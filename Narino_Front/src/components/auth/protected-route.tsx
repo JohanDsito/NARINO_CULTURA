@@ -27,6 +27,10 @@ export function ProtectedRoute({
     retry: false,
   })
 
+  useEffect(() => {
+    if (meQuery.data) setUser(meQuery.data)
+  }, [meQuery.data, setUser])
+
   if (!accessToken) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />
   }
@@ -39,10 +43,6 @@ export function ProtectedRoute({
     logout()
     return <Navigate to="/login" replace state={{ from: location.pathname }} />
   }
-
-  useEffect(() => {
-    if (meQuery.data) setUser(meQuery.data)
-  }, [meQuery.data, setUser])
 
   const resolvedUser = user ?? meQuery.data ?? null
   if (!resolvedUser) {

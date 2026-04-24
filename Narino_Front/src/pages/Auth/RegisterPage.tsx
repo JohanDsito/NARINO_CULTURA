@@ -1,6 +1,9 @@
+import { Link } from 'react-router-dom'
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { PageShell } from '@/components/layout/page-shell'
 import { Button } from '@/components/ui/button'
+import { RegisterForm } from '@/components/auth/register-form'
 
 export default function RegisterPage() {
   return (
@@ -13,13 +16,10 @@ export default function RegisterPage() {
           <CardTitle>Registro</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            En el siguiente paso se implementa el formulario con validación tipada (Zod), selección
-            de tipo de usuario y mensaje de verificación por correo.
-          </p>
+          <RegisterForm />
           <div className="flex flex-wrap gap-3">
             <Button asChild aria-label="Ir a login">
-              <a href="/login">Ya tengo cuenta</a>
+              <Link to="/login">Ya tengo cuenta</Link>
             </Button>
           </div>
         </CardContent>
@@ -27,4 +27,3 @@ export default function RegisterPage() {
     </PageShell>
   )
 }
-

@@ -1,6 +1,9 @@
+import { Link } from 'react-router-dom'
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { PageShell } from '@/components/layout/page-shell'
 import { Button } from '@/components/ui/button'
+import { LoginForm } from '@/components/auth/login-form'
 
 export default function LoginPage() {
   return (
@@ -13,16 +16,13 @@ export default function LoginPage() {
           <CardTitle>Autenticación</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            En el siguiente paso se implementa el formulario con React Hook Form + Zod, manejo de JWT
-            y redirección por rol.
-          </p>
+          <LoginForm />
           <div className="flex flex-wrap gap-3">
             <Button asChild aria-label="Ir a registro">
-              <a href="/register">Crear cuenta</a>
+              <Link to="/register">Crear cuenta</Link>
             </Button>
             <Button variant="outline" asChild aria-label="Recuperar contraseña">
-              <a href="/forgot-password">Olvidé mi contraseña</a>
+              <Link to="/forgot-password">Olvidé mi contraseña</Link>
             </Button>
           </div>
         </CardContent>
@@ -30,4 +30,3 @@ export default function LoginPage() {
     </PageShell>
   )
 }
-

@@ -1,6 +1,9 @@
+import { Link } from 'react-router-dom'
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { PageShell } from '@/components/layout/page-shell'
 import { Button } from '@/components/ui/button'
+import { ForgotPasswordForm } from '@/components/auth/forgot-password-form'
 
 export default function ForgotPasswordPage() {
   return (
@@ -13,13 +16,10 @@ export default function ForgotPasswordPage() {
           <CardTitle>Recuperación</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            En el siguiente paso se implementa el formulario (RHF + Zod) y el envío a{' '}
-            <span className="font-medium">/auth/password-reset/</span>.
-          </p>
+          <ForgotPasswordForm />
           <div className="flex flex-wrap gap-3">
             <Button variant="outline" asChild aria-label="Volver a login">
-              <a href="/login">Volver</a>
+              <Link to="/login">Volver</Link>
             </Button>
           </div>
         </CardContent>
@@ -27,4 +27,3 @@ export default function ForgotPasswordPage() {
     </PageShell>
   )
 }
-

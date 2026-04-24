@@ -46,6 +46,19 @@ export function mapBackendRole(role: BackendRole): Role {
   }
 }
 
+export function mapRoleToBackendRole(role: Role): BackendRole {
+  switch (role) {
+    case 'artist':
+      return 'ARTISTA'
+    case 'buyer':
+      return 'COMPRADOR'
+    case 'cultural_manager':
+      return 'GESTOR_CULTURAL'
+    case 'admin':
+      return 'ADMINISTRADOR'
+  }
+}
+
 export function mapBackendMeUser(user: BackendMeUser): AuthUser {
   return {
     id: user.id,

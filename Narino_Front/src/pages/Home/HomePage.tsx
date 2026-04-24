@@ -1,4 +1,5 @@
 import heroImg from '@/assets/hero.png'
+import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { PageShell } from '@/components/layout/page-shell'
@@ -48,13 +49,13 @@ export default function HomePage() {
             </p>
             <div className="flex flex-wrap gap-3">
               <Button asChild aria-label="Ir a login">
-                <a href="/login">Iniciar sesión</a>
+                <Link to="/login">Iniciar sesión</Link>
               </Button>
               <Button variant="outline" asChild aria-label="Ir a registro">
-                <a href="/register">Crear cuenta</a>
+                <Link to="/register">Crear cuenta</Link>
               </Button>
               <Button variant="secondary" asChild aria-label="Explorar obras">
-                <a href="/artworks">Explorar obras</a>
+                <Link to="/artworks">Explorar obras</Link>
               </Button>
             </div>
           </div>
@@ -78,7 +79,7 @@ export default function HomePage() {
                 Compra obras y artesanías con un flujo de pago claro.
               </p>
               <Button variant="outline" asChild aria-label="Ir a marketplace">
-                <a href="/marketplace">Ver marketplace</a>
+                <Link to="/marketplace">Ver marketplace</Link>
               </Button>
             </CardContent>
           </Card>
@@ -91,7 +92,7 @@ export default function HomePage() {
                 Sigue subastas en tiempo real y participa con pujas.
               </p>
               <Button variant="outline" asChild aria-label="Ir a subastas">
-                <a href="/auctions">Ver subastas</a>
+                <Link to="/auctions">Ver subastas</Link>
               </Button>
             </CardContent>
           </Card>
@@ -104,7 +105,7 @@ export default function HomePage() {
                 Descubre agenda cultural: conciertos, exposiciones y talleres.
               </p>
               <Button variant="outline" asChild aria-label="Ir a eventos">
-                <a href="/events">Ver eventos</a>
+                <Link to="/events">Ver eventos</Link>
               </Button>
             </CardContent>
           </Card>
@@ -113,4 +114,3 @@ export default function HomePage() {
     </div>
   )
 }
-
