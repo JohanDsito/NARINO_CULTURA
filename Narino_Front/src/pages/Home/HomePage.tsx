@@ -3,61 +3,33 @@ import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { PageShell } from '@/components/layout/page-shell'
-import { useTheme } from '@/hooks/useTheme'
 
 export default function HomePage() {
-  const { theme, setTheme } = useTheme()
-
   return (
     <div className="min-h-screen bg-background">
       <PageShell
         title="Nariño Cultura"
-        description="Plataforma digital cultural para el ecosistema artístico del departamento de Nariño, Colombia."
-        actions={
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <Button
-              variant={theme === 'light' ? 'secondary' : 'outline'}
-              onClick={() => setTheme('light')}
-              aria-label="Activar tema claro"
-            >
-              Claro
-            </Button>
-            <Button
-              variant={theme === 'dark' ? 'secondary' : 'outline'}
-              onClick={() => setTheme('dark')}
-              aria-label="Activar tema oscuro"
-            >
-              Oscuro
-            </Button>
-            <Button
-              variant={theme === 'system' ? 'secondary' : 'outline'}
-              onClick={() => setTheme('system')}
-              aria-label="Usar tema del sistema"
-            >
-              Sistema
-            </Button>
-          </div>
-        }
+        description="Conecta con artistas, compra obras únicas, participa en subastas y descubre la agenda cultural de Nariño."
       >
         <section className="grid gap-6 lg:grid-cols-2 lg:items-center">
           <div className="space-y-4">
-            <h2 className="text-4xl font-semibold leading-tight">
-              Arte, tradición y creación viva desde el sur de Colombia
+            <h2 className="text-5xl font-semibold leading-tight tracking-tight">
+              Arte y tradición desde el corazón de Nariño
             </h2>
-            <p className="text-base text-muted-foreground">
-              Explora obras, sigue artistas, participa en subastas y descubre eventos culturales.
+            <p className="max-w-2xl text-lg text-muted-foreground">
+              Descubre artistas locales, explora obras originales, participa en subastas y sumérgete en la oferta cultural del departamento.
             </p>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <Button asChild aria-label="Ir a login">
                 <Link to="/login">Iniciar sesión</Link>
               </Button>
               <Button variant="outline" asChild aria-label="Ir a registro">
                 <Link to="/register">Crear cuenta</Link>
               </Button>
-              <Button variant="secondary" asChild aria-label="Explorar obras">
-                <Link to="/artworks">Explorar obras</Link>
-              </Button>
             </div>
+            <Button variant="secondary" asChild aria-label="Explorar obras">
+              <Link to="/artworks">Explorar obras</Link>
+            </Button>
           </div>
           <div className="relative overflow-hidden rounded-xl border bg-card">
             <img

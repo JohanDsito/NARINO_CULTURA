@@ -18,7 +18,7 @@ export default function ForgotPasswordPage() {
         <CardContent className="space-y-4">
           <ForgotPasswordForm />
           <div className="flex flex-wrap gap-3">
-            <Button variant="outline" asChild aria-label="Volver a login">
+            <Button variant="secondary" asChild aria-label="Volver a login">
               <Link to="/login">Volver</Link>
             </Button>
           </div>

@@ -48,13 +48,13 @@ export function ChatbotWidget() {
     <div className="fixed bottom-4 right-4 z-50">
       {open ? (
         <div
-          className="w-[92vw] max-w-sm overflow-hidden rounded-xl border bg-card shadow-lg"
+          className="w-[92vw] max-w-sm overflow-hidden rounded-xl border border-border bg-slate-950 text-white shadow-lg"
           role="dialog"
           aria-label="Chat de ayuda"
         >
-          <div className="flex items-center justify-between border-b px-4 py-3">
+          <div className="flex items-center justify-between border-b border-border bg-slate-900 px-4 py-3">
             <div className="space-y-0.5">
-              <p className="font-medium">Asistente</p>
+              <p className="font-medium text-white">Asistente</p>
               <p className="text-xs text-muted-foreground">Nariño Cultura</p>
             </div>
             <Button
@@ -74,8 +74,8 @@ export function ChatbotWidget() {
                 className={cn(
                   'max-w-[90%] rounded-lg px-3 py-2 text-sm',
                   m.role === 'user'
-                    ? 'ml-auto bg-primary text-primary-foreground'
-                    : 'bg-muted text-foreground',
+                    ? 'ml-auto bg-tierra text-white'
+                    : 'bg-slate-800 text-white',
                 )}
               >
                 {m.text}
@@ -87,7 +87,7 @@ export function ChatbotWidget() {
                 <button
                   key={s}
                   type="button"
-                  className="rounded-full border bg-background px-3 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+                  className="rounded-full border border-border bg-slate-800 px-3 py-1 text-xs text-white hover:bg-slate-700"
                   onClick={() => send(s)}
                 >
                   {s}
@@ -97,7 +97,7 @@ export function ChatbotWidget() {
           </div>
 
           <form
-            className="flex items-center gap-2 border-t p-3"
+            className="flex items-center gap-2 border-t border-border bg-slate-950 p-3"
             onSubmit={(e) => {
               e.preventDefault()
               send(text)
@@ -108,6 +108,7 @@ export function ChatbotWidget() {
               onChange={(e) => setText(e.target.value)}
               placeholder="Escribe tu pregunta…"
               aria-label="Mensaje"
+              className="bg-slate-800 text-white placeholder:text-slate-400"
             />
             <Button type="submit" disabled={!canSend} aria-label="Enviar mensaje">
               <Send className="h-4 w-4" />
