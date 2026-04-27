@@ -1,0 +1,22 @@
+# Entorno Virtual
+venv/
+env/
+ENV/
+
+# Variables de entorno (¡MUY IMPORTANTE!)
+.env
+
+# Base de datos local
+db.sqlite3
+
+# Archivos de Python (Caché)
+**/__pycache__/
+*.pyc
+
+# Frontend (Node modules y builds)
+node_modules/
+dist/
+.eslintcache
+
+# Docker
+.dockerignore

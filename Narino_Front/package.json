@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+<<<<<<< HEAD
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-slot": "^1.2.4",
     "@tanstack/react-query": "^5.100.1",
@@ -25,6 +26,10 @@
     "tailwind-merge": "^3.5.0",
     "zod": "^4.3.6",
     "zustand": "^5.0.12"
+=======
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+>>>>>>> 22dcc9d4de8fb95d562380bbf3d6905ae84f0518
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
@@ -32,14 +37,20 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.0",
+<<<<<<< HEAD
     "autoprefixer": "^10.5.0",
+=======
+>>>>>>> 22dcc9d4de8fb95d562380bbf3d6905ae84f0518
     "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.4.0",
+<<<<<<< HEAD
     "postcss": "^8.5.10",
     "tailwindcss": "^3.4.19",
     "tailwindcss-animate": "^1.0.7",
+=======
+>>>>>>> 22dcc9d4de8fb95d562380bbf3d6905ae84f0518
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.56.1",
     "vite": "^8.0.0"
