@@ -11,10 +11,18 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:narino_cultura/app.dart';
 import 'package:narino_cultura/features/auth/presentation/screens/login_screen.dart';
+import 'package:narino_cultura/features/auth/presentation/providers/auth_guard_provider.dart';
 
 void main() {
   testWidgets('App boots to login', (WidgetTester tester) async {
-    await tester.pumpWidget(const ProviderScope(child: NarinoCulturaApp()));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          isAuthenticatedProvider.overrideWith((ref) async => false),
+        ],
+        child: const NarinoCulturaApp(),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.byType(MaterialApp), findsOneWidget);
