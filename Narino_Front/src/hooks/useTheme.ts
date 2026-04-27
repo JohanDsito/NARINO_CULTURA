@@ -1,57 +1,28 @@
-import { useEffect } from 'react'
-import { useThemeStore, type Theme, getSystemTheme, watchSystemTheme } from '../store/themeStore'
+import { useEffect, useState } from 'react'
 
-/**
- * Hook para acceder y controlar el tema de la aplicación.
- * Sincroniza automáticamente con las variables CSS y localStorage.
- *
- * @returns {Object} theme: tema actual ('light' | 'dark'), toggle: función para cambiar tema
- *
- * @example
- * const { theme, toggle } = useTheme()
- * return (
- *   <button onClick={toggle}>
- *     {theme === 'light' ? '🌙' : '☀️'}
- *   </button>
- * )
- */
+type Theme = 'light' | 'dark'
+
 export function useTheme() {
-  const theme = useThemeStore((state) => state.theme)
-  const toggle = useThemeStore((state) => state.toggle)
-  const setTheme = useThemeStore((state) => state.setTheme)
+  const [theme, setTheme] = useState<Theme>(() => {
+    // Leer preferencia guardada o usar la del sistema
+    const saved = localStorage.getItem('nc-theme') as Theme | null
+    if (saved) return saved
+    return window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'dark'
+      : 'light'
+  })
 
-  // Sincronizar con preferencia del sistema al montar
   useEffect(() => {
-    const systemTheme = getSystemTheme()
-    const savedTheme = localStorage.getItem('nc-theme-store') as Theme | null
-
-    // Si no hay tema guardado, usar el del sistema
-    if (!savedTheme) {
-      setTheme(systemTheme)
+    const root = document.documentElement
+    if (theme === 'dark') {
+      root.classList.add('dark')
+    } else {
+      root.classList.remove('dark')
     }
-  }, [setTheme])
+    localStorage.setItem('nc-theme', theme)
+  }, [theme])
 
-  // Escuchar cambios en la preferencia del sistema
-  useEffect(() => {
-    const unwatch = watchSystemTheme((systemTheme) => {
-      // Solo cambiar si no hay preferencia guardada del usuario
-      if (!localStorage.getItem('nc-theme-store')) {
-        setTheme(systemTheme)
-      }
-    })
+  const toggle = () => setTheme(t => (t === 'light' ? 'dark' : 'light'))
 
-    return () => {
-      unwatch?.()
-    }
-  }, [setTheme])
-
-  return { theme, toggle, setTheme }
-}
-
-/**
- * Hook para acceder solo al tema sin funciones de cambio.
- * Útil para componentes que solo necesitan leer el tema.
- */
-export function useThemeValue(): Theme {
-  return useThemeStore((state) => state.theme)
+  return { theme, toggle }
 }

@@ -1,4 +1,4 @@
-import { axiosInstance } from '@/api/axiosInstance'
+import axiosInstance from '@/api/axiosInstance'
 
 export interface CreateArtistProfilePayload {
   artistic_name: string

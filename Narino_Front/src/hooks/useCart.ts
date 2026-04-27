@@ -10,8 +10,8 @@ export function useCart() {
   const items = useCartStore((s) => s.items)
   const addItem = useCartStore((s) => s.addItem)
   const removeItem = useCartStore((s) => s.removeItem)
-  const setQuantity = useCartStore((s) => s.setQuantity)
-  const clear = useCartStore((s) => s.clear)
+  const setQuantity = useCartStore((s) => s.updateQuantity)
+  const clear = useCartStore((s) => s.clearCart)
 
   return useMemo(
     () => ({

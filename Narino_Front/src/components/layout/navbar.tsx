@@ -1,149 +1,101 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { useMutation } from '@tanstack/react-query'
-import { ShoppingBag, Bell, LogOut, LogIn, Palette } from 'lucide-react'
-import { toast } from 'sonner'
-import type { ReactNode } from 'react'
+import { Link, useLocation } from 'react-router-dom'
+import { Sun, Moon, ShoppingCart, Bell, Mountain } from 'lucide-react'
+import { useTheme } from '../../hooks/useTheme'
+import { useCartStore } from '../../store/cartStore'
 
-import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
-import { useAuthStore } from '@/store/authStore'
-import { useCart } from '@/hooks/useCart'
-import { useTheme } from '@/hooks/useTheme'
-import { logout as logoutApi } from '@/api/auth.api'
+const links = [
+  { to: '/artists',     label: 'Artistas' },
+  { to: '/artworks',    label: 'Obras' },
+  { to: '/marketplace', label: 'Marketplace' },
+  { to: '/auctions',    label: 'Subastas' },
+  { to: '/events',      label: 'Eventos' },
+]
 
 export function Navbar() {
-  const location = useLocation()
-  const navigate = useNavigate()
-  const { count } = useCart()
-  const { theme, setTheme } = useTheme()
-
-  const accessToken = useAuthStore((s) => s.accessToken)
-  const refreshToken = useAuthStore((s) => s.refreshToken)
-  const user = useAuthStore((s) => s.user)
-  const logoutLocal = useAuthStore((s) => s.logout)
-
-  const logoutMutation = useMutation({
-    mutationFn: async () => {
-      if (refreshToken) await logoutApi(refreshToken)
-    },
-    onSuccess: () => {
-      logoutLocal()
-      toast.success('Sesión cerrada.')
-      navigate('/login', { replace: true })
-    },
-    onError: () => {
-      logoutLocal()
-      navigate('/login', { replace: true })
-    },
-  })
-
-  const isActive = (path: string) => location.pathname === path
+  const { theme, toggle } = useTheme()
+  const { pathname } = useLocation()
+  const cartCount = useCartStore(s => s.items.length)
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4">
-        <Link to="/" className="flex items-center gap-2" aria-label="Ir a inicio">
-          <span className="font-display text-xl font-semibold text-primary">Nariño Cultura</span>
+    <nav
+      className="fixed top-0 inset-x-0 z-50 flex items-center justify-between
+                 px-6 md:px-10 h-16"
+      style={{
+        background: '#2D1B00',
+        borderBottom: '1px solid rgba(201,146,26,0.2)',
+      }}
+    >
+      {/* Logo */}
+      <Link to="/" className="flex items-center gap-2 no-underline">
+        <div className="w-8 h-8 rounded-lg bg-oro flex items-center justify-center">
+          <Mountain size={16} color="#2D1B00" />
+        </div>
+        <span className="font-display font-bold text-[18px] text-oro-light tracking-wide">
+          Nariño Cultura
+        </span>
+      </Link>
+
+      {/* Links */}
+      <ul className="hidden md:flex items-center gap-7 list-none">
+        {links.map(({ to, label }) => (
+          <li key={to}>
+            <Link
+              to={to}
+              className="font-body font-medium text-[14px] no-underline transition-colors duration-300"
+              style={{
+                color: pathname.startsWith(to)
+                  ? '#F0C060'
+                  : 'rgba(245,239,229,0.75)',
+              }}
+            >
+              {label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+
+      {/* Acciones */}
+      <div className="flex items-center gap-4">
+        {/* Carrito */}
+        <Link to="/checkout" className="relative">
+          <ShoppingCart size={20} color="rgba(245,239,229,0.75)" />
+          {cartCount > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full
+                             bg-tierra text-white text-[10px] font-bold
+                             flex items-center justify-center">
+              {cartCount}
+            </span>
+          )}
         </Link>
 
-        <nav className="hidden items-center gap-1 md:flex" aria-label="Navegación principal">
-          <NavLink to="/artists" active={isActive('/artists')}>
-            Artistas
-          </NavLink>
-          <NavLink to="/artworks" active={isActive('/artworks')}>
-            Obras
-          </NavLink>
-          <NavLink to="/marketplace" active={isActive('/marketplace')}>
-            Marketplace
-          </NavLink>
-          <NavLink to="/auctions" active={isActive('/auctions')}>
-            Subastas
-          </NavLink>
-          <NavLink to="/events" active={isActive('/events')}>
-            Eventos
-          </NavLink>
-        </nav>
+        {/* Notificaciones */}
+        <Link to="/notifications">
+          <Bell size={20} color="rgba(245,239,229,0.75)" />
+        </Link>
 
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            aria-label="Cambiar tema"
-          >
-            <Palette className="h-5 w-5" />
-          </Button>
+        {/* Toggle dark mode */}
+        <button
+          onClick={toggle}
+          aria-label="Cambiar modo de color"
+          className="w-8 h-8 rounded-full flex items-center justify-center
+                     transition-colors duration-300 hover:bg-white/10"
+        >
+          {theme === 'light'
+            ? <Moon size={18} color="#F0C060" />
+            : <Sun  size={18} color="#F0C060" />
+          }
+        </button>
 
-          <Link to="/notifications" aria-label="Notificaciones">
-            <Button variant="ghost" size="icon">
-              <Bell className="h-5 w-5" />
-            </Button>
-          </Link>
-
-          <Link to="/checkout" aria-label="Carrito">
-            <Button variant="ghost" size="icon" className="relative">
-              <ShoppingBag className="h-5 w-5" />
-              {count > 0 ? (
-                <span className="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-secondary px-1 text-xs font-semibold text-secondary-foreground">
-                  {count}
-                </span>
-              ) : null}
-            </Button>
-          </Link>
-
-          {accessToken ? (
-            <Button
-              variant="outline"
-              onClick={() => logoutMutation.mutate()}
-              disabled={logoutMutation.isPending}
-              aria-label="Cerrar sesión"
-            >
-              <LogOut className="h-4 w-4" />
-              <span className="hidden sm:inline">Salir</span>
-            </Button>
-          ) : (
-            <Button
-              asChild
-              variant="outline"
-              aria-label="Ir a iniciar sesión"
-              className="gap-2"
-            >
-              <Link to="/login" state={{ from: location.pathname }}>
-                <LogIn className="h-4 w-4" />
-                <span className="hidden sm:inline">Entrar</span>
-              </Link>
-            </Button>
-          )}
-
-          {user ? (
-            <span className="hidden text-sm text-muted-foreground lg:inline">
-              {user.firstName || user.email}
-            </span>
-          ) : null}
-        </div>
+        {/* Login */}
+        <Link
+          to="/login"
+          className="hidden md:inline-flex font-body font-semibold text-[13px]
+                     bg-tierra text-white px-4 py-2 rounded-btn no-underline
+                     transition-all duration-300 hover:bg-tierra-light hover:-translate-y-px"
+        >
+          Ingresar
+        </Link>
       </div>
-    </header>
-  )
-}
-
-function NavLink({
-  to,
-  active,
-  children,
-}: {
-  to: string
-  active: boolean
-  children: ReactNode
-}) {
-  return (
-    <Link
-      to={to}
-      className={cn(
-        'rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground',
-        active && 'bg-muted text-foreground',
-      )}
-    >
-      {children}
-    </Link>
+    </nav>
   )
 }

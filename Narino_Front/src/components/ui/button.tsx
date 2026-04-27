@@ -1,7 +1,8 @@
-import { type ButtonHTMLAttributes, forwardRef, Children, cloneElement, isValidElement } from 'react'
+import { ButtonHTMLAttributes, forwardRef } from 'react'
+import { Slot } from '@radix-ui/react-slot'
 import { cn } from '../../utils/cn'
 
-type Variant = 'primary' | 'secondary' | 'gold' | 'outline'
+type Variant = 'primary' | 'secondary' | 'gold'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant
@@ -9,43 +10,28 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const base =
-  'inline-flex items-center justify-center gap-1.5 font-body text-[13px] font-semibold ' +
+  'inline-flex items-center gap-1.5 font-body text-[13px] font-semibold ' +
   'px-[18px] py-[9px] rounded-btn border-none cursor-pointer ' +
   'transition-all duration-[350ms] ease-smooth ' +
-  'hover:-translate-y-px focus-visible:outline-2 ' +
-  'disabled:opacity-50 disabled:cursor-not-allowed'
+  'hover:-translate-y-px focus-visible:outline-2'
 
 const variants: Record<Variant, string> = {
   primary:   'bg-tierra text-white hover:bg-tierra-light',
   secondary: 'bg-transparent text-tierra border-[1.5px] border-tierra hover:bg-tierra-pale',
   gold:      'bg-oro text-[#2D1B00] font-bold hover:bg-oro-light',
-  outline:   'bg-transparent text-tierra border-[1.5px] border-tierra hover:bg-tierra-pale',
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ variant = 'primary', className, children, asChild, ...props }, ref) => {
-    const classes = cn(base, variants[variant], className)
-
-    if (asChild && children) {
-      // Renderizar como el hijo (ej: Link) con las clases del button
-      const child = Children.only(children) as React.ReactElement<{ className?: string }>
-      if (isValidElement(child)) {
-        const childClassName = child.props?.className || ''
-        return cloneElement(child, {
-          className: cn(classes, childClassName),
-        })
-      }
-    }
-
-    // Renderizar como button normal
+  ({ variant = 'primary', asChild = false, className, children, ...props }, ref) => {
+    const Comp = asChild ? Slot : 'button'
     return (
-      <button
+      <Comp
         ref={ref}
-        className={classes}
+        className={cn(base, variants[variant], className)}
         {...props}
       >
         {children}
-      </button>
+      </Comp>
     )
   }
 )

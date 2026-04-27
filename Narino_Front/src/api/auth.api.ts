@@ -1,57 +1,53 @@
-import { axiosInstance } from '@/api/axiosInstance'
-import type { AuthTokens, BackendMeUser, BackendRole } from '@/types/auth'
-import { mapBackendMeUser } from '@/types/auth'
+import axiosInstance from './axiosInstance'
+import type { AuthTokens, LoginCredentials, RegisterData, User } from '@/types/auth'
 
-export interface LoginPayload {
-  email: string
-  password: string
-}
-
-export async function login(payload: LoginPayload) {
-  const { data } = await axiosInstance.post<AuthTokens>('/auth/login/', payload)
+export async function login(
+  credentials: LoginCredentials,
+): Promise<{ tokens: AuthTokens; user: User }> {
+  const { data } = await axiosInstance.post('/auth/login/', credentials)
   return data
 }
 
-export interface RegisterPayload {
-  email: string
-  password: string
-  first_name: string
-  last_name: string
-  role: BackendRole
-  phone?: string
-  avatar_url?: string
-}
-
-export async function register(payload: RegisterPayload) {
-  const { data } = await axiosInstance.post<{ detail: string }>('/auth/register/', payload)
+export async function register(userData: RegisterData): Promise<{ message: string }> {
+  const { data } = await axiosInstance.post('/auth/register/', userData)
   return data
 }
 
-export async function verifyEmail(token: string) {
-  const { data } = await axiosInstance.post<{ detail: string }>('/auth/verify-email/', { token })
+export async function me(): Promise<User> {
+  const { data } = await axiosInstance.get('/auth/me/')
   return data
 }
 
-export async function me() {
-  const { data } = await axiosInstance.get<BackendMeUser>('/users/me/')
-  return mapBackendMeUser(data)
-}
-
-export async function logout(refresh: string) {
-  const { data } = await axiosInstance.post<{ detail: string }>('/auth/logout/', { refresh })
+export async function requestPasswordReset(
+  email: string,
+): Promise<{ message: string }> {
+  const { data } = await axiosInstance.post('/auth/password/reset/', { email })
   return data
 }
 
-export async function requestPasswordReset(email: string) {
-  const { data } = await axiosInstance.post<{ detail: string }>('/auth/password-reset/', { email })
+export async function confirmPasswordReset(
+  token: string,
+  password: string,
+): Promise<{ message: string }> {
+  const { data } = await axiosInstance.post('/auth/password/reset/confirm/', {
+    token,
+    password,
+  })
   return data
 }
 
-export async function confirmPasswordReset(payload: { token: string; new_password: string }) {
-  const { data } = await axiosInstance.post<{ detail: string }>(
-    '/auth/password-reset/confirm/',
-    payload,
-  )
-  return data
+export async function logout(): Promise<void> {
+  const refresh = localStorage.getItem('refresh_token')
+  if (refresh) {
+    await axiosInstance.post('/auth/logout/', { refresh }).catch(() => {})
+  }
 }
 
+export const authApi = {
+  login,
+  register,
+  getMe: me,
+  forgotPassword: requestPasswordReset,
+  resetPassword: confirmPasswordReset,
+  logout,
+}

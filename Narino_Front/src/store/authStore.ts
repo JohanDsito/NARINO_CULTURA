@@ -1,54 +1,65 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-import type { AuthUser } from '@/types/auth'
+export type UserRole = 'artist' | 'buyer' | 'cultural_manager' | 'admin'
 
-type AuthStatus = 'anonymous' | 'authenticated'
+export interface User {
+  id: number
+  email: string
+  first_name: string
+  last_name: string
+  role: UserRole
+  avatar?: string
+  artistic_name?: string
+  category?: string
+  city?: string
+  bio?: string
+  followers_count?: number
+}
 
 interface AuthState {
-  status: AuthStatus
+  user: User | null
   accessToken: string | null
   refreshToken: string | null
-  user: AuthUser | null
-  setTokens: (tokens: { access: string; refresh: string }) => void
-  setAccessToken: (access: string) => void
-  setUser: (user: AuthUser | null) => void
+  isAuthenticated: boolean
+  setAuth: (user: User, access: string, refresh: string) => void
   logout: () => void
+  updateUser: (data: Partial<User>) => void
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
-      status: 'anonymous',
+      user: null,
       accessToken: null,
       refreshToken: null,
-      user: null,
-      setTokens: (tokens) =>
-        set(() => ({
-          status: 'authenticated',
-          accessToken: tokens.access,
-          refreshToken: tokens.refresh,
-        })),
-      setAccessToken: (access) => set(() => ({ accessToken: access })),
-      setUser: (user) => set(() => ({ user })),
-      logout: () =>
-        set(() => ({
-          status: 'anonymous',
-          accessToken: null,
-          refreshToken: null,
-          user: null,
+      isAuthenticated: false,
+
+      setAuth: (user, access, refresh) => {
+        localStorage.setItem('access_token', access)
+        localStorage.setItem('refresh_token', refresh)
+        set({ user, accessToken: access, refreshToken: refresh, isAuthenticated: true })
+      },
+
+      logout: () => {
+        localStorage.removeItem('access_token')
+        localStorage.removeItem('refresh_token')
+        set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false })
+      },
+
+      updateUser: (data) =>
+        set((state) => ({
+          user: state.user ? { ...state.user, ...data } : null,
         })),
     }),
     {
-      name: 'narino_cultura_auth',
-      version: 1,
+      name: 'auth-storage',
       partialize: (state) => ({
-        status: state.status,
+        user: state.user,
         accessToken: state.accessToken,
         refreshToken: state.refreshToken,
-        user: state.user,
+        isAuthenticated: state.isAuthenticated,
       }),
-    },
-  ),
+    }
+  )
 )
-
