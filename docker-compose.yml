@@ -31,12 +31,13 @@ services:
     build: .
     env_file:
       - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
     depends_on:
       - postgres
       - redis
     ports:
       - "8000:8000"
-    working_dir: /app/narinocultura_backend
     command: >
       sh -c "python manage.py migrate &&
              python -m daphne -b 0.0.0.0 -p 8000 config.asgi:application"
@@ -44,4 +45,3 @@ services:
 volumes:
   postgres_data:
   n8n_data:
-
