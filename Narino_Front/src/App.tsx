@@ -1,12 +1,3 @@
-<<<<<<< HEAD
-import { RouterProvider } from 'react-router-dom'
-
-import { router } from '@/router'
-
-export default function App() {
-  return <RouterProvider router={router} />
-}
-=======
 import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
@@ -128,4 +119,3 @@ function App() {
 }
 
 export default App
->>>>>>> 22dcc9d4de8fb95d562380bbf3d6905ae84f0518
