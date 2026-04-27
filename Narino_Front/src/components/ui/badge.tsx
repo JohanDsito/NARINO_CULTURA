@@ -1,30 +1,31 @@
-import * as React from 'react'
-import { cva, type VariantProps } from 'class-variance-authority'
+import { type HTMLAttributes } from 'react'
+import { cn } from '../../utils/cn'
 
-import { cn } from '@/lib/utils'
+type Variant = 'tierra' | 'oro' | 'selva' | 'indigo'
 
-const badgeVariants = cva(
-  'inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium transition-colors',
-  {
-    variants: {
-      variant: {
-        default: 'border-transparent bg-primary text-primary-foreground',
-        secondary: 'border-transparent bg-secondary text-secondary-foreground',
-        outline: 'text-foreground',
-        muted: 'border-transparent bg-muted text-muted-foreground',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
-    },
-  },
-)
-
-type BadgeProps = React.HTMLAttributes<HTMLDivElement> &
-  VariantProps<typeof badgeVariants>
-
-function Badge({ className, variant, ...props }: BadgeProps) {
-  return <div className={cn(badgeVariants({ variant }), className)} {...props} />
+interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
+  variant?: Variant
 }
 
-export { Badge }
+const variants: Record<Variant, string> = {
+  tierra: 'bg-tierra-pale text-tierra',
+  oro:    'bg-oro-pale    text-oro',
+  selva:  'bg-selva-pale  text-selva',
+  indigo: 'bg-indigo-pale text-indigo',
+}
+
+export function Badge({ variant = 'tierra', className, children, ...props }: BadgeProps) {
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center text-[11px] font-semibold',
+        'px-[10px] py-[3px] rounded-tag',
+        variants[variant],
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </span>
+  )
+}

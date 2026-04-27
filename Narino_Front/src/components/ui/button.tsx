@@ -1,53 +1,52 @@
-import * as React from 'react'
-import { Slot } from '@radix-ui/react-slot'
-import { cva, type VariantProps } from 'class-variance-authority'
+import { type ButtonHTMLAttributes, forwardRef, Children, cloneElement, isValidElement } from 'react'
+import { cn } from '../../utils/cn'
 
-import { cn } from '@/lib/utils'
+type Variant = 'primary' | 'secondary' | 'gold' | 'outline'
 
-const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ring-offset-background [&_svg]:pointer-events-none [&_svg]:shrink-0',
-  {
-    variants: {
-      variant: {
-        default: 'bg-primary text-primary-foreground hover:bg-primary/90',
-        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/90',
-        outline: 'border border-input bg-background hover:bg-muted',
-        ghost: 'hover:bg-muted',
-        destructive:
-          'bg-destructive text-destructive-foreground hover:bg-destructive/90',
-      },
-      size: {
-        default: 'h-10 px-4 py-2',
-        sm: 'h-9 rounded-md px-3',
-        lg: 'h-11 rounded-md px-8',
-        icon: 'h-10 w-10',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
-      size: 'default',
-    },
-  },
-)
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: Variant
+  asChild?: boolean
+}
 
-type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> &
-  VariantProps<typeof buttonVariants> & {
-    asChild?: boolean
-  }
+const base =
+  'inline-flex items-center justify-center gap-1.5 font-body text-[13px] font-semibold ' +
+  'px-[18px] py-[9px] rounded-btn border-none cursor-pointer ' +
+  'transition-all duration-[350ms] ease-smooth ' +
+  'hover:-translate-y-px focus-visible:outline-2 ' +
+  'disabled:opacity-50 disabled:cursor-not-allowed'
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, type, ...props }, ref) => {
-    const Comp = asChild ? Slot : 'button'
+const variants: Record<Variant, string> = {
+  primary:   'bg-tierra text-white hover:bg-tierra-light',
+  secondary: 'bg-transparent text-tierra border-[1.5px] border-tierra hover:bg-tierra-pale',
+  gold:      'bg-oro text-[#2D1B00] font-bold hover:bg-oro-light',
+  outline:   'bg-transparent text-tierra border-[1.5px] border-tierra hover:bg-tierra-pale',
+}
+
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ variant = 'primary', className, children, asChild, ...props }, ref) => {
+    const classes = cn(base, variants[variant], className)
+
+    if (asChild && children) {
+      // Renderizar como el hijo (ej: Link) con las clases del button
+      const child = Children.only(children) as React.ReactElement<{ className?: string }>
+      if (isValidElement(child)) {
+        const childClassName = child.props?.className || ''
+        return cloneElement(child, {
+          className: cn(classes, childClassName),
+        })
+      }
+    }
+
+    // Renderizar como button normal
     return (
-      <Comp
+      <button
         ref={ref}
-        className={cn(buttonVariants({ variant, size }), className)}
-        type={type ?? 'button'}
+        className={classes}
         {...props}
-      />
+      >
+        {children}
+      </button>
     )
-  },
+  }
 )
 Button.displayName = 'Button'
-
-export { Button }
