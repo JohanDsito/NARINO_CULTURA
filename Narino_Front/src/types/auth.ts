@@ -44,7 +44,9 @@ export interface RegisterData {
   password: string
   first_name: string
   last_name: string
-  role: UserRole
+  role: string
+  phone?: string
+  avatar_url?: string
   artistic_name?: string
   category?: string
   city?: string

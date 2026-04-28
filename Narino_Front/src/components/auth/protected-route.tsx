@@ -17,7 +17,7 @@ export function ProtectedRoute({
   const location = useLocation()
   const accessToken = useAuthStore((s) => s.accessToken)
   const user = useAuthStore((s) => s.user)
-  const setUser = useAuthStore((s) => s.setUser)
+  const updateUser = useAuthStore((s) => s.updateUser)
   const logout = useAuthStore((s) => s.logout)
 
   const meQuery = useQuery({
@@ -28,8 +28,8 @@ export function ProtectedRoute({
   })
 
   useEffect(() => {
-    if (meQuery.data) setUser(meQuery.data)
-  }, [meQuery.data, setUser])
+    if (meQuery.data) updateUser(meQuery.data)
+  }, [meQuery.data, updateUser])
 
   if (!accessToken) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />

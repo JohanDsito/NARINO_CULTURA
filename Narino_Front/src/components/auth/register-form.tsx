@@ -88,12 +88,11 @@ export function RegisterForm() {
         first_name: values.firstName,
         last_name: values.lastName,
         role: mapRoleToBackendRole(values.role),
-        phone: values.phone?.trim() || undefined,
-        avatar_url: values.avatarUrl?.trim() || undefined,
+        category: values.discipline?.trim() || undefined,
       })
     },
     onSuccess: (data) => {
-      toast.success('Registro exitoso.', { description: data.detail })
+      toast.success('Registro exitoso.', { description: data.message })
       navigate('/login', { replace: true })
     },
     onError: (err) => {
@@ -109,85 +108,85 @@ export function RegisterForm() {
 
   return (
     <form
-      className="space-y-4"
+      className="space-y-3"
       onSubmit={handleSubmit((values) => mutation.mutate(values))}
       aria-label="Formulario de registro"
     >
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="firstName">Nombre</Label>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1">
+          <Label htmlFor="firstName" className="text-xs font-medium">Nombre</Label>
           <Input id="firstName" autoComplete="given-name" {...register('firstName')} />
           {errors.firstName ? (
-            <p className="text-sm text-destructive">{errors.firstName.message}</p>
+            <p className="text-xs text-destructive">{errors.firstName.message}</p>
           ) : null}
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="lastName">Apellido</Label>
+        <div className="space-y-1">
+          <Label htmlFor="lastName" className="text-xs font-medium">Apellido</Label>
           <Input id="lastName" autoComplete="family-name" {...register('lastName')} />
           {errors.lastName ? (
-            <p className="text-sm text-destructive">{errors.lastName.message}</p>
+            <p className="text-xs text-destructive">{errors.lastName.message}</p>
           ) : null}
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+      <div className="space-y-1">
+        <Label htmlFor="email" className="text-xs font-medium">Email</Label>
         <Input id="email" type="email" autoComplete="email" {...register('email')} />
-        {errors.email ? <p className="text-sm text-destructive">{errors.email.message}</p> : null}
+        {errors.email ? <p className="text-xs text-destructive">{errors.email.message}</p> : null}
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="password">Contraseña</Label>
+      <div className="space-y-1">
+        <Label htmlFor="password" className="text-xs font-medium">Contraseña</Label>
         <Input id="password" type="password" autoComplete="new-password" {...register('password')} />
         {errors.password ? (
-          <p className="text-sm text-destructive">{errors.password.message}</p>
+          <p className="text-xs text-destructive">{errors.password.message}</p>
         ) : null}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="role">Tipo de usuario</Label>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1">
+          <Label htmlFor="role" className="text-xs font-medium">Tipo de usuario</Label>
           <Select id="role" {...register('role')} aria-label="Seleccionar tipo de usuario">
             <option value="buyer">Comprador</option>
             <option value="artist">Artista</option>
             <option value="cultural_manager">Gestor cultural</option>
           </Select>
-          {errors.role ? <p className="text-sm text-destructive">{errors.role.message}</p> : null}
+          {errors.role ? <p className="text-xs text-destructive">{errors.role.message}</p> : null}
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="phone">Teléfono (opcional)</Label>
+        <div className="space-y-1">
+          <Label htmlFor="phone" className="text-xs font-medium">Teléfono (opt.)</Label>
           <Input id="phone" autoComplete="tel" {...register('phone')} />
         </div>
       </div>
 
       {role === 'artist' ? (
-        <div className="rounded-lg border bg-muted/30 p-4">
-          <p className="mb-3 text-sm font-medium">Información de artista</p>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="artisticName">Nombre artístico</Label>
+        <div className="rounded-lg border border-tierra/20 bg-tierra-pale/20 p-3">
+          <p className="mb-2 text-xs font-semibold text-tierra">Información de artista</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1 sm:col-span-2">
+              <Label htmlFor="artisticName" className="text-xs font-medium">Nombre artístico*</Label>
               <Input id="artisticName" {...register('artisticName')} />
               {errors.artisticName ? (
-                <p className="text-sm text-destructive">{errors.artisticName.message}</p>
+                <p className="text-xs text-destructive">{errors.artisticName.message}</p>
               ) : null}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="discipline">Categoría / disciplina (opcional)</Label>
+            <div className="space-y-1">
+              <Label htmlFor="discipline" className="text-xs font-medium">Categoría (opt.)</Label>
               <Input id="discipline" {...register('discipline')} />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="city">Ciudad</Label>
+            <div className="space-y-1">
+              <Label htmlFor="city" className="text-xs font-medium">Ciudad*</Label>
               <Input id="city" {...register('city')} />
               {errors.city ? (
-                <p className="text-sm text-destructive">{errors.city.message}</p>
+                <p className="text-xs text-destructive">{errors.city.message}</p>
               ) : null}
             </div>
           </div>
         </div>
       ) : null}
 
-      <Button type="submit" className="w-full" disabled={mutation.isPending} aria-label="Crear cuenta">
-        {mutation.isPending ? 'Creando cuenta…' : 'Crear cuenta'}
+      <Button type="submit" className="w-full mt-4" disabled={mutation.isPending} aria-label="Crear cuenta">
+        {mutation.isPending ? 'Creando…' : 'Crear cuenta'}
       </Button>
     </form>
   )

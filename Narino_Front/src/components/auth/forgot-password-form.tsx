@@ -26,7 +26,7 @@ export function ForgotPasswordForm() {
   const mutation = useMutation({
     mutationFn: async (values: FormValues) => await requestPasswordReset(values.email),
     onSuccess: (data) => {
-      toast.success('Solicitud enviada.', { description: data.detail })
+      toast.success('Solicitud enviada.', { description: data.message })
       form.reset()
     },
     onError: (err) => {

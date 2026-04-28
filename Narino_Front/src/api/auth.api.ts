@@ -4,17 +4,17 @@ import type { AuthTokens, LoginCredentials, RegisterData, User } from '@/types/a
 export async function login(
   credentials: LoginCredentials,
 ): Promise<{ tokens: AuthTokens; user: User }> {
-  const { data } = await axiosInstance.post('/auth/login/', credentials)
+  const { data } = await axiosInstance.post('/api/v1/auth/login/', credentials)
   return data
 }
 
 export async function register(userData: RegisterData): Promise<{ message: string }> {
-  const { data } = await axiosInstance.post('/auth/register/', userData)
+  const { data } = await axiosInstance.post('/api/v1/auth/register/', userData)
   return data
 }
 
 export async function me(): Promise<User> {
-  const { data } = await axiosInstance.get('/auth/me/')
+  const { data } = await axiosInstance.get('/api/v1/auth/me/')
   return data
 }
 

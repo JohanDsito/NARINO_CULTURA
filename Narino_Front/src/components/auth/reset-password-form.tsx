@@ -35,9 +35,9 @@ export function ResetPasswordForm({ initialToken }: { initialToken?: string }) {
 
   const mutation = useMutation({
     mutationFn: async (values: FormValues) =>
-      await confirmPasswordReset({ token: values.token, new_password: values.newPassword }),
+      await confirmPasswordReset(values.token, values.newPassword),
     onSuccess: (data) => {
-      toast.success('Contraseña actualizada.', { description: data.detail })
+      toast.success('Contraseña actualizada.', { description: data.message })
       navigate('/login', { replace: true })
     },
     onError: (err) => {

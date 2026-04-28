@@ -26,7 +26,7 @@ export interface ArtistProfile {
 }
 
 export async function createArtistProfile(payload: CreateArtistProfilePayload) {
-  const { data } = await axiosInstance.post<ArtistProfile>('/artists/', payload)
+  const { data } = await axiosInstance.post<ArtistProfile>('/api/v1/artists/', payload)
   return data
 }
 

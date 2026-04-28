@@ -43,8 +43,7 @@ export function LoginForm() {
   const navigate = useNavigate()
   const location = useLocation()
 
-  const setTokens = useAuthStore((s) => s.setTokens)
-  const setUser = useAuthStore((s) => s.setUser)
+  const setAuth = useAuthStore((s) => s.setAuth)
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -54,15 +53,10 @@ export function LoginForm() {
 
   const mutation = useMutation({
     mutationFn: async (values: FormValues) => {
-      const tokens = await login(values)
-      setTokens(tokens)
-      const user = await queryClient.fetchQuery({
-        queryKey: ['auth', 'me'],
-        queryFn: me,
-      })
-      setUser(user)
+      const response = await login(values)
+      setAuth(response.user, response.tokens.access, response.tokens.refresh)
       const pendingArtist = getPendingArtistProfile()
-      if (user.role === 'artist' && pendingArtist) {
+      if (response.user.role === 'artist' && pendingArtist) {
         try {
           await createArtistProfile(pendingArtist)
           toast.success('Perfil de artista creado.')
@@ -74,7 +68,7 @@ export function LoginForm() {
           clearPendingArtistProfile()
         }
       }
-      return user
+      return response.user
     },
     onSuccess: (user) => {
       toast.success('Bienvenido/a.')
@@ -98,14 +92,14 @@ export function LoginForm() {
       onSubmit={handleSubmit((values) => mutation.mutate(values))}
       aria-label="Formulario de inicio de sesión"
     >
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+      <div className="space-y-1">
+        <Label htmlFor="email" className="text-xs font-medium">Email</Label>
         <Input id="email" type="email" autoComplete="email" {...register('email')} />
-        {errors.email ? <p className="text-sm text-destructive">{errors.email.message}</p> : null}
+        {errors.email ? <p className="text-xs text-destructive">{errors.email.message}</p> : null}
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="password">Contraseña</Label>
+      <div className="space-y-1">
+        <Label htmlFor="password" className="text-xs font-medium">Contraseña</Label>
         <Input
           id="password"
           type="password"
@@ -113,11 +107,11 @@ export function LoginForm() {
           {...register('password')}
         />
         {errors.password ? (
-          <p className="text-sm text-destructive">{errors.password.message}</p>
+          <p className="text-xs text-destructive">{errors.password.message}</p>
         ) : null}
       </div>
 
-      <Button type="submit" className="w-full" disabled={mutation.isPending} aria-label="Ingresar">
+      <Button type="submit" className="w-full mt-6" disabled={mutation.isPending} aria-label="Ingresar">
         {mutation.isPending ? 'Ingresando…' : 'Ingresar'}
       </Button>
     </form>
