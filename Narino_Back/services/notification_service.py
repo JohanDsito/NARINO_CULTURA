@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 import requests
 from django.conf import settings
+from django.core.mail import send_mail
 
 from apps.notifications.models import NotificationLog
 
@@ -21,7 +22,39 @@ class NotificationService:
 
         status_code = None
         ok = False
-        if webhook_url:
+
+        if notification_type == "EMAIL_VERIFICATION":
+            # Enviar email directamente
+            email = payload.get("email")
+            token = payload.get("token")
+            if email and token:
+                subject = "Verifica tu cuenta en Nariño Cultura"
+                message = f"""
+                ¡Hola!
+
+                Gracias por registrarte en Nariño Cultura. Para verificar tu cuenta, haz clic en el siguiente enlace:
+
+                http://tu-dominio.com/verify-email?token={token}
+
+                Si no solicitaste esta verificación, ignora este mensaje.
+
+                Saludos,
+                El equipo de Nariño Cultura
+                """
+                try:
+                    send_mail(
+                        subject,
+                        message,
+                        settings.DEFAULT_FROM_EMAIL,
+                        [email],
+                        fail_silently=False,
+                    )
+                    ok = True
+                    status_code = 200
+                except Exception as e:
+                    print(f"Error enviando email: {e}")
+                    ok = False
+        elif webhook_url:
             try:
                 response = requests.post(
                     webhook_url,

@@ -149,6 +149,9 @@ CHANNEL_LAYERS = {
 N8N_WEBHOOK_URL = config("N8N_WEBHOOK_URL", default="")
 AI_SERVICE_URL = config("AI_SERVICE_URL", default="")
 
+# Configuración de email
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="noreply@narinocultura.com")
+
 WOMPI_BASE_URL = config("WOMPI_BASE_URL", default="https://sandbox.wompi.co/v1")
 WOMPI_PUBLIC_KEY = config("WOMPI_PUBLIC_KEY", default="")
 WOMPI_PRIVATE_KEY = config("WOMPI_PRIVATE_KEY", default="")
