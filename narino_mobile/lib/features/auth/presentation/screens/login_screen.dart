@@ -315,18 +315,12 @@ class _FormCard extends StatelessWidget {
             const SizedBox(height: 8),
             Align(
               alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: isLoading ? null : () {},
-                style: TextButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  foregroundColor: AppColors.oroDark,
-                ),
+              child: GestureDetector(
+                onTap:
+                    isLoading ? null : () => context.push('/forgot-password'),
                 child: Text(
                   '¿Olvidaste tu contraseña?',
-                  style: AppTypography.caption(color: AppColors.oroDark)
-                      .copyWith(fontSize: 12, fontWeight: FontWeight.w500),
+                  style: AppTypography.caption(color: AppColors.tierraProfunda),
                 ),
               ),
             ),

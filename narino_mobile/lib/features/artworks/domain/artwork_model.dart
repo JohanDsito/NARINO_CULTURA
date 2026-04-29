@@ -79,6 +79,8 @@ class ArtworkModel {
         esFavorito: esFavorito ?? this.esFavorito,
         creadoEn: creadoEn,
       );
+
+  bool get isDisponible => estado == 'disponible';
 }
 
 const kCategoriasNarino = [

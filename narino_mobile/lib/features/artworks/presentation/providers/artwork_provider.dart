@@ -145,10 +145,9 @@ class ArtworkNotifier extends StateNotifier<ArtworkState> {
   Future<bool> deleteArtwork(int artworkId) async {
     try {
       await _repo.delete(artworkId);
-      final filtered = state.artworks.where((a) => a.id != artworkId).toList();
       state = state.copyWith(
-        artworks: filtered,
-        totalResultados: (state.totalResultados - 1).clamp(0, 1 << 30),
+        artworks: state.artworks.where((a) => a.id != artworkId).toList(),
+        totalResultados: state.totalResultados - 1,
       );
       return true;
     } catch (e) {
@@ -157,22 +156,27 @@ class ArtworkNotifier extends StateNotifier<ArtworkState> {
     }
   }
 
-  Future<ArtworkModel?> publishArtwork(FormData formData) async {
+  Future<ArtworkModel?> publish(FormData formData) async {
     try {
-      final created = await _repo.publish(formData);
-      await loadCatalog();
-      return created;
+      final artwork = await _repo.publish(formData);
+      state = state.copyWith(
+        artworks: [artwork, ...state.artworks],
+        totalResultados: state.totalResultados + 1,
+      );
+      return artwork;
     } catch (e) {
       state = state.copyWith(errorMessage: e.toString());
       return null;
     }
   }
 
-  Future<ArtworkModel?> updateArtwork(int id, FormData formData) async {
+  Future<ArtworkModel?> update(int id, FormData formData) async {
     try {
-      final updatedModel = await _repo.update(id, formData);
-      await loadCatalog();
-      return updatedModel;
+      final updated = await _repo.update(id, formData);
+      final updatedList =
+          state.artworks.map((a) => a.id == id ? updated : a).toList();
+      state = state.copyWith(artworks: updatedList);
+      return updated;
     } catch (e) {
       state = state.copyWith(errorMessage: e.toString());
       return null;

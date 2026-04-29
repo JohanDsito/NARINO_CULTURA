@@ -5,6 +5,15 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../ai/data/ai_service.dart';
+import '../../../artworks/domain/artwork_model.dart';
+import '../../../../shared/widgets/artwork_card.dart';
+import '../../../notifications/presentation/providers/notifications_provider.dart';
+
+final _aiArtworkRecoProvider =
+    FutureProvider.autoDispose<List<ArtworkModel>>((ref) async {
+  return AiService().getArtworkRecommendations();
+});
 
 const _mockArtworks = [
   {'title': 'Cóndor Andino', 'artist': 'María Torres', 'price': '\$320.000'},
@@ -41,7 +50,7 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: AppColors.bgLight,
-      appBar: _buildAppBar(context),
+      appBar: _buildAppBar(context, ref),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -53,6 +62,7 @@ class HomeScreen extends ConsumerWidget {
               subtitle: 'Descubre el arte de Nariño',
             ),
             _buildArtworkCards(),
+            _buildForYouSection(ref),
             _buildSectionHeader(
               title: 'Próximos eventos',
               subtitle: 'Agenda cultural del departamento',
@@ -62,10 +72,18 @@ class HomeScreen extends ConsumerWidget {
           ],
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: AppColors.tierraProfunda,
+        onPressed: () => context.push('/chatbot'),
+        child: const Icon(Icons.chat_bubble_outline, color: Colors.white),
+      ),
     );
   }
 
-  AppBar _buildAppBar(BuildContext context) {
+  AppBar _buildAppBar(BuildContext context, WidgetRef ref) {
+    final unreadAsync = ref.watch(unreadNotificationsCountProvider);
+    final unread = unreadAsync.valueOrNull ?? 0;
+
     return AppBar(
       backgroundColor: AppColors.obsidiana,
       elevation: 0,
@@ -96,12 +114,37 @@ class HomeScreen extends ConsumerWidget {
         ],
       ),
       actions: [
-        IconButton(
-          icon: const Icon(
-            Icons.notifications_outlined,
-            color: AppColors.oroClaro,
-          ),
-          onPressed: () {},
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            IconButton(
+              icon: const Icon(
+                Icons.notifications_outlined,
+                color: AppColors.oroClaro,
+              ),
+              onPressed: () => context.push('/notifications'),
+            ),
+            if (unread > 0)
+              Positioned(
+                top: 6,
+                right: 6,
+                child: Container(
+                  width: 16,
+                  height: 16,
+                  decoration: const BoxDecoration(
+                    color: AppColors.error,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      unread > 99 ? '99+' : '$unread',
+                      style: AppTypography.caption(color: Colors.white)
+                          .copyWith(fontSize: 9),
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
         IconButton(
           icon: const Icon(Icons.person_outline, color: AppColors.oroClaro),
@@ -260,7 +303,7 @@ class HomeScreen extends ConsumerWidget {
             width: 220,
             decoration: BoxDecoration(
               color: AppColors.bgCardLight,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(color: AppColors.borderLight),
             ),
             padding: const EdgeInsets.all(14),
@@ -373,7 +416,7 @@ class _EventCard extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: AppColors.bgCardLight,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.borderLight),
       ),
       padding: const EdgeInsets.all(14),
@@ -465,6 +508,95 @@ class _EventCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+extension on HomeScreen {
+  Widget _buildForYouSection(WidgetRef ref) {
+    final asyncReco = ref.watch(_aiArtworkRecoProvider);
+    return asyncReco.when(
+      loading: () => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 18, 20, 10),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Para ti',
+                    style: AppTypography.displaySemiBold(
+                      color: AppColors.textPrimaryLight,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Recomendaciones basadas en tu actividad',
+                    style: AppTypography.quoteItalic(
+                      color: AppColors.textSecondaryLight,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.tierraProfunda,
+              ),
+            ),
+          ],
+        ),
+      ),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (list) {
+        final items = list.take(6).toList();
+        if (items.isEmpty) return const SizedBox.shrink();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Para ti',
+                    style: AppTypography.displaySemiBold(
+                      color: AppColors.textPrimaryLight,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Recomendaciones basadas en tu actividad',
+                    style: AppTypography.quoteItalic(
+                      color: AppColors.textSecondaryLight,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(
+              height: 170,
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                scrollDirection: Axis.horizontal,
+                itemCount: items.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                itemBuilder: (_, i) => SizedBox(
+                  width: 160,
+                  child: ArtworkCard(artwork: items[i], compact: true),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
