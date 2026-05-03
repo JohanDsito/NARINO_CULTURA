@@ -147,6 +147,8 @@ CHANNEL_LAYERS = {
 }
 
 N8N_WEBHOOK_URL = config("N8N_WEBHOOK_URL", default="")
+FRONTEND_BASE_URL = config("FRONTEND_BASE_URL", default="http://localhost:5173").rstrip("/")
+API_BASE_URL = config("API_BASE_URL", default="http://localhost:8000").rstrip("/")
 AI_SERVICE_URL = config("AI_SERVICE_URL", default="")
 
 WOMPI_BASE_URL = config("WOMPI_BASE_URL", default="https://sandbox.wompi.co/v1")

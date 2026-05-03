@@ -1,0 +1,75 @@
+{
+  "name": "Nariño Cultura - Auth Emails",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "narinocultura",
+        "responseMode": "responseNode",
+        "httpMethod": "POST",
+        "options": {}
+      },
+      "id": "1",
+      "name": "Auth Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "narinocultura-auth"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json;\\nconst type = body.type;\\nconst payload = body.payload ?? {};\\nconst user = body.user ?? {};\\nconst fullName = [user.first_name, user.last_name].filter(Boolean).join(' ').trim() || 'usuario';\\n\\nif (type === 'EMAIL_VERIFICATION') {\\n  return [{\\n    json: {\\n      to: payload.email,\\n      subject: 'Confirma tu cuenta en Nariño Cultura',\\n      html: `\\n        <div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #1f2937;\">\\n          <h2 style=\"color: #7c2d12;\">Bienvenido a Nariño Cultura</h2>\\n          <p>Hola ${fullName}, gracias por registrarte.</p>\\n          <p>Para activar tu cuenta, haz clic en el siguiente boton:</p>\\n          <p>\\n            <a href=\"${payload.verification_url ?? ''}\" style=\"display:inline-block;padding:12px 20px;background:#7c2d12;color:#ffffff;text-decoration:none;border-radius:8px;\">Verificar correo</a>\\n          </p>\\n          <p>Si el boton no funciona, copia este enlace en tu navegador:</p>\\n          <p>${payload.verification_url ?? ''}</p>\\n          <p>Token de respaldo: <strong>${payload.token ?? ''}</strong></p>\\n        </div>\\n      `\\n    }\\n  }];\\n}\\n\\nif (type === 'PASSWORD_RESET') {\\n  return [{\\n    json: {\\n      to: payload.email,\\n      subject: 'Restablece tu contraseña en Nariño Cultura',\\n      html: `\\n        <div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #1f2937;\">\\n          <h2 style=\"color: #7c2d12;\">Recuperacion de contraseña</h2>\\n          <p>Hola ${fullName}, recibimos una solicitud para cambiar tu contraseña.</p>\\n          <p>Puedes continuar desde este enlace:</p>\\n          <p>\\n            <a href=\"${payload.reset_url ?? ''}\" style=\"display:inline-block;padding:12px 20px;background:#7c2d12;color:#ffffff;text-decoration:none;border-radius:8px;\">Restablecer contraseña</a>\\n          </p>\\n          <p>Si el boton no funciona, copia este enlace en tu navegador:</p>\\n          <p>${payload.reset_url ?? ''}</p>\\n          <p>Token de respaldo: <strong>${payload.token ?? ''}</strong></p>\\n        </div>\\n      `\\n    }\\n  }];\\n}\\n\\nreturn [{\\n  json: {\\n    to: payload.email ?? 'admin@narinocultura.local',\\n    subject: `Evento no manejado: ${type ?? 'SIN_TIPO'}`,\\n    html: `<pre>${JSON.stringify(body, null, 2)}</pre>`\\n  }\\n}];"
+      },
+      "id": "2",
+      "name": "Build Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [520, 300]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": {}
+      },
+      "id": "3",
+      "name": "Send Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [800, 300],
+      "credentials": {
+        "smtp": {
+          "id": "",
+          "name": ""
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"ok\": true, \"message\": \"Workflow procesado\"}",
+        "options": {}
+      },
+      "id": "4",
+      "name": "Respond OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1060, 300]
+    }
+  ],
+  "connections": {
+    "Auth Webhook": {
+      "main": [[{ "node": "Build Email", "type": "main", "index": 0 }]]
+    },
+    "Build Email": {
+      "main": [[{ "node": "Send Email", "type": "main", "index": 0 }]]
+    },
+    "Send Email": {
+      "main": [[{ "node": "Respond OK", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "1"
+}

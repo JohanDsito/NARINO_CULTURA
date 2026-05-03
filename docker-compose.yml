@@ -24,6 +24,8 @@ services:
       N8N_PORT: 5678
       N8N_PROTOCOL: http
       WEBHOOK_URL: http://localhost:5678/
+      N8N_EDITOR_BASE_URL: http://localhost:5678/
+      N8N_SECURE_COOKIE: false
     volumes:
       - n8n_data:/home/node/.n8n
 
@@ -38,9 +40,21 @@ services:
       - redis
     ports:
       - "8000:8000"
-    command: >
-      sh -c "python manage.py migrate &&
-              python -m daphne -b 0.0.0.0 -p 8000 config.asgi:application"
+    command: |
+      sh -c "python - <<'PY'
+      import socket, time
+      host='postgres'
+      port=5432
+      while True:
+          try:
+              with socket.create_connection((host, port), timeout=2):
+                  break
+          except OSError:
+              print('Waiting for postgres...')
+              time.sleep(1)
+      PY
+      python manage.py migrate &&
+      python -m daphne -b 0.0.0.0 -p 8000 config.asgi:application"
 
 volumes:
   postgres_data:

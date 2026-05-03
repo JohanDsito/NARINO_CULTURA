@@ -1,8 +1,8 @@
 import { Suspense, lazy, type ComponentType } from 'react'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 
-import { AppLayout } from '@/components/layout/app-layout'
 import { ProtectedRoute } from '@/components/auth/protected-route'
+import { AppLayout } from '@/components/layout/app-layout'
 import { PageLoader } from '@/components/layout/page-loader'
 import { ANY_AUTH, ROLE } from '@/constants/roles'
 import UnderConstructionPage from '@/pages/Shared/UnderConstructionPage'
@@ -13,7 +13,7 @@ function lazyPage<T extends { default: ComponentType }>(
 ) {
   const Component = lazy(importer)
   return (
-    <Suspense fallback={<PageLoader label={label ?? 'Cargando…'} />}>
+    <Suspense fallback={<PageLoader label={label ?? 'Cargando...'} />}>
       <Component />
     </Suspense>
   )
@@ -24,30 +24,35 @@ export const router = createBrowserRouter([
     path: '/',
     element: <AppLayout />,
     children: [
-      { index: true, element: lazyPage(() => import('@/pages/Home/HomePage'), 'Cargando inicio…') },
+      { index: true, element: lazyPage(() => import('@/pages/Home/HomePage'), 'Cargando inicio...') },
 
       {
         path: 'login',
-        element: lazyPage(() => import('@/pages/Auth/LoginPage'), 'Cargando login…'),
+        element: lazyPage(() => import('@/pages/Auth/LoginPage'), 'Cargando login...'),
       },
       {
         path: 'register',
-        element: lazyPage(() => import('@/pages/Auth/RegisterPage'), 'Cargando registro…'),
+        element: lazyPage(() => import('@/pages/Auth/RegisterPage'), 'Cargando registro...'),
       },
       {
         path: 'forgot-password',
         element: lazyPage(
           () => import('@/pages/Auth/ForgotPasswordPage'),
-          'Cargando recuperación…',
+          'Cargando recuperacion...',
         ),
       },
       {
         path: 'reset-password',
-        element: (
-          <UnderConstructionPage
-            title="Restablecer contraseña"
-            description="Formulario para crear una nueva contraseña."
-          />
+        element: lazyPage(
+          () => import('@/pages/Auth/ResetPasswordPage'),
+          'Cargando restablecimiento...',
+        ),
+      },
+      {
+        path: 'verify-email',
+        element: lazyPage(
+          () => import('@/pages/Auth/VerifyEmailPage'),
+          'Cargando verificacion...',
         ),
       },
 
@@ -56,7 +61,7 @@ export const router = createBrowserRouter([
         element: (
           <UnderConstructionPage
             title="Artistas"
-            description="Directorio de artistas con filtros, búsqueda y paginación infinita."
+            description="Directorio de artistas con filtros, busqueda y paginacion infinita."
           />
         ),
       },
@@ -75,7 +80,7 @@ export const router = createBrowserRouter([
         element: (
           <UnderConstructionPage
             title="Obras"
-            description="Catálogo con filtros, ordenamiento y vista grid/lista."
+            description="Catalogo con filtros, ordenamiento y vista grid/lista."
           />
         ),
       },
@@ -84,7 +89,7 @@ export const router = createBrowserRouter([
         element: (
           <UnderConstructionPage
             title="Detalle de obra"
-            description="Galería, información y acciones: carrito o subasta."
+            description="Galeria, informacion y acciones: carrito o subasta."
           />
         ),
       },
@@ -94,7 +99,7 @@ export const router = createBrowserRouter([
         element: (
           <UnderConstructionPage
             title="Marketplace"
-            description="Explora novedades, más vendidos y artistas destacados."
+            description="Explora novedades, mas vendidos y artistas destacados."
           />
         ),
       },
@@ -103,7 +108,7 @@ export const router = createBrowserRouter([
         element: (
           <UnderConstructionPage
             title="Subastas"
-            description="Subastas activas, próximas y finalizadas con countdown."
+            description="Subastas activas, proximas y finalizadas con countdown."
           />
         ),
       },
@@ -130,7 +135,7 @@ export const router = createBrowserRouter([
         element: (
           <UnderConstructionPage
             title="Detalle de evento"
-            description="Información completa, mapa y registro de interés."
+            description="Informacion completa, mapa y registro de interes."
           />
         ),
       },
@@ -141,7 +146,7 @@ export const router = createBrowserRouter([
           <ProtectedRoute allowedRoles={ANY_AUTH}>
             <UnderConstructionPage
               title="Checkout"
-              description="Resumen de orden, datos de envío e integración Wompi."
+              description="Resumen de orden, datos de envio e integracion Wompi."
             />
           </ProtectedRoute>
         ),
@@ -150,7 +155,7 @@ export const router = createBrowserRouter([
         path: 'orders',
         element: (
           <ProtectedRoute allowedRoles={ANY_AUTH}>
-            <UnderConstructionPage title="Mis pedidos" description="Historial de órdenes y estados." />
+            <UnderConstructionPage title="Mis pedidos" description="Historial de ordenes y estados." />
           </ProtectedRoute>
         ),
       },
@@ -178,7 +183,7 @@ export const router = createBrowserRouter([
         path: 'payment/success',
         element: (
           <ProtectedRoute allowedRoles={ANY_AUTH}>
-            <UnderConstructionPage title="Pago exitoso" description="Resultado final de la transacción." />
+            <UnderConstructionPage title="Pago exitoso" description="Resultado final de la transaccion." />
           </ProtectedRoute>
         ),
       },
@@ -186,7 +191,7 @@ export const router = createBrowserRouter([
         path: 'payment/pending',
         element: (
           <ProtectedRoute allowedRoles={ANY_AUTH}>
-            <UnderConstructionPage title="Pago pendiente" description="La transacción está en proceso." />
+            <UnderConstructionPage title="Pago pendiente" description="La transaccion esta en proceso." />
           </ProtectedRoute>
         ),
       },
@@ -194,7 +199,7 @@ export const router = createBrowserRouter([
         path: 'payment/declined',
         element: (
           <ProtectedRoute allowedRoles={ANY_AUTH}>
-            <UnderConstructionPage title="Pago rechazado" description="La transacción no fue aprobada." />
+            <UnderConstructionPage title="Pago rechazado" description="La transaccion no fue aprobada." />
           </ProtectedRoute>
         ),
       },
@@ -205,7 +210,7 @@ export const router = createBrowserRouter([
           <ProtectedRoute allowedRoles={[ROLE.artist]}>
             <UnderConstructionPage
               title="Perfil de artista"
-              description="Edición de perfil, foto/banner y portafolio."
+              description="Edicion de perfil, foto/banner y portafolio."
             />
           </ProtectedRoute>
         ),
@@ -214,7 +219,7 @@ export const router = createBrowserRouter([
         path: 'dashboard/artworks',
         element: (
           <ProtectedRoute allowedRoles={[ROLE.artist]}>
-            <UnderConstructionPage title="Mis obras" description="Gestión de obras publicadas." />
+            <UnderConstructionPage title="Mis obras" description="Gestion de obras publicadas." />
           </ProtectedRoute>
         ),
       },
@@ -222,7 +227,7 @@ export const router = createBrowserRouter([
         path: 'dashboard/artworks/new',
         element: (
           <ProtectedRoute allowedRoles={[ROLE.artist]}>
-            <UnderConstructionPage title="Nueva obra" description="Formulario de publicación de obra." />
+            <UnderConstructionPage title="Nueva obra" description="Formulario de publicacion de obra." />
           </ProtectedRoute>
         ),
       },
@@ -230,7 +235,7 @@ export const router = createBrowserRouter([
         path: 'dashboard/artworks/:id/edit',
         element: (
           <ProtectedRoute allowedRoles={[ROLE.artist]}>
-            <UnderConstructionPage title="Editar obra" description="Formulario de edición de obra." />
+            <UnderConstructionPage title="Editar obra" description="Formulario de edicion de obra." />
           </ProtectedRoute>
         ),
       },
@@ -238,7 +243,7 @@ export const router = createBrowserRouter([
         path: 'dashboard/sales',
         element: (
           <ProtectedRoute allowedRoles={[ROLE.artist]}>
-            <UnderConstructionPage title="Ventas" description="Métricas y órdenes recibidas." />
+            <UnderConstructionPage title="Ventas" description="Metricas y ordenes recibidas." />
           </ProtectedRoute>
         ),
       },
@@ -246,7 +251,7 @@ export const router = createBrowserRouter([
         path: 'dashboard/analytics',
         element: (
           <ProtectedRoute allowedRoles={[ROLE.artist]}>
-            <UnderConstructionPage title="Analítica" description="Panel analítico del artista." />
+            <UnderConstructionPage title="Analitica" description="Panel analitico del artista." />
           </ProtectedRoute>
         ),
       },
@@ -260,8 +265,8 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={[ROLE.admin]}>
             <UnderConstructionPage
-              title="Admin — Dashboard"
-              description="Métricas, gráficos y actividad reciente."
+              title="Admin - Dashboard"
+              description="Metricas, graficos y actividad reciente."
             />
           </ProtectedRoute>
         ),
@@ -270,7 +275,7 @@ export const router = createBrowserRouter([
         path: 'admin/users',
         element: (
           <ProtectedRoute allowedRoles={[ROLE.admin]}>
-            <UnderConstructionPage title="Admin — Usuarios" description="Gestión de roles y estado." />
+            <UnderConstructionPage title="Admin - Usuarios" description="Gestion de roles y estado." />
           </ProtectedRoute>
         ),
       },
@@ -279,7 +284,7 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={[ROLE.admin]}>
             <UnderConstructionPage
-              title="Admin — Moderación"
+              title="Admin - Moderacion"
               description="Aprobar o rechazar obras pendientes."
             />
           </ProtectedRoute>
@@ -289,7 +294,7 @@ export const router = createBrowserRouter([
         path: 'admin/events',
         element: (
           <ProtectedRoute allowedRoles={[ROLE.admin]}>
-            <UnderConstructionPage title="Admin — Eventos" description="CRUD completo de eventos." />
+            <UnderConstructionPage title="Admin - Eventos" description="CRUD completo de eventos." />
           </ProtectedRoute>
         ),
       },
@@ -298,8 +303,8 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={[ROLE.admin]}>
             <UnderConstructionPage
-              title="Admin — Transacciones"
-              description="Auditoría financiera y exportación CSV."
+              title="Admin - Transacciones"
+              description="Auditoria financiera y exportacion CSV."
             />
           </ProtectedRoute>
         ),

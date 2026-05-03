@@ -1,7 +1,7 @@
 import { type ClassValue, clsx } from 'clsx'
-import { twMerge } from 'tailwind-merge'
 import { format, formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { twMerge } from 'tailwind-merge'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -57,7 +57,8 @@ export function truncateText(text: string, maxLength: number): string {
 export function getImageUrl(path?: string): string {
   if (!path) return '/placeholder.webp'
   if (path.startsWith('http')) return path
-  return `${import.meta.env.VITE_API_BASE_URL}${path}`
+  const baseURL = (import.meta.env.VITE_API_BASE_URL ?? import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '')
+  return `${baseURL}${path}`
 }
 
 export function slugify(text: string): string {
