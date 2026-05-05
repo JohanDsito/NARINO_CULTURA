@@ -17,9 +17,9 @@ export function useLogin() {
 
       const roleRoutes: Record<string, string> = {
         admin: '/admin/dashboard',
-        artist: '/dashboard/artworks',
-        cultural_manager: '/dashboard/profile',
-        buyer: '/',
+        artist: '/dashboard/profile',
+        cultural_manager: '/events',
+        buyer: '/marketplace',
       }
       navigate(roleRoutes[user.role] ?? '/')
     },

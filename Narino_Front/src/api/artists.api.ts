@@ -4,6 +4,7 @@ export interface CreateArtistProfilePayload {
   artistic_name: string
   discipline?: string
   city?: string
+  bio?: string
 }
 
 export interface ArtistProfile {
@@ -30,3 +31,12 @@ export async function createArtistProfile(payload: CreateArtistProfilePayload) {
   return data
 }
 
+export async function listArtistProfiles() {
+  const { data } = await axiosInstance.get<ArtistProfile[] | { results: ArtistProfile[] }>('/api/v1/artists/')
+  return Array.isArray(data) ? data : data.results
+}
+
+export async function updateArtistProfile(slug: string, payload: Partial<CreateArtistProfilePayload>) {
+  const { data } = await axiosInstance.patch<ArtistProfile>(`/api/v1/artists/${slug}/`, payload)
+  return data
+}

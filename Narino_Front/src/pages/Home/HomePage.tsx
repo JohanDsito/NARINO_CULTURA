@@ -7,8 +7,16 @@ import { EventCalendar } from '@/components/events/event-calendar'
 import { useAuthStore } from '@/store/authStore'
 
 export default function HomePage() {
-  const { user } = useAuthStore()
+  const { user, isAuthenticated } = useAuthStore()
   const isAdmin = user?.role === 'admin' || user?.role === 'cultural_manager'
+  const accountPath =
+    user?.role === 'admin'
+      ? '/admin/dashboard'
+      : user?.role === 'artist'
+        ? '/dashboard/profile'
+        : user?.role === 'cultural_manager'
+          ? '/events'
+          : '/marketplace'
 
   return (
     <div className="min-h-screen bg-background">
@@ -25,12 +33,20 @@ export default function HomePage() {
               Descubre artistas locales, explora obras originales, participa en subastas y sumérgete en la oferta cultural del departamento.
             </p>
             <div className="flex flex-wrap items-center gap-3">
-              <Button asChild aria-label="Ir a login">
-                <Link to="/login">Iniciar sesión</Link>
-              </Button>
-              <Button variant="outline" asChild aria-label="Ir a registro">
-                <Link to="/register">Crear cuenta</Link>
-              </Button>
+              {isAuthenticated ? (
+                <Button asChild aria-label="Ir a mi panel">
+                  <Link to={accountPath}>Ir a mi panel</Link>
+                </Button>
+              ) : (
+                <>
+                  <Button asChild aria-label="Ir a login">
+                    <Link to="/login">Iniciar sesión</Link>
+                  </Button>
+                  <Button variant="outline" asChild aria-label="Ir a registro">
+                    <Link to="/register">Crear cuenta</Link>
+                  </Button>
+                </>
+              )}
             </div>
             <Button variant="secondary" asChild aria-label="Explorar obras">
               <Link to="/artworks">Explorar obras</Link>

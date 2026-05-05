@@ -1,7 +1,9 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Sun, Moon, ShoppingCart, Bell, Mountain } from 'lucide-react'
+import { LayoutDashboard, LogOut, Sun, Moon, ShoppingCart, Bell, Mountain } from 'lucide-react'
 import { useTheme } from '../../hooks/useTheme'
 import { useCartStore } from '../../store/cartStore'
+import { useAuthStore } from '@/store/authStore'
+import { useLogout } from '@/hooks/useAuth'
 
 const links = [
   { to: '/artists',     label: 'Artistas' },
@@ -15,6 +17,18 @@ export function Navbar() {
   const { theme, toggle } = useTheme()
   const { pathname } = useLocation()
   const cartCount = useCartStore(s => s.items.length)
+  const user = useAuthStore(s => s.user)
+  const isAuthenticated = useAuthStore(s => s.isAuthenticated)
+  const logout = useLogout()
+
+  const accountPath =
+    user?.role === 'admin'
+      ? '/admin/dashboard'
+      : user?.role === 'artist'
+        ? '/dashboard/profile'
+        : user?.role === 'cultural_manager'
+          ? '/events'
+          : '/marketplace'
 
   return (
     <nav
@@ -86,15 +100,36 @@ export function Navbar() {
           }
         </button>
 
-        {/* Login */}
-        <Link
-          to="/login"
-          className="hidden md:inline-flex font-body font-semibold text-[13px]
-                     bg-tierra text-white px-4 py-2 rounded-btn no-underline
-                     transition-all duration-300 hover:bg-tierra-light hover:-translate-y-px"
-        >
-          Ingresar
-        </Link>
+        {isAuthenticated ? (
+          <>
+            <Link
+              to={accountPath}
+              className="hidden md:inline-flex items-center gap-2 font-body font-semibold text-[13px]
+                         bg-tierra text-white px-4 py-2 rounded-btn no-underline
+                         transition-all duration-300 hover:bg-tierra-light hover:-translate-y-px"
+            >
+              <LayoutDashboard size={15} />
+              Mi panel
+            </Link>
+            <button
+              type="button"
+              onClick={() => void logout()}
+              aria-label="Cerrar sesión"
+              className="hidden md:inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors duration-300 hover:bg-white/10"
+            >
+              <LogOut size={18} color="rgba(245,239,229,0.75)" />
+            </button>
+          </>
+        ) : (
+          <Link
+            to="/login"
+            className="hidden md:inline-flex font-body font-semibold text-[13px]
+                       bg-tierra text-white px-4 py-2 rounded-btn no-underline
+                       transition-all duration-300 hover:bg-tierra-light hover:-translate-y-px"
+          >
+            Ingresar
+          </Link>
+        )}
       </div>
     </nav>
   )

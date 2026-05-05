@@ -33,6 +33,7 @@ function getRedirectPathByRole(role: string) {
     case 'cultural_manager':
       return '/events'
     case 'buyer':
+      return '/marketplace'
     default:
       return '/'
   }

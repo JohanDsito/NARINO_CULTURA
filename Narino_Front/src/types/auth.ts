@@ -1,15 +1,38 @@
 // ─── Auth ────────────────────────────────────────────
 export type UserRole = 'artist' | 'buyer' | 'cultural_manager' | 'admin'
 export type Role = UserRole
+export type BackendRole = 'ARTISTA' | 'COMPRADOR' | 'GESTOR_CULTURAL' | 'ADMINISTRADOR'
 
-export const mapRoleToBackendRole = (role: UserRole): string => {
-  const roleMap: Record<UserRole, string> = {
+const frontendToBackendRole: Record<UserRole, BackendRole> = {
     artist: 'ARTISTA',
     buyer: 'COMPRADOR',
     cultural_manager: 'GESTOR_CULTURAL',
     admin: 'ADMINISTRADOR',
   }
-  return roleMap[role]
+
+const backendToFrontendRole: Record<BackendRole, UserRole> = {
+  ARTISTA: 'artist',
+  COMPRADOR: 'buyer',
+  GESTOR_CULTURAL: 'cultural_manager',
+  ADMINISTRADOR: 'admin',
+}
+
+export const mapRoleToBackendRole = (role: UserRole): BackendRole => {
+  return frontendToBackendRole[role]
+}
+
+export const normalizeUserRole = (role: string): UserRole => {
+  if (role in backendToFrontendRole) {
+    return backendToFrontendRole[role as BackendRole]
+  }
+  if (role in frontendToBackendRole) {
+    return role as UserRole
+  }
+  return 'buyer'
+}
+
+export const normalizeUser = <T extends { role: string }>(user: T): Omit<T, 'role'> & { role: UserRole } => {
+  return { ...user, role: normalizeUserRole(user.role) }
 }
 
 export interface User {

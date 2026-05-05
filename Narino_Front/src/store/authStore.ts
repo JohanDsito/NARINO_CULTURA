@@ -1,21 +1,9 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { normalizeUser, normalizeUserRole, type User as AuthUser, type UserRole } from '@/types/auth'
 
-export type UserRole = 'artist' | 'buyer' | 'cultural_manager' | 'admin'
-
-export interface User {
-  id: number
-  email: string
-  first_name: string
-  last_name: string
-  role: UserRole
-  avatar?: string
-  artistic_name?: string
-  category?: string
-  city?: string
-  bio?: string
-  followers_count?: number
-}
+export type { UserRole }
+export type User = AuthUser
 
 interface AuthState {
   user: User | null
@@ -38,7 +26,7 @@ export const useAuthStore = create<AuthState>()(
       setAuth: (user, access, refresh) => {
         localStorage.setItem('access_token', access)
         localStorage.setItem('refresh_token', refresh)
-        set({ user, accessToken: access, refreshToken: refresh, isAuthenticated: true })
+        set({ user: normalizeUser(user), accessToken: access, refreshToken: refresh, isAuthenticated: true })
       },
 
       logout: () => {
@@ -49,17 +37,30 @@ export const useAuthStore = create<AuthState>()(
 
       updateUser: (data) =>
         set((state) => ({
-          user: state.user ? { ...state.user, ...data } : null,
+          user: state.user ? normalizeUser({ ...state.user, ...data }) : null,
         })),
     }),
     {
       name: 'auth-storage',
       partialize: (state) => ({
-        user: state.user,
+        user: state.user ? normalizeUser(state.user) : null,
         accessToken: state.accessToken,
         refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
       }),
+      merge: (persisted, current) => {
+        const state = persisted as Partial<AuthState>
+        const accessToken = state.accessToken ?? localStorage.getItem('access_token')
+        const refreshToken = state.refreshToken ?? localStorage.getItem('refresh_token')
+        return {
+          ...current,
+          ...state,
+          user: state.user ? { ...state.user, role: normalizeUserRole(state.user.role) } : null,
+          accessToken,
+          refreshToken,
+          isAuthenticated: Boolean(accessToken),
+        }
+      },
     }
   )
 )
