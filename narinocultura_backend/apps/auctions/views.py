@@ -22,6 +22,18 @@ class AuctionViewSet(viewsets.ModelViewSet):
             .prefetch_related("bids")
         )
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            self.perform_create(serializer)
+        except ValueError as e:
+            return Response({"detail": str(e)}, status=400)
+
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
     def perform_create(self, serializer):
         auction = AuctionService.create_auction(
             seller=self.request.user,
@@ -38,7 +50,11 @@ class AuctionViewSet(viewsets.ModelViewSet):
         serializer = BidCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:
-            bid = AuctionService.place_bid(auction=auction, bidder=request.user, amount=serializer.validated_data["amount"])
+            bid = AuctionService.place_bid(
+                auction=auction,
+                bidder=request.user,
+                amount=serializer.validated_data["amount"],
+            )
         except ValueError as e:
             return Response({"detail": str(e)}, status=400)
         return Response({"detail": "Puja registrada.", "bid_id": str(bid.id)}, status=status.HTTP_201_CREATED)

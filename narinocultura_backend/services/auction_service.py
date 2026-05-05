@@ -54,7 +54,7 @@ class AuctionService:
             AuctionService._close_if_ended(auction_id=auction.id)
             raise ValueError("La subasta ya finalizó.")
 
-        locked = Auction.objects.select_for_update().select_related("highest_bidder").get(id=auction.id)
+        locked = Auction.objects.select_for_update().get(id=auction.id)
         if amount <= locked.current_price:
             raise ValueError("La puja debe ser mayor al precio actual.")
 
