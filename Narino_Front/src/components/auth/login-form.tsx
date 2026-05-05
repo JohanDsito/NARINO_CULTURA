@@ -1,11 +1,11 @@
 import { useLocation, useNavigate } from 'react-router-dom'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 
-import { login, me } from '@/api/auth.api'
+import { login } from '@/api/auth.api'
 import { createArtistProfile } from '@/api/artists.api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -39,7 +39,6 @@ function getRedirectPathByRole(role: string) {
 }
 
 export function LoginForm() {
-  const queryClient = useQueryClient()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -117,4 +116,3 @@ export function LoginForm() {
     </form>
   )
 }
-

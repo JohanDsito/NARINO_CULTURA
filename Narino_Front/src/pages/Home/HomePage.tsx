@@ -3,8 +3,13 @@ import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { PageShell } from '@/components/layout/page-shell'
+import { EventCalendar } from '@/components/events/event-calendar'
+import { useAuthStore } from '@/store/authStore'
 
 export default function HomePage() {
+  const { user } = useAuthStore()
+  const isAdmin = user?.role === 'admin' || user?.role === 'cultural_manager'
+
   return (
     <div className="min-h-screen bg-background">
       <PageShell
@@ -81,6 +86,11 @@ export default function HomePage() {
               </Button>
             </CardContent>
           </Card>
+        </section>
+
+        {/* Sección de calendario de eventos */}
+        <section className="mt-16 pb-8">
+          <EventCalendar showCreateButton={isAdmin} />
         </section>
       </PageShell>
     </div>

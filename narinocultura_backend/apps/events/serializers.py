@@ -3,14 +3,22 @@ from rest_framework import serializers
 from apps.events.models import Event, EventRegistration
 
 
+class UserBasicSerializer(serializers.Serializer):
+    """Serializer básico para usuario con información mínima"""
+    id = serializers.IntegerField()
+    email = serializers.EmailField()
+    first_name = serializers.CharField()
+    last_name = serializers.CharField()
+
+
 class EventSerializer(serializers.ModelSerializer):
-    organizer_id = serializers.UUIDField(source="organizer.id", read_only=True)
+    organizer = UserBasicSerializer(read_only=True)
 
     class Meta:
         model = Event
         fields = (
             "id",
-            "organizer_id",
+            "organizer",
             "title",
             "description",
             "event_type",
@@ -24,7 +32,7 @@ class EventSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         )
-        read_only_fields = ("id", "organizer_id", "created_at", "updated_at")
+        read_only_fields = ("id", "organizer", "created_at", "updated_at")
 
     def validate(self, attrs):
         start = attrs.get("start_date") or getattr(self.instance, "start_date", None)

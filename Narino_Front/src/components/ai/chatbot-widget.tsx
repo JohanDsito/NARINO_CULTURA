@@ -45,7 +45,7 @@ export function ChatbotWidget() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50">
+    <div className="fixed bottom-16 right-5 z-50 md:bottom-20 md:right-8">
       {open ? (
         <div
           className="w-[92vw] max-w-sm overflow-hidden rounded-xl border border-border bg-slate-950 text-white shadow-lg"
@@ -118,14 +118,13 @@ export function ChatbotWidget() {
       ) : (
         <Button
           onClick={() => setOpen(true)}
-          className="h-12 w-12 rounded-full"
+          className="h-14 w-14 rounded-full shadow-lg"
           size="icon"
           aria-label="Abrir chat"
         >
-          <MessageCircle className="h-5 w-5" />
+          <MessageCircle className="h-6 w-6" />
         </Button>
       )}
     </div>
   )
 }
-
