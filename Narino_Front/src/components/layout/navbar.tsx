@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
 import { LayoutDashboard, LogOut, Sun, Moon, ShoppingCart, Bell, Mountain } from 'lucide-react'
-import { useTheme } from '../../hooks/useTheme'
-import { useCartStore } from '../../store/cartStore'
+import { useTheme } from '@/hooks/useTheme'
+import { useCartStore } from '@/store/cartStore'
 import { useAuthStore } from '@/store/authStore'
 import { useLogout } from '@/hooks/useAuth'
 

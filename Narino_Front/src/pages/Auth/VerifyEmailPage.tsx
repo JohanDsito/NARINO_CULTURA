@@ -11,16 +11,17 @@ type VerificationStatus = 'loading' | 'success' | 'error'
 
 export default function VerifyEmailPage() {
   const [params] = useSearchParams()
-  const [status, setStatus] = useState<VerificationStatus>('loading')
-  const [message, setMessage] = useState('Validando tu token de verificación...')
   const token = params.get('token')
 
+  const [status, setStatus] = useState<VerificationStatus>(() => {
+    return token ? 'loading' : 'error'
+  })
+  const [message, setMessage] = useState(() => {
+    return token ? 'Validando tu token de verificación...' : 'No se encontró el token de verificación en el enlace.'
+  })
+
   useEffect(() => {
-    if (!token) {
-      setStatus('error')
-      setMessage('No se encontró el token de verificación en el enlace.')
-      return
-    }
+    if (!token) return
 
     let mounted = true
 

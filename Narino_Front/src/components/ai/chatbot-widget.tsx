@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { MessageCircle, X, Send } from 'lucide-react'
 
-import { cn } from '@/lib/utils'
+import { cn } from '@/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 

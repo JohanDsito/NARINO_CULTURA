@@ -33,15 +33,17 @@ export default function ArtistDashboardPage() {
     [profileQuery.data, user?.id],
   )
 
-  useEffect(() => {
+  const initialForm = useMemo(() => {
     const defaultName = `${user?.first_name ?? ''} ${user?.last_name ?? ''}`.trim()
-    setForm({
+    return {
       artistic_name: profile?.artistic_name ?? user?.artistic_name ?? defaultName,
       city: profile?.city ?? user?.city ?? '',
       discipline: profile?.discipline ?? user?.category ?? '',
       bio: profile?.bio ?? user?.bio ?? '',
-    })
+    }
   }, [profile, user])
+
+  const [form, setForm] = useState(initialForm)
 
   const saveMutation = useMutation({
     mutationFn: async () => {

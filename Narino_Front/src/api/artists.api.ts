@@ -33,7 +33,7 @@ export async function createArtistProfile(payload: CreateArtistProfilePayload) {
 
 export async function listArtistProfiles() {
   const { data } = await axiosInstance.get<ArtistProfile[] | { results: ArtistProfile[] }>('/api/v1/artists/')
-  return Array.isArray(data) ? data : data.results
+  return Array.isArray(data) ? data : data.results || []
 }
 
 export async function updateArtistProfile(slug: string, payload: Partial<CreateArtistProfilePayload>) {
