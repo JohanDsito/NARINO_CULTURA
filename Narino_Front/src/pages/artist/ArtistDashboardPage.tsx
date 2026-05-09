@@ -15,12 +15,6 @@ import { useAuthStore } from '@/store/authStore'
 export default function ArtistDashboardPage() {
   const user = useAuthStore((s) => s.user)
   const queryClient = useQueryClient()
-  const [form, setForm] = useState({
-    artistic_name: '',
-    city: '',
-    discipline: '',
-    bio: '',
-  })
 
   const profileQuery = useQuery({
     queryKey: ['artist-profile', 'me'],
@@ -44,6 +38,10 @@ export default function ArtistDashboardPage() {
   }, [profile, user])
 
   const [form, setForm] = useState(initialForm)
+
+  useEffect(() => {
+    setForm(initialForm)
+  }, [initialForm])
 
   const saveMutation = useMutation({
     mutationFn: async () => {

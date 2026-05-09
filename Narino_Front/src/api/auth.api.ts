@@ -1,5 +1,11 @@
 import axiosInstance from './axiosInstance'
-import { normalizeUser, type AuthTokens, type LoginCredentials, type RegisterData, type User } from '@/types/auth'
+import {
+  normalizeUser,
+  type AuthTokens,
+  type LoginCredentials,
+  type RegisterData,
+  type User,
+} from '@/types/auth'
 
 export async function login(
   credentials: LoginCredentials,
@@ -27,14 +33,17 @@ export async function register(userData: RegisterData): Promise<{ message: strin
   return { message: data.message ?? data.detail ?? 'Registro exitoso.' }
 }
 
+export async function verifyEmail(token: string): Promise<{ message: string }> {
+  const { data } = await axiosInstance.post('/api/v1/auth/verify-email/', { token })
+  return { message: data.message ?? data.detail ?? 'Email verificado correctamente.' }
+}
+
 export async function me(): Promise<User> {
   const { data } = await axiosInstance.get('/api/v1/auth/me/')
   return normalizeUser(data) as User
 }
 
-export async function requestPasswordReset(
-  email: string,
-): Promise<{ message: string }> {
+export async function requestPasswordReset(email: string): Promise<{ message: string }> {
   const { data } = await axiosInstance.post('/api/v1/auth/password/reset/', { email })
   return data
 }
@@ -60,6 +69,7 @@ export async function logout(): Promise<void> {
 export const authApi = {
   login,
   register,
+  verifyEmail,
   getMe: me,
   forgotPassword: requestPasswordReset,
   resetPassword: confirmPasswordReset,

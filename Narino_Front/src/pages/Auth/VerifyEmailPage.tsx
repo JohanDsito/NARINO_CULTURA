@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
 import { verifyEmail } from '@/api/auth.api'
+import { PageShell } from '@/components/layout/page-shell'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { PageShell } from '@/components/layout/page-shell'
 import { getApiErrorMessage } from '@/utils/apiError'
 
 type VerificationStatus = 'loading' | 'success' | 'error'
@@ -17,7 +17,9 @@ export default function VerifyEmailPage() {
     return token ? 'loading' : 'error'
   })
   const [message, setMessage] = useState(() => {
-    return token ? 'Validando tu token de verificación...' : 'No se encontró el token de verificación en el enlace.'
+    return token
+      ? 'Validando tu token de verificación...'
+      : 'No se encontró el token de verificación en el enlace.'
   })
 
   useEffect(() => {
@@ -31,7 +33,7 @@ export default function VerifyEmailPage() {
         setStatus('success')
         setMessage(data.message)
       })
-      .catch((error) => {
+      .catch((error: unknown) => {
         if (!mounted) return
         setStatus('error')
         setMessage(getApiErrorMessage(error))
