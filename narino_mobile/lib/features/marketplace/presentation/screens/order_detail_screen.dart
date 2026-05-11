@@ -298,8 +298,8 @@ class _ItemThumb extends StatelessWidget {
       width: 48,
       height: 48,
       fit: BoxFit.cover,
-      placeholder: (_, __) => _ThumbFallback(loading: true),
-      errorWidget: (_, __, ___) => _ThumbFallback(),
+      placeholder: (_, __) => const _ThumbFallback(loading: true),
+      errorWidget: (_, __, ___) => const _ThumbFallback(),
     );
   }
 }

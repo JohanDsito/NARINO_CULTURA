@@ -145,7 +145,7 @@ class _MarketplaceBanner extends StatelessWidget {
                 Text(
                   'Apoya directamente a los artistas',
                   style: AppTypography.quoteItalic(
-                    color: AppColors.oroClaro.withOpacity(0.70),
+                    color: AppColors.oroClaro.withAlpha(70),
                   ),
                 ),
               ],
@@ -238,7 +238,7 @@ class _LoadingBody extends StatelessWidget {
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       children: [
-        SizedBox(height: 140),
+        const SizedBox(height: 140),
         Center(
           child: CircularProgressIndicator(
             color: cs.primary,

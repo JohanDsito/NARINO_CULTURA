@@ -186,8 +186,7 @@ class _SummaryStat extends StatelessWidget {
       children: [
         Text(
           label,
-          style: AppTypography.caption(
-              color: AppColors.oroClaro.withOpacity(0.60)),
+          style: AppTypography.caption(color: AppColors.oroClaro.withAlpha(60)),
         ),
         const SizedBox(height: 4),
         Text(
@@ -211,10 +210,7 @@ class _SaleCard extends StatelessWidget {
   ({Color bg, Color fg}) get _estadoColors => switch (order.estado) {
         'completado' => (bg: AppColors.selvaPalida, fg: AppColors.selvaAndina),
         'pendiente' => (bg: AppColors.oroPalido, fg: AppColors.oroAndino),
-        'fallido' => (
-            bg: AppColors.error.withOpacity(0.10),
-            fg: AppColors.error
-          ),
+        'fallido' => (bg: AppColors.error.withAlpha(10), fg: AppColors.error),
         _ => (bg: AppColors.bgSubtleLight, fg: AppColors.textMutedLight),
       };
 

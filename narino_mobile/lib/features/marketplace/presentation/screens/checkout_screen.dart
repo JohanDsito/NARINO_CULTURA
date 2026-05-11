@@ -163,9 +163,9 @@ class _SecurityBanner extends StatelessWidget {
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.indigoNoche.withOpacity(0.06),
+        color: AppColors.indigoNoche.withAlpha(6),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.indigoNoche.withOpacity(0.18)),
+        border: Border.all(color: AppColors.indigoNoche.withAlpha(18)),
       ),
       child: Row(
         children: [
@@ -173,7 +173,7 @@ class _SecurityBanner extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: AppColors.indigoNoche.withOpacity(0.10),
+              color: AppColors.indigoNoche.withAlpha(10),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(Icons.verified_user_outlined,

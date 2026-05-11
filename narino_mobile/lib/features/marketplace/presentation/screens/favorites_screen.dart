@@ -52,7 +52,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.oroAndino.withOpacity(0.15),
+                    color: AppColors.oroAndino.withAlpha(15),
                     borderRadius: BorderRadius.circular(99),
                   ),
                   child: Text(
@@ -165,8 +165,9 @@ class _FavoriteCard extends StatelessWidget {
   }
 
   Color _badgeFg(bool isDark, String badge) {
-    if (badge == 'En subasta')
+    if (badge == 'En subasta') {
       return isDark ? AppColors.indigoDark : AppColors.indigoNoche;
+    }
     return isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
   }
 
@@ -287,12 +288,12 @@ class _FavImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (imageUrl == null) return _FavImageFallback();
+    if (imageUrl == null) return const _FavImageFallback();
     return CachedNetworkImage(
       imageUrl: imageUrl!,
       fit: BoxFit.cover,
-      placeholder: (_, __) => _FavImageFallback(loading: true),
-      errorWidget: (_, __, ___) => _FavImageFallback(),
+      placeholder: (_, __) => const _FavImageFallback(loading: true),
+      errorWidget: (_, __, ___) => const _FavImageFallback(),
     );
   }
 }
@@ -336,7 +337,7 @@ class _RemoveButton extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final bg = isDark
         ? AppColors.bgCardLight.withValues(alpha: 0.92)
-        : Colors.white.withOpacity(0.92);
+        : Colors.white.withAlpha(92);
     return GestureDetector(
       onTap: onRemove,
       child: Container(
@@ -347,7 +348,7 @@ class _RemoveButton extends StatelessWidget {
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withAlpha(8),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),

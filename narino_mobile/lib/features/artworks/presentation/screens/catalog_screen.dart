@@ -200,7 +200,7 @@ class _CategoryChips extends ConsumerWidget {
         isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
     // ✅ FIX: selectedColor del chip resuelto desde el tema en lugar de color fijo
     final chipSelectedBg =
-        isDark ? cs.primary.withOpacity(0.18) : AppColors.tierraPalida;
+        isDark ? cs.primary.withValues(alpha: 0.18) : AppColors.tierraPalida;
 
     return SizedBox(
       height: 40,
