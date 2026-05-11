@@ -16,8 +16,20 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
+from django.http import JsonResponse
+
+def api_root(request):
+    return JsonResponse({
+        "message": "Bienvenido a Nariño Cultura API",
+        "version": "1.0.0",
+        "endpoints": {
+            "admin": "/admin/",
+            "api": "/api/v1/",
+        }
+    })
 
 urlpatterns = [
+    path("", api_root, name="api-root"),
     path("admin/", admin.site.urls),
     path("api/v1/", include("apps.users.urls")),
     path("api/v1/", include("apps.artists.urls")),

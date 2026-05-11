@@ -1,10 +1,10 @@
-# Integracion de n8n para Nariño Cultura
+# Integracion de n8n para Narino Cultura
 
-Tu backend ya envia eventos a `n8n` usando la variable `N8N_WEBHOOK_URL`.
+Tu backend envia eventos a `n8n` usando la variable `N8N_WEBHOOK_URL`.
 
 ## 1. Variables recomendadas
 
-Agrega o revisa estas variables en [.env](C:\Users\Usuario\Desktop\NARINO_CULTURA\.env):
+Revisa estas variables en [.env](C:\Users\Usuario\Desktop\NARINO_CULTURA\.env):
 
 ```env
 N8N_WEBHOOK_URL=http://n8n:5678/webhook/narinocultura
@@ -34,9 +34,18 @@ Cuando un usuario se registra, Django envia un POST como este:
 }
 ```
 
-Para recuperacion de contraseña, el tipo sera `PASSWORD_RESET` y el payload incluira `reset_url`.
+Para recuperacion de contrasena, el tipo sera `PASSWORD_RESET` y el payload incluira `reset_url`.
 
-## 3. Importar workflow en n8n
+## 3. Mejoras del correo
+
+El workflow actualizado:
+
+- saluda al usuario con el primer nombre y el primer apellido
+- usa `payload.verification_url` en el boton de verificacion
+- muestra un enlace completo utilizable como respaldo
+- conserva el token como apoyo para pruebas manuales
+
+## 4. Importar workflow en n8n
 
 1. Entra a `http://localhost:5678`.
 2. Ve a `Workflows`.
@@ -44,10 +53,11 @@ Para recuperacion de contraseña, el tipo sera `PASSWORD_RESET` y el payload inc
 4. Importa [narinocultura-auth-email-workflow.json](C:\Users\Usuario\Desktop\NARINO_CULTURA\docs\n8n\narinocultura-auth-email-workflow.json).
 5. Abre el nodo `Send Email` y asigna tus credenciales SMTP.
 6. Activa el workflow.
+7. Si ya tenias un workflow funcionando, reimporta este archivo o reemplaza manualmente el codigo del nodo `Build Email`.
 
-## 4. SMTP para pruebas
+## 5. SMTP para pruebas
 
-Puedes usar Gmail con contraseña de aplicacion o un servicio como Mailtrap.
+Puedes usar Gmail con contrasena de aplicacion o un servicio como Mailtrap.
 
 Campos clave del nodo `Send Email`:
 
@@ -56,16 +66,18 @@ Campos clave del nodo `Send Email`:
 - `Email Format`: `HTML`
 - `HTML`: `={{ $json.html }}`
 
-## 5. Prueba completa
+## 6. Prueba completa
 
 1. Levanta `docker compose up`.
 2. Verifica que `n8n` este activo.
 3. Registra un usuario nuevo en el frontend.
 4. Revisa la ejecucion del workflow en `n8n`.
-5. Abre el correo recibido y prueba el enlace.
+5. Abre el correo recibido y prueba el boton.
 
-## 6. Resultado esperado
+## 7. Resultado esperado
 
 - Registro: llega correo con boton de verificacion.
-- Recuperacion: llega correo con boton para crear nueva contraseña.
+- El saludo usa el primer nombre y el primer apellido del usuario.
+- Si el cliente de correo no abre bien el boton, el mensaje incluye una URL completa utilizable.
+- Recuperacion: llega correo con boton para crear nueva contrasena.
 - Si `n8n` falla, Django deja trazabilidad en `NotificationLog`.
