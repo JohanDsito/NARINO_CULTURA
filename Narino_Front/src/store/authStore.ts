@@ -36,9 +36,17 @@ export const useAuthStore = create<AuthState>()(
       },
 
       updateUser: (data) =>
-        set((state) => ({
-          user: state.user ? normalizeUser({ ...state.user, ...data }) : null,
-        })),
+        set((state) => {
+          if (state.user) {
+            return { user: normalizeUser({ ...state.user, ...data }) }
+          }
+
+          if (data.id && data.email && data.first_name && data.last_name && data.role) {
+            return { user: normalizeUser(data as User) }
+          }
+
+          return { user: null }
+        }),
     }),
     {
       name: 'auth-storage',

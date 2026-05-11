@@ -17,8 +17,8 @@ const eventFormSchema = z.object({
   title: z.string().min(3, 'El título debe tener al menos 3 caracteres'),
   description: z.string().min(10, 'La descripción debe tener al menos 10 caracteres'),
   event_type: z.enum(['CONCIERTO', 'EXPOSICION', 'TALLER', 'FERIA', 'ESPECTACULO', 'OTRO']),
-  start_date: z.string().datetime(),
-  end_date: z.string().datetime(),
+  start_date: z.string().min(1, 'Selecciona la fecha y hora de inicio'),
+  end_date: z.string().min(1, 'Selecciona la fecha y hora de fin'),
   location: z.string().min(3, 'La ubicación debe tener al menos 3 caracteres'),
   image_url: z.string().url().optional().or(z.literal('')),
 })
