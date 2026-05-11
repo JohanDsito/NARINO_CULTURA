@@ -566,9 +566,9 @@ class _ErrorBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.error.withOpacity(0.08),
+        color: AppColors.error.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.error.withOpacity(0.40)),
+        border: Border.all(color: AppColors.error.withValues(alpha: 0.40)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -32,15 +32,19 @@ String _labelFiltro(String v) => switch (v) {
       _ => 'Todos',
     };
 
-({Color bg, Color fg}) _estadoColors(String estado) => switch (estado) {
+({Color bg, Color fg}) _estadoColors(String estado, bool isDark) =>
+    switch (estado) {
       'completado' => (bg: AppColors.selvaPalida, fg: AppColors.selvaAndina),
       'pendiente' => (bg: AppColors.oroPalido, fg: AppColors.oroAndino),
       'fallido' => (bg: AppColors.error.withAlpha(10), fg: AppColors.error),
       'reembolsado' => (
-          bg: AppColors.bgSubtleLight,
-          fg: AppColors.textMutedLight
+          bg: isDark ? AppColors.bgSubtleDark : AppColors.bgSubtleLight,
+          fg: isDark ? AppColors.textMutedDark : AppColors.textMutedLight
         ),
-      _ => (bg: AppColors.bgSubtleLight, fg: AppColors.textMutedLight),
+      _ => (
+          bg: isDark ? AppColors.bgSubtleDark : AppColors.bgSubtleLight,
+          fg: isDark ? AppColors.textMutedDark : AppColors.textMutedLight
+        ),
     };
 
 String _fmtDate(DateTime d) =>
@@ -62,6 +66,7 @@ class _PurchaseHistoryScreenState extends ConsumerState<PurchaseHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     final asyncOrders = ref.watch(_purchaseHistoryProvider);
+    final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -74,9 +79,8 @@ class _PurchaseHistoryScreenState extends ConsumerState<PurchaseHistoryScreen> {
         ),
       ),
       body: asyncOrders.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(
-              color: AppColors.tierraProfunda, strokeWidth: 2),
+        loading: () => Center(
+          child: CircularProgressIndicator(color: cs.primary, strokeWidth: 2),
         ),
         error: (e, _) => _ErrorView(message: e.toString()),
         data: (orders) {
@@ -118,6 +122,16 @@ class _FilterChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+    final bgSubtle = isDark ? AppColors.bgSubtleDark : AppColors.bgSubtleLight;
+    final selectedBg =
+        isDark ? AppColors.bgSubtleDark : AppColors.tierraPalida;
+    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
+
     return SizedBox(
       height: 50,
       child: ListView.separated(
@@ -132,19 +146,16 @@ class _FilterChips extends StatelessWidget {
             label: Text(
               _labelFiltro(f),
               style: AppTypography.caption(
-                color: isSelected
-                    ? AppColors.tierraProfunda
-                    : AppColors.textMutedLight,
+                color: isSelected ? cs.primary : textMuted,
               ),
             ),
             selected: isSelected,
             onSelected: (_) => onSelect(f),
-            backgroundColor: AppColors.bgSubtleLight,
-            selectedColor: AppColors.tierraPalida,
+            backgroundColor: bgSubtle,
+            selectedColor: selectedBg,
             checkmarkColor: Colors.transparent,
             side: BorderSide(
-              color:
-                  isSelected ? AppColors.tierraProfunda : AppColors.borderLight,
+              color: isSelected ? cs.primary : border,
             ),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(99),
@@ -163,16 +174,19 @@ class _EmptyOrders extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final iconColor = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.receipt_long_outlined,
-              size: 56, color: AppColors.borderLight),
+          Icon(Icons.receipt_long_outlined, size: 56, color: iconColor),
           const SizedBox(height: 14),
           Text(
             'No hay compras para este filtro.',
-            style: AppTypography.bodyMedium(color: AppColors.textMutedLight),
+            style: AppTypography.bodyMedium(color: textMuted),
           ),
         ],
       ),
@@ -187,18 +201,20 @@ class _ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.cloud_off_outlined,
-                size: 48, color: AppColors.textMutedLight),
+            Icon(Icons.cloud_off_outlined, size: 48, color: textMuted),
             const SizedBox(height: 14),
             Text(
               message,
-              style: AppTypography.bodyMedium(color: AppColors.textMutedLight),
+              style: AppTypography.bodyMedium(color: textMuted),
               textAlign: TextAlign.center,
             ),
           ],
@@ -217,7 +233,18 @@ class _OrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = _estadoColors(order.estado);
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final bgCard = theme.cardTheme.color ?? cs.surface;
+    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final textPrimary =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+    final indigoFg = isDark ? AppColors.indigoDark : AppColors.indigoNoche;
+
+    final colors = _estadoColors(order.estado, isDark);
     final label = _labelFiltro(order.estado);
 
     return InkWell(
@@ -225,9 +252,9 @@ class _OrderCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.bgCardLight,
+          color: bgCard,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.borderLight),
+          border: Border.all(color: border),
         ),
         padding: const EdgeInsets.all(14),
         child: Column(
@@ -239,8 +266,7 @@ class _OrderCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     'Orden #${order.id}',
-                    style: AppTypography.labelSemiBold(
-                        color: AppColors.textPrimaryLight),
+                    style: AppTypography.labelSemiBold(color: textPrimary),
                   ),
                 ),
                 _StatusBadge(label: label, colors: colors),
@@ -249,7 +275,7 @@ class _OrderCard extends StatelessWidget {
             const SizedBox(height: 5),
             Text(
               _fmtDate(order.creadoEn),
-              style: AppTypography.caption(color: AppColors.textMutedLight),
+              style: AppTypography.caption(color: textMuted),
             ),
             const SizedBox(height: 10),
 
@@ -259,14 +285,12 @@ class _OrderCard extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 3),
                 child: Row(
                   children: [
-                    const Icon(Icons.fiber_manual_record,
-                        size: 6, color: AppColors.textMutedLight),
+                    Icon(Icons.fiber_manual_record, size: 6, color: textMuted),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         i.obraTitulo,
-                        style: AppTypography.bodySmall(
-                            color: AppColors.textMutedLight),
+                        style: AppTypography.bodySmall(color: textMuted),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -282,8 +306,7 @@ class _OrderCard extends StatelessWidget {
               children: [
                 Text(
                   order.totalFormateado,
-                  style:
-                      AppTypography.labelSemiBold(color: AppColors.indigoNoche),
+                  style: AppTypography.labelSemiBold(color: indigoFg),
                 ),
                 const Spacer(),
                 if (order.isCompletado && order.comprobantePdfUrl != null)
@@ -343,7 +366,7 @@ class _ReceiptButton extends StatelessWidget {
       icon: const Icon(Icons.picture_as_pdf_outlined, size: 16),
       label: const Text('Comprobante'),
       style: TextButton.styleFrom(
-        foregroundColor: AppColors.tierraProfunda,
+        foregroundColor: Theme.of(context).colorScheme.primary,
         padding: EdgeInsets.zero,
         minimumSize: const Size(0, 32),
       ),

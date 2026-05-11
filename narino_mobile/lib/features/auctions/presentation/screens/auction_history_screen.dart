@@ -90,12 +90,21 @@ class _EstadoFilter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+    final bgSubtle = isDark ? AppColors.bgSubtleDark : AppColors.bgSubtleLight;
+    final selectedBg =
+        isDark ? AppColors.bgSubtleDark : AppColors.tierraPalida;
+    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       child: Row(
         children: [
-          const Icon(Icons.filter_list_outlined,
-              size: 18, color: AppColors.textMutedLight),
+          Icon(Icons.filter_list_outlined, size: 18, color: textMuted),
           const SizedBox(width: 8),
           Expanded(
             child: SizedBox(
@@ -110,20 +119,16 @@ class _EstadoFilter extends StatelessWidget {
                       label: Text(
                         entry.value,
                         style: AppTypography.caption(
-                          color: isSelected
-                              ? AppColors.tierraProfunda
-                              : AppColors.textMutedLight,
+                          color: isSelected ? cs.primary : textMuted,
                         ),
                       ),
                       selected: isSelected,
                       onSelected: (_) => onChanged(entry.key),
-                      backgroundColor: AppColors.bgSubtleLight,
-                      selectedColor: AppColors.tierraPalida,
+                      backgroundColor: bgSubtle,
+                      selectedColor: selectedBg,
                       checkmarkColor: Colors.transparent,
                       side: BorderSide(
-                        color: isSelected
-                            ? AppColors.tierraProfunda
-                            : AppColors.borderLight,
+                        color: isSelected ? cs.primary : border,
                       ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(99),
@@ -150,11 +155,14 @@ class _HistoryList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncList = ref.watch(auctionHistoryProvider(params));
+    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
 
     return asyncList.when(
-      loading: () => const Center(
-        child: CircularProgressIndicator(
-            color: AppColors.tierraProfunda, strokeWidth: 2),
+      loading: () => Center(
+        child: CircularProgressIndicator(color: cs.primary, strokeWidth: 2),
       ),
       error: (e, _) => Center(
         child: Padding(
@@ -162,8 +170,7 @@ class _HistoryList extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.cloud_off_outlined,
-                  size: 44, color: AppColors.textMutedLight),
+              Icon(Icons.cloud_off_outlined, size: 44, color: textMuted),
               const SizedBox(height: 12),
               Text(
                 e.toString(),
@@ -186,7 +193,7 @@ class _HistoryList extends ConsumerWidget {
         }
 
         return RefreshIndicator(
-          color: AppColors.tierraProfunda,
+          color: cs.primary,
           onRefresh: () async {
             ref.invalidate(auctionHistoryProvider(params));
             await ref.read(auctionHistoryProvider(params).future);
@@ -210,6 +217,10 @@ class _EmptyHistory extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final iconColor = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
     final isPujas = params.mode == 'participante';
     return Center(
       child: Padding(
@@ -217,14 +228,13 @@ class _EmptyHistory extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.gavel_outlined,
-                size: 52, color: AppColors.borderLight),
+            Icon(Icons.gavel_outlined, size: 52, color: iconColor),
             const SizedBox(height: 14),
             Text(
               isPujas
                   ? 'Aún no has participado en subastas.'
                   : 'Aún no has creado subastas.',
-              style: AppTypography.bodyMedium(color: AppColors.textMutedLight),
+              style: AppTypography.bodyMedium(color: textMuted),
               textAlign: TextAlign.center,
             ),
           ],
@@ -241,16 +251,19 @@ class _AuctionTile extends StatelessWidget {
 
   final AuctionModel auction;
 
-  Color _estadoBg(String estado) => switch (estado) {
-        'activa' => AppColors.indigoPalido,
-        'cerrada' => AppColors.tierraPalida,
-        _ => AppColors.bgSubtleLight,
+  Color _estadoBg(String estado, bool isDark) => switch (estado) {
+        'activa' => isDark
+            ? AppColors.indigoNoche.withValues(alpha: 0.25)
+            : AppColors.indigoPalido,
+        'cerrada' =>
+          isDark ? AppColors.bgSubtleDark : AppColors.tierraPalida,
+        _ => isDark ? AppColors.bgSubtleDark : AppColors.bgSubtleLight,
       };
 
-  Color _estadoFg(String estado) => switch (estado) {
-        'activa' => AppColors.indigoNoche,
-        'cerrada' => AppColors.tierraProfunda,
-        _ => AppColors.textMutedLight,
+  Color _estadoFg(String estado, bool isDark) => switch (estado) {
+        'activa' => isDark ? AppColors.indigoDark : AppColors.indigoNoche,
+        'cerrada' => isDark ? AppColors.tierraDark : AppColors.tierraProfunda,
+        _ => isDark ? AppColors.textMutedDark : AppColors.textMutedLight,
       };
 
   String _estadoLabel(String estado) => switch (estado) {
@@ -262,6 +275,16 @@ class _AuctionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final bgCard = theme.cardTheme.color ?? cs.surface;
+    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final textPrimary =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+
     final estado = auction.estado;
 
     return InkWell(
@@ -269,9 +292,9 @@ class _AuctionTile extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.bgCardLight,
+          color: bgCard,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.borderLight),
+          border: Border.all(color: border),
         ),
         padding: const EdgeInsets.all(12),
         child: Row(
@@ -292,8 +315,7 @@ class _AuctionTile extends StatelessWidget {
                     auction.obraTitulo,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTypography.labelSemiBold(
-                        color: AppColors.textPrimaryLight),
+                    style: AppTypography.labelSemiBold(color: textPrimary),
                   ),
                   const SizedBox(height: 6),
                   Row(
@@ -302,20 +324,19 @@ class _AuctionTile extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: _estadoBg(estado),
+                          color: _estadoBg(estado, isDark),
                           borderRadius: BorderRadius.circular(99),
                         ),
                         child: Text(
                           _estadoLabel(estado),
-                          style:
-                              AppTypography.caption(color: _estadoFg(estado)),
+                          style: AppTypography.caption(
+                              color: _estadoFg(estado, isDark)),
                         ),
                       ),
                       const SizedBox(width: 8),
                       Text(
                         '${auction.totalPujas} pujas',
-                        style: AppTypography.caption(
-                            color: AppColors.textMutedLight),
+                        style: AppTypography.caption(color: textMuted),
                       ),
                     ],
                   ),
@@ -329,8 +350,7 @@ class _AuctionTile extends StatelessWidget {
               ),
             ),
 
-            const Icon(Icons.chevron_right,
-                color: AppColors.textMutedLight, size: 20),
+            Icon(Icons.chevron_right, color: textMuted, size: 20),
           ],
         ),
       ),
@@ -346,28 +366,33 @@ class _TileImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (imageUrl == null) {
-      return _PlaceholderBox();
+      return const _PlaceholderBox();
     }
     return CachedNetworkImage(
       imageUrl: imageUrl!,
       width: 56,
       height: 56,
       fit: BoxFit.cover,
-      placeholder: (_, __) => _PlaceholderBox(),
-      errorWidget: (_, __, ___) => _PlaceholderBox(),
+      placeholder: (_, __) => const _PlaceholderBox(),
+      errorWidget: (_, __, ___) => const _PlaceholderBox(),
     );
   }
 }
 
 class _PlaceholderBox extends StatelessWidget {
+  const _PlaceholderBox();
+
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgSubtle = isDark ? AppColors.bgSubtleDark : AppColors.bgSubtleLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
     return Container(
       width: 56,
       height: 56,
-      color: AppColors.bgSubtleLight,
-      child: const Icon(Icons.image_outlined,
-          color: AppColors.textMutedLight, size: 24),
+      color: bgSubtle,
+      child: Icon(Icons.image_outlined, color: textMuted, size: 24),
     );
   }
 }

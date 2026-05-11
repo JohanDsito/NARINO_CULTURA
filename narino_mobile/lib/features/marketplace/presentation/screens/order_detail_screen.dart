@@ -30,9 +30,9 @@ class OrderDetailScreen extends ConsumerWidget {
         ),
       ),
       body: orderAsync.when(
-        loading: () => const Center(
+        loading: () => Center(
           child: CircularProgressIndicator(
-              color: AppColors.tierraProfunda, strokeWidth: 2),
+              color: Theme.of(context).colorScheme.primary, strokeWidth: 2),
         ),
         error: (e, _) => _ErrorView(message: e.toString()),
         data: (order) => _OrderBody(order: order),
@@ -50,18 +50,20 @@ class _ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.receipt_long_outlined,
-                size: 48, color: AppColors.textMutedLight),
+            Icon(Icons.receipt_long_outlined, size: 48, color: textMuted),
             const SizedBox(height: 12),
             Text(
               message,
-              style: AppTypography.bodyMedium(color: AppColors.textMutedLight),
+              style: AppTypography.bodyMedium(color: textMuted),
               textAlign: TextAlign.center,
             ),
           ],
@@ -102,6 +104,11 @@ class _OrderBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textSecondary =
+        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+    final cs = Theme.of(context).colorScheme;
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
       children: [
@@ -109,8 +116,7 @@ class _OrderBody extends ConsumerWidget {
         const SizedBox(height: 14),
         Text(
           'Obras en esta orden',
-          style:
-              AppTypography.labelSemiBold(color: AppColors.textSecondaryLight),
+          style: AppTypography.labelSemiBold(color: textSecondary),
         ),
         const SizedBox(height: 10),
         ...order.items.map(
@@ -127,13 +133,13 @@ class _OrderBody extends ConsumerWidget {
             child: FilledButton.icon(
               onPressed: () => _pay(context, ref),
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.indigoNoche,
-                foregroundColor: Colors.white,
+                backgroundColor: cs.primary,
+                foregroundColor: cs.onPrimary,
               ),
               icon: const Icon(Icons.credit_card_outlined),
               label: Text(
                 'Completar pago',
-                style: AppTypography.labelSemiBold(color: Colors.white),
+                style: AppTypography.labelSemiBold(color: cs.onPrimary),
               ),
             ),
           ),
@@ -150,34 +156,43 @@ class _OrderHeader extends StatelessWidget {
 
   final OrderModel order;
 
-  Color _estadoColor(String estado) {
+  Color _estadoColor(String estado, bool isDark) {
     return switch (estado) {
       'completado' => AppColors.selvaAndina,
       'pendiente' => AppColors.oroAndino,
       'fallido' || 'reembolsado' => AppColors.error,
-      _ => AppColors.textMutedLight,
+      _ => isDark ? AppColors.textMutedDark : AppColors.textMutedLight,
     };
   }
 
-  Color _estadoBg(String estado) {
+  Color _estadoBg(String estado, bool isDark) {
     return switch (estado) {
       'completado' => AppColors.selvaPalida,
       'pendiente' => AppColors.oroPalido,
-      _ => AppColors.bgSubtleLight,
+      _ => isDark ? AppColors.bgSubtleDark : AppColors.bgSubtleLight,
     };
   }
 
   @override
   Widget build(BuildContext context) {
-    final estadoColor = _estadoColor(order.estado);
-    final estadoBg = _estadoBg(order.estado);
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final bgCard = theme.cardTheme.color ?? cs.surface;
+    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+    final indigoFg = isDark ? AppColors.indigoDark : AppColors.indigoNoche;
+
+    final estadoColor = _estadoColor(order.estado, isDark);
+    final estadoBg = _estadoBg(order.estado, isDark);
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.bgCardLight,
+        color: bgCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderLight),
+        border: Border.all(color: border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -203,7 +218,7 @@ class _OrderHeader extends StatelessWidget {
                 IconButton(
                   tooltip: 'Ver comprobante PDF',
                   icon: const Icon(Icons.picture_as_pdf_outlined),
-                  color: AppColors.textMutedLight,
+                  color: textMuted,
                   onPressed: () async {
                     final uri = Uri.tryParse(order.comprobantePdfUrl!);
                     if (uri != null) {
@@ -217,13 +232,11 @@ class _OrderHeader extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              const Icon(Icons.payments_outlined,
-                  size: 16, color: AppColors.textMutedLight),
+              Icon(Icons.payments_outlined, size: 16, color: textMuted),
               const SizedBox(width: 6),
               Text(
                 'Total: ${order.totalFormateado}',
-                style:
-                    AppTypography.labelSemiBold(color: AppColors.indigoNoche),
+                style: AppTypography.labelSemiBold(color: indigoFg),
               ),
             ],
           ),
@@ -249,11 +262,22 @@ class _OrderItemRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final bgCard = theme.cardTheme.color ?? cs.surface;
+    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final textPrimary =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+    final indigoFg = isDark ? AppColors.indigoDark : AppColors.indigoNoche;
+
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.bgCardLight,
+        color: bgCard,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.borderLight),
+        border: Border.all(color: border),
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -263,7 +287,7 @@ class _OrderItemRow extends StatelessWidget {
         ),
         title: Text(
           item.obraTitulo,
-          style: AppTypography.labelSemiBold(color: AppColors.textPrimaryLight),
+          style: AppTypography.labelSemiBold(color: textPrimary),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
@@ -271,12 +295,12 @@ class _OrderItemRow extends StatelessWidget {
           padding: const EdgeInsets.only(top: 2),
           child: Text(
             item.artistaNombre,
-            style: AppTypography.caption(color: AppColors.textMutedLight),
+            style: AppTypography.caption(color: textMuted),
           ),
         ),
         trailing: Text(
           _fmt(item.precio),
-          style: AppTypography.labelSemiBold(color: AppColors.indigoNoche),
+          style: AppTypography.labelSemiBold(color: indigoFg),
         ),
       ),
     );
@@ -311,10 +335,14 @@ class _ThumbFallback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgSubtle = isDark ? AppColors.bgSubtleDark : AppColors.bgSubtleLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
     return Container(
       width: 48,
       height: 48,
-      color: AppColors.bgSubtleLight,
+      color: bgSubtle,
       child: Center(
         child: loading
             ? const SizedBox(
@@ -322,8 +350,7 @@ class _ThumbFallback extends StatelessWidget {
                 height: 14,
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
-            : const Icon(Icons.image_outlined,
-                color: AppColors.textMutedLight, size: 20),
+            : Icon(Icons.image_outlined, color: textMuted, size: 20),
       ),
     );
   }

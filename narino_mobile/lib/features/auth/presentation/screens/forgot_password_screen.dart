@@ -129,8 +129,6 @@ class _ForgotForm extends StatelessWidget {
         isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
     final textSecondary =
         isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
-    final textMuted =
-        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
     return Form(
       key: formKey,
       child: Column(
@@ -143,7 +141,7 @@ class _ForgotForm extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             'Ingresa tu correo y te enviaremos un enlace para restablecer tu contraseña. El enlace es válido por 30 minutos.',
-            style: AppTypography.bodySmall(color: textMuted),
+            style: AppTypography.bodySmall(color: textSecondary),
           ),
           const SizedBox(height: 24),
           TextFormField(
@@ -282,10 +280,9 @@ class _SuccessState extends StatelessWidget {
 /// Hero reutilizable para las pantallas de auth.
 /// [compact] reduce el tamaño cuando hay menos espacio vertical.
 class _AuthHero extends StatelessWidget {
-  const _AuthHero({this.compact = false, this.subtitle});
+  const _AuthHero({this.compact = false});
 
   final bool compact;
-  final String? subtitle;
 
   @override
   Widget build(BuildContext context) {
@@ -320,16 +317,6 @@ class _AuthHero extends StatelessWidget {
                     : AppTypography.displayBold(color: AppColors.oroClaro),
                 textAlign: TextAlign.center,
               ),
-              if (subtitle != null && !compact) ...[
-                const SizedBox(height: 6),
-                Text(
-                  subtitle!,
-                  style: AppTypography.quoteItalic(
-                    color: AppColors.oroClaro.withAlpha(70),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
             ],
           ),
         ),

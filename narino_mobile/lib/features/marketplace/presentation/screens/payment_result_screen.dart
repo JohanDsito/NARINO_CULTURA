@@ -51,6 +51,15 @@ class _SuccessContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final textPrimary =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final textSecondary =
+        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -62,14 +71,13 @@ class _SuccessContent extends StatelessWidget {
         const SizedBox(height: 20),
         Text(
           '¡Pago confirmado!',
-          style:
-              AppTypography.displaySemiBold(color: AppColors.textPrimaryLight),
+          style: AppTypography.displaySemiBold(color: textPrimary),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
         Text(
           'La orden #$orderId fue procesada correctamente. Recibirás un comprobante por correo.',
-          style: AppTypography.bodyMedium(color: AppColors.textSecondaryLight),
+          style: AppTypography.bodyMedium(color: textSecondary),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 32),
@@ -79,8 +87,8 @@ class _SuccessContent extends StatelessWidget {
               child: OutlinedButton(
                 onPressed: () => context.go('/home'),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: AppColors.borderLight),
-                  foregroundColor: AppColors.textPrimaryLight,
+                  side: BorderSide(color: border),
+                  foregroundColor: textPrimary,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 child: const Text('Ir al inicio'),
@@ -91,8 +99,8 @@ class _SuccessContent extends StatelessWidget {
               child: FilledButton.icon(
                 onPressed: () => context.go('/marketplace/purchases'),
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.indigoNoche,
-                  foregroundColor: Colors.white,
+                  backgroundColor: cs.primary,
+                  foregroundColor: cs.onPrimary,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 icon: const Icon(Icons.receipt_long_outlined, size: 18),
@@ -115,6 +123,15 @@ class _FailureContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final textPrimary =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final textSecondary =
+        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -126,14 +143,13 @@ class _FailureContent extends StatelessWidget {
         const SizedBox(height: 20),
         Text(
           'Pago no completado',
-          style:
-              AppTypography.displaySemiBold(color: AppColors.textPrimaryLight),
+          style: AppTypography.displaySemiBold(color: textPrimary),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
         Text(
           'No se pudo confirmar el pago de la orden #$orderId. Puedes reintentar o revisar tu método de pago.',
-          style: AppTypography.bodyMedium(color: AppColors.textSecondaryLight),
+          style: AppTypography.bodyMedium(color: textSecondary),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 32),
@@ -143,8 +159,8 @@ class _FailureContent extends StatelessWidget {
               child: OutlinedButton(
                 onPressed: () => context.go('/home'),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: AppColors.borderLight),
-                  foregroundColor: AppColors.textPrimaryLight,
+                  side: BorderSide(color: border),
+                  foregroundColor: textPrimary,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 child: const Text('Ir al inicio'),
@@ -155,8 +171,8 @@ class _FailureContent extends StatelessWidget {
               child: FilledButton.icon(
                 onPressed: () => context.go('/marketplace/cart'),
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.indigoNoche,
-                  foregroundColor: Colors.white,
+                  backgroundColor: cs.primary,
+                  foregroundColor: cs.onPrimary,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 icon: const Icon(Icons.refresh_outlined, size: 18),

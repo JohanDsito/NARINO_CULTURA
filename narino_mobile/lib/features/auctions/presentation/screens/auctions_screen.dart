@@ -43,6 +43,7 @@ class _AuctionsScreenState extends ConsumerState<AuctionsScreen> {
     final asyncAuctions = ref.watch(auctionsProvider);
     final role = ref.watch(currentUserRoleProvider).value;
     final canCreate = role == 'artista' || role == 'admin';
+    final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -72,7 +73,7 @@ class _AuctionsScreenState extends ConsumerState<AuctionsScreen> {
         ],
       ),
       body: RefreshIndicator(
-        color: AppColors.tierraProfunda,
+        color: cs.primary,
         onRefresh: () async => ref.read(auctionsProvider.notifier).loadActive(),
         child: asyncAuctions.when(
           loading: () => const _LoadingBody(),
@@ -98,11 +99,11 @@ class _LoadingBody extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
-      children: const [
-        SizedBox(height: 140),
+      children: [
+        const SizedBox(height: 140),
         Center(
           child: CircularProgressIndicator(
-              color: AppColors.tierraProfunda, strokeWidth: 2),
+              color: Theme.of(context).colorScheme.primary, strokeWidth: 2),
         ),
       ],
     );
@@ -159,19 +160,20 @@ class _EmptyBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final iconColor = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(24),
       children: [
         const SizedBox(height: 90),
-        const Center(
-          child: Icon(Icons.gavel_outlined,
-              size: 56, color: AppColors.borderLight),
-        ),
+        Center(child: Icon(Icons.gavel_outlined, size: 56, color: iconColor)),
         const SizedBox(height: 14),
         Text(
           'No hay subastas activas en este momento.',
-          style: AppTypography.bodyMedium(color: AppColors.textMutedLight),
+          style: AppTypography.bodyMedium(color: textMuted),
           textAlign: TextAlign.center,
         ),
       ],
@@ -220,16 +222,37 @@ class _AuctionCard extends StatelessWidget {
     return '$h:$m:$s';
   }
 
-  ({Color bg, Color fg}) _badgeColors(String estado) => estado == 'activa'
-      ? (bg: AppColors.indigoPalido, fg: AppColors.indigoNoche)
-      : (bg: AppColors.bgSubtleLight, fg: AppColors.textSecondaryLight);
+  ({Color bg, Color fg}) _badgeColors(String estado, bool isDark) =>
+      estado == 'activa'
+          ? (
+              bg: isDark
+                  ? AppColors.indigoNoche.withValues(alpha: 0.25)
+                  : AppColors.indigoPalido,
+              fg: isDark ? AppColors.indigoDark : AppColors.indigoNoche
+            )
+          : (
+              bg: isDark ? AppColors.bgSubtleDark : AppColors.bgSubtleLight,
+              fg: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight
+            );
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final bgCard = theme.cardTheme.color ?? cs.surface;
+    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final textPrimary =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+    final textSecondary =
+        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+
     final remaining = _remaining;
     final price =
         auction.totalPujas > 0 ? auction.precioActual : auction.precioBase;
-    final colors = _badgeColors(auction.estado);
+    final colors = _badgeColors(auction.estado, isDark);
     final isUrgent = remaining.inMinutes < 60 && auction.estado == 'activa';
 
     return InkWell(
@@ -237,12 +260,12 @@ class _AuctionCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(14),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.bgCardLight,
+          color: bgCard,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isUrgent
                 ? AppColors.error.withValues(alpha: 0.35)
-                : AppColors.borderLight,
+                : border,
           ),
         ),
         padding: const EdgeInsets.all(12),
@@ -270,8 +293,8 @@ class _AuctionCard extends StatelessWidget {
                           auction.obraTitulo,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: AppTypography.labelSemiBold(
-                              color: AppColors.textPrimaryLight),
+                          style:
+                              AppTypography.labelSemiBold(color: textPrimary),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -294,8 +317,7 @@ class _AuctionCard extends StatelessWidget {
                     auction.artistaNombre,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTypography.bodySmall(
-                        color: AppColors.textMutedLight),
+                    style: AppTypography.bodySmall(color: textMuted),
                   ),
                   const SizedBox(height: 10),
 
@@ -305,8 +327,7 @@ class _AuctionCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           '\$${price.toStringAsFixed(0)}',
-                          style: AppTypography.labelSemiBold(
-                              color: AppColors.tierraProfunda),
+                          style: AppTypography.labelSemiBold(color: cs.primary),
                         ),
                       ),
                       Icon(
@@ -314,17 +335,13 @@ class _AuctionCard extends StatelessWidget {
                             ? Icons.timer_outlined
                             : Icons.schedule_outlined,
                         size: 15,
-                        color: isUrgent
-                            ? AppColors.error
-                            : AppColors.textSecondaryLight,
+                        color: isUrgent ? AppColors.error : textSecondary,
                       ),
                       const SizedBox(width: 4),
                       Text(
                         _formatRemaining(remaining),
                         style: AppTypography.caption(
-                          color: isUrgent
-                              ? AppColors.error
-                              : AppColors.textSecondaryLight,
+                          color: isUrgent ? AppColors.error : textSecondary,
                         ),
                       ),
                     ],
@@ -333,8 +350,7 @@ class _AuctionCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 4),
-            const Icon(Icons.chevron_right,
-                color: AppColors.textMutedLight, size: 20),
+            Icon(Icons.chevron_right, color: textMuted, size: 20),
           ],
         ),
       ),
@@ -370,10 +386,14 @@ class _FallbackImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgSubtle = isDark ? AppColors.bgSubtleDark : AppColors.bgSubtleLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
     return Container(
       width: 78,
       height: 78,
-      color: AppColors.bgSubtleLight,
+      color: bgSubtle,
       child: Center(
         child: loading
             ? const SizedBox(
@@ -381,8 +401,7 @@ class _FallbackImage extends StatelessWidget {
                 height: 16,
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
-            : const Icon(Icons.image_outlined,
-                color: AppColors.textMutedLight, size: 28),
+            : Icon(Icons.image_outlined, color: textMuted, size: 28),
       ),
     );
   }

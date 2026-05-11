@@ -151,13 +151,6 @@ class _AuctionDetailScreenState extends ConsumerState<AuctionDetailScreen> {
     });
   }
 
-  static String _formatRemaining(Duration d) {
-    final h = (d.inSeconds ~/ 3600).toString().padLeft(2, '0');
-    final m = ((d.inSeconds % 3600) ~/ 60).toString().padLeft(2, '0');
-    final s = (d.inSeconds % 60).toString().padLeft(2, '0');
-    return '$h:$m:$s';
-  }
-
   // ─── Permisos ─────────────────────────────────────────────────────────────
 
   static bool _isArtistOwner(AuctionModel auction,
@@ -235,12 +228,18 @@ class _AuctionDetailScreenState extends ConsumerState<AuctionDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+
     if (_isLoading) {
       return Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        body: const Center(
-          child: CircularProgressIndicator(
-              color: AppColors.tierraProfunda, strokeWidth: 2),
+        body: Center(
+          child: CircularProgressIndicator(color: cs.primary, strokeWidth: 2),
         ),
       );
     }
@@ -268,7 +267,7 @@ class _AuctionDetailScreenState extends ConsumerState<AuctionDetailScreen> {
         ],
       ),
       body: RefreshIndicator(
-        color: AppColors.tierraProfunda,
+        color: cs.primary,
         onRefresh: _load,
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
@@ -281,13 +280,12 @@ class _AuctionDetailScreenState extends ConsumerState<AuctionDetailScreen> {
             const SizedBox(height: 14),
             Text(
               auction.obraTitulo,
-              style: AppTypography.displaySemiBold(
-                  color: AppColors.textPrimaryLight),
+              style: AppTypography.displaySemiBold(color: textPrimary),
             ),
             const SizedBox(height: 4),
             Text(
               auction.artistaNombre,
-              style: AppTypography.bodySmall(color: AppColors.textMutedLight),
+              style: AppTypography.bodySmall(color: textMuted),
             ),
             const SizedBox(height: 16),
             _StatCard(
@@ -299,8 +297,7 @@ class _AuctionDetailScreenState extends ConsumerState<AuctionDetailScreen> {
             const SizedBox(height: 16),
             Text(
               'Últimas pujas',
-              style: AppTypography.labelSemiBold(
-                  color: AppColors.textPrimaryLight),
+              style: AppTypography.labelSemiBold(color: textPrimary),
             ),
             const SizedBox(height: 10),
             _BidsList(bids: auction.ultimasPujas.take(5).toList()),
@@ -337,6 +334,9 @@ class _ErrorScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -353,8 +353,7 @@ class _ErrorScaffold extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.cloud_off_outlined,
-                  size: 48, color: AppColors.textMutedLight),
+              Icon(Icons.cloud_off_outlined, size: 48, color: textMuted),
               const SizedBox(height: 14),
               Text(
                 error ?? 'No se pudo cargar la subasta.',
@@ -407,9 +406,11 @@ class _ImagePlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgSubtle = isDark ? AppColors.bgSubtleDark : AppColors.bgSubtleLight;
     return Container(
       height: height,
-      color: AppColors.bgSubtleLight,
+      color: bgSubtle,
       child: const Center(
         child: SizedBox(
           width: 22,
@@ -428,16 +429,22 @@ class _ImageError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final bgCard = theme.cardTheme.color ?? cs.surface;
+    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
     return Container(
       height: height,
       decoration: BoxDecoration(
-        color: AppColors.bgCardLight,
+        color: bgCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderLight),
+        border: Border.all(color: border),
       ),
-      child: const Center(
-        child: Icon(Icons.image_outlined,
-            size: 52, color: AppColors.textMutedLight),
+      child: Center(
+        child: Icon(Icons.image_outlined, size: 52, color: textMuted),
       ),
     );
   }
@@ -469,24 +476,36 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final bgCard = theme.cardTheme.color ?? cs.surface;
+    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final textPrimary =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final textSecondary =
+        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.bgCardLight,
+        color: bgCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderLight),
+        border: Border.all(color: border),
       ),
       child: Row(
         children: [
           Expanded(
             child: _StatColumn(
               label: 'Precio actual',
+              labelColor: textMuted,
               value: '\$${precioActual.toStringAsFixed(0)}',
-              valueStyle: AppTypography.displaySemiBold(
-                  color: AppColors.textPrimaryLight),
+              valueStyle: AppTypography.displaySemiBold(color: textPrimary),
             ),
           ),
-          Container(width: 1, height: 56, color: AppColors.borderLight),
+          Container(width: 1, height: 56, color: border),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -494,20 +513,19 @@ class _StatCard extends StatelessWidget {
               children: [
                 _StatColumn(
                   label: 'Pujas',
+                  labelColor: textMuted,
                   value: '$totalPujas',
-                  valueStyle: AppTypography.labelSemiBold(
-                      color: AppColors.textPrimaryLight),
+                  valueStyle: AppTypography.labelSemiBold(color: textPrimary),
                 ),
                 const SizedBox(height: 12),
                 _StatColumn(
                   label: 'Tiempo restante',
+                  labelColor: textMuted,
                   value: estado == 'activa'
                       ? _formatRemaining(remaining)
                       : '--:--:--',
                   valueStyle: AppTypography.bodyMedium(
-                    color: _isUrgent
-                        ? AppColors.error
-                        : AppColors.textSecondaryLight,
+                    color: _isUrgent ? AppColors.error : textSecondary,
                   ),
                   icon: _isUrgent
                       ? const Icon(Icons.timer_outlined,
@@ -526,12 +544,14 @@ class _StatCard extends StatelessWidget {
 class _StatColumn extends StatelessWidget {
   const _StatColumn({
     required this.label,
+    required this.labelColor,
     required this.value,
     required this.valueStyle,
     this.icon,
   });
 
   final String label;
+  final Color labelColor;
   final String value;
   final TextStyle valueStyle;
   final Widget? icon;
@@ -541,8 +561,7 @@ class _StatColumn extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: AppTypography.caption(color: AppColors.textMutedLight)),
+        Text(label, style: AppTypography.caption(color: labelColor)),
         const SizedBox(height: 4),
         Row(
           children: [
@@ -564,22 +583,31 @@ class _BidsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final bgCard = theme.cardTheme.color ?? cs.surface;
+    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final textPrimary =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+
     if (bids.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.bgCardLight,
+          color: bgCard,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.borderLight),
+          border: Border.all(color: border),
         ),
         child: Row(
           children: [
-            const Icon(Icons.gavel_outlined,
-                size: 18, color: AppColors.textMutedLight),
+            Icon(Icons.gavel_outlined, size: 18, color: textMuted),
             const SizedBox(width: 8),
             Text(
               'Aún no hay pujas. ¡Sé el primero!',
-              style: AppTypography.bodySmall(color: AppColors.textMutedLight),
+              style: AppTypography.bodySmall(color: textMuted),
             ),
           ],
         ),
@@ -588,9 +616,9 @@ class _BidsList extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.bgCardLight,
+        color: bgCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderLight),
+        border: Border.all(color: border),
       ),
       child: Column(
         children: bids.asMap().entries.map((entry) {
@@ -603,8 +631,7 @@ class _BidsList extends StatelessWidget {
             decoration: BoxDecoration(
               border: isLast
                   ? null
-                  : const Border(
-                      bottom: BorderSide(color: AppColors.borderLight)),
+                  : Border(bottom: BorderSide(color: border)),
             ),
             child: ListTile(
               dense: true,
@@ -615,20 +642,17 @@ class _BidsList extends StatelessWidget {
                       padding: const EdgeInsets.only(left: 2),
                       child: Text(
                         '${i + 1}',
-                        style: AppTypography.caption(
-                            color: AppColors.textMutedLight),
+                        style: AppTypography.caption(color: textMuted),
                       ),
                     ),
               title: Text(
                 bid.bidderName,
-                style:
-                    AppTypography.bodySmall(color: AppColors.textPrimaryLight),
+                style: AppTypography.bodySmall(color: textPrimary),
               ),
               trailing: Text(
                 '\$${bid.amount.toStringAsFixed(0)}',
                 style: AppTypography.labelSemiBold(
-                    color:
-                        isTop ? AppColors.oroAndino : AppColors.tierraProfunda),
+                    color: isTop ? AppColors.oroAndino : cs.primary),
               ),
             ),
           );
@@ -751,6 +775,16 @@ class _WinnerActions extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     if (auction.estado == 'activa') return const SizedBox.shrink();
 
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final bgCard = theme.cardTheme.color ?? cs.surface;
+    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+    final textSecondary =
+        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+
     return FutureBuilder(
       future: ref.read(profileRepositoryProvider).getMyProfile(),
       builder: (context, snapshot) {
@@ -792,20 +826,18 @@ class _WinnerActions extends ConsumerWidget {
           return Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: AppColors.bgCardLight,
+              color: bgCard,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.borderLight),
+              border: Border.all(color: border),
             ),
             child: Row(
               children: [
-                const Icon(Icons.info_outline,
-                    size: 18, color: AppColors.textMutedLight),
+                Icon(Icons.info_outline, size: 18, color: textMuted),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     'Tu subasta cerró. Revisa el resultado en tu historial.',
-                    style: AppTypography.bodyMedium(
-                        color: AppColors.textSecondaryLight),
+                    style: AppTypography.bodyMedium(color: textSecondary),
                   ),
                 ),
               ],

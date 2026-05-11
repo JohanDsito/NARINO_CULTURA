@@ -52,9 +52,9 @@ class _LoadingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: CircularProgressIndicator(
-        color: AppColors.tierraProfunda,
+        color: Theme.of(context).colorScheme.primary,
         strokeWidth: 2,
       ),
     );
@@ -68,6 +68,9 @@ class _ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textSecondary =
+        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -92,9 +95,7 @@ class _ErrorView extends StatelessWidget {
               const SizedBox(height: 16),
               Text(
                 message,
-                style: AppTypography.bodyMedium(
-                  color: AppColors.textSecondaryLight,
-                ),
+                style: AppTypography.bodyMedium(color: textSecondary),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -549,6 +550,25 @@ class _HeaderRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final bgCard = theme.cardTheme.color ?? cs.surface;
+    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final textPrimary =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+    final pillTierraBg =
+        isDark ? AppColors.bgSubtleDark : AppColors.tierraPalida;
+    final pillTierraFg = isDark ? AppColors.tierraDark : AppColors.tierraProfunda;
+    final pillIndigoBg =
+        isDark ? AppColors.indigoNoche.withValues(alpha: 0.25) : AppColors.indigoPalido;
+    final pillIndigoFg =
+        isDark ? AppColors.indigoDark : AppColors.indigoNoche;
+    final pillMutedBg =
+        isDark ? AppColors.bgSubtleDark : AppColors.bgSubtleLight;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -562,8 +582,8 @@ class _HeaderRow extends StatelessWidget {
                 children: [
                   _Pill(
                     label: artwork.categoria,
-                    background: AppColors.tierraPalida,
-                    foreground: AppColors.tierraProfunda,
+                    background: pillTierraBg,
+                    foreground: pillTierraFg,
                   ),
                   if (artwork.estado != 'disponible')
                     _Pill(
@@ -571,11 +591,11 @@ class _HeaderRow extends StatelessWidget {
                           ? 'En subasta'
                           : 'Vendida',
                       background: artwork.estado == 'en_subasta'
-                          ? AppColors.indigoPalido
-                          : AppColors.bgSubtleLight,
+                          ? pillIndigoBg
+                          : pillMutedBg,
                       foreground: artwork.estado == 'en_subasta'
-                          ? AppColors.indigoNoche
-                          : AppColors.textMutedLight,
+                          ? pillIndigoFg
+                          : textMuted,
                     ),
                 ],
               ),
@@ -591,12 +611,12 @@ class _HeaderRow extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: esFavorito
                         ? Colors.red.withAlpha(18)
-                        : AppColors.bgCardLight,
+                        : bgCard,
                     borderRadius: BorderRadius.circular(99),
                     border: Border.all(
                       color: esFavorito
                           ? Colors.red.shade200
-                          : AppColors.borderLight,
+                          : border,
                     ),
                   ),
                   child: Row(
@@ -604,15 +624,13 @@ class _HeaderRow extends StatelessWidget {
                     children: [
                       Icon(
                         esFavorito ? Icons.favorite : Icons.favorite_outline,
-                        color:
-                            esFavorito ? Colors.red : AppColors.textMutedLight,
+                        color: esFavorito ? Colors.red : textMuted,
                         size: 16,
                       ),
                       const SizedBox(width: 5),
                       Text(
                         '$cantidadFavoritos',
-                        style: AppTypography.caption(
-                            color: AppColors.textMutedLight),
+                        style: AppTypography.caption(color: textMuted),
                       ),
                     ],
                   ),
@@ -624,8 +642,7 @@ class _HeaderRow extends StatelessWidget {
         const SizedBox(height: 14),
         Text(
           artwork.titulo,
-          style:
-              AppTypography.displaySemiBold(color: AppColors.textPrimaryLight),
+          style: AppTypography.displaySemiBold(color: textPrimary),
         ),
         const SizedBox(height: 6),
         if (artwork.precio != null)
@@ -636,7 +653,7 @@ class _HeaderRow extends StatelessWidget {
         else
           Text(
             'Obra para exhibición — sin precio',
-            style: AppTypography.bodyMedium(color: AppColors.textMutedLight),
+            style: AppTypography.bodyMedium(color: textMuted),
           ),
       ],
     );
@@ -681,6 +698,11 @@ class _DescriptionCardState extends State<_DescriptionCard> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final linkColor = isDark ? AppColors.tierraDark : AppColors.tierraProfunda;
+
     return _SectionCard(
       title: 'Descripción',
       icon: Icons.notes_outlined,
@@ -690,15 +712,13 @@ class _DescriptionCardState extends State<_DescriptionCard> {
           AnimatedCrossFade(
             firstChild: Text(
               widget.descripcion,
-              style:
-                  AppTypography.bodyMedium(color: AppColors.textPrimaryLight),
+              style: AppTypography.bodyMedium(color: textPrimary),
               maxLines: _maxLines,
               overflow: TextOverflow.ellipsis,
             ),
             secondChild: Text(
               widget.descripcion,
-              style:
-                  AppTypography.bodyMedium(color: AppColors.textPrimaryLight),
+              style: AppTypography.bodyMedium(color: textPrimary),
             ),
             crossFadeState: _expanded
                 ? CrossFadeState.showSecond
@@ -711,7 +731,7 @@ class _DescriptionCardState extends State<_DescriptionCard> {
               onTap: () => setState(() => _expanded = !_expanded),
               child: Text(
                 _expanded ? 'Ver menos' : 'Ver más',
-                style: AppTypography.caption(color: AppColors.tierraProfunda),
+                style: AppTypography.caption(color: linkColor),
               ),
             ),
           ],
@@ -728,6 +748,15 @@ class _ArtistCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+    final avatarBg = isDark ? AppColors.bgSubtleDark : AppColors.tierraPalida;
+    final avatarFg = isDark ? AppColors.tierraDark : AppColors.tierraProfunda;
+    final linkColor = isDark ? AppColors.tierraDark : AppColors.tierraProfunda;
+
     return _SectionCard(
       title: 'Artista',
       icon: Icons.person_outline,
@@ -742,7 +771,7 @@ class _ArtistCard extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 26,
-                  backgroundColor: AppColors.tierraPalida,
+                  backgroundColor: avatarBg,
                   backgroundImage: artwork.artistaFoto != null
                       ? NetworkImage(artwork.artistaFoto!)
                       : null,
@@ -751,8 +780,7 @@ class _ArtistCard extends StatelessWidget {
                           artwork.artistaNombre.isNotEmpty
                               ? artwork.artistaNombre[0].toUpperCase()
                               : '?',
-                          style: AppTypography.displaySemiBold(
-                              color: AppColors.tierraProfunda),
+                          style: AppTypography.displaySemiBold(color: avatarFg),
                         )
                       : null,
                 ),
@@ -763,22 +791,20 @@ class _ArtistCard extends StatelessWidget {
                     children: [
                       Text(
                         artwork.artistaNombre,
-                        style: AppTypography.labelSemiBold(
-                            color: AppColors.textPrimaryLight),
+                        style: AppTypography.labelSemiBold(color: textPrimary),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         'Ver perfil completo',
-                        style: AppTypography.caption(
-                            color: AppColors.tierraProfunda),
+                        style: AppTypography.caption(color: linkColor),
                       ),
                     ],
                   ),
                 ),
-                const Icon(
+                Icon(
                   Icons.arrow_forward_ios,
                   size: 14,
-                  color: AppColors.textMutedLight,
+                  color: textMuted,
                 ),
               ],
             ),
@@ -829,6 +855,12 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -838,14 +870,13 @@ class _InfoRow extends StatelessWidget {
             width: 110,
             child: Text(
               label,
-              style: AppTypography.caption(color: AppColors.textMutedLight),
+              style: AppTypography.caption(color: textMuted),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style:
-                  AppTypography.bodyMedium(color: AppColors.textPrimaryLight),
+              style: AppTypography.bodyMedium(color: textPrimary),
             ),
           ),
         ],
@@ -891,12 +922,22 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final bgCard = theme.cardTheme.color ?? cs.surface;
+    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+    final textSecondary =
+        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.bgCardLight,
+        color: bgCard,
         borderRadius: BorderRadius.circular(_kSectionRadius),
-        border: Border.all(color: AppColors.borderLight),
+        border: Border.all(color: border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -904,13 +945,12 @@ class _SectionCard extends StatelessWidget {
           Row(
             children: [
               if (icon != null) ...[
-                Icon(icon, size: 15, color: AppColors.textMutedLight),
+                Icon(icon, size: 15, color: textMuted),
                 const SizedBox(width: 6),
               ],
               Text(
                 title,
-                style: AppTypography.labelSemiBold(
-                    color: AppColors.textSecondaryLight),
+                style: AppTypography.labelSemiBold(color: textSecondary),
               ),
             ],
           ),
@@ -927,21 +967,28 @@ class _AuctionBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bannerBg = isDark
+        ? AppColors.indigoNoche.withValues(alpha: 0.25)
+        : AppColors.indigoPalido;
+    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final indigoFg = isDark ? AppColors.indigoDark : AppColors.indigoNoche;
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.indigoPalido,
+        color: bannerBg,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.borderLight),
+        border: Border.all(color: border),
       ),
       child: Row(
         children: [
-          const Icon(Icons.gavel_outlined, color: AppColors.indigoNoche),
+          Icon(Icons.gavel_outlined, color: indigoFg),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               'Esta obra está en subasta. Revisa el estado de la puja en el módulo de Subastas.',
-              style: AppTypography.bodySmall(color: AppColors.indigoNoche),
+              style: AppTypography.bodySmall(color: indigoFg),
             ),
           ),
         ],
@@ -957,14 +1004,15 @@ class _ImagePlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgSubtle = isDark ? AppColors.bgSubtleDark : AppColors.bgSubtleLight;
     return Container(
-      color: AppColors.bgSubtleLight,
+      color: bgSubtle,
       child: const Center(
         child: SizedBox(
           width: 22,
           height: 22,
-          child:
-              CircularProgressIndicator(strokeWidth: 2, color: Colors.white54),
+          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white54),
         ),
       ),
     );
@@ -976,10 +1024,12 @@ class _ImageError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgSubtle = isDark ? AppColors.bgSubtleDark : AppColors.bgSubtleLight;
+    final iconColor = isDark ? AppColors.borderDark : AppColors.borderLight;
     return Container(
-      color: AppColors.bgSubtleLight,
-      child: const Icon(Icons.image_outlined,
-          size: 60, color: AppColors.borderLight),
+      color: bgSubtle,
+      child: Icon(Icons.image_outlined, size: 60, color: iconColor),
     );
   }
 }
@@ -989,10 +1039,12 @@ class _ImageEmpty extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgSubtle = isDark ? AppColors.bgSubtleDark : AppColors.bgSubtleLight;
+    final iconColor = isDark ? AppColors.borderDark : AppColors.borderLight;
     return Container(
-      color: AppColors.bgSubtleLight,
-      child: const Icon(Icons.palette_outlined,
-          size: 60, color: AppColors.borderLight),
+      color: bgSubtle,
+      child: Icon(Icons.palette_outlined, size: 60, color: iconColor),
     );
   }
 }
@@ -1004,9 +1056,17 @@ Future<void> _showShareSheet(BuildContext context, ArtworkModel artwork) async {
   final texto =
       '🎨 ${artwork.titulo} — por ${artwork.artistaNombre}\n\nDescubre esta obra en Nariño Cultura:\n$url';
 
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  final bgCard = Theme.of(context).cardTheme.color ??
+      Theme.of(context).colorScheme.surface;
+  final handleColor =
+      isDark ? AppColors.borderDark : AppColors.borderLight;
+  final titleColor =
+      isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+
   await showModalBottomSheet<void>(
     context: context,
-    backgroundColor: AppColors.bgCardLight,
+    backgroundColor: bgCard,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
@@ -1019,15 +1079,14 @@ Future<void> _showShareSheet(BuildContext context, ArtworkModel artwork) async {
             width: 44,
             height: 4,
             decoration: BoxDecoration(
-              color: AppColors.borderLight,
+              color: handleColor,
               borderRadius: BorderRadius.circular(99),
             ),
           ),
           const SizedBox(height: 16),
           Text(
             'Compartir obra',
-            style: AppTypography.displaySemiBold(
-                color: AppColors.textPrimaryLight),
+            style: AppTypography.displaySemiBold(color: titleColor),
           ),
           const SizedBox(height: 24),
           Row(
@@ -1063,7 +1122,7 @@ Future<void> _showShareSheet(BuildContext context, ArtworkModel artwork) async {
               _ShareOption(
                 icon: Icons.more_horiz,
                 label: 'Más',
-                color: AppColors.textMutedLight,
+                color: isDark ? AppColors.textMutedDark : AppColors.textMutedLight,
                 onTap: () {
                   Share.share(texto);
                   Navigator.pop(context);
@@ -1108,6 +1167,9 @@ class _ShareOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
     return GestureDetector(
       onTap: onTap,
       child: Column(
@@ -1123,8 +1185,7 @@ class _ShareOption extends StatelessWidget {
             child: Icon(icon, color: color, size: 24),
           ),
           const SizedBox(height: 8),
-          Text(label,
-              style: AppTypography.caption(color: AppColors.textMutedLight)),
+          Text(label, style: AppTypography.caption(color: textMuted)),
         ],
       ),
     );

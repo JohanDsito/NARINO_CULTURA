@@ -32,6 +32,7 @@ class SalesHistoryScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncOrders = ref.watch(_salesHistoryProvider);
+    final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -44,9 +45,8 @@ class SalesHistoryScreen extends ConsumerWidget {
         ),
       ),
       body: asyncOrders.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(
-              color: AppColors.tierraProfunda, strokeWidth: 2),
+        loading: () => Center(
+          child: CircularProgressIndicator(color: cs.primary, strokeWidth: 2),
         ),
         error: (e, _) => _ErrorView(message: e.toString()),
         data: (orders) => _SalesBody(orders: orders),
@@ -64,6 +64,10 @@ class _SalesBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+
     final now = DateTime.now();
     final completadas = orders.where((o) => o.isCompletado).toList();
 
@@ -88,7 +92,7 @@ class _SalesBody extends StatelessWidget {
         else ...[
           Text(
             '${orders.length} ${orders.length == 1 ? 'venta' : 'ventas'}',
-            style: AppTypography.bodySmall(color: AppColors.textMutedLight),
+            style: AppTypography.bodySmall(color: textMuted),
           ),
           const SizedBox(height: 10),
           ...orders.map(
@@ -207,11 +211,14 @@ class _SaleCard extends StatelessWidget {
 
   final OrderModel order;
 
-  ({Color bg, Color fg}) get _estadoColors => switch (order.estado) {
+  ({Color bg, Color fg}) _getEstadoColors(bool isDark) => switch (order.estado) {
         'completado' => (bg: AppColors.selvaPalida, fg: AppColors.selvaAndina),
         'pendiente' => (bg: AppColors.oroPalido, fg: AppColors.oroAndino),
         'fallido' => (bg: AppColors.error.withAlpha(10), fg: AppColors.error),
-        _ => (bg: AppColors.bgSubtleLight, fg: AppColors.textMutedLight),
+        _ => (
+            bg: isDark ? AppColors.bgSubtleDark : AppColors.bgSubtleLight,
+            fg: isDark ? AppColors.textMutedDark : AppColors.textMutedLight
+          ),
       };
 
   String get _estadoLabel => switch (order.estado) {
@@ -224,13 +231,24 @@ class _SaleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = _estadoColors;
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final bgCard = theme.cardTheme.color ?? cs.surface;
+    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final textPrimary =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+    final indigoFg = isDark ? AppColors.indigoDark : AppColors.indigoNoche;
+
+    final colors = _getEstadoColors(isDark);
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.bgCardLight,
+        color: bgCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderLight),
+        border: Border.all(color: border),
       ),
       padding: const EdgeInsets.all(14),
       child: Column(
@@ -242,8 +260,7 @@ class _SaleCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   'Orden #${order.id}',
-                  style: AppTypography.labelSemiBold(
-                      color: AppColors.textPrimaryLight),
+                  style: AppTypography.labelSemiBold(color: textPrimary),
                 ),
               ),
               Container(
@@ -263,7 +280,7 @@ class _SaleCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             _fmtDate(order.creadoEn),
-            style: AppTypography.caption(color: AppColors.textMutedLight),
+            style: AppTypography.caption(color: textMuted),
           ),
           const SizedBox(height: 10),
 
@@ -273,14 +290,12 @@ class _SaleCard extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 3),
               child: Row(
                 children: [
-                  const Icon(Icons.fiber_manual_record,
-                      size: 6, color: AppColors.textMutedLight),
+                  Icon(Icons.fiber_manual_record, size: 6, color: textMuted),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       i.obraTitulo,
-                      style: AppTypography.bodySmall(
-                          color: AppColors.textMutedLight),
+                      style: AppTypography.bodySmall(color: textMuted),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -294,13 +309,11 @@ class _SaleCard extends StatelessWidget {
           // ── Total ─────────────────────────────────────────────────────
           Row(
             children: [
-              const Icon(Icons.payments_outlined,
-                  size: 14, color: AppColors.textMutedLight),
+              Icon(Icons.payments_outlined, size: 14, color: textMuted),
               const SizedBox(width: 5),
               Text(
                 order.totalFormateado,
-                style:
-                    AppTypography.labelSemiBold(color: AppColors.indigoNoche),
+                style: AppTypography.labelSemiBold(color: indigoFg),
               ),
             ],
           ),
@@ -317,17 +330,20 @@ class _EmptySales extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final iconColor = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(height: 48),
-          const Icon(Icons.storefront_outlined,
-              size: 56, color: AppColors.borderLight),
+          Icon(Icons.storefront_outlined, size: 56, color: iconColor),
           const SizedBox(height: 14),
           Text(
             'Aún no tienes ventas.',
-            style: AppTypography.bodyMedium(color: AppColors.textMutedLight),
+            style: AppTypography.bodyMedium(color: textMuted),
           ),
         ],
       ),
@@ -344,18 +360,20 @@ class _ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.cloud_off_outlined,
-                size: 48, color: AppColors.textMutedLight),
+            Icon(Icons.cloud_off_outlined, size: 48, color: textMuted),
             const SizedBox(height: 14),
             Text(
               message,
-              style: AppTypography.bodyMedium(color: AppColors.textMutedLight),
+              style: AppTypography.bodyMedium(color: textMuted),
               textAlign: TextAlign.center,
             ),
           ],

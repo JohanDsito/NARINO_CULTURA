@@ -83,9 +83,9 @@ class _FavoritesBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (state.isLoading) {
-      return const Center(
+      return Center(
         child: CircularProgressIndicator(
-            color: AppColors.tierraProfunda, strokeWidth: 2),
+            color: Theme.of(context).colorScheme.primary, strokeWidth: 2),
       );
     }
 
@@ -131,8 +131,9 @@ class _EmptyFavorites extends StatelessWidget {
             onPressed: () => context.go('/catalog'),
             icon: const Icon(Icons.palette_outlined, size: 16),
             label: const Text('Explorar catálogo'),
-            style:
-                TextButton.styleFrom(foregroundColor: AppColors.tierraProfunda),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.primary,
+            ),
           ),
         ],
       ),
@@ -336,7 +337,7 @@ class _RemoveButton extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final bg = isDark
-        ? AppColors.bgCardLight.withValues(alpha: 0.92)
+        ? AppColors.bgCardDark.withValues(alpha: 0.92)
         : Colors.white.withAlpha(92);
     return GestureDetector(
       onTap: onRemove,

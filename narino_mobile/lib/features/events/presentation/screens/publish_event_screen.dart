@@ -309,16 +309,25 @@ class _DateTimeTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final bgSubtle = isDark ? AppColors.bgSubtleDark : AppColors.bgSubtleLight;
+    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final textPrimary =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
     final hasValue = fecha != null;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: AppColors.bgSubtleLight,
+          color: bgSubtle,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: hasValue ? AppColors.tierraProfunda : AppColors.borderLight,
+            color: hasValue ? cs.primary : border,
             width: hasValue ? 1.5 : 1,
           ),
         ),
@@ -327,23 +336,18 @@ class _DateTimeTile extends StatelessWidget {
             Icon(
               Icons.calendar_today_outlined,
               size: 20,
-              color: hasValue
-                  ? AppColors.tierraProfunda
-                  : AppColors.textMutedLight,
+              color: hasValue ? cs.primary : textMuted,
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 _label,
                 style: AppTypography.bodyMedium(
-                  color: hasValue
-                      ? AppColors.textPrimaryLight
-                      : AppColors.textMutedLight,
+                  color: hasValue ? textPrimary : textMuted,
                 ),
               ),
             ),
-            const Icon(Icons.chevron_right,
-                size: 18, color: AppColors.textMutedLight),
+            Icon(Icons.chevron_right, size: 18, color: textMuted),
           ],
         ),
       ),
@@ -368,18 +372,23 @@ class _FlyerPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final textMuted = isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+    final textSecondary =
+        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            const Icon(Icons.image_outlined,
-                size: 16, color: AppColors.textMutedLight),
+            Icon(Icons.image_outlined, size: 16, color: textMuted),
             const SizedBox(width: 6),
             Text(
               'Flyer / imagen',
-              style: AppTypography.labelSemiBold(
-                  color: AppColors.textSecondaryLight),
+              style: AppTypography.labelSemiBold(color: textSecondary),
             ),
             const Spacer(),
             TextButton.icon(
@@ -387,7 +396,7 @@ class _FlyerPicker extends StatelessWidget {
               icon: const Icon(Icons.upload_outlined, size: 16),
               label: Text(file == null ? 'Seleccionar' : 'Cambiar imagen'),
               style: TextButton.styleFrom(
-                foregroundColor: AppColors.tierraProfunda,
+                foregroundColor: cs.primary,
               ),
             ),
           ],

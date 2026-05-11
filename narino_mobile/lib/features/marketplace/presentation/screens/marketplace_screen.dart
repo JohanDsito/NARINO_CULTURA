@@ -64,7 +64,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
           _ResultsCount(count: disponibles.length),
           Expanded(
             child: RefreshIndicator(
-              color: AppColors.tierraProfunda,
+              color: Theme.of(context).colorScheme.primary,
               onRefresh: _refresh,
               child: _MarketplaceBody(
                 artworksState: artworksState,

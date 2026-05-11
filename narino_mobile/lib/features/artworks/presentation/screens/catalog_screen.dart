@@ -521,11 +521,12 @@ class _CardImage extends ConsumerWidget {
                 fit: BoxFit.cover,
                 placeholder: (_, __) => Container(
                   color: bgSubtle,
-                  child: const Center(
+                  child: Center(
                     child: SizedBox(
                       width: 18,
                       height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: cs.primary),
                     ),
                   ),
                 ),

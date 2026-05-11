@@ -384,10 +384,13 @@ class _FlyerImage extends StatelessWidget {
     return Image.network(
       url,
       fit: BoxFit.cover,
-      loadingBuilder: (_, child, progress) {
+      loadingBuilder: (context, child, progress) {
         if (progress == null) return child;
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final bgSubtle =
+            isDark ? AppColors.bgSubtleDark : AppColors.bgSubtleLight;
         return Container(
-          color: AppColors.bgSubtleLight,
+          color: bgSubtle,
           child: const Center(
             child: SizedBox(
               width: 22,
@@ -397,14 +400,17 @@ class _FlyerImage extends StatelessWidget {
           ),
         );
       },
-      errorBuilder: (_, __, ___) => Container(
-        color: AppColors.bgSubtleLight,
-        child: const Icon(
-          Icons.image_outlined,
-          color: AppColors.textMutedLight,
-          size: 60,
-        ),
-      ),
+      errorBuilder: (context, __, ___) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final bgSubtle =
+            isDark ? AppColors.bgSubtleDark : AppColors.bgSubtleLight;
+        final textMuted =
+            isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+        return Container(
+          color: bgSubtle,
+          child: Icon(Icons.image_outlined, color: textMuted, size: 60),
+        );
+      },
     );
   }
 }
@@ -433,15 +439,20 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+    final textSecondary =
+        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 17, color: AppColors.textMutedLight),
+        Icon(icon, size: 17, color: textMuted),
         const SizedBox(width: 10),
         Expanded(
           child: Text(
             text,
-            style: AppTypography.bodySmall(color: AppColors.textSecondaryLight),
+            style: AppTypography.bodySmall(color: textSecondary),
           ),
         ),
       ],
@@ -456,15 +467,18 @@ class _TypePill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final pillBg = isDark ? AppColors.bgSubtleDark : AppColors.tierraPalida;
+    final pillFg = isDark ? AppColors.tierraDark : AppColors.tierraProfunda;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       decoration: BoxDecoration(
-        color: AppColors.tierraPalida,
+        color: pillBg,
         borderRadius: BorderRadius.circular(99),
       ),
       child: Text(
         label,
-        style: AppTypography.caption(color: AppColors.tierraProfunda),
+        style: AppTypography.caption(color: pillFg),
       ),
     );
   }
@@ -475,10 +489,12 @@ class _FeaturedPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final pillBg = isDark ? AppColors.bgSubtleDark : AppColors.oroPalido;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       decoration: BoxDecoration(
-        color: AppColors.oroPalido,
+        color: pillBg,
         borderRadius: BorderRadius.circular(99),
       ),
       child: Text(
@@ -510,9 +526,16 @@ class _ReminderButton extends StatelessWidget {
       child: ElevatedButton.icon(
         onPressed: loading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor:
-              subscribed ? AppColors.bgSubtleLight : AppColors.tierraProfunda,
-          foregroundColor: subscribed ? AppColors.textMutedLight : Colors.white,
+          backgroundColor: subscribed
+              ? (Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.bgSubtleDark
+                  : AppColors.bgSubtleLight)
+              : Theme.of(context).colorScheme.primary,
+          foregroundColor: subscribed
+              ? (Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.textMutedDark
+                  : AppColors.textMutedLight)
+              : Colors.white,
           elevation: subscribed ? 0 : 2,
         ),
         icon: loading

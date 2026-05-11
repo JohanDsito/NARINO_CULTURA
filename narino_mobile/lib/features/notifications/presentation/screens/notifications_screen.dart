@@ -34,16 +34,16 @@ class NotificationsScreen extends ConsumerWidget {
         ],
       ),
       body: RefreshIndicator(
-        color: AppColors.tierraProfunda,
+        color: Theme.of(context).colorScheme.primary,
         onRefresh: () async => ref.read(notificationsProvider.notifier).load(),
         child: asyncNotifs.when(
           loading: () => ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            children: const [
-              SizedBox(height: 140),
+            children: [
+              const SizedBox(height: 140),
               Center(
-                child:
-                    CircularProgressIndicator(color: AppColors.tierraProfunda),
+                child: CircularProgressIndicator(
+                    color: Theme.of(context).colorScheme.primary),
               ),
             ],
           ),
@@ -148,7 +148,9 @@ class _NotificationTile extends StatelessWidget {
                 height: 10,
                 margin: const EdgeInsets.only(top: 6),
                 decoration: BoxDecoration(
-                  color: isUnread ? AppColors.indigoNoche : Colors.transparent,
+                  color: isUnread
+                      ? (isDark ? AppColors.indigoDark : AppColors.indigoNoche)
+                      : Colors.transparent,
                   shape: BoxShape.circle,
                 ),
               ),

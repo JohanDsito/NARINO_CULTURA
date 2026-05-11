@@ -111,7 +111,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             child: Text(
               'Resumen del pedido',
               style: AppTypography.labelSemiBold(
-                  color: AppColors.textPrimaryLight),
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.textPrimaryDark
+                    : AppColors.textPrimaryLight,
+              ),
             ),
           ),
 

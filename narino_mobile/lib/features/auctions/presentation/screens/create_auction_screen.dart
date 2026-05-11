@@ -39,6 +39,7 @@ class _CreateAuctionScreenState extends ConsumerState<CreateAuctionScreen> {
 
   Future<void> _pickStartDateTime() async {
     final now = DateTime.now();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final date = await showDatePicker(
       context: context,
       initialDate: now.add(const Duration(days: 1)),
@@ -46,8 +47,9 @@ class _CreateAuctionScreenState extends ConsumerState<CreateAuctionScreen> {
       lastDate: now.add(const Duration(days: 365)),
       builder: (_, child) => Theme(
         data: ThemeData(
-          colorScheme:
-              const ColorScheme.light(primary: AppColors.tierraProfunda),
+          colorScheme: isDark
+              ? const ColorScheme.dark(primary: AppColors.tierraDark)
+              : const ColorScheme.light(primary: AppColors.tierraProfunda),
         ),
         child: child!,
       ),
@@ -265,14 +267,18 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+    final textSecondary =
+        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
     return Row(
       children: [
-        Icon(icon, size: 16, color: AppColors.textMutedLight),
+        Icon(icon, size: 16, color: textMuted),
         const SizedBox(width: 6),
         Text(
           label,
-          style:
-              AppTypography.labelSemiBold(color: AppColors.textSecondaryLight),
+          style: AppTypography.labelSemiBold(color: textSecondary),
         ),
       ],
     );
@@ -296,12 +302,22 @@ class _DuracionSlider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final bgCard = theme.cardTheme.color ?? cs.surface;
+    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+    final pillBg = isDark ? AppColors.bgSubtleDark : AppColors.tierraPalida;
+    final pillFg = isDark ? AppColors.tierraDark : AppColors.tierraProfunda;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       decoration: BoxDecoration(
-        color: AppColors.bgCardLight,
+        color: bgCard,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.borderLight),
+        border: Border.all(color: border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -311,19 +327,18 @@ class _DuracionSlider extends StatelessWidget {
             children: [
               Text(
                 'Duración',
-                style:
-                    AppTypography.bodyMedium(color: AppColors.textMutedLight),
+                style: AppTypography.bodyMedium(color: textMuted),
               ),
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.tierraPalida,
+                  color: pillBg,
                   borderRadius: BorderRadius.circular(99),
                 ),
                 child: Text(
                   _label,
-                  style: AppTypography.caption(color: AppColors.tierraProfunda),
+                  style: AppTypography.caption(color: pillFg),
                 ),
               ),
             ],
@@ -333,19 +348,15 @@ class _DuracionSlider extends StatelessWidget {
             min: 1,
             max: 30,
             divisions: 29,
-            activeColor: AppColors.tierraProfunda,
-            inactiveColor: AppColors.borderLight,
+            activeColor: cs.primary,
+            inactiveColor: border,
             onChanged: (v) => onChanged(v.round()),
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('1 día',
-                  style:
-                      AppTypography.caption(color: AppColors.textMutedLight)),
-              Text('30 días',
-                  style:
-                      AppTypography.caption(color: AppColors.textMutedLight)),
+              Text('1 día', style: AppTypography.caption(color: textMuted)),
+              Text('30 días', style: AppTypography.caption(color: textMuted)),
             ],
           ),
         ],
@@ -367,15 +378,25 @@ class _DateTimePicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final bgSubtle = isDark ? AppColors.bgSubtleDark : AppColors.bgSubtleLight;
+    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final textPrimary =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: AppColors.bgSubtleLight,
+          color: bgSubtle,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: hasValue ? AppColors.tierraProfunda : AppColors.borderLight,
+            color: hasValue ? cs.primary : border,
             width: hasValue ? 1.5 : 1,
           ),
         ),
@@ -384,26 +405,18 @@ class _DateTimePicker extends StatelessWidget {
             Icon(
               Icons.calendar_today_outlined,
               size: 20,
-              color: hasValue
-                  ? AppColors.tierraProfunda
-                  : AppColors.textMutedLight,
+              color: hasValue ? cs.primary : textMuted,
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 label,
                 style: AppTypography.bodyMedium(
-                  color: hasValue
-                      ? AppColors.textPrimaryLight
-                      : AppColors.textMutedLight,
+                  color: hasValue ? textPrimary : textMuted,
                 ),
               ),
             ),
-            const Icon(
-              Icons.chevron_right,
-              size: 18,
-              color: AppColors.textMutedLight,
-            ),
+            Icon(Icons.chevron_right, size: 18, color: textMuted),
           ],
         ),
       ),
@@ -480,11 +493,11 @@ class _ArtworksLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.all(20),
+    return Padding(
+      padding: const EdgeInsets.all(20),
       child: Center(
         child: CircularProgressIndicator(
-            color: AppColors.tierraProfunda, strokeWidth: 2),
+            color: Theme.of(context).colorScheme.primary, strokeWidth: 2),
       ),
     );
   }
@@ -515,23 +528,30 @@ class _ArtworksEmpty extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final bgCard = theme.cardTheme.color ?? cs.surface;
+    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+    final textSecondary =
+        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.bgCardLight,
+        color: bgCard,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.borderLight),
+        border: Border.all(color: border),
       ),
       child: Row(
         children: [
-          const Icon(Icons.info_outline,
-              size: 18, color: AppColors.textMutedLight),
+          Icon(Icons.info_outline, size: 18, color: textMuted),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               'No tienes obras disponibles para subastar.',
-              style:
-                  AppTypography.bodySmall(color: AppColors.textSecondaryLight),
+              style: AppTypography.bodySmall(color: textSecondary),
             ),
           ),
         ],
