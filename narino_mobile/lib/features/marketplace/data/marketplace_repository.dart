@@ -5,6 +5,7 @@ import '../domain/favorite_model.dart';
 import '../domain/order_model.dart';
 import 'marketplace_service.dart';
 
+/// Repositorio del marketplace: carrito, favoritos, órdenes e integración de pago.
 class MarketplaceRepository {
   MarketplaceRepository({MarketplaceService? service})
       : _service = service ?? MarketplaceService();

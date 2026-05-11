@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +8,8 @@ import '../../../../core/theme/app_typography.dart';
 import '../../domain/cart_item_model.dart';
 import '../providers/cart_provider.dart';
 import '../providers/orders_provider.dart';
+
+// ─── Pantalla principal ───────────────────────────────────────────────────────
 
 class CartScreen extends ConsumerStatefulWidget {
   const CartScreen({super.key});
@@ -21,10 +24,12 @@ class _CartScreenState extends ConsumerState<CartScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(cartProvider.notifier).loadCart();
-    });
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => ref.read(cartProvider.notifier).loadCart(),
+    );
   }
+
+  // ─── Acciones ─────────────────────────────────────────────────────────────
 
   Future<void> _confirmClear() async {
     final confirmed = await showDialog<bool>(
@@ -39,21 +44,31 @@ class _CartScreenState extends ConsumerState<CartScreen> {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
+            ),
             child: const Text('Vaciar'),
           ),
         ],
       ),
     );
-
     if (confirmed != true) return;
+
     final ok = await ref.read(cartProvider.notifier).clearCart();
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(ok
-            ? 'Carrito vaciado.'
-            : (ref.read(cartProvider).errorMessage ?? 'Error')),
-      ),
+    _showSnackBar(
+      ok ? 'Carrito vaciado.' : ref.read(cartProvider).errorMessage ?? 'Error',
+    );
+  }
+
+  Future<void> _removeItem(int itemId) async {
+    final ok = await ref.read(cartProvider.notifier).removeFromCart(itemId);
+    if (!mounted) return;
+    _showSnackBar(
+      ok
+          ? 'Eliminado del carrito.'
+          : ref.read(cartProvider).errorMessage ?? 'Error',
     );
   }
 
@@ -64,11 +79,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
       final order = await ref.read(ordersProvider.notifier).createOrder();
       if (!mounted) return;
       if (order == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(ref.read(ordersProvider).errorMessage ?? 'Error'),
-          ),
-        );
+        _showSnackBar(ref.read(ordersProvider).errorMessage ?? 'Error');
         return;
       }
       context.push('/marketplace/checkout?orderId=${order.id}');
@@ -77,12 +88,19 @@ class _CartScreenState extends ConsumerState<CartScreen> {
     }
   }
 
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  // ─── Build ────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(cartProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.bgLight,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: AppColors.obsidiana,
         foregroundColor: AppColors.oroClaro,
@@ -99,114 +117,170 @@ class _CartScreenState extends ConsumerState<CartScreen> {
             ),
         ],
       ),
-      body: state.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : state.items.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.shopping_bag_outlined,
-                        color: AppColors.textMutedLight,
-                        size: 64,
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        'Tu carrito está vacío.',
-                        style: AppTypography.bodyMedium(
-                          color: AppColors.textMutedLight,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      TextButton(
-                        onPressed: () => context.go('/catalog'),
-                        child: const Text('Ver catálogo'),
-                      ),
-                    ],
-                  ),
-                )
-              : ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
-                  itemCount: state.items.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) => _CartItemCard(
-                    item: state.items[index],
-                    onRemove: () async {
-                      final ok = await ref
-                          .read(cartProvider.notifier)
-                          .removeFromCart(state.items[index].id);
-                      if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            ok
-                                ? 'Eliminado del carrito.'
-                                : (ref.read(cartProvider).errorMessage ??
-                                    'Error'),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-      bottomSheet: Container(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-        decoration: const BoxDecoration(
-          color: AppColors.bgCardLight,
-          border: Border(top: BorderSide(color: AppColors.borderLight)),
+      body: _CartBody(
+        state: state,
+        onRemove: _removeItem,
+      ),
+      bottomSheet: _CartBottomBar(
+        totalFormateado: state.totalFormateado,
+        itemCount: state.itemCount,
+        creatingOrder: _creatingOrder,
+        onCheckout: _goCheckout,
+      ),
+    );
+  }
+}
+
+// ─── Cuerpo del carrito ───────────────────────────────────────────────────────
+
+class _CartBody extends StatelessWidget {
+  const _CartBody({required this.state, required this.onRemove});
+
+  final dynamic state; // CartState
+  final Future<void> Function(int itemId) onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    if (state.isLoading) {
+      return Center(
+        child: CircularProgressIndicator(
+          color: Theme.of(context).colorScheme.primary,
+          strokeWidth: 2,
         ),
-        child: SafeArea(
-          top: false,
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Total',
-                      style: AppTypography.caption(
-                          color: AppColors.textMutedLight),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      state.totalFormateado,
-                      style: AppTypography.labelSemiBold(
-                        color: AppColors.textPrimaryLight,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              FilledButton(
-                onPressed: state.itemCount == 0
-                    ? null
-                    : _creatingOrder
-                        ? null
-                        : _goCheckout,
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.indigoNoche,
-                  foregroundColor: Colors.white,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-                ),
-                child: _creatingOrder
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Ir al checkout'),
-              ),
-            ],
+      );
+    }
+
+    if (state.items.isEmpty) {
+      return _EmptyCart();
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+      itemCount: state.items.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (context, i) => _CartItemCard(
+        item: state.items[i],
+        onRemove: () => onRemove(state.items[i].id),
+      ),
+    );
+  }
+}
+
+class _EmptyCart extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.shopping_bag_outlined, color: textMuted, size: 64),
+          const SizedBox(height: 12),
+          Text(
+            'Tu carrito está vacío.',
+            style: AppTypography.bodyMedium(color: textMuted),
           ),
+          const SizedBox(height: 12),
+          TextButton.icon(
+            onPressed: () => context.go('/catalog'),
+            icon: const Icon(Icons.palette_outlined, size: 16),
+            label: const Text('Ver catálogo'),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.primary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Barra inferior ───────────────────────────────────────────────────────────
+
+class _CartBottomBar extends StatelessWidget {
+  const _CartBottomBar({
+    required this.totalFormateado,
+    required this.itemCount,
+    required this.creatingOrder,
+    required this.onCheckout,
+  });
+
+  final String totalFormateado;
+  final int itemCount;
+  final bool creatingOrder;
+  final VoidCallback onCheckout;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final bgCard = theme.cardTheme.color ?? cs.surface;
+    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final textPrimary =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      decoration: BoxDecoration(
+        color: bgCard,
+        border: Border(top: BorderSide(color: border)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Total',
+                    style: AppTypography.caption(color: textMuted),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    totalFormateado,
+                    style: AppTypography.labelSemiBold(color: textPrimary),
+                  ),
+                ],
+              ),
+            ),
+            FilledButton.icon(
+              onPressed: (itemCount == 0 || creatingOrder) ? null : onCheckout,
+              style: FilledButton.styleFrom(
+                backgroundColor: cs.primary,
+                foregroundColor: cs.onPrimary,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              ),
+              icon: creatingOrder
+                  ? SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: cs.onPrimary,
+                      ),
+                    )
+                  : const Icon(Icons.shopping_cart_checkout_outlined),
+              label: Text(
+                creatingOrder ? 'Procesando...' : 'Ir al checkout',
+                style: AppTypography.labelSemiBold(color: cs.onPrimary),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
+
+// ─── Tarjeta de ítem ──────────────────────────────────────────────────────────
 
 class _CartItemCard extends StatelessWidget {
   const _CartItemCard({required this.item, required this.onRemove});
@@ -216,30 +290,33 @@ class _CartItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final bgCard = theme.cardTheme.color ?? cs.surface;
+    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final textPrimary =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+    final priceColor = isDark ? AppColors.indigoDark : AppColors.indigoNoche;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.bgCardLight,
+        color: bgCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderLight),
+        border: Border.all(color: border),
       ),
+      clipBehavior: Clip.hardEdge,
       child: Row(
         children: [
-          ClipRRect(
-            borderRadius:
-                const BorderRadius.horizontal(left: Radius.circular(16)),
-            child: SizedBox(
-              width: 96,
-              height: 96,
-              child: item.imagenUrl == null
-                  ? Container(color: AppColors.bgSubtleLight)
-                  : Image.network(
-                      item.imagenUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) =>
-                          Container(color: AppColors.bgSubtleLight),
-                    ),
-            ),
+          // Imagen
+          SizedBox(
+            width: 96,
+            height: 96,
+            child: _ItemImage(imageUrl: item.imagenUrl),
           ),
+
+          // Info
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(12),
@@ -250,33 +327,74 @@ class _CartItemCard extends StatelessWidget {
                     item.obraTitulo,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTypography.labelSemiBold(
-                      color: AppColors.textPrimaryLight,
-                    ),
+                    style: AppTypography.labelSemiBold(color: textPrimary),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 3),
                   Text(
                     item.artistaNombre,
-                    style:
-                        AppTypography.caption(color: AppColors.textMutedLight),
+                    style: AppTypography.caption(color: textMuted),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     item.precioFormateado,
-                    style: AppTypography.labelSemiBold(
-                        color: AppColors.indigoNoche),
+                    style: AppTypography.labelSemiBold(color: priceColor),
                   ),
                 ],
               ),
             ),
           ),
+
+          // Botón eliminar
           IconButton(
             onPressed: onRemove,
             icon: const Icon(Icons.close),
-            color: AppColors.textMutedLight,
+            color: textMuted,
             tooltip: 'Eliminar',
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ItemImage extends StatelessWidget {
+  const _ItemImage({required this.imageUrl});
+
+  final String? imageUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    if (imageUrl == null) return const _ImageFallback();
+    return CachedNetworkImage(
+      imageUrl: imageUrl!,
+      fit: BoxFit.cover,
+      placeholder: (_, __) => const _ImageFallback(loading: true),
+      errorWidget: (_, __, ___) => const _ImageFallback(),
+    );
+  }
+}
+
+class _ImageFallback extends StatelessWidget {
+  const _ImageFallback({this.loading = false});
+
+  final bool loading;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgSubtle = isDark ? AppColors.bgSubtleDark : AppColors.bgSubtleLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+    return Container(
+      color: bgSubtle,
+      child: Center(
+        child: loading
+            ? const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : Icon(Icons.image_outlined, color: textMuted),
       ),
     );
   }

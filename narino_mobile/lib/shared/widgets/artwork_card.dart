@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
@@ -13,15 +14,27 @@ class ArtworkCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = artwork.imagenes.isNotEmpty ? artwork.imagenes.first : null;
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final bgCard = theme.cardTheme.color ?? cs.surface;
+    final bgSubtle = isDark ? AppColors.bgSubtleDark : AppColors.bgSubtleLight;
+    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final textPrimary =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+    final priceColor = isDark ? AppColors.indigoDark : AppColors.indigoNoche;
+    final imageUrl =
+        artwork.imagenes.isNotEmpty ? artwork.imagenes.first : null;
 
     return GestureDetector(
       onTap: () => context.go('/artworks/${artwork.id}'),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.bgCardLight,
+          color: bgCard,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.borderLight),
+          border: Border.all(color: border),
         ),
         clipBehavior: Clip.hardEdge,
         child: Column(
@@ -33,24 +46,34 @@ class ArtworkCard extends StatelessWidget {
                 fit: StackFit.expand,
                 children: [
                   if (imageUrl != null)
-                    Image.network(
-                      imageUrl,
+                    CachedNetworkImage(
+                      imageUrl: imageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        color: AppColors.bgSubtleLight,
-                        child: const Icon(
+                      placeholder: (context, _) => Container(
+                        color: bgSubtle,
+                        child: const Center(
+                          child: SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      ),
+                      errorWidget: (context, _, __) => Container(
+                        color: bgSubtle,
+                        child: Icon(
                           Icons.image_outlined,
-                          color: AppColors.borderLight,
+                          color: textMuted,
                           size: 32,
                         ),
                       ),
                     )
                   else
                     Container(
-                      color: AppColors.bgSubtleLight,
-                      child: const Icon(
+                      color: bgSubtle,
+                      child: Icon(
                         Icons.palette_outlined,
-                        color: AppColors.borderLight,
+                        color: textMuted,
                         size: 32,
                       ),
                     ),
@@ -69,7 +92,7 @@ class ArtworkCard extends StatelessWidget {
                       maxLines: compact ? 1 : 2,
                       overflow: TextOverflow.ellipsis,
                       style: AppTypography.labelSemiBold(
-                        color: AppColors.textPrimaryLight,
+                        color: textPrimary,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -78,7 +101,7 @@ class ArtworkCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AppTypography.caption(
-                        color: AppColors.textMutedLight,
+                        color: textMuted,
                       ),
                     ),
                     const Spacer(),
@@ -86,9 +109,7 @@ class ArtworkCard extends StatelessWidget {
                       artwork.precio == null
                           ? 'Precio a consultar'
                           : _fmt(artwork.precio!),
-                      style: (compact
-                              ? AppTypography.caption(color: AppColors.indigoNoche)
-                              : AppTypography.caption(color: AppColors.indigoNoche))
+                      style: AppTypography.caption(color: priceColor)
                           .copyWith(fontSize: compact ? 11 : null),
                     ),
                   ],

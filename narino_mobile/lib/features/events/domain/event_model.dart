@@ -1,3 +1,4 @@
+/// Modelo de dominio que representa un evento cultural en la agenda.
 class EventModel {
   final int id;
   final String nombre;
@@ -9,6 +10,9 @@ class EventModel {
   final List<String> artistasRelacionados;
   final bool esDestacado;
   final bool esPasado;
+  final bool estaSuscrito;
+  final double? latitud;
+  final double? longitud;
 
   const EventModel({
     required this.id,
@@ -21,6 +25,9 @@ class EventModel {
     required this.artistasRelacionados,
     required this.esDestacado,
     required this.esPasado,
+    required this.estaSuscrito,
+    this.latitud,
+    this.longitud,
   });
 
   factory EventModel.fromJson(Map<String, dynamic> json) {
@@ -54,6 +61,9 @@ class EventModel {
       artistasRelacionados: artistasList,
       esDestacado: json['es_destacado'] as bool? ?? false,
       esPasado: parsedFecha.isBefore(DateTime.now()),
+      estaSuscrito: json['esta_suscrito'] as bool? ?? false,
+      latitud: (json['latitud'] as num?)?.toDouble(),
+      longitud: (json['longitud'] as num?)?.toDouble(),
     );
   }
 
@@ -82,7 +92,7 @@ class EventModel {
       'Sep',
       'Oct',
       'Nov',
-      'Dic'
+      'Dic',
     ];
     return '${fecha.day} ${meses[fecha.month - 1]} · ${fecha.hour.toString().padLeft(2, '0')}:${fecha.minute.toString().padLeft(2, '0')}';
   }

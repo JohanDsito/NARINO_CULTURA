@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import '../domain/event_model.dart';
 import 'events_service.dart';
 
+/// Repositorio de eventos: administra lectura de agenda y publicación de eventos.
 class EventsRepository {
   final EventsService _service;
   EventsRepository({EventsService? service})

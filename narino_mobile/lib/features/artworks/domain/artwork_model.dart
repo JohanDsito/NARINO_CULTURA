@@ -1,3 +1,4 @@
+/// Modelo de dominio que representa una obra de arte dentro del catálogo/marketplace.
 class ArtworkModel {
   final int id;
   final String titulo;

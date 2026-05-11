@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/providers/user_role_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../providers/profile_provider.dart';
@@ -56,6 +57,8 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(myProfileProvider);
     final favState = ref.watch(favoritesProvider);
+    final role = ref.watch(currentUserRoleProvider).value;
+    final isArtist = role == 'artista';
 
     if (state.isLoading) {
       return const Scaffold(
@@ -68,7 +71,7 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
     final profile = state.profile;
 
     return Scaffold(
-      backgroundColor: AppColors.bgLight,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -149,7 +152,11 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  const Divider(color: AppColors.borderLight),
+                  Divider(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.borderDark
+                        : AppColors.borderLight,
+                  ),
                   const SizedBox(height: 16),
                   _buildMenuTile(
                     Icons.palette_outlined,
@@ -182,12 +189,19 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                     () => context.push('/marketplace/purchases'),
                   ),
                   _buildMenuTile(
-                    Icons.bar_chart_outlined,
-                    'Mis ventas',
-                    'Historial de ventas (artistas)',
-                    () => context.push('/marketplace/sales'),
+                    Icons.notifications_outlined,
+                    'Notificaciones de eventos',
+                    'Configura qué eventos te interesan',
+                    () => context.push('/events/notification-preferences'),
                   ),
-                  if (profile?.disciplina.trim().isNotEmpty == true)
+                  if (isArtist)
+                    _buildMenuTile(
+                      Icons.bar_chart_outlined,
+                      'Mis ventas',
+                      'Historial de ventas (artistas)',
+                      () => context.push('/marketplace/sales'),
+                    ),
+                  if (isArtist && profile?.disciplina.trim().isNotEmpty == true)
                     _buildMenuTile(
                       Icons.bar_chart_outlined,
                       'Mis estadísticas',
@@ -195,7 +209,11 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                       () => context.push('/profile/stats'),
                     ),
                   const SizedBox(height: 20),
-                  const Divider(color: AppColors.borderLight),
+                  Divider(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.borderDark
+                        : AppColors.borderLight,
+                  ),
                   const SizedBox(height: 16),
                   _buildMenuTile(
                     Icons.alternate_email_outlined,
@@ -216,7 +234,11 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                     () => context.push('/profile/delete-account'),
                   ),
                   const SizedBox(height: 20),
-                  const Divider(color: AppColors.borderLight),
+                  Divider(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.borderDark
+                        : AppColors.borderLight,
+                  ),
                   const SizedBox(height: 8),
                   if (profile?.esVerificado == false)
                     Container(
@@ -280,7 +302,7 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                             child: Text(
                               'Reenviar',
                               style: AppTypography.caption(
-                                color: AppColors.tierraProfunda,
+                                color: Theme.of(context).colorScheme.primary,
                               ),
                             ),
                           ),
@@ -297,17 +319,22 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
   }
 
   Widget _buildStat(String value, String label) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
     return Column(
       children: [
         Text(
           value,
           style: AppTypography.displaySemiBold(
-            color: AppColors.textPrimaryLight,
+            color: textPrimary,
           ).copyWith(fontSize: 20),
         ),
         Text(
           label,
-          style: AppTypography.caption(color: AppColors.textMutedLight),
+          style: AppTypography.caption(color: textMuted),
         ),
       ],
     );
@@ -319,27 +346,34 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
     String subtitle,
     VoidCallback onTap,
   ) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final textPrimary =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+    final iconBg = isDark ? AppColors.bgSubtleDark : AppColors.tierraPalida;
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: Container(
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: AppColors.tierraPalida,
+          color: iconBg,
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Icon(icon, color: AppColors.tierraProfunda, size: 20),
+        child: Icon(icon, color: cs.primary, size: 20),
       ),
       title: Text(
         title,
-        style: AppTypography.labelSemiBold(color: AppColors.textPrimaryLight),
+        style: AppTypography.labelSemiBold(color: textPrimary),
       ),
       subtitle: Text(
         subtitle,
-        style: AppTypography.caption(color: AppColors.textMutedLight),
+        style: AppTypography.caption(color: textMuted),
       ),
-      trailing:
-          const Icon(Icons.chevron_right, color: AppColors.textMutedLight),
+      trailing: Icon(Icons.chevron_right, color: textMuted),
       onTap: onTap,
     );
   }

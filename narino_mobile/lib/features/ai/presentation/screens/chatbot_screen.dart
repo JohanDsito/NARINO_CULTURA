@@ -97,8 +97,15 @@ class _ChatbotScreenState extends State<ChatbotScreen>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final bgCard = theme.cardTheme.color ?? cs.surface;
+    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final textPrimary =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
     return Scaffold(
-      backgroundColor: AppColors.bgLight,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: AppColors.obsidiana,
         foregroundColor: AppColors.oroClaro,
@@ -132,11 +139,9 @@ class _ChatbotScreenState extends State<ChatbotScreen>
                   ),
           ),
           Container(
-            decoration: const BoxDecoration(
-              color: AppColors.bgCardLight,
-              border: Border(
-                top: BorderSide(color: AppColors.borderLight),
-              ),
+            decoration: BoxDecoration(
+              color: bgCard,
+              border: Border(top: BorderSide(color: border)),
             ),
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
             child: SafeArea(
@@ -155,9 +160,7 @@ class _ChatbotScreenState extends State<ChatbotScreen>
                         hintText: 'Escribe tu pregunta...',
                         prefixIcon: Icon(Icons.chat_bubble_outline),
                       ),
-                      style: AppTypography.bodyMedium(
-                        color: AppColors.textPrimaryLight,
-                      ),
+                      style: AppTypography.bodyMedium(color: textPrimary),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -167,22 +170,22 @@ class _ChatbotScreenState extends State<ChatbotScreen>
                     child: ElevatedButton(
                       onPressed: _sending ? null : _send,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.tierraProfunda,
+                        backgroundColor: cs.primary,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                         padding: EdgeInsets.zero,
                       ),
                       child: _sending
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 18,
                               height: 18,
                               child: CircularProgressIndicator(
-                                color: Colors.white,
+                                color: cs.onPrimary,
                                 strokeWidth: 2,
                               ),
                             )
-                          : const Icon(Icons.send, color: Colors.white),
+                          : Icon(Icons.send, color: cs.onPrimary),
                     ),
                   ),
                 ],
@@ -202,29 +205,31 @@ class _EmptyChat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textSecondary =
+        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.chat_bubble_outline,
-              color: AppColors.textMutedLight,
-              size: 72,
-            ),
+            Icon(Icons.chat_bubble_outline, color: textMuted, size: 72),
             const SizedBox(height: 16),
             Text(
               'Pregúntame sobre arte y cultura de Nariño',
               style: AppTypography.displaySemiBold(
-                color: AppColors.textSecondaryLight,
+                color: textSecondary,
               ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
               'Ejemplos: “¿Qué obras hay en Barniz de Pasto?” o “¿Qué eventos hay esta semana?”',
-              style: AppTypography.bodySmall(color: AppColors.textMutedLight),
+              style: AppTypography.bodySmall(color: textMuted),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
@@ -268,20 +273,26 @@ class _ExampleChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final bgCard = theme.cardTheme.color ?? cs.surface;
+    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final textSecondary =
+        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(999),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: AppColors.bgCardLight,
+          color: bgCard,
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: AppColors.borderLight),
+          border: Border.all(color: border),
         ),
         child: Text(
           label,
-          style:
-              AppTypography.labelSemiBold(color: AppColors.textSecondaryLight),
+          style: AppTypography.labelSemiBold(color: textSecondary),
         ),
       ),
     );
@@ -296,10 +307,16 @@ class _ChatBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final bgCard = theme.cardTheme.color ?? cs.surface;
+    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final textPrimary =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
     final isUser = message.isUser;
-    final bubbleColor =
-        isUser ? AppColors.tierraProfunda : AppColors.bgCardLight;
-    final textColor = isUser ? Colors.white : AppColors.textPrimaryLight;
+    final bubbleColor = isUser ? cs.primary : bgCard;
+    final textColor = isUser ? cs.onPrimary : textPrimary;
     final alignment = isUser ? Alignment.centerRight : Alignment.centerLeft;
 
     return Align(
@@ -315,7 +332,7 @@ class _ChatBubble extends StatelessWidget {
             decoration: BoxDecoration(
               color: bubbleColor,
               borderRadius: BorderRadius.circular(14),
-              border: isUser ? null : Border.all(color: AppColors.borderLight),
+              border: isUser ? null : Border.all(color: border),
             ),
             child: message.isTyping
                 ? const _TypingDots()
@@ -391,13 +408,16 @@ class _Dot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
     return Opacity(
       opacity: opacity,
       child: Container(
         width: 6,
         height: 6,
         decoration: BoxDecoration(
-          color: AppColors.textMutedLight,
+          color: textMuted,
           borderRadius: BorderRadius.circular(999),
         ),
       ),

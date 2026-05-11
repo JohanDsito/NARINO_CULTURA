@@ -1,3 +1,4 @@
+/// Modelo de dominio que representa un elemento del portafolio (imagen o video).
 class PortfolioItemModel {
   final int id;
   final String tipo;

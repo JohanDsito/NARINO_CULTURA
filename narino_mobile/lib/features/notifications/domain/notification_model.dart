@@ -1,3 +1,4 @@
+/// Modelo de dominio que representa una notificación generada por el sistema (n8n).
 class NotificationModel {
   final int id;
   final String tipo;
@@ -18,7 +19,8 @@ class NotificationModel {
   });
 
   factory NotificationModel.fromJson(Map<String, dynamic> json) {
-    final created = json['creado_en'] ??
+    final created =
+        json['creado_en'] ??
         json['created_at'] ??
         json['fecha'] ??
         json['timestamp'];
@@ -37,24 +39,27 @@ class NotificationModel {
     final payload = json['data'] is Map
         ? Map<String, dynamic>.from(json['data'] as Map)
         : (json['payload'] is Map
-            ? Map<String, dynamic>.from(json['payload'] as Map)
-            : null);
+              ? Map<String, dynamic>.from(json['payload'] as Map)
+              : null);
 
-    final refId = parseId(
+    final refId =
+        parseId(
           json['referencia_id'] ??
               json['objeto_id'] ??
               json['target_id'] ??
               json['resource_id'],
         ) ??
-        parseId(payload?['id'] ??
-            payload?['obra_id'] ??
-            payload?['artwork_id'] ??
-            payload?['auction_id'] ??
-            payload?['subasta_id'] ??
-            payload?['event_id'] ??
-            payload?['evento_id'] ??
-            payload?['order_id'] ??
-            payload?['compra_id']);
+        parseId(
+          payload?['id'] ??
+              payload?['obra_id'] ??
+              payload?['artwork_id'] ??
+              payload?['auction_id'] ??
+              payload?['subasta_id'] ??
+              payload?['event_id'] ??
+              payload?['evento_id'] ??
+              payload?['order_id'] ??
+              payload?['compra_id'],
+        );
 
     return NotificationModel(
       id: parseId(json['id']) ?? 0,
@@ -69,4 +74,3 @@ class NotificationModel {
     );
   }
 }
-

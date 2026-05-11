@@ -3,6 +3,8 @@ import 'package:dio/dio.dart';
 import '../domain/artwork_model.dart';
 import 'artwork_service.dart';
 
+/// Repositorio de obras: centraliza acceso a catálogo, detalle, publicación,
+/// edición, eliminación y favoritos.
 class ArtworkRepository {
   final ArtworkService _service;
 

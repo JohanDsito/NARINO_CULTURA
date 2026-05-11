@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+/// Modelo genérico para estandarizar respuestas del backend cuando aplica.
 class ApiResponse<T> extends Equatable {
   const ApiResponse({
     required this.data,

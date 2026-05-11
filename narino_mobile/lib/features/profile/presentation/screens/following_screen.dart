@@ -12,9 +12,20 @@ class FollowingScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final followingAsync = ref.watch(followingProvider);
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final bgCard = theme.cardTheme.color ?? cs.surface;
+    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final textPrimary =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final textSecondary =
+        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
 
     return Scaffold(
-      backgroundColor: AppColors.bgLight,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
           'Artistas que sigo',
@@ -27,8 +38,8 @@ class FollowingScreen extends ConsumerWidget {
         ),
       ),
       body: followingAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.tierraProfunda),
+        loading: () => Center(
+          child: CircularProgressIndicator(color: cs.primary),
         ),
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (artists) => artists.isEmpty
@@ -36,23 +47,23 @@ class FollowingScreen extends ConsumerWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.people_outline,
-                      color: AppColors.textMutedLight,
+                      color: textMuted,
                       size: 72,
                     ),
                     const SizedBox(height: 16),
                     Text(
                       'No sigues a ningún artista',
                       style: AppTypography.displaySemiBold(
-                        color: AppColors.textSecondaryLight,
+                        color: textSecondary,
                       ),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       'Explora el catálogo y sigue a los artistas que te gusten',
                       style: AppTypography.bodySmall(
-                        color: AppColors.textMutedLight,
+                        color: textMuted,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -72,11 +83,13 @@ class FollowingScreen extends ConsumerWidget {
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
-                      side: const BorderSide(color: AppColors.borderLight),
+                      side: BorderSide(color: border),
                     ),
-                    tileColor: AppColors.bgCardLight,
+                    tileColor: bgCard,
                     leading: CircleAvatar(
-                      backgroundColor: AppColors.tierraPalida,
+                      backgroundColor: isDark
+                          ? AppColors.bgSubtleDark
+                          : AppColors.tierraPalida,
                       backgroundImage: artist.fotoUrl != null
                           ? NetworkImage(artist.fotoUrl!)
                           : null,
@@ -84,7 +97,7 @@ class FollowingScreen extends ConsumerWidget {
                           ? Text(
                               artist.nombreArtistico[0].toUpperCase(),
                               style: AppTypography.labelSemiBold(
-                                color: AppColors.tierraProfunda,
+                                color: cs.primary,
                               ),
                             )
                           : null,
@@ -92,19 +105,16 @@ class FollowingScreen extends ConsumerWidget {
                     title: Text(
                       artist.nombreArtistico,
                       style: AppTypography.labelSemiBold(
-                        color: AppColors.textPrimaryLight,
+                        color: textPrimary,
                       ),
                     ),
                     subtitle: Text(
                       artist.disciplina,
                       style: AppTypography.caption(
-                        color: AppColors.textMutedLight,
+                        color: textMuted,
                       ),
                     ),
-                    trailing: const Icon(
-                      Icons.chevron_right,
-                      color: AppColors.textMutedLight,
-                    ),
+                    trailing: Icon(Icons.chevron_right, color: textMuted),
                     onTap: () => context.push('/artistas/${artist.id}'),
                   );
                 },

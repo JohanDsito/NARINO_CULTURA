@@ -6,6 +6,7 @@ import '../domain/profile_model.dart';
 import '../domain/portfolio_item_model.dart';
 import 'profile_service.dart';
 
+/// Repositorio de perfil: lectura/edición del perfil y manejo de portafolio y seguimientos.
 class ProfileRepository {
   ProfileRepository({ProfileService? service})
       : _service = service ?? ProfileService();

@@ -3,6 +3,11 @@ import 'package:dio/dio.dart';
 import '../constants/api_constants.dart';
 import 'interceptors/auth_interceptor.dart';
 
+/// Cliente HTTP centralizado de la app basado en Dio.
+///
+/// Usar siempre `ApiClient.instance.dio` para todas las llamadas HTTP para
+/// garantizar que el interceptor JWT esté activo y la configuración sea
+/// consistente en toda la aplicación.
 class ApiClient {
   ApiClient._();
 

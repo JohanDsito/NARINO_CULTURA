@@ -1,22 +1,12 @@
 import 'package:dio/dio.dart';
 
 import '../../../core/constants/api_constants.dart';
+import '../../../core/network/api_client.dart';
 
 class AuthService {
   final Dio _dio;
 
-  AuthService({Dio? dio})
-      : _dio = dio ??
-            Dio(
-              BaseOptions(
-                baseUrl: ApiConstants.baseUrl,
-                connectTimeout:
-                    const Duration(milliseconds: ApiConstants.connectTimeout),
-                receiveTimeout:
-                    const Duration(milliseconds: ApiConstants.receiveTimeout),
-                headers: {'Content-Type': 'application/json'},
-              ),
-            );
+  AuthService({Dio? dio}) : _dio = dio ?? ApiClient.instance.dio;
 
   Future<Map<String, dynamic>> login({
     required String email,
@@ -25,6 +15,8 @@ class AuthService {
     final response = await _dio.post(
       ApiConstants.login,
       data: {'email': email, 'password': password},
+      options:
+          Options(extra: const {'__skipAuth': true, '__skipAuthRefresh': true}),
     );
     return response.data as Map<String, dynamic>;
   }
@@ -43,6 +35,8 @@ class AuthService {
         'password': password,
         'rol': rol,
       },
+      options:
+          Options(extra: const {'__skipAuth': true, '__skipAuthRefresh': true}),
     );
     return response.data as Map<String, dynamic>;
   }

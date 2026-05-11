@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,7 +8,9 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../ai/data/ai_service.dart';
 import '../providers/profile_provider.dart';
 
-final _artistStatsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
+final _artistStatsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
+  ref,
+) async {
   return AiService().getArtistStats();
 });
 
@@ -18,9 +21,14 @@ class ArtistStatsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(myProfileProvider).profile;
     final isArtist = (profile?.disciplina.trim().isNotEmpty ?? false);
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final textPrimary =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
 
     return Scaffold(
-      backgroundColor: AppColors.bgLight,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: AppColors.obsidiana,
         foregroundColor: AppColors.oroClaro,
@@ -31,55 +39,59 @@ class ArtistStatsScreen extends ConsumerWidget {
       ),
       body: !isArtist
           ? const _NotArtistState()
-          : ref.watch(_artistStatsProvider).when(
-                loading: () => const Center(
-                  child: CircularProgressIndicator(color: AppColors.tierraProfunda),
-                ),
-                error: (e, _) => _ErrorBanner(
-                  message: e.toString(),
-                  onRetry: () => ref.invalidate(_artistStatsProvider),
-                ),
-                data: (data) {
-                  final visitasMes = _asInt(data['visitas_mes']);
-                  final visitasTotal = _asInt(data['visitas_total']);
-                  final nuevosSeguidores = _asInt(data['nuevos_seguidores']);
-                  final ingresosMes = _asMoney(data['ingresos_mes']);
-                  final top = _parseTop(data['obras_mas_vistas']);
+          : ref
+                .watch(_artistStatsProvider)
+                .when(
+                  loading: () => Center(
+                    child: CircularProgressIndicator(color: cs.primary),
+                  ),
+                  error: (e, _) => _ErrorBanner(
+                    message: e.toString(),
+                    onRetry: () => ref.invalidate(_artistStatsProvider),
+                  ),
+                  data: (data) {
+                    final visitasMes = _asInt(data['visitas_mes']);
+                    final visitasTotal = _asInt(data['visitas_total']);
+                    final nuevosSeguidores = _asInt(data['nuevos_seguidores']);
+                    final ingresosMes = _asMoney(data['ingresos_mes']);
+                    final top = _parseTop(data['obras_mas_vistas']);
 
-                  return ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
-                    children: [
-                      _StatGrid(
-                        visitasMes: visitasMes,
-                        visitasTotal: visitasTotal,
-                        nuevosSeguidores: nuevosSeguidores,
-                      ),
-                      const SizedBox(height: 12),
-                      _IncomeCard(
-                        value: ingresosMes,
-                        onGoSales: () => context.push('/marketplace/sales'),
-                      ),
-                      const SizedBox(height: 18),
-                      Text(
-                        'Obras más vistas',
-                        style: AppTypography.displaySemiBold(
-                          color: AppColors.textPrimaryLight,
+                    return ListView(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+                      children: [
+                        _StatGrid(
+                          visitasMes: visitasMes,
+                          visitasTotal: visitasTotal,
+                          nuevosSeguidores: nuevosSeguidores,
                         ),
-                      ),
-                      const SizedBox(height: 10),
-                      if (top.isEmpty)
-                        const _EmptyTop()
-                      else
-                        ...top.take(5).map(
-                              (a) => Padding(
-                                padding: const EdgeInsets.only(bottom: 10),
-                                child: _TopArtworkTile(artwork: a),
+                        const SizedBox(height: 12),
+                        _IncomeCard(
+                          value: ingresosMes,
+                          onGoSales: () => context.push('/marketplace/sales'),
+                        ),
+                        const SizedBox(height: 18),
+                        Text(
+                          'Obras más vistas',
+                          style: AppTypography.displaySemiBold(
+                            color: textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        if (top.isEmpty)
+                          const _EmptyTop()
+                        else
+                          ...top
+                              .take(5)
+                              .map(
+                                (a) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 10),
+                                  child: _TopArtworkTile(artwork: a),
+                                ),
                               ),
-                            ),
-                    ],
-                  );
-                },
-              ),
+                      ],
+                    );
+                  },
+                ),
     );
   }
 
@@ -90,10 +102,9 @@ class ArtistStatsScreen extends ConsumerWidget {
 
   String _asMoney(Object? v) {
     final d = double.tryParse(v?.toString() ?? '') ?? 0;
-    final n = d.toStringAsFixed(0).replaceAllMapped(
-          RegExp(r'(\d)(?=(\d{3})+$)'),
-          (m) => '${m[1]}.',
-        );
+    final n = d
+        .toStringAsFixed(0)
+        .replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+$)'), (m) => '${m[1]}.');
     return '\$$n COP';
   }
 
@@ -124,17 +135,11 @@ class _StatGrid extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: _StatCard(
-                label: 'Visitas este mes',
-                value: '$visitasMes',
-              ),
+              child: _StatCard(label: 'Visitas este mes', value: '$visitasMes'),
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: _StatCard(
-                label: 'Visitas total',
-                value: '$visitasTotal',
-              ),
+              child: _StatCard(label: 'Visitas total', value: '$visitasTotal'),
             ),
           ],
         ),
@@ -164,25 +169,28 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final bgCard = theme.cardTheme.color ?? cs.surface;
+    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final textMuted = isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.bgCardLight,
+        color: bgCard,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.borderLight),
+        border: Border.all(color: border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
-            style: AppTypography.caption(color: AppColors.textMutedLight),
+            style: AppTypography.caption(color: textMuted),
           ),
           const SizedBox(height: 8),
-          Text(
-            value,
-            style: AppTypography.price(color: AppColors.oroAndino),
-          ),
+          Text(value, style: AppTypography.price(color: AppColors.oroAndino)),
         ],
       ),
     );
@@ -197,12 +205,18 @@ class _IncomeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final bgCard = theme.cardTheme.color ?? cs.surface;
+    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final textMuted = isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.bgCardLight,
+        color: bgCard,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.borderLight),
+        border: Border.all(color: border),
       ),
       child: Row(
         children: [
@@ -212,12 +226,12 @@ class _IncomeCard extends StatelessWidget {
               children: [
                 Text(
                   'Ingresos del mes',
-                  style: AppTypography.caption(color: AppColors.textMutedLight),
+                  style: AppTypography.caption(color: textMuted),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   value,
-                  style: AppTypography.price(color: AppColors.tierraProfunda),
+                  style: AppTypography.price(color: cs.primary),
                 ),
               ],
             ),
@@ -226,12 +240,14 @@ class _IncomeCard extends StatelessWidget {
           OutlinedButton(
             onPressed: onGoSales,
             style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.tierraProfunda,
-              side: const BorderSide(color: AppColors.borderLight),
+              foregroundColor: cs.primary,
+              side: BorderSide(color: border),
             ),
             child: Text(
               'Ver detalle',
-              style: AppTypography.labelSemiBold(color: AppColors.tierraProfunda),
+              style: AppTypography.labelSemiBold(
+                color: cs.primary,
+              ),
             ),
           ),
         ],
@@ -247,14 +263,27 @@ class _TopArtworkTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final bgCard = theme.cardTheme.color ?? cs.surface;
+    final bgSubtle = isDark ? AppColors.bgSubtleDark : AppColors.bgSubtleLight;
+    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final textPrimary =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final textSecondary =
+        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+    final textMuted = isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.bgCardLight,
+        color: bgCard,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.borderLight),
+        border: Border.all(color: border),
       ),
       child: InkWell(
-        onTap: artwork.id == null ? null : () => context.push('/artworks/${artwork.id}'),
+        onTap: artwork.id == null
+            ? null
+            : () => context.push('/artworks/${artwork.id}'),
         borderRadius: BorderRadius.circular(14),
         child: Padding(
           padding: const EdgeInsets.all(12),
@@ -266,19 +295,37 @@ class _TopArtworkTile extends StatelessWidget {
                     ? Container(
                         width: 54,
                         height: 54,
-                        color: AppColors.bgSubtleLight,
-                        child: const Icon(Icons.image_outlined, color: AppColors.borderLight),
+                        color: bgSubtle,
+                        child: Icon(
+                          Icons.image_outlined,
+                          color: textMuted,
+                        ),
                       )
-                    : Image.network(
-                        artwork.imageUrl!,
+                    : CachedNetworkImage(
+                        imageUrl: artwork.imageUrl!,
                         width: 54,
                         height: 54,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
+                        placeholder: (context, _) => Container(
                           width: 54,
                           height: 54,
-                          color: AppColors.bgSubtleLight,
-                          child: const Icon(Icons.image_not_supported_outlined, color: AppColors.borderLight),
+                          color: bgSubtle,
+                          child: const Center(
+                            child: SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          ),
+                        ),
+                        errorWidget: (context, _, __) => Container(
+                          width: 54,
+                          height: 54,
+                          color: bgSubtle,
+                          child: Icon(
+                            Icons.image_outlined,
+                            color: textMuted,
+                          ),
                         ),
                       ),
               ),
@@ -289,19 +336,23 @@ class _TopArtworkTile extends StatelessWidget {
                   children: [
                     Text(
                       artwork.title ?? 'Obra',
-                      style: AppTypography.labelSemiBold(color: AppColors.textPrimaryLight),
+                      style: AppTypography.labelSemiBold(
+                        color: textPrimary,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
                     Text(
                       '${artwork.visits} visitas',
-                      style: AppTypography.bodySmall(color: AppColors.textSecondaryLight),
+                      style: AppTypography.bodySmall(
+                        color: textSecondary,
+                      ),
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, color: AppColors.textMutedLight),
+              Icon(Icons.chevron_right, color: textMuted),
             ],
           ),
         ),
@@ -315,23 +366,29 @@ class _EmptyTop extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textSecondary =
+        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+    final textMuted = isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.visibility_outlined, color: AppColors.textMutedLight, size: 72),
+            Icon(Icons.visibility_outlined, color: textMuted, size: 72),
             const SizedBox(height: 12),
             Text(
               'Aún no hay datos suficientes',
-              style: AppTypography.displaySemiBold(color: AppColors.textSecondaryLight),
+              style: AppTypography.displaySemiBold(
+                color: textSecondary,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 6),
             Text(
               'Publica y comparte tus obras para ver estadísticas.',
-              style: AppTypography.bodySmall(color: AppColors.textMutedLight),
+              style: AppTypography.bodySmall(color: textMuted),
               textAlign: TextAlign.center,
             ),
           ],
@@ -346,23 +403,29 @@ class _NotArtistState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textSecondary =
+        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+    final textMuted = isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.bar_chart_outlined, color: AppColors.textMutedLight, size: 72),
+            Icon(Icons.bar_chart_outlined, color: textMuted, size: 72),
             const SizedBox(height: 16),
             Text(
               'Estadísticas disponibles para artistas',
-              style: AppTypography.displaySemiBold(color: AppColors.textSecondaryLight),
+              style: AppTypography.displaySemiBold(
+                color: textSecondary,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 6),
             Text(
               'Completa tu perfil como artista para ver visitas, seguidores e ingresos.',
-              style: AppTypography.bodySmall(color: AppColors.textMutedLight),
+              style: AppTypography.bodySmall(color: textMuted),
               textAlign: TextAlign.center,
             ),
           ],
@@ -380,6 +443,10 @@ class _ErrorBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textSecondary =
+        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -398,7 +465,9 @@ class _ErrorBanner extends StatelessWidget {
               const SizedBox(height: 10),
               Text(
                 message,
-                style: AppTypography.bodyMedium(color: AppColors.textSecondaryLight),
+                style: AppTypography.bodyMedium(
+                  color: textSecondary,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
@@ -407,13 +476,15 @@ class _ErrorBanner extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: onRetry,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.tierraProfunda,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    backgroundColor: cs.primary,
+                    foregroundColor: cs.onPrimary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   child: Text(
                     'Reintentar',
-                    style: AppTypography.labelSemiBold(color: Colors.white),
+                    style: AppTypography.labelSemiBold(color: cs.onPrimary),
                   ),
                 ),
               ),
@@ -426,7 +497,12 @@ class _ErrorBanner extends StatelessWidget {
 }
 
 class _TopArtwork {
-  const _TopArtwork({required this.id, required this.title, required this.imageUrl, required this.visits});
+  const _TopArtwork({
+    required this.id,
+    required this.title,
+    required this.imageUrl,
+    required this.visits,
+  });
 
   final int? id;
   final String? title;
@@ -449,9 +525,13 @@ class _TopArtwork {
       title: (json['titulo'] ?? json['title'] ?? '').toString().trim().isEmpty
           ? null
           : (json['titulo'] ?? json['title']).toString(),
-      imageUrl: (json['imagen_url'] ?? json['image_url'] ?? json['imagen'] ?? json['image'])?.toString(),
+      imageUrl:
+          (json['imagen_url'] ??
+                  json['image_url'] ??
+                  json['imagen'] ??
+                  json['image'])
+              ?.toString(),
       visits: parseVisits(json['visitas'] ?? json['views']),
     );
   }
 }
-

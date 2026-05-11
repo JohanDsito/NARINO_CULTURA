@@ -8,6 +8,46 @@ import '../../../../core/theme/app_typography.dart';
 import '../../domain/order_model.dart';
 import '../providers/cart_provider.dart';
 
+// ─── Provider ─────────────────────────────────────────────────────────────────
+
+final _purchaseHistoryProvider = FutureProvider<List<OrderModel>>((ref) async {
+  return ref.read(marketplaceRepositoryProvider).getPurchaseHistory();
+});
+
+// ─── Constantes ───────────────────────────────────────────────────────────────
+
+const _kFiltros = [
+  'todos',
+  'completado',
+  'pendiente',
+  'fallido',
+  'reembolsado'
+];
+
+String _labelFiltro(String v) => switch (v) {
+      'completado' => 'Completado',
+      'pendiente' => 'Pendiente',
+      'fallido' => 'Fallido',
+      'reembolsado' => 'Reembolsado',
+      _ => 'Todos',
+    };
+
+({Color bg, Color fg}) _estadoColors(String estado) => switch (estado) {
+      'completado' => (bg: AppColors.selvaPalida, fg: AppColors.selvaAndina),
+      'pendiente' => (bg: AppColors.oroPalido, fg: AppColors.oroAndino),
+      'fallido' => (bg: AppColors.error.withAlpha(10), fg: AppColors.error),
+      'reembolsado' => (
+          bg: AppColors.bgSubtleLight,
+          fg: AppColors.textMutedLight
+        ),
+      _ => (bg: AppColors.bgSubtleLight, fg: AppColors.textMutedLight),
+    };
+
+String _fmtDate(DateTime d) =>
+    '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+
+// ─── Pantalla principal ───────────────────────────────────────────────────────
+
 class PurchaseHistoryScreen extends ConsumerStatefulWidget {
   const PurchaseHistoryScreen({super.key});
 
@@ -21,101 +61,154 @@ class _PurchaseHistoryScreenState extends ConsumerState<PurchaseHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final future = ref.watch(_purchaseHistoryProvider);
+    final asyncOrders = ref.watch(_purchaseHistoryProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.bgLight,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: AppColors.obsidiana,
         foregroundColor: AppColors.oroClaro,
         title: Text(
-          'Compras',
+          'Mis compras',
           style: AppTypography.displaySemiBold(color: AppColors.oroClaro),
         ),
       ),
-      body: future.when(
+      body: asyncOrders.when(
+        loading: () => const Center(
+          child: CircularProgressIndicator(
+              color: AppColors.tierraProfunda, strokeWidth: 2),
+        ),
+        error: (e, _) => _ErrorView(message: e.toString()),
         data: (orders) {
           final filtered = _estadoFiltro == 'todos'
               ? orders
               : orders.where((o) => o.estado == _estadoFiltro).toList();
 
-          return ListView(
-            padding: const EdgeInsets.all(16),
+          return Column(
             children: [
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    for (final f in const [
-                      'todos',
-                      'completado',
-                      'pendiente',
-                      'fallido',
-                      'reembolsado',
-                    ])
-                      Padding(
-                        padding: const EdgeInsets.only(right: 10),
-                        child: ChoiceChip(
-                          selected: _estadoFiltro == f,
-                          label: Text(_labelFiltro(f)),
-                          onSelected: (_) => setState(() => _estadoFiltro = f),
-                        ),
-                      ),
-                  ],
-                ),
+              _FilterChips(
+                selected: _estadoFiltro,
+                onSelect: (v) => setState(() => _estadoFiltro = v),
               ),
-              const SizedBox(height: 12),
-              if (filtered.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 48),
-                  child: Center(
-                    child: Text(
-                      'No hay compras para este filtro.',
-                      style: AppTypography.bodyMedium(
-                        color: AppColors.textMutedLight,
+              Expanded(
+                child: filtered.isEmpty
+                    ? const _EmptyOrders()
+                    : ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                        itemCount: filtered.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 12),
+                        itemBuilder: (_, i) => _OrderCard(order: filtered[i]),
                       ),
-                    ),
-                  ),
-                )
-              else
-                for (final order in filtered)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _OrderCard(order: order),
-                  ),
+              ),
             ],
           );
         },
-        error: (e, _) => Center(
-          child: Text(
-            e.toString(),
-            style: AppTypography.bodyMedium(color: AppColors.textMutedLight),
-          ),
-        ),
-        loading: () => const Center(child: CircularProgressIndicator()),
       ),
     );
   }
+}
 
-  String _labelFiltro(String v) {
-    switch (v) {
-      case 'completado':
-        return 'Completado';
-      case 'pendiente':
-        return 'Pendiente';
-      case 'fallido':
-        return 'Fallido';
-      case 'reembolsado':
-        return 'Reembolsado';
-      default:
-        return 'Todos';
-    }
+// ─── Filtros ──────────────────────────────────────────────────────────────────
+
+class _FilterChips extends StatelessWidget {
+  const _FilterChips({required this.selected, required this.onSelect});
+
+  final String selected;
+  final ValueChanged<String> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 50,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        itemCount: _kFiltros.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (_, i) {
+          final f = _kFiltros[i];
+          final isSelected = selected == f;
+          return FilterChip(
+            label: Text(
+              _labelFiltro(f),
+              style: AppTypography.caption(
+                color: isSelected
+                    ? AppColors.tierraProfunda
+                    : AppColors.textMutedLight,
+              ),
+            ),
+            selected: isSelected,
+            onSelected: (_) => onSelect(f),
+            backgroundColor: AppColors.bgSubtleLight,
+            selectedColor: AppColors.tierraPalida,
+            checkmarkColor: Colors.transparent,
+            side: BorderSide(
+              color:
+                  isSelected ? AppColors.tierraProfunda : AppColors.borderLight,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(99),
+            ),
+          );
+        },
+      ),
+    );
   }
 }
 
-final _purchaseHistoryProvider = FutureProvider<List<OrderModel>>((ref) async {
-  return ref.read(marketplaceRepositoryProvider).getPurchaseHistory();
-});
+// ─── Estados vacíos y de error ────────────────────────────────────────────────
+
+class _EmptyOrders extends StatelessWidget {
+  const _EmptyOrders();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.receipt_long_outlined,
+              size: 56, color: AppColors.borderLight),
+          const SizedBox(height: 14),
+          Text(
+            'No hay compras para este filtro.',
+            style: AppTypography.bodyMedium(color: AppColors.textMutedLight),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ErrorView extends StatelessWidget {
+  const _ErrorView({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.cloud_off_outlined,
+                size: 48, color: AppColors.textMutedLight),
+            const SizedBox(height: 14),
+            Text(
+              message,
+              style: AppTypography.bodyMedium(color: AppColors.textMutedLight),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Tarjeta de orden ─────────────────────────────────────────────────────────
 
 class _OrderCard extends StatelessWidget {
   const _OrderCard({required this.order});
@@ -124,115 +217,136 @@ class _OrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final badge = _badge(order.estado);
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.bgCardLight,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderLight),
-      ),
-      child: InkWell(
-        onTap: () => context.go('/marketplace/order/${order.id}'),
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Orden #${order.id}',
-                      style: AppTypography.labelSemiBold(
-                        color: AppColors.textPrimaryLight,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: badge.color.withAlpha(18),
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: AppColors.borderLight),
-                    ),
-                    child: Text(
-                      badge.label,
-                      style: AppTypography.caption(color: badge.color),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Text(
-                _fmtDate(order.creadoEn),
-                style: AppTypography.caption(color: AppColors.textMutedLight),
-              ),
-              const SizedBox(height: 10),
-              ...order.items.map(
-                (i) => Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
+    final colors = _estadoColors(order.estado);
+    final label = _labelFiltro(order.estado);
+
+    return InkWell(
+      onTap: () => context.go('/marketplace/order/${order.id}'),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.bgCardLight,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.borderLight),
+        ),
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Encabezado ────────────────────────────────────────────
+            Row(
+              children: [
+                Expanded(
                   child: Text(
-                    '• ${i.obraTitulo}',
-                    style: AppTypography.bodySmall(
-                        color: AppColors.textMutedLight),
+                    'Orden #${order.id}',
+                    style: AppTypography.labelSemiBold(
+                        color: AppColors.textPrimaryLight),
                   ),
                 ),
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      order.totalFormateado,
-                      style: AppTypography.labelSemiBold(
-                        color: AppColors.indigoNoche,
+                _StatusBadge(label: label, colors: colors),
+              ],
+            ),
+            const SizedBox(height: 5),
+            Text(
+              _fmtDate(order.creadoEn),
+              style: AppTypography.caption(color: AppColors.textMutedLight),
+            ),
+            const SizedBox(height: 10),
+
+            // ── Ítems ────────────────────────────────────────────────
+            ...order.items.map(
+              (i) => Padding(
+                padding: const EdgeInsets.only(bottom: 3),
+                child: Row(
+                  children: [
+                    const Icon(Icons.fiber_manual_record,
+                        size: 6, color: AppColors.textMutedLight),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        i.obraTitulo,
+                        style: AppTypography.bodySmall(
+                            color: AppColors.textMutedLight),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                  ),
-                  if (order.isCompletado && order.comprobantePdfUrl != null)
-                    TextButton.icon(
-                      onPressed: () async {
-                        final uri = Uri.tryParse(order.comprobantePdfUrl!);
-                        if (uri != null) {
-                          await launchUrl(
-                            uri,
-                            mode: LaunchMode.externalApplication,
-                          );
-                        }
-                      },
-                      icon: const Icon(Icons.picture_as_pdf_outlined),
-                      label: const Text('Comprobante'),
-                    ),
-                ],
+                  ],
+                ),
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 10),
+
+            // ── Footer ───────────────────────────────────────────────
+            Row(
+              children: [
+                Text(
+                  order.totalFormateado,
+                  style:
+                      AppTypography.labelSemiBold(color: AppColors.indigoNoche),
+                ),
+                const Spacer(),
+                if (order.isCompletado && order.comprobantePdfUrl != null)
+                  _ReceiptButton(url: order.comprobantePdfUrl!),
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
+}
 
-  ({String label, Color color}) _badge(String estado) {
-    switch (estado) {
-      case 'completado':
-        return (label: 'Completado', color: Colors.green);
-      case 'pendiente':
-        return (label: 'Pendiente', color: Colors.orange);
-      case 'fallido':
-        return (label: 'Fallido', color: Colors.red);
-      case 'reembolsado':
-        return (label: 'Reembolsado', color: Colors.grey);
-      default:
-        return (label: estado, color: AppColors.textMutedLight);
-    }
+// ─── Badge de estado ──────────────────────────────────────────────────────────
+
+class _StatusBadge extends StatelessWidget {
+  const _StatusBadge({
+    required this.label,
+    required this.colors,
+  });
+
+  final String label;
+  final ({Color bg, Color fg}) colors;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: colors.bg,
+        borderRadius: BorderRadius.circular(99),
+      ),
+      child: Text(
+        label,
+        style: AppTypography.caption(color: colors.fg),
+      ),
+    );
   }
+}
 
-  String _fmtDate(DateTime d) {
-    final dd = d.day.toString().padLeft(2, '0');
-    final mm = d.month.toString().padLeft(2, '0');
-    final yyyy = d.year.toString();
-    return '$dd/$mm/$yyyy';
+// ─── Botón de comprobante ─────────────────────────────────────────────────────
+
+class _ReceiptButton extends StatelessWidget {
+  const _ReceiptButton({required this.url});
+
+  final String url;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton.icon(
+      onPressed: () async {
+        final uri = Uri.tryParse(url);
+        if (uri != null) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        }
+      },
+      icon: const Icon(Icons.picture_as_pdf_outlined, size: 16),
+      label: const Text('Comprobante'),
+      style: TextButton.styleFrom(
+        foregroundColor: AppColors.tierraProfunda,
+        padding: EdgeInsets.zero,
+        minimumSize: const Size(0, 32),
+      ),
+    );
   }
 }

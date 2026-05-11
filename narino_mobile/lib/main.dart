@@ -6,6 +6,10 @@ import 'core/network/api_client.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  ApiClient.instance.init();
-  runApp(const ProviderScope(child: NarinoCulturaApp()));
+  ApiClient.instance.init(); // interceptor JWT activo
+  runApp(
+    const ProviderScope(
+      child: NarinoCulturaApp(),
+    ),
+  );
 }

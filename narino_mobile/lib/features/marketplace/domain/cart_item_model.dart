@@ -1,3 +1,4 @@
+/// Modelo de dominio que representa un ítem dentro del carrito de compras.
 class CartItemModel {
   const CartItemModel({
     required this.id,

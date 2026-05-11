@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,35 +8,34 @@ import '../../../../core/theme/app_typography.dart';
 import '../../domain/auction_model.dart';
 import '../providers/auctions_provider.dart';
 
+// ─── Constantes ───────────────────────────────────────────────────────────────
+
+const _kEstados = <String?, String>{
+  null: 'Todos',
+  'activa': 'Activa',
+  'cerrada': 'Cerrada',
+  'cancelada': 'Cancelada',
+};
+
+// ─── Pantalla principal ───────────────────────────────────────────────────────
+
 class AuctionHistoryScreen extends ConsumerStatefulWidget {
   const AuctionHistoryScreen({super.key});
 
   @override
-  ConsumerState<AuctionHistoryScreen> createState() => _AuctionHistoryScreenState();
+  ConsumerState<AuctionHistoryScreen> createState() =>
+      _AuctionHistoryScreenState();
 }
 
 class _AuctionHistoryScreenState extends ConsumerState<AuctionHistoryScreen> {
   String? _estado;
-
-  String _labelEstado(String? v) {
-    switch (v) {
-      case 'activa':
-        return 'Activa';
-      case 'cerrada':
-        return 'Cerrada';
-      case 'cancelada':
-        return 'Cancelada';
-      default:
-        return 'Todos';
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: AppColors.bgLight,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
           backgroundColor: AppColors.obsidiana,
           foregroundColor: AppColors.oroClaro,
@@ -55,54 +55,20 @@ class _AuctionHistoryScreenState extends ConsumerState<AuctionHistoryScreen> {
         ),
         body: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: AppColors.bgCardLight,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.borderLight),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String?>(
-                    value: _estado,
-                    isExpanded: true,
-                    dropdownColor: AppColors.bgCardLight,
-                    iconEnabledColor: AppColors.textMutedLight,
-                    items: const [
-                      DropdownMenuItem(value: null, child: Text('Todos')),
-                      DropdownMenuItem(value: 'activa', child: Text('Activa')),
-                      DropdownMenuItem(value: 'cerrada', child: Text('Cerrada')),
-                      DropdownMenuItem(
-                        value: 'cancelada',
-                        child: Text('Cancelada'),
-                      ),
-                    ],
-                    onChanged: (v) => setState(() => _estado = v),
-                  ),
-                ),
-              ),
+            _EstadoFilter(
+              value: _estado,
+              onChanged: (v) => setState(() => _estado = v),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Filtro: ${_labelEstado(_estado)}',
-                  style: AppTypography.caption(color: AppColors.textMutedLight),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
             Expanded(
               child: TabBarView(
                 children: [
                   _HistoryList(
-                    params: AuctionHistoryParams(mode: 'participante', estado: _estado),
+                    params: AuctionHistoryParams(
+                        mode: 'participante', estado: _estado),
                   ),
                   _HistoryList(
-                    params: AuctionHistoryParams(mode: 'artista', estado: _estado),
+                    params:
+                        AuctionHistoryParams(mode: 'artista', estado: _estado),
                   ),
                 ],
               ),
@@ -113,6 +79,68 @@ class _AuctionHistoryScreenState extends ConsumerState<AuctionHistoryScreen> {
     );
   }
 }
+
+// ─── Filtro de estado ─────────────────────────────────────────────────────────
+
+class _EstadoFilter extends StatelessWidget {
+  const _EstadoFilter({required this.value, required this.onChanged});
+
+  final String? value;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      child: Row(
+        children: [
+          const Icon(Icons.filter_list_outlined,
+              size: 18, color: AppColors.textMutedLight),
+          const SizedBox(width: 8),
+          Expanded(
+            child: SizedBox(
+              height: 40,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: _kEstados.entries.map((entry) {
+                  final isSelected = value == entry.key;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: FilterChip(
+                      label: Text(
+                        entry.value,
+                        style: AppTypography.caption(
+                          color: isSelected
+                              ? AppColors.tierraProfunda
+                              : AppColors.textMutedLight,
+                        ),
+                      ),
+                      selected: isSelected,
+                      onSelected: (_) => onChanged(entry.key),
+                      backgroundColor: AppColors.bgSubtleLight,
+                      selectedColor: AppColors.tierraPalida,
+                      checkmarkColor: Colors.transparent,
+                      side: BorderSide(
+                        color: isSelected
+                            ? AppColors.tierraProfunda
+                            : AppColors.borderLight,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Lista del historial ──────────────────────────────────────────────────────
 
 class _HistoryList extends ConsumerWidget {
   const _HistoryList({required this.params});
@@ -125,26 +153,36 @@ class _HistoryList extends ConsumerWidget {
 
     return asyncList.when(
       loading: () => const Center(
-        child: CircularProgressIndicator(color: AppColors.tierraProfunda),
+        child: CircularProgressIndicator(
+            color: AppColors.tierraProfunda, strokeWidth: 2),
       ),
       error: (e, _) => Center(
         child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Text(
-            e.toString(),
-            style: AppTypography.bodySmall(color: AppColors.error),
-            textAlign: TextAlign.center,
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.cloud_off_outlined,
+                  size: 44, color: AppColors.textMutedLight),
+              const SizedBox(height: 12),
+              Text(
+                e.toString(),
+                style: AppTypography.bodySmall(color: AppColors.error),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 14),
+              ElevatedButton.icon(
+                onPressed: () => ref.invalidate(auctionHistoryProvider(params)),
+                icon: const Icon(Icons.refresh),
+                label: const Text('Reintentar'),
+              ),
+            ],
           ),
         ),
       ),
       data: (list) {
         if (list.isEmpty) {
-          return Center(
-            child: Text(
-              'No hay subastas para mostrar.',
-              style: AppTypography.bodyMedium(color: AppColors.textMutedLight),
-            ),
-          );
+          return _EmptyHistory(params: params);
         }
 
         return RefreshIndicator(
@@ -154,7 +192,7 @@ class _HistoryList extends ConsumerWidget {
             await ref.read(auctionHistoryProvider(params).future);
           },
           child: ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
             itemCount: list.length,
             separatorBuilder: (_, __) => const SizedBox(height: 10),
             itemBuilder: (_, i) => _AuctionTile(auction: list[i]),
@@ -165,20 +203,66 @@ class _HistoryList extends ConsumerWidget {
   }
 }
 
+class _EmptyHistory extends StatelessWidget {
+  const _EmptyHistory({required this.params});
+
+  final AuctionHistoryParams params;
+
+  @override
+  Widget build(BuildContext context) {
+    final isPujas = params.mode == 'participante';
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.gavel_outlined,
+                size: 52, color: AppColors.borderLight),
+            const SizedBox(height: 14),
+            Text(
+              isPujas
+                  ? 'Aún no has participado en subastas.'
+                  : 'Aún no has creado subastas.',
+              style: AppTypography.bodyMedium(color: AppColors.textMutedLight),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Tile de subasta ──────────────────────────────────────────────────────────
+
 class _AuctionTile extends StatelessWidget {
   const _AuctionTile({required this.auction});
 
   final AuctionModel auction;
 
+  Color _estadoBg(String estado) => switch (estado) {
+        'activa' => AppColors.indigoPalido,
+        'cerrada' => AppColors.tierraPalida,
+        _ => AppColors.bgSubtleLight,
+      };
+
+  Color _estadoFg(String estado) => switch (estado) {
+        'activa' => AppColors.indigoNoche,
+        'cerrada' => AppColors.tierraProfunda,
+        _ => AppColors.textMutedLight,
+      };
+
+  String _estadoLabel(String estado) => switch (estado) {
+        'activa' => 'Activa',
+        'cerrada' => 'Cerrada',
+        'cancelada' => 'Cancelada',
+        _ => estado,
+      };
+
   @override
   Widget build(BuildContext context) {
     final estado = auction.estado;
-    final estadoLabel = switch (estado) {
-      'activa' => 'Activa',
-      'cerrada' => 'Cerrada',
-      'cancelada' => 'Cancelada',
-      _ => estado,
-    };
 
     return InkWell(
       onTap: () => context.go('/auctions/${auction.id}'),
@@ -189,47 +273,101 @@ class _AuctionTile extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AppColors.borderLight),
         ),
-        child: ListTile(
-          contentPadding: const EdgeInsets.all(12),
-          leading: ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: auction.imagenUrl != null
-                ? Image.network(
-                    auction.imagenUrl!,
-                    width: 54,
-                    height: 54,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      width: 54,
-                      height: 54,
-                      color: AppColors.bgLight,
-                      child: const Icon(Icons.image_not_supported_outlined),
-                    ),
-                  )
-                : Container(
-                    width: 54,
-                    height: 54,
-                    color: AppColors.bgLight,
-                    child: const Icon(Icons.image_outlined),
-                  ),
-          ),
-          title: Text(
-            auction.obraTitulo,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppTypography.labelSemiBold(color: AppColors.textPrimaryLight),
-          ),
-          subtitle: Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: Text(
-              '$estadoLabel · ${auction.totalPujas} pujas · \$${auction.precioActual.toStringAsFixed(0)}',
-              style: AppTypography.bodySmall(color: AppColors.textSecondaryLight),
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            // Imagen
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: _TileImage(imageUrl: auction.imagenUrl),
             ),
-          ),
-          trailing: const Icon(Icons.chevron_right),
+            const SizedBox(width: 12),
+
+            // Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    auction.obraTitulo,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.labelSemiBold(
+                        color: AppColors.textPrimaryLight),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: _estadoBg(estado),
+                          borderRadius: BorderRadius.circular(99),
+                        ),
+                        child: Text(
+                          _estadoLabel(estado),
+                          style:
+                              AppTypography.caption(color: _estadoFg(estado)),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${auction.totalPujas} pujas',
+                        style: AppTypography.caption(
+                            color: AppColors.textMutedLight),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '\$${auction.precioActual.toStringAsFixed(0)}',
+                    style:
+                        AppTypography.labelSemiBold(color: AppColors.oroAndino),
+                  ),
+                ],
+              ),
+            ),
+
+            const Icon(Icons.chevron_right,
+                color: AppColors.textMutedLight, size: 20),
+          ],
         ),
       ),
     );
   }
 }
 
+class _TileImage extends StatelessWidget {
+  const _TileImage({required this.imageUrl});
+
+  final String? imageUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    if (imageUrl == null) {
+      return _PlaceholderBox();
+    }
+    return CachedNetworkImage(
+      imageUrl: imageUrl!,
+      width: 56,
+      height: 56,
+      fit: BoxFit.cover,
+      placeholder: (_, __) => _PlaceholderBox(),
+      errorWidget: (_, __, ___) => _PlaceholderBox(),
+    );
+  }
+}
+
+class _PlaceholderBox extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 56,
+      height: 56,
+      color: AppColors.bgSubtleLight,
+      child: const Icon(Icons.image_outlined,
+          color: AppColors.textMutedLight, size: 24),
+    );
+  }
+}

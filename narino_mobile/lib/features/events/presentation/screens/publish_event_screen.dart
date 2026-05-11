@@ -9,6 +9,19 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../providers/events_provider.dart';
 
+// ─── Constantes ───────────────────────────────────────────────────────────────
+
+const _kTipos = [
+  'concierto',
+  'exposicion',
+  'taller',
+  'feria',
+  'convocatoria',
+  'otro',
+];
+
+// ─── Pantalla principal ───────────────────────────────────────────────────────
+
 class PublishEventScreen extends ConsumerStatefulWidget {
   const PublishEventScreen({super.key});
 
@@ -24,18 +37,12 @@ class _PublishEventScreenState extends ConsumerState<PublishEventScreen> {
   final _descCtrl = TextEditingController();
   final _artistasCtrl = TextEditingController();
 
+  final _lugarFocus = FocusNode();
+  final _descFocus = FocusNode();
+
   DateTime? _fecha;
   String _tipo = 'concierto';
   File? _flyer;
-
-  final List<String> _tipos = const [
-    'concierto',
-    'exposicion',
-    'taller',
-    'feria',
-    'convocatoria',
-    'otro',
-  ];
 
   @override
   void dispose() {
@@ -43,16 +50,17 @@ class _PublishEventScreenState extends ConsumerState<PublishEventScreen> {
     _lugarCtrl.dispose();
     _descCtrl.dispose();
     _artistasCtrl.dispose();
+    _lugarFocus.dispose();
+    _descFocus.dispose();
     super.dispose();
   }
 
+  // ─── Acciones ─────────────────────────────────────────────────────────────
+
   Future<void> _pickFlyer() async {
-    final picker = ImagePicker();
-    final xfile =
-        await picker.pickImage(source: ImageSource.gallery, imageQuality: 92);
-    if (xfile == null) return;
-    final file = File(xfile.path);
-    setState(() => _flyer = file);
+    final xfile = await ImagePicker()
+        .pickImage(source: ImageSource.gallery, imageQuality: 92);
+    if (xfile != null) setState(() => _flyer = File(xfile.path));
   }
 
   Future<void> _pickDateTime() async {
@@ -63,31 +71,26 @@ class _PublishEventScreenState extends ConsumerState<PublishEventScreen> {
       lastDate: DateTime(now.year + 3),
       initialDate: _fecha ?? now,
     );
-    if (!mounted) return;
-    if (date == null) return;
+    if (!mounted || date == null) return;
+
     final time = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.fromDateTime(_fecha ?? now),
     );
-    if (!mounted) return;
-    if (time == null) return;
+    if (!mounted || time == null) return;
+
     setState(() {
       _fecha =
           DateTime(date.year, date.month, date.day, time.hour, time.minute);
     });
   }
 
-  List<String> _parseArtistIds() {
-    final raw = _artistasCtrl.text.trim();
-    if (raw.isEmpty) return [];
-    final parts = raw.split(',');
-    final ids = <String>[];
-    for (final p in parts) {
-      final v = p.trim();
-      if (v.isNotEmpty) ids.add(v);
-    }
-    return ids;
-  }
+  List<String> _parseArtistIds() => _artistasCtrl.text
+      .trim()
+      .split(',')
+      .map((s) => s.trim())
+      .where((s) => s.isNotEmpty)
+      .toList();
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
@@ -124,196 +127,336 @@ class _PublishEventScreenState extends ConsumerState<PublishEventScreen> {
     }
   }
 
+  // ─── Build ────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(eventsProvider);
+    final isLoading = state.isLoading;
 
     return Scaffold(
-      backgroundColor: AppColors.bgLight,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: AppColors.obsidiana,
         foregroundColor: AppColors.oroClaro,
+        leading: const BackButton(color: AppColors.oroClaro),
         title: Text(
           'Publicar evento',
           style: AppTypography.displaySemiBold(color: AppColors.oroClaro),
         ),
-        leading: IconButton(
-          onPressed: () => context.pop(),
-          icon: const Icon(Icons.arrow_back),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // ── Nombre ────────────────────────────────────────────────
+              TextFormField(
+                controller: _nombreCtrl,
+                textCapitalization: TextCapitalization.sentences,
+                textInputAction: TextInputAction.next,
+                enabled: !isLoading,
+                onFieldSubmitted: (_) =>
+                    FocusScope.of(context).requestFocus(_lugarFocus),
+                decoration: const InputDecoration(
+                  labelText: 'Nombre del evento *',
+                  prefixIcon: Icon(Icons.event_outlined),
+                ),
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? 'Campo obligatorio'
+                    : null,
+              ),
+              const SizedBox(height: 14),
+
+              // ── Tipo ──────────────────────────────────────────────────
+              DropdownButtonFormField<String>(
+                initialValue: _tipo,
+                items: _kTipos
+                    .map((t) => DropdownMenuItem(
+                          value: t,
+                          child: Text(t[0].toUpperCase() + t.substring(1)),
+                        ))
+                    .toList(),
+                onChanged: isLoading
+                    ? null
+                    : (v) => setState(() => _tipo = v ?? _tipo),
+                decoration: const InputDecoration(
+                  labelText: 'Tipo de evento',
+                  prefixIcon: Icon(Icons.category_outlined),
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // ── Lugar ─────────────────────────────────────────────────
+              TextFormField(
+                controller: _lugarCtrl,
+                focusNode: _lugarFocus,
+                textInputAction: TextInputAction.next,
+                enabled: !isLoading,
+                onFieldSubmitted: (_) =>
+                    FocusScope.of(context).requestFocus(_descFocus),
+                decoration: const InputDecoration(
+                  labelText: 'Lugar *',
+                  prefixIcon: Icon(Icons.place_outlined),
+                ),
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? 'Campo obligatorio'
+                    : null,
+              ),
+              const SizedBox(height: 14),
+
+              // ── Fecha y hora ──────────────────────────────────────────
+              _DateTimeTile(
+                fecha: _fecha,
+                onTap: isLoading ? null : _pickDateTime,
+              ),
+              const SizedBox(height: 14),
+
+              // ── Descripción ───────────────────────────────────────────
+              TextFormField(
+                controller: _descCtrl,
+                focusNode: _descFocus,
+                maxLines: 4,
+                textCapitalization: TextCapitalization.sentences,
+                enabled: !isLoading,
+                decoration: const InputDecoration(
+                  labelText: 'Descripción *',
+                  alignLabelWithHint: true,
+                  prefixIcon: Padding(
+                    padding: EdgeInsets.only(bottom: 56),
+                    child: Icon(Icons.notes_outlined),
+                  ),
+                ),
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? 'Campo obligatorio'
+                    : null,
+              ),
+              const SizedBox(height: 14),
+
+              // ── Artistas ──────────────────────────────────────────────
+              TextFormField(
+                controller: _artistasCtrl,
+                enabled: !isLoading,
+                decoration: const InputDecoration(
+                  labelText: 'Artistas relacionados (IDs, separados por coma)',
+                  prefixIcon: Icon(Icons.people_outline),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // ── Flyer ─────────────────────────────────────────────────
+              _FlyerPicker(
+                file: _flyer,
+                disabled: isLoading,
+                onPick: _pickFlyer,
+                onRemove: () => setState(() => _flyer = null),
+              ),
+
+              // ── Error ─────────────────────────────────────────────────
+              if (state.hasError) ...[
+                const SizedBox(height: 12),
+                _ErrorBanner(message: state.errorMessage!),
+              ],
+
+              const SizedBox(height: 24),
+
+              // ── Botón ─────────────────────────────────────────────────
+              SizedBox(
+                height: 52,
+                child: ElevatedButton.icon(
+                  onPressed: isLoading ? null : _submit,
+                  icon: isLoading
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2),
+                        )
+                      : const Icon(Icons.publish_outlined),
+                  label: Text(
+                    isLoading ? 'Publicando...' : 'Publicar evento',
+                    style: AppTypography.buttonText(color: Colors.white),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.bgCardLight,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.borderLight),
+    );
+  }
+}
+
+// ─── Selector de fecha/hora ───────────────────────────────────────────────────
+
+class _DateTimeTile extends StatelessWidget {
+  const _DateTimeTile({required this.fecha, required this.onTap});
+
+  final DateTime? fecha;
+  final VoidCallback? onTap;
+
+  String get _label {
+    if (fecha == null) return 'Fecha y hora *';
+    final dd = fecha!.day.toString().padLeft(2, '0');
+    final mm = fecha!.month.toString().padLeft(2, '0');
+    final hh = fecha!.hour.toString().padLeft(2, '0');
+    final mi = fecha!.minute.toString().padLeft(2, '0');
+    return '$dd/$mm/${fecha!.year}  ·  $hh:$mi';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasValue = fecha != null;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: AppColors.bgSubtleLight,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: hasValue ? AppColors.tierraProfunda : AppColors.borderLight,
+            width: hasValue ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.calendar_today_outlined,
+              size: 20,
+              color: hasValue
+                  ? AppColors.tierraProfunda
+                  : AppColors.textMutedLight,
             ),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextFormField(
-                    controller: _nombreCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Nombre del evento',
-                      prefixIcon: Icon(Icons.event_outlined),
-                    ),
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) {
-                        return 'Campo obligatorio';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    key: ValueKey('tipo_$_tipo'),
-                    initialValue: _tipo,
-                    items: _tipos
-                        .map(
-                          (t) => DropdownMenuItem(
-                            value: t,
-                            child: Text(t[0].toUpperCase() + t.substring(1)),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (v) => setState(() => _tipo = v ?? _tipo),
-                    decoration: const InputDecoration(
-                      labelText: 'Tipo',
-                      prefixIcon: Icon(Icons.category_outlined),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _lugarCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Lugar',
-                      prefixIcon: Icon(Icons.place_outlined),
-                    ),
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) {
-                        return 'Campo obligatorio';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _descCtrl,
-                    maxLines: 4,
-                    decoration: const InputDecoration(
-                      labelText: 'Descripción',
-                      prefixIcon: Icon(Icons.notes_outlined),
-                    ),
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) {
-                        return 'Campo obligatorio';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 14),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          _fecha == null
-                              ? 'Fecha y hora'
-                              : 'Fecha: ${_fmtDateTime(_fecha!)}',
-                          style: AppTypography.bodySmall(
-                            color: AppColors.textSecondaryLight,
-                          ),
-                        ),
-                      ),
-                      FilledButton.tonal(
-                        onPressed: _pickDateTime,
-                        child: const Text('Elegir'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  TextFormField(
-                    controller: _artistasCtrl,
-                    decoration: const InputDecoration(
-                      labelText:
-                          'Artistas relacionados (IDs separados por coma)',
-                      prefixIcon: Icon(Icons.person_outline),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Flyer / imagen',
-                          style: AppTypography.bodySmall(
-                            color: AppColors.textSecondaryLight,
-                          ),
-                        ),
-                      ),
-                      FilledButton.tonal(
-                        onPressed: _pickFlyer,
-                        child: const Text('Seleccionar'),
-                      ),
-                    ],
-                  ),
-                  if (_flyer != null) ...[
-                    const SizedBox(height: 10),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.file(
-                        _flyer!,
-                        height: 160,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ],
-                  if (state.hasError) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      state.errorMessage!,
-                      style: AppTypography.bodySmall(color: AppColors.error),
-                    ),
-                  ],
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    height: 48,
-                    child: FilledButton(
-                      onPressed: state.isLoading ? null : _submit,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.indigoNoche,
-                        foregroundColor: Colors.white,
-                      ),
-                      child: state.isLoading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text('Publicar'),
-                    ),
-                  ),
-                ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                _label,
+                style: AppTypography.bodyMedium(
+                  color: hasValue
+                      ? AppColors.textPrimaryLight
+                      : AppColors.textMutedLight,
+                ),
               ),
+            ),
+            const Icon(Icons.chevron_right,
+                size: 18, color: AppColors.textMutedLight),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Selector de flyer ────────────────────────────────────────────────────────
+
+class _FlyerPicker extends StatelessWidget {
+  const _FlyerPicker({
+    required this.file,
+    required this.disabled,
+    required this.onPick,
+    required this.onRemove,
+  });
+
+  final File? file;
+  final bool disabled;
+  final VoidCallback onPick;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.image_outlined,
+                size: 16, color: AppColors.textMutedLight),
+            const SizedBox(width: 6),
+            Text(
+              'Flyer / imagen',
+              style: AppTypography.labelSemiBold(
+                  color: AppColors.textSecondaryLight),
+            ),
+            const Spacer(),
+            TextButton.icon(
+              onPressed: disabled ? null : onPick,
+              icon: const Icon(Icons.upload_outlined, size: 16),
+              label: Text(file == null ? 'Seleccionar' : 'Cambiar imagen'),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.tierraProfunda,
+              ),
+            ),
+          ],
+        ),
+        if (file != null) ...[
+          const SizedBox(height: 8),
+          Stack(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.file(
+                  file!,
+                  height: 160,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: GestureDetector(
+                  onTap: disabled ? null : onRemove,
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                    child:
+                        const Icon(Icons.close, color: Colors.white, size: 16),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+// ─── Banner de error ──────────────────────────────────────────────────────────
+
+class _ErrorBanner extends StatelessWidget {
+  const _ErrorBanner({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.error.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.error.withValues(alpha: 0.30)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.error_outline, color: AppColors.error, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: AppTypography.bodySmall(color: AppColors.error),
             ),
           ),
         ],
       ),
     );
   }
-}
-
-String _fmtDateTime(DateTime d) {
-  final dd = d.day.toString().padLeft(2, '0');
-  final mm = d.month.toString().padLeft(2, '0');
-  final yyyy = d.year.toString();
-  final hh = d.hour.toString().padLeft(2, '0');
-  final mi = d.minute.toString().padLeft(2, '0');
-  return '$dd/$mm/$yyyy $hh:$mi';
 }

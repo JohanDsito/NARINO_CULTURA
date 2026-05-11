@@ -16,6 +16,7 @@ import 'features/auth/presentation/screens/forgot_password_screen.dart';
 import 'features/events/presentation/screens/events_screen.dart';
 import 'features/events/presentation/screens/event_detail_screen.dart';
 import 'features/events/presentation/screens/publish_event_screen.dart';
+import 'features/events/presentation/screens/event_notification_preferences_screen.dart';
 import 'features/home/presentation/screens/home_screen.dart';
 import 'features/marketplace/presentation/screens/marketplace_screen.dart';
 import 'features/marketplace/presentation/screens/cart_screen.dart';
@@ -171,6 +172,10 @@ final _routerProvider = Provider<GoRouter>((ref) {
             builder: (_, __) => const PublishEventScreen(),
           ),
           GoRoute(
+            path: '/events/notification-preferences',
+            builder: (_, __) => const EventNotificationPreferencesScreen(),
+          ),
+          GoRoute(
             path: '/events/:id',
             builder: (context, state) => EventDetailScreen(
               eventId: int.parse(state.pathParameters['id']!),
@@ -240,7 +245,7 @@ class NarinoCulturaApp extends ConsumerWidget {
   }
 }
 
-class MainShell extends StatelessWidget {
+class MainShell extends ConsumerStatefulWidget {
   const MainShell({
     super.key,
     required this.child,
@@ -251,43 +256,68 @@ class MainShell extends StatelessWidget {
   final String location;
 
   static const _tabs = <_ShellTab>[
-    _ShellTab(path: '/home', label: 'Inicio', icon: Icons.home_outlined),
+    _ShellTab(
+      path: '/home',
+      label: 'Inicio',
+      iconOutlined: Icons.home_outlined,
+      iconFilled: Icons.home,
+    ),
     _ShellTab(
       path: '/catalog',
       label: 'Catálogo',
-      icon: Icons.grid_view_outlined,
+      iconOutlined: Icons.grid_view_outlined,
+      iconFilled: Icons.grid_view,
     ),
     _ShellTab(
       path: '/marketplace',
       label: 'Tienda',
-      icon: Icons.storefront_outlined,
+      iconOutlined: Icons.storefront_outlined,
+      iconFilled: Icons.storefront,
     ),
-    _ShellTab(path: '/auctions', label: 'Subastas', icon: Icons.gavel_outlined),
+    _ShellTab(
+      path: '/auctions',
+      label: 'Subastas',
+      iconOutlined: Icons.gavel_outlined,
+      iconFilled: Icons.gavel,
+    ),
     _ShellTab(
       path: '/events',
       label: 'Eventos',
-      icon: Icons.event_outlined,
+      iconOutlined: Icons.event_outlined,
+      iconFilled: Icons.event,
     ),
-    _ShellTab(path: '/profile', label: 'Perfil', icon: Icons.person_outline),
+    _ShellTab(
+      path: '/profile',
+      label: 'Perfil',
+      iconOutlined: Icons.person_outline,
+      iconFilled: Icons.person,
+    ),
   ];
 
+  @override
+  ConsumerState<MainShell> createState() => _MainShellState();
+}
+
+class _MainShellState extends ConsumerState<MainShell> {
   int get _currentIndex {
-    final idx = _tabs.indexWhere((t) => location.startsWith(t.path));
+    final idx =
+        MainShell._tabs.indexWhere((t) => widget.location.startsWith(t.path));
     return idx < 0 ? 0 : idx;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: child,
+      body: widget.child,
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
-        onTap: (index) => context.go(_tabs[index].path),
+        onTap: (index) => context.go(MainShell._tabs[index].path),
         selectedItemColor: AppColors.tierraProfunda,
         items: [
-          for (final tab in _tabs)
+          for (final tab in MainShell._tabs)
             BottomNavigationBarItem(
-              icon: Icon(tab.icon),
+              icon: Icon(tab.iconOutlined),
+              activeIcon: Icon(tab.iconFilled),
               label: tab.label,
             ),
         ],
@@ -300,10 +330,12 @@ class _ShellTab {
   const _ShellTab({
     required this.path,
     required this.label,
-    required this.icon,
+    required this.iconOutlined,
+    required this.iconFilled,
   });
 
   final String path;
   final String label;
-  final IconData icon;
+  final IconData iconOutlined;
+  final IconData iconFilled;
 }

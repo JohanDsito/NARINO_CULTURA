@@ -82,7 +82,7 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
     final isLoading = state.isLoading;
 
     return Scaffold(
-      backgroundColor: AppColors.bgLight,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: AppColors.obsidiana,
         foregroundColor: AppColors.oroClaro,
@@ -116,13 +116,17 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
                     'Se desactivará tu cuenta y perderás acceso a tus datos y funcionalidades. '
                     'El backend enviará un correo confirmando el proceso.',
                     style: AppTypography.bodyMedium(
-                        color: AppColors.textPrimaryLight),
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.textPrimaryDark
+                            : AppColors.textPrimaryLight),
                   ),
                   const SizedBox(height: 10),
                   Text(
                     'Si tienes subastas activas, no podrás continuar.',
                     style: AppTypography.bodyMedium(
-                        color: AppColors.textSecondaryLight),
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textSecondaryLight),
                   ),
                 ],
               ),
@@ -148,9 +152,14 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.bgCardLight,
+                color: Theme.of(context).cardTheme.color ??
+                    Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.borderLight),
+                border: Border.all(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.borderDark
+                      : AppColors.borderLight,
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -158,7 +167,9 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
                   Text(
                     'Confirma tu contraseña',
                     style: AppTypography.labelSemiBold(
-                      color: AppColors.textPrimaryLight,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.textPrimaryDark
+                          : AppColors.textPrimaryLight,
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -184,7 +195,10 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
                         child: Text(
                           'Entiendo que esta acción es irreversible.',
                           style: AppTypography.bodyMedium(
-                            color: AppColors.textSecondaryLight,
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? AppColors.textSecondaryDark
+                                    : AppColors.textSecondaryLight,
                           ),
                         ),
                       ),
@@ -197,22 +211,23 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.error,
-                        foregroundColor: Colors.white,
+                        foregroundColor: Theme.of(context).colorScheme.onError,
                       ),
                       onPressed: isLoading ? null : _submit,
                       child: isLoading
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 18,
                               height: 18,
                               child: CircularProgressIndicator(
-                                color: Colors.white,
+                                color: Theme.of(context).colorScheme.onError,
                                 strokeWidth: 2,
                               ),
                             )
                           : Text(
                               'Eliminar mi cuenta',
-                              style:
-                                  AppTypography.buttonText(color: Colors.white),
+                              style: AppTypography.buttonText(
+                                color: Theme.of(context).colorScheme.onError,
+                              ),
                             ),
                     ),
                   ),

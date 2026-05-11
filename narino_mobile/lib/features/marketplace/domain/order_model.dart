@@ -1,3 +1,4 @@
+/// Modelo de dominio que representa una orden de compra/venta en el marketplace.
 class OrderModel {
   const OrderModel({
     required this.id,

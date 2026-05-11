@@ -1,7 +1,9 @@
+import 'env_constants.dart';
+
 class ApiConstants {
   ApiConstants._();
 
-  static const String baseUrl = 'http://10.0.2.2:8000/api/v1';
+  static String get baseUrl => EnvConstants.apiBaseUrl;
 
   static const String login = '/auth/login/';
   static const String register = '/auth/register/';
@@ -78,4 +80,8 @@ class ApiConstants {
   static const String notifications = '/notifications/';
   static const String notificationRead = '/notifications/{id}/read/';
   static const String notificationsReadAll = '/notifications/read-all/';
+
+  // Preferencias de notificación de eventos (HU-34)
+  static const String eventNotificationPreferences =
+      '/notifications/event-preferences/';
 }

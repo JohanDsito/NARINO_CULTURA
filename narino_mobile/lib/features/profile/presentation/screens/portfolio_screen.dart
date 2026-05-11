@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -87,7 +88,7 @@ class _PortfolioScreenState extends ConsumerState<PortfolioScreen> {
     final state = ref.watch(myProfileProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.bgLight,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
           'Mi portafolio (${state.portfolio.length}/30)',
@@ -154,13 +155,23 @@ class _PortfolioScreenState extends ConsumerState<PortfolioScreen> {
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: item.isImage
-              ? Image.network(
-                  item.url,
+              ? CachedNetworkImage(
+                  imageUrl: item.url,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
+                  placeholder: (context, _) => Container(
+                    color: AppColors.bgSubtleLight,
+                    child: const Center(
+                      child: SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ),
+                  ),
+                  errorWidget: (context, _, __) => Container(
                     color: AppColors.bgSubtleLight,
                     child: const Icon(
-                      Icons.broken_image_outlined,
+                      Icons.image_outlined,
                       color: AppColors.textMutedLight,
                     ),
                   ),

@@ -92,7 +92,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     if (state.profile != null) _initFrom(state.profile!);
 
     return Scaffold(
-      backgroundColor: AppColors.bgLight,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
           'Editar perfil',
@@ -117,6 +117,17 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   Widget _buildPreview(profile) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final bgCard = theme.cardTheme.color ?? cs.surface;
+    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final textPrimary =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final textSecondary =
+        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -124,14 +135,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-                color: AppColors.bgCardLight,
+                color: bgCard,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.borderLight)),
+                border: Border.all(color: border)),
             child: Column(
               children: [
                 CircleAvatar(
                   radius: 48,
-                  backgroundColor: AppColors.tierraPalida,
+                  backgroundColor:
+                      isDark ? AppColors.bgSubtleDark : AppColors.tierraPalida,
                   backgroundImage: _nuevaFoto != null
                       ? FileImage(_nuevaFoto!) as ImageProvider
                       : (profile?.fotoUrl != null
@@ -142,8 +154,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           _nombreCtrl.text.isNotEmpty
                               ? _nombreCtrl.text[0].toUpperCase()
                               : '?',
-                          style: AppTypography.displayBold(
-                              color: AppColors.tierraProfunda))
+                          style: AppTypography.displayBold(color: cs.primary))
                       : null,
                 ),
                 const SizedBox(height: 12),
@@ -151,16 +162,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     _nombreCtrl.text.isEmpty
                         ? 'Nombre artístico'
                         : _nombreCtrl.text,
-                    style: AppTypography.displaySemiBold(
-                        color: AppColors.textPrimaryLight)),
+                    style: AppTypography.displaySemiBold(color: textPrimary)),
                 Text(_disciplina ?? '',
-                    style: AppTypography.quoteItalic(
-                        color: AppColors.textMutedLight)),
+                    style: AppTypography.quoteItalic(color: textMuted)),
                 if (_bioCtrl.text.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   Text(_bioCtrl.text,
-                      style: AppTypography.bodyMedium(
-                          color: AppColors.textSecondaryLight),
+                      style: AppTypography.bodyMedium(color: textSecondary),
                       textAlign: TextAlign.center),
                 ],
               ],
@@ -168,7 +176,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           ),
           const SizedBox(height: 20),
           Text('Esta es la vista previa de tu perfil público.',
-              style: AppTypography.caption(color: AppColors.textMutedLight),
+              style: AppTypography.caption(color: textMuted),
               textAlign: TextAlign.center),
           const SizedBox(height: 20),
           SizedBox(
@@ -177,7 +185,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             child: ElevatedButton(
                 onPressed: _save,
                 child: Text('Guardar cambios',
-                    style: AppTypography.buttonText(color: Colors.white))),
+                    style: AppTypography.buttonText(color: cs.onPrimary))),
           ),
         ],
       ),
@@ -185,6 +193,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   Widget _buildForm(ProfileState state) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final textPrimary =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final textSecondary =
+        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Form(
@@ -217,11 +234,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       right: 0,
                       child: Container(
                         padding: const EdgeInsets.all(6),
-                        decoration: const BoxDecoration(
-                            color: AppColors.tierraProfunda,
-                            shape: BoxShape.circle),
-                        child: const Icon(Icons.camera_alt_outlined,
-                            color: Colors.white, size: 16),
+                        decoration: BoxDecoration(
+                          color: cs.primary,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.camera_alt_outlined,
+                          color: cs.onPrimary,
+                          size: 16,
+                        ),
                       ),
                     ),
                   ],
@@ -231,14 +252,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             const SizedBox(height: 6),
             Center(
                 child: Text('JPG/PNG · máx. 5 MB',
-                    style: AppTypography.caption(
-                        color: AppColors.textMutedLight))),
+                    style: AppTypography.caption(color: textMuted))),
             const SizedBox(height: 20),
 
             TextFormField(
               controller: _nombreCtrl,
-              style:
-                  AppTypography.bodyMedium(color: AppColors.textPrimaryLight),
+              style: AppTypography.bodyMedium(color: textPrimary),
               decoration: const InputDecoration(
                   labelText: 'Nombre artístico *',
                   prefixIcon: Icon(Icons.person_outline)),
@@ -253,8 +272,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               decoration: const InputDecoration(
                   labelText: 'Disciplina *',
                   prefixIcon: Icon(Icons.brush_outlined)),
-              style:
-                  AppTypography.bodyMedium(color: AppColors.textPrimaryLight),
+              style: AppTypography.bodyMedium(color: textPrimary),
               items: ArtisticDisciplines.all
                   .map((d) => DropdownMenuItem(value: d, child: Text(d)))
                   .toList(),
@@ -267,8 +285,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               controller: _bioCtrl,
               maxLines: 5,
               maxLength: 500,
-              style:
-                  AppTypography.bodyMedium(color: AppColors.textPrimaryLight),
+              style: AppTypography.bodyMedium(color: textPrimary),
               decoration: const InputDecoration(
                   labelText: 'Biografía (opcional)',
                   prefixIcon: Icon(Icons.description_outlined),
@@ -278,28 +295,24 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
             // Redes sociales (HU-10: hasta 3)
             Text('Redes sociales',
-                style: AppTypography.labelSemiBold(
-                    color: AppColors.textSecondaryLight)),
+                style: AppTypography.labelSemiBold(color: textSecondary)),
             const SizedBox(height: 10),
             TextFormField(
                 controller: _igCtrl,
-                style:
-                    AppTypography.bodyMedium(color: AppColors.textPrimaryLight),
+                style: AppTypography.bodyMedium(color: textPrimary),
                 decoration: const InputDecoration(
                     labelText: 'Instagram (URL)',
                     prefixIcon: Icon(Icons.link))),
             const SizedBox(height: 10),
             TextFormField(
                 controller: _fbCtrl,
-                style:
-                    AppTypography.bodyMedium(color: AppColors.textPrimaryLight),
+                style: AppTypography.bodyMedium(color: textPrimary),
                 decoration: const InputDecoration(
                     labelText: 'Facebook (URL)', prefixIcon: Icon(Icons.link))),
             const SizedBox(height: 10),
             TextFormField(
                 controller: _ttCtrl,
-                style:
-                    AppTypography.bodyMedium(color: AppColors.textPrimaryLight),
+                style: AppTypography.bodyMedium(color: textPrimary),
                 decoration: const InputDecoration(
                     labelText: 'TikTok (URL)', prefixIcon: Icon(Icons.link))),
             const SizedBox(height: 28),
@@ -323,13 +336,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               child: ElevatedButton(
                 onPressed: state.isSaving ? null : _save,
                 child: state.isSaving
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2))
+                          color: cs.onPrimary,
+                          strokeWidth: 2,
+                        ))
                     : Text('Guardar cambios',
-                        style: AppTypography.buttonText(color: Colors.white)),
+                        style: AppTypography.buttonText(color: cs.onPrimary)),
               ),
             ),
             const SizedBox(height: 20),

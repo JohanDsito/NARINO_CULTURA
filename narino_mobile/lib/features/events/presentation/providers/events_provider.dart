@@ -41,6 +41,22 @@ class EventsNotifier extends StateNotifier<EventsState> {
     loadEvents();
   }
 
+  void setFiltroArtista(String? artista) {
+    state = state.copyWith(
+        filtroArtista: artista,
+        clearArtista: artista == null || artista.isEmpty);
+    // El filtrado por artista se hace en el frontend sobre la lista ya cargada
+    // según el prompt, pero si el repo soporta filtro por artista sería mejor.
+    // Sin embargo, las instrucciones dicen "filtra eventos que tengan ese texto en su lista de artistasRelacionados"
+    // lo cual implica un filtrado local si ya tenemos todos los eventos.
+  }
+
+  void setMostrarPasados(bool value) {
+    if (state.mostrarPasados == value) return;
+    state = state.copyWith(mostrarPasados: value);
+    loadEvents();
+  }
+
   void togglePasados() {
     state = state.copyWith(mostrarPasados: !state.mostrarPasados);
     loadEvents();

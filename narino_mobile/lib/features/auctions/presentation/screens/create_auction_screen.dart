@@ -7,6 +7,8 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../artworks/domain/artwork_model.dart';
 import '../providers/auctions_provider.dart';
 
+// ─── Pantalla principal ───────────────────────────────────────────────────────
+
 class CreateAuctionScreen extends ConsumerStatefulWidget {
   const CreateAuctionScreen({super.key});
 
@@ -33,6 +35,8 @@ class _CreateAuctionScreenState extends ConsumerState<CreateAuctionScreen> {
     super.dispose();
   }
 
+  // ─── Fecha y hora ─────────────────────────────────────────────────────────
+
   Future<void> _pickStartDateTime() async {
     final now = DateTime.now();
     final date = await showDatePicker(
@@ -48,14 +52,12 @@ class _CreateAuctionScreenState extends ConsumerState<CreateAuctionScreen> {
         child: child!,
       ),
     );
+    if (date == null || !mounted) return;
 
-    if (date == null) return;
-    if (!mounted) return;
     final time = await showTimePicker(
       context: context,
       initialTime: const TimeOfDay(hour: 18, minute: 0),
     );
-
     setState(() {
       _fecha = date;
       _hora = time;
@@ -69,15 +71,25 @@ class _CreateAuctionScreenState extends ConsumerState<CreateAuctionScreen> {
     return DateTime(_fecha!.year, _fecha!.month, _fecha!.day, h, m);
   }
 
+  String get _fechaLabel {
+    final fi = _fechaInicio;
+    if (fi == null) return 'Fecha y hora de inicio *';
+    final h = (_hora?.hour ?? 0).toString().padLeft(2, '0');
+    final m = (_hora?.minute ?? 0).toString().padLeft(2, '0');
+    return '${fi.day}/${fi.month}/${fi.year}  ·  $h:$m';
+  }
+
+  // ─── Submit ───────────────────────────────────────────────────────────────
+
   Future<void> _submit() async {
+    setState(() => _errorMsg = null);
+
     if (_fechaInicio == null) {
       setState(() => _errorMsg = 'Selecciona fecha y hora de inicio.');
       return;
     }
     if (!_formKey.currentState!.validate()) return;
-
-    final artwork = _selectedArtwork;
-    if (artwork == null) {
+    if (_selectedArtwork == null) {
       setState(() => _errorMsg = 'Selecciona una obra.');
       return;
     }
@@ -89,19 +101,14 @@ class _CreateAuctionScreenState extends ConsumerState<CreateAuctionScreen> {
       return;
     }
 
-    setState(() {
-      _isSubmitting = true;
-      _errorMsg = null;
-    });
-
+    setState(() => _isSubmitting = true);
     try {
       final auction = await ref.read(auctionsRepositoryProvider).createAuction(
-            obraId: artwork.id,
+            obraId: _selectedArtwork!.id,
             precioBase: precioBase,
             duracionDias: _duracionDias,
             fechaInicio: _fechaInicio!,
           );
-
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -117,22 +124,24 @@ class _CreateAuctionScreenState extends ConsumerState<CreateAuctionScreen> {
     }
   }
 
+  // ─── Build ────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
     final artworksAsync = ref.watch(myArtworksForAuctionProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.bgLight,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: AppColors.obsidiana,
         foregroundColor: AppColors.oroClaro,
-        title: Text(
-          'Abrir subasta',
-          style: AppTypography.displaySemiBold(color: AppColors.oroClaro),
-        ),
         leading: IconButton(
           icon: const Icon(Icons.close, color: AppColors.oroClaro),
           onPressed: () => context.pop(),
+        ),
+        title: Text(
+          'Abrir subasta',
+          style: AppTypography.displaySemiBold(color: AppColors.oroClaro),
         ),
       ),
       body: SingleChildScrollView(
@@ -142,75 +151,43 @@ class _CreateAuctionScreenState extends ConsumerState<CreateAuctionScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'Obra a subastar',
-                style: AppTypography.labelSemiBold(
-                  color: AppColors.textPrimaryLight,
-                ),
+              // ── Obra ──────────────────────────────────────────────────────
+              const _SectionLabel(
+                icon: Icons.image_outlined,
+                label: 'Obra a subastar',
               ),
               const SizedBox(height: 10),
               artworksAsync.when(
-                loading: () => const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(16),
-                    child: CircularProgressIndicator(
-                      color: AppColors.tierraProfunda,
-                    ),
-                  ),
-                ),
-                error: (e, _) => Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.error.withAlpha(20),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppColors.error.withAlpha(77)),
-                  ),
-                  child: Text(
-                    e.toString(),
-                    style: AppTypography.bodySmall(color: AppColors.error),
-                  ),
-                ),
+                loading: () => const _ArtworksLoading(),
+                error: (e, _) => _ArtworksError(error: e.toString()),
                 data: (list) {
-                  if (list.isEmpty) {
-                    return Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.bgCardLight,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: AppColors.borderLight),
-                      ),
-                      child: Text(
-                        'No tienes obras disponibles para subastar.',
-                        style: AppTypography.bodySmall(
-                          color: AppColors.textSecondaryLight,
-                        ),
-                      ),
-                    );
-                  }
-
+                  if (list.isEmpty) return const _ArtworksEmpty();
                   _selectedArtwork ??= list.first;
-
                   return DropdownButtonFormField<ArtworkModel>(
                     key: ValueKey(_selectedArtwork?.id),
                     initialValue: _selectedArtwork,
                     decoration: const InputDecoration(
-                      prefixIcon: Icon(Icons.image_outlined),
+                      prefixIcon: Icon(Icons.palette_outlined),
                       labelText: 'Selecciona una obra *',
                     ),
                     items: list
-                        .map(
-                          (a) => DropdownMenuItem(
-                            value: a,
-                            child: Text(a.titulo),
-                          ),
-                        )
+                        .map((a) =>
+                            DropdownMenuItem(value: a, child: Text(a.titulo)))
                         .toList(),
                     onChanged: (v) => setState(() => _selectedArtwork = v),
                     validator: (v) => v == null ? 'Selecciona una obra' : null,
                   );
                 },
               ),
-              const SizedBox(height: 16),
+
+              const SizedBox(height: 20),
+
+              // ── Precio base ───────────────────────────────────────────────
+              const _SectionLabel(
+                icon: Icons.payments_outlined,
+                label: 'Precio base',
+              ),
+              const SizedBox(height: 10),
               TextFormField(
                 controller: _precioBaseCtrl,
                 keyboardType:
@@ -218,7 +195,8 @@ class _CreateAuctionScreenState extends ConsumerState<CreateAuctionScreen> {
                 decoration: const InputDecoration(
                   prefixIcon: Icon(Icons.payments_outlined),
                   labelText: 'Precio base *',
-                  hintText: 'Ej: 250000',
+                  hintText: 'Ej: 250.000',
+                  prefixText: r'$ ',
                 ),
                 validator: (v) {
                   final n =
@@ -227,101 +205,336 @@ class _CreateAuctionScreenState extends ConsumerState<CreateAuctionScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
-              Text(
-                'Duración (días): $_duracionDias',
-                style: AppTypography.bodyMedium(
-                  color: AppColors.textSecondaryLight,
-                ),
+
+              const SizedBox(height: 20),
+
+              // ── Duración ──────────────────────────────────────────────────
+              const _SectionLabel(
+                icon: Icons.date_range_outlined,
+                label: 'Duración',
               ),
-              Slider(
-                value: _duracionDias.toDouble(),
-                min: 1,
-                max: 30,
-                divisions: 29,
-                activeColor: AppColors.tierraProfunda,
-                onChanged: (v) => setState(() => _duracionDias = v.round()),
+              const SizedBox(height: 6),
+              _DuracionSlider(
+                value: _duracionDias,
+                onChanged: (v) => setState(() => _duracionDias = v),
+              ),
+
+              const SizedBox(height: 16),
+
+              // ── Fecha y hora ──────────────────────────────────────────────
+              const _SectionLabel(
+                icon: Icons.schedule_outlined,
+                label: 'Inicio de la subasta',
               ),
               const SizedBox(height: 10),
-              GestureDetector(
+              _DateTimePicker(
+                label: _fechaLabel,
+                hasValue: _fechaInicio != null,
                 onTap: _pickStartDateTime,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: AppColors.bgSubtleLight,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: _fechaInicio == null
-                          ? AppColors.borderLight
-                          : AppColors.tierraProfunda,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.calendar_today_outlined,
-                        color: _fechaInicio == null
-                            ? AppColors.textMutedLight
-                            : AppColors.tierraProfunda,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          _fechaInicio == null
-                              ? 'Fecha y hora de inicio *'
-                              : '${_fechaInicio!.day}/${_fechaInicio!.month}/${_fechaInicio!.year} · ${_hora?.hour.toString().padLeft(2, '0')}:${_hora?.minute.toString().padLeft(2, '0')}',
-                          style: AppTypography.bodyMedium(
-                            color: _fechaInicio == null
-                                ? AppColors.textMutedLight
-                                : AppColors.textPrimaryLight,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               ),
-              const SizedBox(height: 18),
+
+              const SizedBox(height: 20),
+
+              // ── Error ─────────────────────────────────────────────────────
               if (_errorMsg != null) ...[
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.error.withAlpha(20),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppColors.error.withAlpha(77)),
-                  ),
-                  child: Text(
-                    _errorMsg!,
-                    style: AppTypography.bodySmall(color: AppColors.error),
-                  ),
-                ),
+                _ErrorBanner(message: _errorMsg!),
                 const SizedBox(height: 16),
               ],
-              SizedBox(
-                height: 52,
-                child: ElevatedButton.icon(
-                  onPressed: _isSubmitting ? null : _submit,
-                  icon: _isSubmitting
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : const Icon(Icons.gavel_outlined),
-                  label: Text(
-                    _isSubmitting ? 'Abriendo...' : 'Abrir subasta',
-                    style: AppTypography.buttonText(color: Colors.white),
-                  ),
+
+              // ── Botón ─────────────────────────────────────────────────────
+              _SubmitButton(
+                isSubmitting: _isSubmitting,
+                onPressed: _submit,
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Widgets del formulario ───────────────────────────────────────────────────
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: AppColors.textMutedLight),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style:
+              AppTypography.labelSemiBold(color: AppColors.textSecondaryLight),
+        ),
+      ],
+    );
+  }
+}
+
+class _DuracionSlider extends StatelessWidget {
+  const _DuracionSlider({required this.value, required this.onChanged});
+
+  final int value;
+  final ValueChanged<int> onChanged;
+
+  String get _label {
+    if (value == 1) return '1 día';
+    if (value < 7) return '$value días';
+    if (value == 7) return '1 semana';
+    if (value == 14) return '2 semanas';
+    if (value == 30) return '1 mes';
+    return '$value días';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      decoration: BoxDecoration(
+        color: AppColors.bgCardLight,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.borderLight),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Duración',
+                style:
+                    AppTypography.bodyMedium(color: AppColors.textMutedLight),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.tierraPalida,
+                  borderRadius: BorderRadius.circular(99),
+                ),
+                child: Text(
+                  _label,
+                  style: AppTypography.caption(color: AppColors.tierraProfunda),
                 ),
               ),
             ],
           ),
+          Slider(
+            value: value.toDouble(),
+            min: 1,
+            max: 30,
+            divisions: 29,
+            activeColor: AppColors.tierraProfunda,
+            inactiveColor: AppColors.borderLight,
+            onChanged: (v) => onChanged(v.round()),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('1 día',
+                  style:
+                      AppTypography.caption(color: AppColors.textMutedLight)),
+              Text('30 días',
+                  style:
+                      AppTypography.caption(color: AppColors.textMutedLight)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DateTimePicker extends StatelessWidget {
+  const _DateTimePicker({
+    required this.label,
+    required this.hasValue,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool hasValue;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: AppColors.bgSubtleLight,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: hasValue ? AppColors.tierraProfunda : AppColors.borderLight,
+            width: hasValue ? 1.5 : 1,
+          ),
         ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.calendar_today_outlined,
+              size: 20,
+              color: hasValue
+                  ? AppColors.tierraProfunda
+                  : AppColors.textMutedLight,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                style: AppTypography.bodyMedium(
+                  color: hasValue
+                      ? AppColors.textPrimaryLight
+                      : AppColors.textMutedLight,
+                ),
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right,
+              size: 18,
+              color: AppColors.textMutedLight,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ErrorBanner extends StatelessWidget {
+  const _ErrorBanner({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.error.withAlpha(20),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.error.withAlpha(77)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.error_outline, size: 18, color: AppColors.error),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: AppTypography.bodySmall(color: AppColors.error),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SubmitButton extends StatelessWidget {
+  const _SubmitButton({
+    required this.isSubmitting,
+    required this.onPressed,
+  });
+
+  final bool isSubmitting;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 52,
+      child: ElevatedButton.icon(
+        onPressed: isSubmitting ? null : onPressed,
+        icon: isSubmitting
+            ? const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                    color: Colors.white, strokeWidth: 2),
+              )
+            : const Icon(Icons.gavel_outlined),
+        label: Text(
+          isSubmitting ? 'Abriendo...' : 'Abrir subasta',
+          style: AppTypography.buttonText(color: Colors.white),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Estados de obras ─────────────────────────────────────────────────────────
+
+class _ArtworksLoading extends StatelessWidget {
+  const _ArtworksLoading();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.all(20),
+      child: Center(
+        child: CircularProgressIndicator(
+            color: AppColors.tierraProfunda, strokeWidth: 2),
+      ),
+    );
+  }
+}
+
+class _ArtworksError extends StatelessWidget {
+  const _ArtworksError({required this.error});
+
+  final String error;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.error.withAlpha(20),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.error.withAlpha(77)),
+      ),
+      child:
+          Text(error, style: AppTypography.bodySmall(color: AppColors.error)),
+    );
+  }
+}
+
+class _ArtworksEmpty extends StatelessWidget {
+  const _ArtworksEmpty();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.bgCardLight,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.borderLight),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.info_outline,
+              size: 18, color: AppColors.textMutedLight),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'No tienes obras disponibles para subastar.',
+              style:
+                  AppTypography.bodySmall(color: AppColors.textSecondaryLight),
+            ),
+          ),
+        ],
       ),
     );
   }

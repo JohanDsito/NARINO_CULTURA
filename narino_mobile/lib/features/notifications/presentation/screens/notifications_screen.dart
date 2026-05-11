@@ -15,7 +15,7 @@ class NotificationsScreen extends ConsumerWidget {
     final asyncNotifs = ref.watch(notificationsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.bgLight,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: AppColors.obsidiana,
         foregroundColor: AppColors.oroClaro,
@@ -33,24 +33,41 @@ class NotificationsScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: asyncNotifs.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.tierraProfunda),
-        ),
-        error: (e, _) => _ErrorBanner(
-          message: e.toString(),
-          onRetry: () => ref.read(notificationsProvider.notifier).load(),
-        ),
-        data: (items) {
-          if (items.isEmpty) {
-            return const _EmptyState();
-          }
+      body: RefreshIndicator(
+        color: AppColors.tierraProfunda,
+        onRefresh: () async => ref.read(notificationsProvider.notifier).load(),
+        child: asyncNotifs.when(
+          loading: () => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: const [
+              SizedBox(height: 140),
+              Center(
+                child:
+                    CircularProgressIndicator(color: AppColors.tierraProfunda),
+              ),
+            ],
+          ),
+          error: (e, _) => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            children: [
+              const SizedBox(height: 60),
+              _ErrorBanner(
+                message: e.toString(),
+                onRetry: () => ref.read(notificationsProvider.notifier).load(),
+              ),
+            ],
+          ),
+          data: (items) {
+            if (items.isEmpty) {
+              return ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: const [_EmptyState()],
+              );
+            }
 
-          return RefreshIndicator(
-            color: AppColors.tierraProfunda,
-            onRefresh: () async =>
-                ref.read(notificationsProvider.notifier).load(),
-            child: ListView.separated(
+            return ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
               itemCount: items.length,
               separatorBuilder: (_, __) => const SizedBox(height: 10),
@@ -63,9 +80,9 @@ class NotificationsScreen extends ConsumerWidget {
                   if (route != null) context.push(route);
                 },
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
@@ -93,17 +110,30 @@ class _NotificationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final bgCard = theme.cardTheme.color ?? cs.surface;
+    final bgSubtle = isDark ? AppColors.bgSubtleDark : AppColors.bgSubtleLight;
+    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final textPrimary =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final textSecondary =
+        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+    final unreadBg = isDark
+        ? AppColors.indigoNoche.withValues(alpha: 0.20)
+        : AppColors.indigoPalido.withValues(alpha: 0.20);
     final isUnread = !notification.leida;
     final icon = _iconForType(notification.tipo);
     final timeText = _formatWhen(notification.creadoEn);
 
     return Container(
       decoration: BoxDecoration(
-        color: isUnread
-            ? AppColors.indigoPalido.withValues(alpha: 0.20)
-            : AppColors.bgCardLight,
+        color: isUnread ? unreadBg : bgCard,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.borderLight),
+        border: Border.all(color: border),
       ),
       child: InkWell(
         onTap: onTap,
@@ -127,10 +157,10 @@ class _NotificationTile extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: AppColors.bgSubtleLight,
+                  color: bgSubtle,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, color: AppColors.textSecondaryLight),
+                child: Icon(icon, color: textSecondary),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -143,7 +173,7 @@ class _NotificationTile extends StatelessWidget {
                           child: Text(
                             notification.titulo,
                             style: AppTypography.labelSemiBold(
-                              color: AppColors.textPrimaryLight,
+                              color: textPrimary,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -153,7 +183,7 @@ class _NotificationTile extends StatelessWidget {
                         Text(
                           timeText,
                           style: AppTypography.caption(
-                            color: AppColors.textMutedLight,
+                            color: textMuted,
                           ),
                         ),
                       ],
@@ -162,7 +192,7 @@ class _NotificationTile extends StatelessWidget {
                     Text(
                       notification.descripcion,
                       style: AppTypography.bodySmall(
-                        color: AppColors.textSecondaryLight,
+                        color: textSecondary,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -171,7 +201,7 @@ class _NotificationTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              const Icon(Icons.chevron_right, color: AppColors.textMutedLight),
+              Icon(Icons.chevron_right, color: textMuted),
             ],
           ),
         ),
@@ -216,6 +246,11 @@ class _ErrorBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final textSecondary =
+        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -234,8 +269,7 @@ class _ErrorBanner extends StatelessWidget {
               const SizedBox(height: 10),
               Text(
                 message,
-                style: AppTypography.bodyMedium(
-                    color: AppColors.textSecondaryLight),
+                style: AppTypography.bodyMedium(color: textSecondary),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
@@ -244,15 +278,15 @@ class _ErrorBanner extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: onRetry,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.tierraProfunda,
-                    foregroundColor: Colors.white,
+                    backgroundColor: cs.primary,
+                    foregroundColor: cs.onPrimary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   child: Text(
                     'Reintentar',
-                    style: AppTypography.labelSemiBold(color: Colors.white),
+                    style: AppTypography.labelSemiBold(color: cs.onPrimary),
                   ),
                 ),
               ),
@@ -269,29 +303,30 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textSecondary =
+        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.notifications_none_outlined,
-              color: AppColors.textMutedLight,
-              size: 72,
-            ),
+            Icon(Icons.notifications_none_outlined, color: textMuted, size: 72),
             const SizedBox(height: 16),
             Text(
               'No tienes notificaciones',
               style: AppTypography.displaySemiBold(
-                color: AppColors.textSecondaryLight,
+                color: textSecondary,
               ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 6),
             Text(
               'Cuando haya actividad importante, aparecerá aquí.',
-              style: AppTypography.bodySmall(color: AppColors.textMutedLight),
+              style: AppTypography.bodySmall(color: textMuted),
               textAlign: TextAlign.center,
             ),
           ],

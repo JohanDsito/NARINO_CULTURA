@@ -25,11 +25,13 @@ class _ArtistPublicProfileScreenState
   @override
   Widget build(BuildContext context) {
     final profileAsync = ref.watch(artistProfileProvider(widget.artistId));
+    final cs = Theme.of(context).colorScheme;
 
     return profileAsync.when(
-      loading: () => const Scaffold(
+      loading: () => Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: Center(
-          child: CircularProgressIndicator(color: AppColors.tierraProfunda),
+          child: CircularProgressIndicator(color: cs.primary),
         ),
       ),
       error: (e, _) => Scaffold(
@@ -44,8 +46,16 @@ class _ArtistPublicProfileScreenState
   }
 
   Widget _buildProfile(BuildContext context, ProfileModel profile) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final textPrimary =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final textSecondary =
+        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
     return Scaffold(
-      backgroundColor: AppColors.bgLight,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -53,7 +63,7 @@ class _ArtistPublicProfileScreenState
             expandedHeight: 220,
             backgroundColor: AppColors.obsidiana,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              icon: const Icon(Icons.arrow_back, color: AppColors.oroClaro),
               onPressed: () => context.pop(),
             ),
             flexibleSpace: FlexibleSpaceBar(
@@ -65,7 +75,9 @@ class _ArtistPublicProfileScreenState
                     children: [
                       CircleAvatar(
                         radius: 46,
-                        backgroundColor: AppColors.tierraPalida,
+                        backgroundColor: isDark
+                            ? AppColors.bgSubtleDark
+                            : AppColors.tierraPalida,
                         backgroundImage: profile.fotoUrl != null
                             ? NetworkImage(profile.fotoUrl!)
                             : null,
@@ -119,7 +131,7 @@ class _ArtistPublicProfileScreenState
                                 child: Text(
                                   'Siguiendo',
                                   style: AppTypography.labelMedium(
-                                    color: AppColors.tierraProfunda,
+                                    color: cs.primary,
                                   ),
                                 ),
                               )
@@ -130,7 +142,7 @@ class _ArtistPublicProfileScreenState
                                 child: Text(
                                   'Seguir',
                                   style: AppTypography.labelMedium(
-                                    color: Colors.white,
+                                    color: cs.onPrimary,
                                   ),
                                 ),
                               ),
@@ -140,23 +152,23 @@ class _ArtistPublicProfileScreenState
                   if (profile.biografia != null &&
                       profile.biografia!.isNotEmpty) ...[
                     const SizedBox(height: 16),
-                    const Divider(color: AppColors.borderLight),
+                    Divider(color: border),
                     const SizedBox(height: 12),
                     Text(
                       profile.biografia!,
                       style: AppTypography.quoteItalic(
-                        color: AppColors.textSecondaryLight,
+                        color: textSecondary,
                       ),
                     ),
                   ],
                   if (profile.redesSociales.isNotEmpty) ...[
                     const SizedBox(height: 16),
-                    const Divider(color: AppColors.borderLight),
+                    Divider(color: border),
                     const SizedBox(height: 12),
                     Text(
                       'Redes sociales',
                       style: AppTypography.labelSemiBold(
-                        color: AppColors.textSecondaryLight,
+                        color: textSecondary,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -167,7 +179,7 @@ class _ArtistPublicProfileScreenState
                           label: Text(
                             e.key,
                             style: AppTypography.caption(
-                              color: AppColors.tierraProfunda,
+                              color: cs.primary,
                             ),
                           ),
                           onPressed: () async {
@@ -185,12 +197,12 @@ class _ArtistPublicProfileScreenState
                     ),
                   ],
                   const SizedBox(height: 20),
-                  const Divider(color: AppColors.borderLight),
+                  Divider(color: border),
                   const SizedBox(height: 12),
                   Text(
                     'Obras de ${profile.nombreArtistico}',
                     style: AppTypography.displaySemiBold(
-                      color: AppColors.textPrimaryLight,
+                      color: textPrimary,
                     ).copyWith(fontSize: 16),
                   ),
                   const SizedBox(height: 8),
@@ -199,7 +211,7 @@ class _ArtistPublicProfileScreenState
                     label: Text(
                       'Ver todas las obras (${profile.totalObras})',
                       style: AppTypography.labelMedium(
-                        color: AppColors.tierraProfunda,
+                        color: cs.primary,
                       ),
                     ),
                     onPressed: () => context.go('/catalog'),
@@ -233,17 +245,21 @@ class _ArtistPublicProfileScreenState
   }
 
   Widget _buildStat(String value, String label) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
     return Column(
       children: [
         Text(
           value,
-          style:
-              AppTypography.displaySemiBold(color: AppColors.textPrimaryLight)
-                  .copyWith(fontSize: 20),
+          style: AppTypography.displaySemiBold(color: textPrimary)
+              .copyWith(fontSize: 20),
         ),
         Text(
           label,
-          style: AppTypography.caption(color: AppColors.textMutedLight),
+          style: AppTypography.caption(color: textMuted),
         ),
       ],
     );

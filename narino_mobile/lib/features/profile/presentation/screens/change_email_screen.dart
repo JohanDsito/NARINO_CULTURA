@@ -55,7 +55,7 @@ class _ChangeEmailScreenState extends ConsumerState<ChangeEmailScreen> {
     final isLoading = state.isLoading;
 
     return Scaffold(
-      backgroundColor: AppColors.bgLight,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: AppColors.obsidiana,
         foregroundColor: AppColors.oroClaro,
@@ -108,9 +108,14 @@ class _ChangeEmailScreenState extends ConsumerState<ChangeEmailScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.bgCardLight,
+                color: Theme.of(context).cardTheme.color ??
+                    Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.borderLight),
+                border: Border.all(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.borderDark
+                      : AppColors.borderLight,
+                ),
               ),
               child: Form(
                 key: _formKey,
@@ -159,18 +164,21 @@ class _ChangeEmailScreenState extends ConsumerState<ChangeEmailScreen> {
                       child: ElevatedButton(
                         onPressed: isLoading ? null : _submit,
                         child: isLoading
-                            ? const SizedBox(
+                            ? SizedBox(
                                 width: 18,
                                 height: 18,
                                 child: CircularProgressIndicator(
-                                  color: Colors.white,
+                                  color:
+                                      Theme.of(context).colorScheme.onPrimary,
                                   strokeWidth: 2,
                                 ),
                               )
                             : Text(
                                 'Enviar solicitud',
                                 style: AppTypography.buttonText(
-                                    color: Colors.white),
+                                  color:
+                                      Theme.of(context).colorScheme.onPrimary,
+                                ),
                               ),
                       ),
                     ),
@@ -180,7 +188,7 @@ class _ChangeEmailScreenState extends ConsumerState<ChangeEmailScreen> {
                       child: Text(
                         'Volver',
                         style: AppTypography.bodyMedium(
-                          color: AppColors.tierraProfunda,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                       ),
                     ),

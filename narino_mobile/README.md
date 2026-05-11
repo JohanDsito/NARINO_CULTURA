@@ -1,16 +1,33 @@
-# narino_mobile
+# Nariño Cultura (App móvil)
 
-A new Flutter project.
+Aplicación móvil para explorar, difundir y comercializar arte y cultura del departamento de Nariño. Incluye catálogo de obras, marketplace con pagos, subastas en tiempo real, agenda cultural, notificaciones y módulo de IA (chatbot y recomendaciones).
 
-## Getting Started
+## Stack tecnológico
 
-This project is a starting point for a Flutter application.
+- Flutter · Dart
+- Riverpod (estado)
+- go_router (navegación)
+- Dio (HTTP) + interceptor JWT
 
-A few resources to get you started if this is your first Flutter project:
+## Requisitos
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- Flutter SDK instalado
+- Emulador Android o dispositivo físico
+- Backend Django corriendo y accesible desde el emulador
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Ejecución
+
+```bash
+flutter pub get
+flutter run
+```
+
+## Integrantes
+
+- Johan David Delgado Delgado
+- Juan Manuel Matabanchoy Cabrera
+- Valery Nickol Rosero Molina
+
+## Universidad
+
+Universidad Cooperativa de Colombia — Ingeniería de Software — 2026

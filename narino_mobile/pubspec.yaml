@@ -34,6 +34,9 @@ dependencies:
   url_launcher: ^6.3.0
   video_player: ^2.8.6
   web_socket_channel: ^2.4.0
+  flutter_map: ^6.1.0          # Mapa interactivo con OpenStreetMap (gratuito, sin API key)
+  latlong2: ^0.9.0             # Coordenadas para flutter_map
+  table_calendar: ^3.1.0       # Widget de calendario mensual para Flutter
 
 dev_dependencies:
   flutter_test:

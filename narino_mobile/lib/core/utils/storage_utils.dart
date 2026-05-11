@@ -1,5 +1,8 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+/// Utilidad de almacenamiento seguro para credenciales de autenticación.
+///
+/// Guarda y recupera el token de acceso y refresh usando `flutter_secure_storage`.
 class StorageUtils {
   StorageUtils._();
 

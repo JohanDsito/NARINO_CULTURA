@@ -3,23 +3,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/auth_repository.dart';
 import '../../domain/auth_state.dart';
+import '../../domain/user_model.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepository();
 });
 
-final authProvider = StateNotifierProvider<AuthController, AuthState>((ref) {
+final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   final repository = ref.read(authRepositoryProvider);
-  return AuthController(repository);
+  return AuthNotifier(repository);
 });
 
-class AuthController extends StateNotifier<AuthState> {
-  AuthController(this._repository)
+class AuthNotifier extends StateNotifier<AuthState> {
+  AuthNotifier(this._repository)
       : super(const AuthState(status: AuthStatus.unauthenticated));
 
   final AuthRepository _repository;
 
-  Future<void> login({
+  Future<UserModel?> login({
     required String email,
     required String password,
   }) async {
@@ -30,22 +31,24 @@ class AuthController extends StateNotifier<AuthState> {
     );
 
     try {
-      await _repository.login(email: email, password: password);
+      final user = await _repository.login(email: email, password: password);
       state = state.copyWith(
         status: AuthStatus.authenticated,
         errorMessage: null,
-        successMessage: 'Sesión iniciada.',
+        successMessage: null,
       );
+      return user;
     } catch (e) {
       state = state.copyWith(
         status: AuthStatus.error,
         errorMessage: _mapError(e),
         successMessage: null,
       );
+      return null;
     }
   }
 
-  Future<void> register({
+  Future<UserModel?> register({
     required String nombre,
     required String email,
     required String password,
@@ -58,7 +61,7 @@ class AuthController extends StateNotifier<AuthState> {
     );
 
     try {
-      await _repository.register(
+      final user = await _repository.register(
         nombre: nombre,
         email: email,
         password: password,
@@ -67,14 +70,16 @@ class AuthController extends StateNotifier<AuthState> {
       state = state.copyWith(
         status: AuthStatus.authenticated,
         errorMessage: null,
-        successMessage: 'Registro exitoso.',
+        successMessage: null,
       );
+      return user;
     } catch (e) {
       state = state.copyWith(
         status: AuthStatus.error,
         errorMessage: _mapError(e),
         successMessage: null,
       );
+      return null;
     }
   }
 
@@ -87,11 +92,17 @@ class AuthController extends StateNotifier<AuthState> {
     );
   }
 
+  void clearError() {
+    state = state.copyWith(errorMessage: null);
+  }
+
   void clearMessages() {
     state = state.copyWith(errorMessage: null, successMessage: null);
   }
 
   String _mapError(Object error) {
+    if (error is FormatException) return error.message;
+
     if (error is DioException) {
       final status = error.response?.statusCode;
       final data = error.response?.data;
@@ -143,8 +154,6 @@ class AuthController extends StateNotifier<AuthState> {
 
       return 'Ocurrió un error al comunicar con el servidor.';
     }
-
-    if (error is FormatException) return error.message;
 
     return 'Ocurrió un error inesperado.';
   }

@@ -1,3 +1,4 @@
+/// Modelo de dominio que representa una puja dentro de una subasta.
 class AuctionBidModel {
   final String bidderName;
   final double amount;

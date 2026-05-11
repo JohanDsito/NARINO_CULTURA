@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import 'account_security_service.dart';
 
+/// Modelo de dominio para representar una sesión activa del usuario.
 class ActiveSessionModel {
   final int id;
   final String device;
@@ -62,6 +63,7 @@ class ActiveSessionModel {
   }
 }
 
+/// Repositorio de seguridad de cuenta: cambio de correo, sesiones activas y eliminación de cuenta.
 class AccountSecurityRepository {
   AccountSecurityRepository({AccountSecurityService? service})
       : _service = service ?? AccountSecurityService();
@@ -164,4 +166,3 @@ int? _asInt(Object? v) {
   if (v is num) return v.toInt();
   return int.tryParse(v?.toString() ?? '');
 }
-

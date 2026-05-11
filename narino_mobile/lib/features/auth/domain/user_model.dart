@@ -1,3 +1,4 @@
+/// Modelo de dominio del usuario autenticado (perfil mínimo).
 class UserModel {
   final int id;
   final String email;

@@ -1,5 +1,6 @@
 import 'auction_bid_model.dart';
 
+/// Modelo de dominio que representa una subasta asociada a una obra.
 class AuctionModel {
   final int id;
   final int obraId;

@@ -3,9 +3,11 @@ import 'package:dio/dio.dart';
 import '../domain/auction_model.dart';
 import 'auctions_service.dart';
 
+/// Repositorio de subastas: integra endpoints REST y acciones CRUD relacionadas
+/// con subastas (listado, detalle, crear, pujar, cancelar, historial).
 class AuctionsRepository {
   AuctionsRepository({AuctionsService? service})
-      : _service = service ?? AuctionsService();
+    : _service = service ?? AuctionsService();
 
   final AuctionsService _service;
 
@@ -56,10 +58,7 @@ class AuctionsRepository {
     }
   }
 
-  Future<void> bid({
-    required int auctionId,
-    required double monto,
-  }) async {
+  Future<void> bid({required int auctionId, required double monto}) async {
     try {
       await _service.bid(auctionId: auctionId, monto: monto);
     } on DioException catch (e) {

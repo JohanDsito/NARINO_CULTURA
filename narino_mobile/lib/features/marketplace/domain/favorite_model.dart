@@ -1,3 +1,4 @@
+/// Modelo de dominio que representa una obra marcada como favorita por el usuario.
 class FavoriteModel {
   const FavoriteModel({
     required this.id,
