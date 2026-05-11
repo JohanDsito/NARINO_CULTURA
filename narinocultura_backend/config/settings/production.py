@@ -7,7 +7,7 @@ if SECRET_KEY == "unsafe-secret-key-change-me":
 # Configuraciones para producción
 ALLOWED_HOSTS = ["*"]
 STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
-SECURE_SSL_REDIRECT = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+SECURE_SSL_REDIRECT = False
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
 
