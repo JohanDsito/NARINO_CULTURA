@@ -1,8 +1,9 @@
+import os
 from datetime import timedelta
 from pathlib import Path
-
+from dotenv import load_dotenv
 from decouple import Csv, config
-
+load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 SECRET_KEY = config("SECRET_KEY", default="unsafe-secret-key-change-me")
@@ -37,6 +38,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -77,8 +79,8 @@ else:
             "NAME": config("DB_NAME"),
             "USER": config("DB_USER"),
             "PASSWORD": config("DB_PASSWORD"),
-            "HOST": config("DB_HOST", default="localhost"),
-            "PORT": config("DB_PORT", default="5432"),
+            "HOST": config("DB_HOST"),
+            "PORT": config("DB_PORT"),
         }
     }
 
@@ -102,6 +104,8 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "users.User"
