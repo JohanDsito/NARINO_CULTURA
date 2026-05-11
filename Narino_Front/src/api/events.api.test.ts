@@ -1,40 +1,53 @@
-import axiosInstance from '@/api/axiosInstance'
-import { eventsApi } from '@/api/events.api'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 
-jest.mock('@/api/axiosInstance', () => ({
-  __esModule: true,
+import axiosInstance from './axiosInstance'
+import { eventsApi } from './events.api'
+
+vi.mock('./axiosInstance', () => ({
   default: {
-    delete: jest.fn(),
-    get: jest.fn(),
-    patch: jest.fn(),
-    post: jest.fn(),
+    delete: vi.fn(),
+    get: vi.fn(),
+    patch: vi.fn(),
+    post: vi.fn(),
   },
 }))
 
-const mockedAxios = jest.mocked(axiosInstance)
+const mockedAxios = vi.mocked(axiosInstance)
 
 describe('events.api', () => {
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
 
   it('requests published events with default and custom params', () => {
-    eventsApi.getPublishedEvents({ event_type: 'TALLER' })
-
-    expect(mockedAxios.get).toHaveBeenCalledWith('/api/v1/events/', {
-      params: {
-        is_published: true,
-        event_type: 'TALLER',
-      },
+    eventsApi.getPublishedEvents({
+      event_type: 'TALLER',
     })
+
+    expect(mockedAxios.get).toHaveBeenCalledWith(
+      '/api/v1/events/',
+      {
+        params: {
+          is_published: true,
+          event_type: 'TALLER',
+        },
+      },
+    )
   })
 
   it('requests admin event list without forcing published filter', () => {
-    eventsApi.getAllEvents({ start_date: '2026-01-01' })
-
-    expect(mockedAxios.get).toHaveBeenCalledWith('/api/v1/events/', {
-      params: { start_date: '2026-01-01' },
+    eventsApi.getAllEvents({
+      start_date: '2026-01-01',
     })
+
+    expect(mockedAxios.get).toHaveBeenCalledWith(
+      '/api/v1/events/',
+      {
+        params: {
+          start_date: '2026-01-01',
+        },
+      },
+    )
   })
 
   it('calls detail and mutation endpoints', () => {
@@ -49,26 +62,53 @@ describe('events.api', () => {
 
     eventsApi.getEventById('1')
     eventsApi.createEvent(payload)
-    eventsApi.updateEvent('1', { title: 'Taller' })
+    eventsApi.updateEvent('1', {
+      title: 'Taller',
+    })
     eventsApi.deleteEvent('1')
     eventsApi.registerToEvent('1')
 
-    expect(mockedAxios.get).toHaveBeenCalledWith('/api/v1/events/1/')
-    expect(mockedAxios.post).toHaveBeenCalledWith('/api/v1/events/', payload)
-    expect(mockedAxios.patch).toHaveBeenCalledWith('/api/v1/events/1/', { title: 'Taller' })
-    expect(mockedAxios.delete).toHaveBeenCalledWith('/api/v1/events/1/')
-    expect(mockedAxios.post).toHaveBeenCalledWith('/api/v1/events/1/register/', {})
+    expect(mockedAxios.get).toHaveBeenCalledWith(
+      '/api/v1/events/1/',
+    )
+
+    expect(mockedAxios.post).toHaveBeenCalledWith(
+      '/api/v1/events/',
+      payload,
+    )
+
+    expect(mockedAxios.patch).toHaveBeenCalledWith(
+      '/api/v1/events/1/',
+      {
+        title: 'Taller',
+      },
+    )
+
+    expect(mockedAxios.delete).toHaveBeenCalledWith(
+      '/api/v1/events/1/',
+    )
+
+    expect(mockedAxios.post).toHaveBeenCalledWith(
+      '/api/v1/events/1/register/',
+      {},
+    )
   })
 
   it('requests events by date range for calendar views', () => {
-    eventsApi.getEventsByDateRange('2026-01-01', '2026-01-31')
+    eventsApi.getEventsByDateRange(
+      '2026-01-01',
+      '2026-01-31',
+    )
 
-    expect(mockedAxios.get).toHaveBeenCalledWith('/api/v1/events/', {
-      params: {
-        is_published: true,
-        start_date__gte: '2026-01-01',
-        start_date__lte: '2026-01-31',
+    expect(mockedAxios.get).toHaveBeenCalledWith(
+      '/api/v1/events/',
+      {
+        params: {
+          is_published: true,
+          start_date__gte: '2026-01-01',
+          start_date__lte: '2026-01-31',
+        },
       },
-    })
+    )
   })
 })

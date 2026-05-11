@@ -21,7 +21,7 @@ export async function login(
     return { tokens, user: normalizeUser(data.user) as User }
   }
 
-  const { data: user } = await axiosInstance.get('/api/v1/auth/me/', {
+  const { data: user } = await axiosInstance.get('/api/v1/users/me/', {
     headers: { Authorization: `Bearer ${tokens.access}` },
   })
 
@@ -39,12 +39,12 @@ export async function verifyEmail(token: string): Promise<{ message: string }> {
 }
 
 export async function me(): Promise<User> {
-  const { data } = await axiosInstance.get('/api/v1/auth/me/')
+  const { data } = await axiosInstance.get('/api/v1/users/me/')
   return normalizeUser(data) as User
 }
 
 export async function requestPasswordReset(email: string): Promise<{ message: string }> {
-  const { data } = await axiosInstance.post('/api/v1/auth/password/reset/', { email })
+  const { data } = await axiosInstance.post('/api/v1/auth/password-reset/', { email })
   return data
 }
 
@@ -52,7 +52,7 @@ export async function confirmPasswordReset(
   token: string,
   password: string,
 ): Promise<{ message: string }> {
-  const { data } = await axiosInstance.post('/api/v1/auth/password/reset/confirm/', {
+  const { data } = await axiosInstance.post('/api/v1/auth/password-reset/confirm/', {
     token,
     new_password: password,
   })
