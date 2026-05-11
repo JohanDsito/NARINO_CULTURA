@@ -1,2 +1,2 @@
-web: cd narinocultura_backend && gunicorn config.wsgi --bind 0.0.0.0:$PORT
+web: cd narinocultura_backend && daphne -b 0.0.0.0 -p $PORT config.asgi:application
 worker: cd narinocultura_backend && python manage.py runworker channels
