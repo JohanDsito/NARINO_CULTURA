@@ -4,7 +4,11 @@ import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { Calendar } from '@/components/ui/calendar'
 import { PageLoader } from '@/components/layout/page-loader'
-import { eventsApi, type Event } from '@/api/events.api'
+import {
+  eventsApi,
+  normalizeEventsResponse,
+  type Event,
+} from '@/api/events.api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -56,7 +60,7 @@ export function EventCalendar({ showCreateButton = false }: EventCalendarProps) 
     queryFn: () =>
       eventsApi
         .getEventsByDateRange(monthStart, monthEnd)
-        .then((res) => res.data),
+        .then((res) => normalizeEventsResponse(res.data)),
     placeholderData: keepPreviousData,
     staleTime: 5 * 60 * 1000,
   })

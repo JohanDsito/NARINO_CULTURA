@@ -35,6 +35,24 @@ export interface CreateEventPayload {
   is_published?: boolean
 }
 
+interface PaginatedEventsResponse {
+  results?: Event[]
+}
+
+export type EventsResponse = Event[] | PaginatedEventsResponse | null | undefined
+
+export function normalizeEventsResponse(data: EventsResponse): Event[] {
+  if (Array.isArray(data)) {
+    return data
+  }
+
+  if (Array.isArray(data?.results)) {
+    return data.results
+  }
+
+  return []
+}
+
 export const eventsApi = {
   // Obtener todos los eventos publicados
   getPublishedEvents: (params?: {
@@ -42,7 +60,7 @@ export const eventsApi = {
     start_date?: string
     end_date?: string
   }) => {
-    return axiosInstance.get<Event[]>('/api/v1/events/', {
+    return axiosInstance.get<EventsResponse>('/api/v1/events/', {
       params: {
         is_published: true,
         ...params,
@@ -56,7 +74,7 @@ export const eventsApi = {
     start_date?: string
     end_date?: string
   }) => {
-    return axiosInstance.get<Event[]>('/api/v1/events/', {
+    return axiosInstance.get<EventsResponse>('/api/v1/events/', {
       params,
     })
   },
@@ -88,7 +106,7 @@ export const eventsApi = {
 
   // Obtener eventos por mes (para el calendario)
   getEventsByDateRange: (startDate: string, endDate: string) => {
-    return axiosInstance.get<Event[]>('/api/v1/events/', {
+    return axiosInstance.get<EventsResponse>('/api/v1/events/', {
       params: {
         is_published: true,
         start_date__gte: startDate,
