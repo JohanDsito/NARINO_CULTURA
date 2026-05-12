@@ -1,4 +1,4 @@
-import heroImg from '@/assets/hero.png'
+import carnavalimg from '@/assets/carnaval.png'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -54,7 +54,7 @@ export default function HomePage() {
           </div>
           <div className="relative overflow-hidden rounded-xl border bg-card">
             <img
-              src={heroImg}
+              src={carnavalimg}
               alt="Carnaval de Negros y Blancos: máscara y colores tradicionales"
               loading="lazy"
               className="h-[320px] w-full object-cover sm:h-[360px]"
