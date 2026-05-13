@@ -1,14 +1,17 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 
-import { useAuthStore } from '@/store/authStore'
-import type { AuthUser } from '@/types/auth'
+import {
+  useAuthStore,
+  type User,
+} from '@/store/authStore'
 
-const user: AuthUser = {
+const user: User = {
   id: 1,
   email: 'ana@test.com',
   first_name: 'Ana',
   last_name: 'Mora',
-  role: 'ARTISTA',
+  artistic_name: 'ARTISTA',
+  role: 'artist',
 }
 
 describe('authStore', () => {
@@ -24,13 +27,11 @@ describe('authStore', () => {
   })
 
   it('sets authenticated state and persists tokens', () => {
-    useAuthStore
-      .getState()
-      .setAuth(
-        user,
-        'access-token',
-        'refresh-token',
-      )
+    useAuthStore.getState().setAuth(
+      user,
+      'access-token',
+      'refresh-token',
+    )
 
     expect(useAuthStore.getState()).toMatchObject({
       user: {
@@ -51,13 +52,11 @@ describe('authStore', () => {
   })
 
   it('clears state and tokens on logout', () => {
-    useAuthStore
-      .getState()
-      .setAuth(
-        user,
-        'access-token',
-        'refresh-token',
-      )
+    useAuthStore.getState().setAuth(
+      user,
+      'access-token',
+      'refresh-token',
+    )
 
     useAuthStore.getState().logout()
 
@@ -78,16 +77,14 @@ describe('authStore', () => {
   })
 
   it('updates and normalizes the current user', () => {
-    useAuthStore
-      .getState()
-      .setAuth(
-        user,
-        'access-token',
-        'refresh-token',
-      )
+    useAuthStore.getState().setAuth(
+      user,
+      'access-token',
+      'refresh-token',
+    )
 
     useAuthStore.getState().updateUser({
-      role: 'ADMINISTRADOR',
+      role: 'admin',
       first_name: 'Admin',
     })
 

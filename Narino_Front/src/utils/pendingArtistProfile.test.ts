@@ -1,10 +1,18 @@
 import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+} from 'vitest'
+
+import {
   clearPendingArtistProfile,
   getPendingArtistProfile,
   setPendingArtistProfile,
 } from '@/utils/pendingArtistProfile'
 
-const storageKey = 'narino_cultura_pending_artist_profile'
+const storageKey =
+  'narino_cultura_pending_artist_profile'
 
 describe('pendingArtistProfile', () => {
   beforeEach(() => {
@@ -20,21 +28,35 @@ describe('pendingArtistProfile', () => {
 
     setPendingArtistProfile(payload)
 
-    expect(getPendingArtistProfile()).toEqual(payload)
+    expect(
+      getPendingArtistProfile(),
+    ).toEqual(payload)
   })
 
   it('returns null when the storage value is missing or invalid', () => {
-    expect(getPendingArtistProfile()).toBeNull()
+    expect(
+      getPendingArtistProfile(),
+    ).toBeNull()
 
-    localStorage.setItem(storageKey, '{invalid')
+    localStorage.setItem(
+      storageKey,
+      '{invalid',
+    )
 
-    expect(getPendingArtistProfile()).toBeNull()
+    expect(
+      getPendingArtistProfile(),
+    ).toBeNull()
   })
 
   it('clears the pending profile', () => {
-    setPendingArtistProfile({ artistic_name: 'La Montaña' })
+    setPendingArtistProfile({
+      artistic_name: 'La Montaña',
+    })
+
     clearPendingArtistProfile()
 
-    expect(localStorage.getItem(storageKey)).toBeNull()
+    expect(
+      localStorage.getItem(storageKey),
+    ).toBeNull()
   })
 })
