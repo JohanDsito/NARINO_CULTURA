@@ -16,7 +16,7 @@ from apps.users.serializers import (
     RegisterSerializer,
     UserMeSerializer,
 )
-from services.notification_service import NotificationService
+from services.email_service import EmailService
 
 
 class RegisterAPIView(APIView):
@@ -28,11 +28,12 @@ class RegisterAPIView(APIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save(is_active=True, is_verified=False)
         verification = EmailVerification.issue_for_user(user)
-        NotificationService.send(
-            "EMAIL_VERIFICATION",
-            {"email": user.email, "token": verification.token},
-            user=user,
-        )
+        email_result = EmailService.send_verification_email(user.email, verification.token)
+        if not email_result.ok:
+            return Response(
+                {"detail": f"Registro creado pero hubo un error al enviar el correo: {email_result.error_message}"},
+                status=status.HTTP_201_CREATED,
+            )
         return Response(
             {"detail": "Registro exitoso. Revisa tu correo para verificar la cuenta."},
             status=status.HTTP_201_CREATED,
@@ -109,11 +110,7 @@ class PasswordResetRequestAPIView(APIView):
         user = User.objects.filter(email=email).first()
         if user:
             reset = PasswordReset.issue_for_user(user)
-            NotificationService.send(
-                "PASSWORD_RESET",
-                {"email": user.email, "token": reset.token},
-                user=user,
-            )
+            EmailService.send_password_reset_email(user.email, reset.token)
         return Response({"detail": "Si el email existe, se enviaron instrucciones de recuperación."})
 
 
