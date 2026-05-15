@@ -36,7 +36,7 @@ class RegisterAPIView(APIView):
         logger.info(f"Token generado: {verification.token[:10]}...")
         
         try:
-            email_result = EmailService.send_verification_email(user.email, verification.token)
+            email_result = EmailService.send_verification_email(user.email, verification.token, user.first_name)
             logger.info(f"Resultado del envío: {email_result.ok}")
             
             if not email_result.ok:

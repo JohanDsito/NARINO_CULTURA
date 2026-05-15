@@ -92,12 +92,13 @@ class EmailService:
         return result
 
     @staticmethod
-    def send_verification_email(user_email: str, verification_token: str) -> EmailResult:
+    def send_verification_email(user_email: str, verification_token: str, user_name: str = "") -> EmailResult:
         verification_url = f"{settings.FRONTEND_URL}/verify-email?token={verification_token}"
         context = {
             "verification_url": verification_url,
             "frontend_url": settings.FRONTEND_URL,
             "token": verification_token,
+            "user_name": user_name or "Usuario",
         }
         html_message = render_to_string("emails/verify_email.html", context)
         text_message = strip_tags(html_message)
