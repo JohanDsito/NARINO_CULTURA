@@ -176,6 +176,7 @@ FRONTEND_URL = config(
     "FRONTEND_URL",
     default=config("FRONTEND_BASE_URL", default="http://localhost:5173"),
 )
+RESEND_API_KEY = config("RESEND_API_KEY", default="")
 
 WOMPI_BASE_URL = config("WOMPI_BASE_URL", default="https://sandbox.wompi.co/v1")
 WOMPI_PUBLIC_KEY = config("WOMPI_PUBLIC_KEY", default="")
