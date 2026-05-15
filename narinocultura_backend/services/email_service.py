@@ -24,8 +24,10 @@ class EmailService:
             return EmailResult(ok=False, error_message="Resend API key no configurada")
 
         try:
+            # Usar onboarding@resend.dev para evitar problemas de verificación de dominio
+            from_email = "onboarding@resend.dev"
             payload = {
-                "from": getattr(settings, "RESEND_FROM_EMAIL", settings.DEFAULT_FROM_EMAIL),
+                "from": from_email,
                 "to": [user_email],
                 "subject": subject,
                 "html": html_message,
