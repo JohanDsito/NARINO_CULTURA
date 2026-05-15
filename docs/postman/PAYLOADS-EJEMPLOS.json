@@ -1,0 +1,354 @@
+{
+  "titulo": "Nariño Cultura - Ejemplos de Payloads JSON",
+  "descripcion": "Ejemplos completos de bodies para todas las requests de la API",
+  "payloads": {
+    "autenticacion": {
+      "registro": {
+        "descripcion": "Registrar nuevo usuario con rol ARTISTA",
+        "metodo": "POST",
+        "endpoint": "/api/v1/auth/register/",
+        "body": {
+          "email": "artista@narinocultura.com",
+          "password": "SecurePassword123!",
+          "first_name": "Juan",
+          "last_name": "Pérez",
+          "role": "ARTISTA",
+          "phone": "+57 310 1234567",
+          "avatar_url": "https://example.com/avatar.jpg"
+        },
+        "notas": [
+          "password debe tener mínimo 8 caracteres",
+          "role debe ser: ARTISTA, COMPRADOR, GESTOR_CULTURAL, ADMINISTRADOR",
+          "phone y avatar_url son opcionales"
+        ]
+      },
+      "verificar_email": {
+        "descripcion": "Verificar email con token recibido",
+        "metodo": "POST",
+        "endpoint": "/api/v1/auth/verify-email/",
+        "body": {
+          "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        },
+        "notas": [
+          "El token se envía en el email de verificación",
+          "En desarrollo, busca el token en los logs del servidor",
+          "Token válido por 24 horas"
+        ]
+      },
+      "login": {
+        "descripcion": "Iniciar sesión",
+        "metodo": "POST",
+        "endpoint": "/api/v1/auth/login/",
+        "body": {
+          "email": "artista@narinocultura.com",
+          "password": "SecurePassword123!"
+        },
+        "respuesta": {
+          "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+          "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        },
+        "notas": [
+          "Guarda access y refresh tokens",
+          "access válido por 30 minutos (por defecto)",
+          "refresh válido por 7 días (por defecto)"
+        ]
+      },
+      "refresh_token": {
+        "descripcion": "Obtener nuevo access token",
+        "metodo": "POST",
+        "endpoint": "/api/v1/auth/token/refresh/",
+        "body": {
+          "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        },
+        "respuesta": {
+          "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        }
+      },
+      "logout": {
+        "descripcion": "Cerrar sesión y desbloquear refresh token",
+        "metodo": "POST",
+        "endpoint": "/api/v1/auth/logout/",
+        "headers": {
+          "Authorization": "Bearer {access_token}"
+        },
+        "body": {
+          "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        }
+      },
+      "password_reset": {
+        "descripcion": "Solicitar reset de contraseña",
+        "metodo": "POST",
+        "endpoint": "/api/v1/auth/password-reset/",
+        "body": {
+          "email": "artista@narinocultura.com"
+        },
+        "notas": [
+          "Enviará email con link de reset",
+          "Token válido por 2 horas",
+          "No falla si email no existe (por seguridad)"
+        ]
+      },
+      "password_reset_confirm": {
+        "descripcion": "Confirmar cambio de contraseña",
+        "metodo": "POST",
+        "endpoint": "/api/v1/auth/password-reset/confirm/",
+        "body": {
+          "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+          "new_password": "NewPassword456!"
+        }
+      }
+    },
+    "usuario": {
+      "actualizar_perfil": {
+        "descripcion": "Actualizar datos del usuario",
+        "metodo": "PATCH",
+        "endpoint": "/api/v1/users/me/",
+        "headers": {
+          "Authorization": "Bearer {access_token}"
+        },
+        "body": {
+          "first_name": "Juan Carlos",
+          "last_name": "Pérez García",
+          "phone": "+57 310 9876543",
+          "avatar_url": "https://example.com/new-avatar.jpg"
+        },
+        "notas": [
+          "email y role son read-only",
+          "Todos los campos son opcionales",
+          "Envía solo los que quieras actualizar"
+        ]
+      },
+      "cambiar_password": {
+        "descripcion": "Cambiar contraseña (usuario autenticado)",
+        "metodo": "PATCH",
+        "endpoint": "/api/v1/users/me/password/",
+        "headers": {
+          "Authorization": "Bearer {access_token}"
+        },
+        "body": {
+          "current_password": "SecurePassword123!",
+          "new_password": "NewSecurePassword456!"
+        },
+        "notas": [
+          "new_password debe tener mínimo 8 caracteres",
+          "current_password debe ser correcta"
+        ]
+      }
+    },
+    "artista": {
+      "crear_perfil": {
+        "descripcion": "Crear o actualizar perfil de artista",
+        "metodo": "POST",
+        "endpoint": "/api/v1/artists/",
+        "headers": {
+          "Authorization": "Bearer {access_token}"
+        },
+        "body": {
+          "artistic_name": "Juan Pérez Artista",
+          "bio": "Artista plástico especializado en pintura abstracta con 15 años de experiencia",
+          "location": "Pasto, Nariño",
+          "website": "https://juanperezart.com",
+          "instagram": "@juanperezart",
+          "facebook": "JuanPerezArtista",
+          "profile_image": "https://example.com/profile.jpg",
+          "banner_image": "https://example.com/banner.jpg"
+        },
+        "notas": [
+          "artistic_name es obligatorio",
+          "Otros campos son opcionales",
+          "Slug se genera automáticamente desde artistic_name"
+        ]
+      }
+    },
+    "obras": {
+      "crear_obra": {
+        "descripcion": "Crear nueva obra de arte",
+        "metodo": "POST",
+        "endpoint": "/api/v1/artworks/",
+        "headers": {
+          "Authorization": "Bearer {access_token}"
+        },
+        "body": {
+          "title": "Abstracción Nariñense",
+          "description": "Obra de arte abstracta inspirada en la naturaleza de Nariño",
+          "category_id": "550e8400-e29b-41d4-a716-446655440000",
+          "technique": "Acrílico sobre lienzo",
+          "dimensions": "80x100 cm",
+          "year_created": 2024,
+          "price": 2500000,
+          "image_url": "https://example.com/artwork.jpg",
+          "is_available": true
+        },
+        "notas": [
+          "price está en pesos colombianos",
+          "category_id es obligatorio",
+          "year_created es opcional",
+          "image_url debe ser URL válida"
+        ]
+      },
+      "actualizar_obra": {
+        "descripcion": "Actualizar obra de arte",
+        "metodo": "PATCH",
+        "endpoint": "/api/v1/artworks/{id}/",
+        "headers": {
+          "Authorization": "Bearer {access_token}"
+        },
+        "body": {
+          "title": "Abstracción Nariñense - Edición Limitada",
+          "price": 3000000,
+          "is_available": true,
+          "description": "Descripción actualizada"
+        },
+        "notas": [
+          "Solo el propietario puede actualizar",
+          "Todos los campos son opcionales"
+        ]
+      }
+    },
+    "subastas": {
+      "crear_subasta": {
+        "descripcion": "Crear nueva subasta para una obra",
+        "metodo": "POST",
+        "endpoint": "/api/v1/auctions/",
+        "headers": {
+          "Authorization": "Bearer {access_token}"
+        },
+        "body": {
+          "artwork_id": "550e8400-e29b-41d4-a716-446655440000",
+          "starting_price": 1000000,
+          "reserve_price": 1500000,
+          "start_date": "2026-05-20T10:00:00Z",
+          "end_date": "2026-05-27T18:00:00Z",
+          "description": "Subasta exclusiva de obra de arte nariñense"
+        },
+        "notas": [
+          "artwork_id debe ser de una obra tuya",
+          "reserve_price >= starting_price",
+          "Fechas en formato ISO 8601 (UTC)",
+          "end_date > start_date",
+          "description es opcional"
+        ]
+      },
+      "hacer_puja": {
+        "descripcion": "Hacer una puja en una subasta",
+        "metodo": "POST",
+        "endpoint": "/api/v1/auctions/{auction_id}/bid/",
+        "headers": {
+          "Authorization": "Bearer {access_token}"
+        },
+        "body": {
+          "auction_id": "550e8400-e29b-41d4-a716-446655440000",
+          "amount": 1200000
+        },
+        "notas": [
+          "amount debe ser mayor que la puja actual",
+          "Debe ser mayor que starting_price",
+          "No puedes pujar en tus propias subastas",
+          "La subasta debe estar activa"
+        ]
+      }
+    },
+    "marketplace": {
+      "agregar_carrito": {
+        "descripcion": "Agregar obra al carrito de compras",
+        "metodo": "POST",
+        "endpoint": "/api/v1/marketplace/cart/items/",
+        "headers": {
+          "Authorization": "Bearer {access_token}"
+        },
+        "body": {
+          "artwork_id": "550e8400-e29b-41d4-a716-446655440000",
+          "quantity": 1
+        },
+        "notas": [
+          "quantity debe ser >= 1",
+          "La obra debe estar disponible"
+        ]
+      },
+      "checkout": {
+        "descripcion": "Procesar compra del carrito",
+        "metodo": "POST",
+        "endpoint": "/api/v1/marketplace/checkout/",
+        "headers": {
+          "Authorization": "Bearer {access_token}"
+        },
+        "body": {
+          "payment_method": "credit_card",
+          "shipping_address": "Cra 25 #15-20, Pasto, Nariño",
+          "notes": "Notas adicionales del pedido"
+        },
+        "notas": [
+          "El carrito se vacía después de checkout exitoso",
+          "Se genera una orden de compra",
+          "Se notifica al vendedor"
+        ]
+      },
+      "agregar_favorito": {
+        "descripcion": "Agregar obra a favoritos",
+        "metodo": "POST",
+        "endpoint": "/api/v1/marketplace/favorites/",
+        "headers": {
+          "Authorization": "Bearer {access_token}"
+        },
+        "body": {
+          "artwork_id": "550e8400-e29b-41d4-a716-446655440000"
+        }
+      }
+    },
+    "eventos": {
+      "crear_evento": {
+        "descripcion": "Crear nuevo evento cultural",
+        "metodo": "POST",
+        "endpoint": "/api/v1/events/",
+        "headers": {
+          "Authorization": "Bearer {access_token}"
+        },
+        "body": {
+          "title": "Exposición de Arte Nariñense",
+          "description": "Exposición de arte contemporáneo de artistas locales",
+          "start_date": "2026-06-01T10:00:00Z",
+          "end_date": "2026-06-30T18:00:00Z",
+          "location": "Museo de Nariño, Pasto",
+          "image_url": "https://example.com/event.jpg",
+          "capacity": 150,
+          "is_free": false,
+          "ticket_price": 50000
+        },
+        "notas": [
+          "Requiere rol GESTOR_CULTURAL",
+          "Capacidad máxima de asistentes",
+          "Si is_free=true, ticket_price se ignora"
+        ]
+      }
+    }
+  },
+  "notas_generales": [
+    "Todas las URLs están sin la URL base",
+    "La URL base es: http://localhost:8000",
+    "Todas las requests requieren header: Content-Type: application/json",
+    "Las requests autenticadas requieren: Authorization: Bearer {token}",
+    "Los IDs son UUID format: 550e8400-e29b-41d4-a716-446655440000",
+    "Las fechas son formato ISO 8601: 2026-05-20T10:00:00Z",
+    "Los montos de dinero están en pesos colombianos (COP)"
+  ],
+  "headers_comunes": {
+    "sin_autenticacion": {
+      "Content-Type": "application/json"
+    },
+    "con_autenticacion": {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer {access_token}"
+    }
+  },
+  "codigos_respuesta": {
+    "200": "OK - Solicitud exitosa",
+    "201": "Created - Recurso creado exitosamente",
+    "204": "No Content - Eliminado correctamente",
+    "400": "Bad Request - Datos inválidos",
+    "401": "Unauthorized - Token requerido o inválido",
+    "403": "Forbidden - No tienes permiso",
+    "404": "Not Found - Recurso no existe",
+    "422": "Unprocessable Entity - Validación fallida",
+    "500": "Internal Server Error - Error del servidor"
+  }
+}

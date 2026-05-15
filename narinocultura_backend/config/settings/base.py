@@ -170,16 +170,18 @@ EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
 DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="noreply@narinocultura.com")
 
-# Para Resend, usar un dominio verificado o el de Resend
-RESEND_FROM_EMAIL = config("RESEND_FROM_EMAIL", default="onboarding@resend.dev")
+# Configuración para Brevo
+BREVO_API_KEY = config("BREVO_API_KEY", default="")
+BREVO_FROM_EMAIL = config("BREVO_FROM_EMAIL", default="noreply@narinocultura.com")
 
-N8N_WEBHOOK_URL = config("N8N_WEBHOOK_URL", default="")
+# Resend (antiguo, mantener por compatibilidad)
+# RESEND_FROM_EMAIL = config("RESEND_FROM_EMAIL", default="onboarding@resend.dev")
+# RESEND_API_KEY = config("RESEND_API_KEY", default="")
 AI_SERVICE_URL = config("AI_SERVICE_URL", default="")
 FRONTEND_URL = config(
     "FRONTEND_URL",
     default=config("FRONTEND_BASE_URL", default="http://localhost:5173"),
 )
-RESEND_API_KEY = config("RESEND_API_KEY", default="")
 
 WOMPI_BASE_URL = config("WOMPI_BASE_URL", default="https://sandbox.wompi.co/v1")
 WOMPI_PUBLIC_KEY = config("WOMPI_PUBLIC_KEY", default="")

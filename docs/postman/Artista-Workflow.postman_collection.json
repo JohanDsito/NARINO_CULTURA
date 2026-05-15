@@ -1,0 +1,785 @@
+{
+  "info": {
+    "_postman_id": "artista-workflow-2026",
+    "name": "Nariño Cultura - Artista Workflow",
+    "description": "Colección completa de pruebas para el rol de ARTISTA en Nariño Cultura API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Autenticación",
+      "item": [
+        {
+          "name": "Registro como Artista",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"artista@narinocultura.com\",\n  \"password\": \"SecurePassword123!\",\n  \"first_name\": \"Juan\",\n  \"last_name\": \"Pérez\",\n  \"role\": \"ARTISTA\",\n  \"phone\": \"+57 310 1234567\",\n  \"avatar_url\": \"https://example.com/avatar.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/register/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "register", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verificar Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{verification_token}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/verify-email/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "verify-email", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login como Artista",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('access_token', jsonData.access);",
+                  "    pm.environment.set('refresh_token', jsonData.refresh);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"artista@narinocultura.com\",\n  \"password\": \"SecurePassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/login/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "login", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh\": \"{{refresh_token}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/token/refresh/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "token", "refresh", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh\": \"{{refresh_token}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/logout/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "logout", ""]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Perfil de Usuario",
+      "item": [
+        {
+          "name": "Obtener Mi Perfil",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/me/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", "me", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar Mi Perfil",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Juan Carlos\",\n  \"last_name\": \"Pérez García\",\n  \"phone\": \"+57 310 9876543\",\n  \"avatar_url\": \"https://example.com/new-avatar.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/me/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", "me", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cambiar Contraseña",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_password\": \"SecurePassword123!\",\n  \"new_password\": \"NewSecurePassword456!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/me/password/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", "me", "password", ""]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Perfil de Artista",
+      "item": [
+        {
+          "name": "Listar Artistas",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/artists/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "artists", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Detalle de Artista",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/artists/{{artist_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "artists", "{{artist_id}}", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Crear/Actualizar Perfil de Artista",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"artistic_name\": \"Juan Pérez Artista\",\n  \"bio\": \"Artista plástico especializado en pintura abstracta con 15 años de experiencia\",\n  \"location\": \"Pasto, Nariño\",\n  \"website\": \"https://juanperezart.com\",\n  \"instagram\": \"@juanperezart\",\n  \"facebook\": \"JuanPerezArtista\",\n  \"profile_image\": \"https://example.com/profile.jpg\",\n  \"banner_image\": \"https://example.com/banner.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/artists/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "artists", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Mi Perfil de Artista",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/artists/my-profile/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "artists", "my-profile", ""]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Obras de Arte",
+      "item": [
+        {
+          "name": "Listar Categorías",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/artworks/categories/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "artworks", "categories", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Obras de Arte",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/artworks/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "artworks", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Detalle de Obra",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/artworks/{{artwork_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "artworks", "{{artwork_id}}", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Crear Nueva Obra de Arte",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Abstracción Nariñense\",\n  \"description\": \"Obra de arte abstracta inspirada en la naturaleza de Nariño\",\n  \"category_id\": \"{{category_id}}\",\n  \"technique\": \"Acrílico sobre lienzo\",\n  \"dimensions\": \"80x100 cm\",\n  \"year_created\": 2024,\n  \"price\": 2500000,\n  \"image_url\": \"https://example.com/artwork.jpg\",\n  \"is_available\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/artworks/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "artworks", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar Obra de Arte",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Abstracción Nariñense - Edición Limitada\",\n  \"price\": 3000000,\n  \"is_available\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/artworks/{{artwork_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "artworks", "{{artwork_id}}", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Mis Obras",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/artworks/?artist={{artist_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "artworks", ""],
+              "query": [
+                {
+                  "key": "artist",
+                  "value": "{{artist_id}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. Subastas",
+      "item": [
+        {
+          "name": "Listar Subastas",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auctions/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auctions", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Detalle de Subasta",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auctions/{{auction_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auctions", "{{auction_id}}", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Crear Nueva Subasta",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"artwork_id\": \"{{artwork_id}}\",\n  \"starting_price\": 1000000,\n  \"reserve_price\": 1500000,\n  \"start_date\": \"2026-05-20T10:00:00Z\",\n  \"end_date\": \"2026-05-27T18:00:00Z\",\n  \"description\": \"Subasta exclusiva de obra de arte nariñense\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auctions/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auctions", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Hacer Una Puja",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"auction_id\": \"{{auction_id}}\",\n  \"amount\": 1200000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auctions/{{auction_id}}/bid/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auctions", "{{auction_id}}", "bid", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Mis Subastas como Vendedor",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auctions/?seller={{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auctions", ""],
+              "query": [
+                {
+                  "key": "seller",
+                  "value": "{{user_id}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "6. Marketplace",
+      "item": [
+        {
+          "name": "Obtener Mi Carrito",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/marketplace/cart/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "marketplace", "cart", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Agregar Obra al Carrito",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"artwork_id\": \"{{artwork_id}}\",\n  \"quantity\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/marketplace/cart/items/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "marketplace", "cart", "items", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Mis Órdenes de Compra",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/marketplace/orders/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "marketplace", "orders", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Mis Ventas",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/marketplace/sales/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "marketplace", "sales", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Agregar Obra a Favoritos",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"artwork_id\": \"{{artwork_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/marketplace/favorites/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "marketplace", "favorites", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Mis Favoritos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/marketplace/favorites/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "marketplace", "favorites", ""]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "7. Recuperación de Contraseña",
+      "item": [
+        {
+          "name": "Solicitar Reset de Contraseña",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"artista@narinocultura.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/password-reset/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "password-reset", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Confirmar Reset de Contraseña",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{password_reset_token}}\",\n  \"new_password\": \"NewPassword789!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/password-reset/confirm/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "password-reset", "confirm", ""]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "artist_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "artwork_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "auction_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "category_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "verification_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "password_reset_token",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
