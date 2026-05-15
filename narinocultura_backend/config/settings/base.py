@@ -168,15 +168,16 @@ EMAIL_PORT = config("EMAIL_PORT", default=587, cast=int)
 EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True, cast=bool)
 EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
-DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="noreply@narinocultura.com")
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="noreply@narinocultura.uk")
 
-# Configuración para Brevo
+# Resend Configuration
+RESEND_API_KEY = config("RESEND_API_KEY", default="")
+RESEND_FROM_EMAIL = config("RESEND_FROM_EMAIL", default="noreply@narinocultura.uk")
+
+# Optional Brevo Configuration (no usado por defecto)
 BREVO_API_KEY = config("BREVO_API_KEY", default="")
-BREVO_FROM_EMAIL = config("BREVO_FROM_EMAIL", default="noreply@narinocultura.com")
+BREVO_FROM_EMAIL = config("BREVO_FROM_EMAIL", default="noreply@narinocultura.uk")
 
-# Resend (antiguo, mantener por compatibilidad)
-# RESEND_FROM_EMAIL = config("RESEND_FROM_EMAIL", default="onboarding@resend.dev")
-# RESEND_API_KEY = config("RESEND_API_KEY", default="")
 AI_SERVICE_URL = config("AI_SERVICE_URL", default="")
 FRONTEND_URL = config(
     "FRONTEND_URL",

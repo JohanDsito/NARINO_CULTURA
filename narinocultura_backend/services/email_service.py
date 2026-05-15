@@ -19,50 +19,43 @@ class EmailService:
     """Servicio para enviar emails desde el backend."""
 
     @staticmethod
-    def _send_via_brevo(subject: str, user_email: str, html_message: str, text_message: str) -> EmailResult:
-        brevo_api_key = getattr(settings, "BREVO_API_KEY", "")
-        brevo_from_email = getattr(settings, "BREVO_FROM_EMAIL", "")
-        
-        if not brevo_api_key:
-            return EmailResult(ok=False, error_message="Brevo API key no configurada")
-        if not brevo_from_email:
-            return EmailResult(ok=False, error_message="Brevo FROM_EMAIL no configurado")
+    def _send_via_resend(subject: str, user_email: str, html_message: str, text_message: str) -> EmailResult:
+        resend_api_key = getattr(settings, "RESEND_API_KEY", "")
+        resend_from_email = getattr(settings, "RESEND_FROM_EMAIL", "")
+
+        if not resend_api_key:
+            return EmailResult(ok=False, error_message="Resend API key no configurada")
+        if not resend_from_email:
+            return EmailResult(ok=False, error_message="Resend FROM_EMAIL no configurado")
 
         try:
             payload = {
-                "sender": {
-                    "name": "Nariño Cultura",
-                    "email": brevo_from_email
-                },
-                "to": [
-                    {
-                        "email": user_email
-                    }
-                ],
+                "from": resend_from_email,
+                "to": [user_email],
                 "subject": subject,
-                "htmlContent": html_message,
-                "textContent": text_message
+                "html": html_message,
+                "text": text_message,
             }
             headers = {
-                "api-key": brevo_api_key,
+                "Authorization": f"Bearer {resend_api_key}",
                 "Content-Type": "application/json",
             }
             response = requests.post(
-                "https://api.brevo.com/v3/smtp/email",
+                "https://api.resend.com/emails",
                 json=payload,
                 headers=headers,
-                timeout=10
+                timeout=10,
             )
-            if response.status_code >= 200 and response.status_code < 300:
+            if 200 <= response.status_code < 300:
                 return EmailResult(ok=True)
             return EmailResult(
                 ok=False,
-                error_message=f"Brevo API error {response.status_code}: {response.text}",
+                error_message=f"Resend API error {response.status_code}: {response.text}",
             )
         except requests.RequestException as e:
-            return EmailResult(ok=False, error_message=f"Error de red con Brevo: {str(e)}")
+            return EmailResult(ok=False, error_message=f"Error de red con Resend: {str(e)}")
         except Exception as e:
-            return EmailResult(ok=False, error_message=f"Error inesperado con Brevo: {str(e)}")
+            return EmailResult(ok=False, error_message=f"Error inesperado con Resend: {str(e)}")
 
     @staticmethod
     def _send_via_smtp(subject: str, user_email: str, html_message: str, text_message: str) -> EmailResult:
@@ -81,15 +74,15 @@ class EmailService:
 
     @staticmethod
     def _send_email(subject: str, user_email: str, html_message: str, text_message: str) -> EmailResult:
-        # Intentar Brevo primero
-        brevo_api_key = getattr(settings, "BREVO_API_KEY", "")
-        if brevo_api_key:
-            result = EmailService._send_via_brevo(subject, user_email, html_message, text_message)
+        # Intentar Resend primero
+        resend_api_key = getattr(settings, "RESEND_API_KEY", "")
+        if resend_api_key:
+            result = EmailService._send_via_resend(subject, user_email, html_message, text_message)
             if result.ok:
-                logger.info(f"Email enviado a {user_email} vía Brevo")
+                logger.info(f"Email enviado a {user_email} vía Resend")
                 return result
-            logger.warning(f"Brevo falló, intentando SMTP: {result.error_message}")
-        
+            logger.warning(f"Resend falló, intentando SMTP: {result.error_message}")
+
         # Fallback a SMTP
         result = EmailService._send_via_smtp(subject, user_email, html_message, text_message)
         if result.ok:

@@ -21,7 +21,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"artista@narinocultura.com\",\n  \"password\": \"SecurePassword123!\",\n  \"first_name\": \"Juan\",\n  \"last_name\": \"Pérez\",\n  \"role\": \"ARTISTA\",\n  \"phone\": \"+57 310 1234567\",\n  \"avatar_url\": \"https://example.com/avatar.jpg\"\n}"
+              "raw": "{\n  \"email\": \"artista@narinocultura.uk\",\n  \"password\": \"SecurePassword123!\",\n  \"first_name\": \"Juan\",\n  \"last_name\": \"Pérez\",\n  \"role\": \"ARTISTA\",\n  \"phone\": \"+57 310 1234567\",\n  \"avatar_url\": \"https://example.com/avatar.jpg\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/auth/register/",
@@ -79,7 +79,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"artista@narinocultura.com\",\n  \"password\": \"SecurePassword123!\"\n}"
+              "raw": "{\n  \"email\": \"artista@narinocultura.uk\",\n  \"password\": \"SecurePassword123!\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/auth/login/",
@@ -695,7 +695,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"artista@narinocultura.com\"\n}"
+              "raw": "{\n  \"email\": \"artista@narinocultura.uk\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/auth/password-reset/",

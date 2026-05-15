@@ -8,7 +8,7 @@
         "metodo": "POST",
         "endpoint": "/api/v1/auth/register/",
         "body": {
-          "email": "artista@narinocultura.com",
+          "email": "artista@narinocultura.uk",
           "password": "SecurePassword123!",
           "first_name": "Juan",
           "last_name": "Pérez",
@@ -40,7 +40,7 @@
         "metodo": "POST",
         "endpoint": "/api/v1/auth/login/",
         "body": {
-          "email": "artista@narinocultura.com",
+          "email": "artista@narinocultura.uk",
           "password": "SecurePassword123!"
         },
         "respuesta": {
@@ -80,7 +80,7 @@
         "metodo": "POST",
         "endpoint": "/api/v1/auth/password-reset/",
         "body": {
-          "email": "artista@narinocultura.com"
+          "email": "artista@narinocultura.uk"
         },
         "notas": [
           "Enviará email con link de reset",

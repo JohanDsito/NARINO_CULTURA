@@ -123,7 +123,7 @@ Si ves error `401 Unauthorized`:
 Respuesta típica:
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",  ← Copia este ID
-  "email": "artista@narinocultura.com",
+  "email": "artista@narinocultura.uk",
   ...
 }
 ```

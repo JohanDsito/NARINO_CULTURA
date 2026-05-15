@@ -23,7 +23,7 @@ Tu backend ha sido **actualizado de Resend a Brevo**:
 
 1. En Brevo Dashboard, ve a **Senders & Lists** → **Senders**
 2. Verifica que tengas al menos un email registrado
-3. Ejemplo: `noreply@narinocultura.com` o similar
+3. Ejemplo: `noreply@narinocultura.uk` o similar
 4. **Importante:** Este email debe estar verificado en Brevo
 
 ### Paso 3: Configurar en Railway
@@ -35,7 +35,7 @@ En tu proyecto de Railway:
 
 ```
 BREVO_API_KEY=xkeysib-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-BREVO_FROM_EMAIL=noreply@narinocultura.com
+BREVO_FROM_EMAIL=noreply@narinocultura.uk
 ```
 
 **Nota:** Reemplaza con tus valores reales.
@@ -50,7 +50,7 @@ BREVO_FROM_EMAIL=noreply@narinocultura.com
 
 ```
 BREVO_API_KEY=xkeysib-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-BREVO_FROM_EMAIL=noreply@narinocultura.com
+BREVO_FROM_EMAIL=noreply@narinocultura.uk
 ```
 
 2. Inicia el servidor:
@@ -150,7 +150,7 @@ Content-Type: application/json
 {
   "sender": {
     "name": "Nariño Cultura",
-    "email": "noreply@narinocultura.com"
+    "email": "noreply@narinocultura.uk"
   },
   "to": [
     {

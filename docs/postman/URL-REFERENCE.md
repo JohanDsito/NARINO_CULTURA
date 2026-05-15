@@ -116,7 +116,7 @@ Content-Type: application/json
 ### Registro
 ```json
 {
-  "email": "artista@narinocultura.com",
+  "email": "artista@narinocultura.uk",
   "password": "SecurePassword123!",
   "first_name": "Juan",
   "last_name": "Pérez",

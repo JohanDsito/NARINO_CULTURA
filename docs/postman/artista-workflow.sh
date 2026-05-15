@@ -7,7 +7,7 @@
 
 # Configurar variables
 BASE_URL="http://localhost:8000"
-EMAIL="artista@narinocultura.com"
+EMAIL="artista@narinocultura.uk"
 PASSWORD="SecurePassword123!"
 
 echo "🎨 Iniciando pruebas de API como ARTISTA..."

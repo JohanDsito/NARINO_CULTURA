@@ -36,14 +36,14 @@
 ```python
 # Configuración para Brevo
 BREVO_API_KEY = config("BREVO_API_KEY", default="")
-BREVO_FROM_EMAIL = config("BREVO_FROM_EMAIL", default="noreply@narinocultura.com")
+BREVO_FROM_EMAIL = config("BREVO_FROM_EMAIL", default="noreply@narinocultura.uk")
 ```
 
 #### Variables de Entorno Requeridas:
 | Variable | Tipo | Ejemplo |
 |----------|------|---------|
 | `BREVO_API_KEY` | String | `xkeysib-abcd1234efgh5678...` |
-| `BREVO_FROM_EMAIL` | Email | `noreply@narinocultura.com` |
+| `BREVO_FROM_EMAIL` | Email | `noreply@narinocultura.uk` |
 
 ---
 
@@ -84,14 +84,14 @@ Email se envía correctamente ✅
 Ir a: Variables de Entorno
 Agregar:
   BREVO_API_KEY = xkeysib-XXXXXXX...
-  BREVO_FROM_EMAIL = noreply@narinocultura.com
+  BREVO_FROM_EMAIL = noreply@narinocultura.uk
 Redeploy la aplicación
 ```
 
 ### 2. En Local (.env):
 ```bash
 BREVO_API_KEY=xkeysib-XXXXXXX...
-BREVO_FROM_EMAIL=noreply@narinocultura.com
+BREVO_FROM_EMAIL=noreply@narinocultura.uk
 ```
 
 ### 3. Probar:
@@ -153,7 +153,7 @@ Para que funcione, necesitas:
 4. **Variables en Railway:**
    ```
    BREVO_API_KEY=xkeysib-...
-   BREVO_FROM_EMAIL=noreply@narinocultura.com
+   BREVO_FROM_EMAIL=noreply@narinocultura.uk
    ```
 
 ---

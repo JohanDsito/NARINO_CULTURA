@@ -37,7 +37,7 @@ EMAIL_PORT=587
 EMAIL_USE_TLS=True
 EMAIL_HOST_USER=narinocultura@gmail.com
 EMAIL_HOST_PASSWORD=tu_contraseña_de_aplicación
-DEFAULT_FROM_EMAIL=noreply@narinocultura.com
+DEFAULT_FROM_EMAIL=noreply@narinocultura.uk
 
 # Frontend URL (para los links en los emails)
 FRONTEND_URL=http://localhost:5173
