@@ -28,16 +28,37 @@ class RegisterAPIView(APIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save(is_active=True, is_verified=False)
         verification = EmailVerification.issue_for_user(user)
-        email_result = EmailService.send_verification_email(user.email, verification.token)
-        if not email_result.ok:
+        
+        # Agregar logging detallado para debugging
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"Intentando enviar email de verificación a {user.email}")
+        logger.info(f"Token generado: {verification.token[:10]}...")
+        
+        try:
+            email_result = EmailService.send_verification_email(user.email, verification.token)
+            logger.info(f"Resultado del envío: {email_result.ok}")
+            
+            if not email_result.ok:
+                logger.error(f"Error al enviar email: {email_result.error_message}")
+                return Response(
+                    {"detail": f"Registro creado pero hubo un error al enviar el correo: {email_result.error_message}"},
+                    status=status.HTTP_201_CREATED,
+                )
+            
+            logger.info("Email de verificación enviado exitosamente")
             return Response(
-                {"detail": f"Registro creado pero hubo un error al enviar el correo: {email_result.error_message}"},
+                {"detail": "Registro exitoso. Revisa tu correo para verificar la cuenta."},
                 status=status.HTTP_201_CREATED,
             )
-        return Response(
-            {"detail": "Registro exitoso. Revisa tu correo para verificar la cuenta."},
-            status=status.HTTP_201_CREATED,
-        )
+        except Exception as e:
+            logger.error(f"Excepción al enviar email: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return Response(
+                {"detail": f"Registro creado pero hubo un error inesperado: {str(e)}"},
+                status=status.HTTP_201_CREATED,
+            )
 
 
 class VerifyEmailAPIView(APIView):

@@ -172,7 +172,10 @@ DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="noreply@narinocultura
 
 N8N_WEBHOOK_URL = config("N8N_WEBHOOK_URL", default="")
 AI_SERVICE_URL = config("AI_SERVICE_URL", default="")
-FRONTEND_URL = config("FRONTEND_URL", default="http://localhost:5173")
+FRONTEND_URL = config(
+    "FRONTEND_URL",
+    default=config("FRONTEND_BASE_URL", default="http://localhost:5173"),
+)
 
 WOMPI_BASE_URL = config("WOMPI_BASE_URL", default="https://sandbox.wompi.co/v1")
 WOMPI_PUBLIC_KEY = config("WOMPI_PUBLIC_KEY", default="")
