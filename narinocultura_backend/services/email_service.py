@@ -25,7 +25,7 @@ class EmailService:
 
         try:
             payload = {
-                "from": settings.DEFAULT_FROM_EMAIL,
+                "from": getattr(settings, "RESEND_FROM_EMAIL", settings.DEFAULT_FROM_EMAIL),
                 "to": [user_email],
                 "subject": subject,
                 "html": html_message,

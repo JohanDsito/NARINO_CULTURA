@@ -170,6 +170,9 @@ EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
 DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="noreply@narinocultura.com")
 
+# Para Resend, usar un dominio verificado o el de Resend
+RESEND_FROM_EMAIL = config("RESEND_FROM_EMAIL", default="onboarding@resend.dev")
+
 N8N_WEBHOOK_URL = config("N8N_WEBHOOK_URL", default="")
 AI_SERVICE_URL = config("AI_SERVICE_URL", default="")
 FRONTEND_URL = config(
