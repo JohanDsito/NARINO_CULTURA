@@ -21,6 +21,7 @@ vi.mock('axios', () => ({
 describe('axiosInstance', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.stubEnv('VITE_API_BASE_URL', 'http://test-api.local/api/v1')
     localStorage.clear()
     window.history.replaceState(null, '', '/')
     vi.resetModules()
