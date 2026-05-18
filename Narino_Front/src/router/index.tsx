@@ -35,6 +35,10 @@ export const router = createBrowserRouter([
         element: lazyPage(() => import('@/pages/Auth/RegisterPage'), 'Cargando registro…'),
       },
       {
+        path: 'verify-email',
+        element: lazyPage(() => import('@/pages/Auth/VerifyEmailPage'), 'Verificando correo…'),
+      },
+      {
         path: 'forgot-password',
         element: lazyPage(
           () => import('@/pages/Auth/ForgotPasswordPage'),
