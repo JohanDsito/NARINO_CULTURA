@@ -60,7 +60,7 @@ export const eventsApi = {
     start_date?: string
     end_date?: string
   }) => {
-    return axiosInstance.get<EventsResponse>('/api/v1/events/', {
+    return axiosInstance.get<EventsResponse>('/events/', {
       params: {
         is_published: true,
         ...params,
@@ -74,39 +74,39 @@ export const eventsApi = {
     start_date?: string
     end_date?: string
   }) => {
-    return axiosInstance.get<EventsResponse>('/api/v1/events/', {
+    return axiosInstance.get<EventsResponse>('/events/', {
       params,
     })
   },
 
   // Obtener un evento específico
   getEventById: (id: string) => {
-    return axiosInstance.get<Event>(`/api/v1/events/${id}/`)
+    return axiosInstance.get<Event>(`/events/${id}/`)
   },
 
   // Crear un evento (solo admin/cultural manager)
   createEvent: (payload: CreateEventPayload) => {
-    return axiosInstance.post<Event>('/api/v1/events/', payload)
+    return axiosInstance.post<Event>('/events/', payload)
   },
 
   // Actualizar un evento (solo el organizador/admin)
   updateEvent: (id: string, payload: Partial<CreateEventPayload>) => {
-    return axiosInstance.patch<Event>(`/api/v1/events/${id}/`, payload)
+    return axiosInstance.patch<Event>(`/events/${id}/`, payload)
   },
 
   // Eliminar un evento (solo el organizador/admin)
   deleteEvent: (id: string) => {
-    return axiosInstance.delete(`/api/v1/events/${id}/`)
+    return axiosInstance.delete(`/events/${id}/`)
   },
 
   // Registrarse en un evento
   registerToEvent: (id: string) => {
-    return axiosInstance.post(`/api/v1/events/${id}/register/`, {})
+    return axiosInstance.post(`/events/${id}/register/`, {})
   },
 
   // Obtener eventos por mes (para el calendario)
   getEventsByDateRange: (startDate: string, endDate: string) => {
-    return axiosInstance.get<EventsResponse>('/api/v1/events/', {
+    return axiosInstance.get<EventsResponse>('/events/', {
       params: {
         is_published: true,
         start_date__gte: startDate,

@@ -69,27 +69,27 @@ describe('events.api', () => {
     eventsApi.registerToEvent('1')
 
     expect(mockedAxios.get).toHaveBeenCalledWith(
-      '/api/v1/events/1/',
+      '/events/1/',
     )
 
     expect(mockedAxios.post).toHaveBeenCalledWith(
-      '/api/v1/events/',
+      '/events/',
       payload,
     )
 
     expect(mockedAxios.patch).toHaveBeenCalledWith(
-      '/api/v1/events/1/',
+      '/events/1/',
       {
         title: 'Taller',
       },
     )
 
     expect(mockedAxios.delete).toHaveBeenCalledWith(
-      '/api/v1/events/1/',
+      '/events/1/',
     )
 
     expect(mockedAxios.post).toHaveBeenCalledWith(
-      '/api/v1/events/1/register/',
+      '/events/1/register/',
       {},
     )
   })
