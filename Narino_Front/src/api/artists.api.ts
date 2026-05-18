@@ -27,16 +27,16 @@ export interface ArtistProfile {
 }
 
 export async function createArtistProfile(payload: CreateArtistProfilePayload) {
-  const { data } = await axiosInstance.post<ArtistProfile>('/artists/', payload)
+  const { data } = await axiosInstance.post<ArtistProfile>('/api/v1/artists/', payload)
   return data
 }
 
 export async function listArtistProfiles() {
-  const { data } = await axiosInstance.get<ArtistProfile[] | { results: ArtistProfile[] }>('/artists/')
+  const { data } = await axiosInstance.get<ArtistProfile[] | { results: ArtistProfile[] }>('/api/v1/artists/')
   return Array.isArray(data) ? data : data.results || []
 }
 
 export async function updateArtistProfile(slug: string, payload: Partial<CreateArtistProfilePayload>) {
-  const { data } = await axiosInstance.patch<ArtistProfile>(`/artists/${slug}/`, payload)
+  const { data } = await axiosInstance.patch<ArtistProfile>(`/api/v1/artists/${slug}/`, payload)
   return data
 }

@@ -27,7 +27,7 @@ describe('artists.api', () => {
 
     await expect(createArtistProfile({ artistic_name: 'Ana' })).resolves.toBe(profile)
 
-    expect(mockedAxios.post).toHaveBeenCalledWith('/artists/', {
+    expect(mockedAxios.post).toHaveBeenCalledWith('/api/v1/artists/', {
       artistic_name: 'Ana',
     })
   })
@@ -52,7 +52,7 @@ describe('artists.api', () => {
     ).resolves.toBe(profile)
 
     expect(mockedAxios.patch).toHaveBeenCalledWith(
-      '/artists/ana/',
+      '/api/v1/artists/ana/',
       {
         artistic_name: 'Ana Sur',
       }

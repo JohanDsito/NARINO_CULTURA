@@ -59,6 +59,14 @@ export async function confirmPasswordReset(
   return data
 }
 
+export async function changePassword(currentPassword: string, newPassword: string): Promise<{ message: string }> {
+  const { data } = await axiosInstance.post('/api/v1/users/me/password/', {
+    current_password: currentPassword,
+    new_password: newPassword,
+  })
+  return data
+}
+
 export async function logout(): Promise<void> {
   const refresh = localStorage.getItem('refresh_token')
   if (refresh) {
@@ -73,5 +81,6 @@ export const authApi = {
   getMe: me,
   forgotPassword: requestPasswordReset,
   resetPassword: confirmPasswordReset,
+  changePassword,
   logout,
 }
