@@ -21,7 +21,7 @@ const _kFieldPadding = EdgeInsets.symmetric(horizontal: 12, vertical: 10);
 class PublishArtworkScreen extends ConsumerStatefulWidget {
   const PublishArtworkScreen({super.key, this.artworkIdToEdit});
 
-  final int? artworkIdToEdit;
+  final String? artworkIdToEdit;
 
   @override
   ConsumerState<PublishArtworkScreen> createState() =>

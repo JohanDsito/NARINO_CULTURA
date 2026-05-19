@@ -10,8 +10,8 @@ class FavoriteModel {
     this.imagenUrl,
   });
 
-  final int id;
-  final int obraId;
+  final String id;
+  final String obraId;
   final String obraTitulo;
   final String artistaNombre;
   final String estado;
@@ -19,14 +19,14 @@ class FavoriteModel {
   final String? imagenUrl;
 
   factory FavoriteModel.fromJson(Map<String, dynamic> json) => FavoriteModel(
-        id: json['id'],
-        obraId: json['obra_id'],
-        obraTitulo: json['obra_titulo'],
-        artistaNombre: json['artista_nombre'],
-        estado: json['estado'] ?? 'disponible',
+        id: json['id']?.toString() ?? '',
+        obraId: json['obra_id']?.toString() ?? '',
+        obraTitulo: json['obra_titulo']?.toString() ?? '',
+        artistaNombre: json['artista_nombre']?.toString() ?? '',
+        estado: json['estado']?.toString() ?? 'disponible',
         precio:
             json['precio'] != null ? double.tryParse(json['precio'].toString()) : null,
-        imagenUrl: json['imagen_url'],
+        imagenUrl: json['imagen_url']?.toString(),
       );
 
   bool get isDisponible => estado == 'disponible';

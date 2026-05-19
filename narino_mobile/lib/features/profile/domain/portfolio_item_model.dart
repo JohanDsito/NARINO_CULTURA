@@ -1,6 +1,6 @@
 /// Modelo de dominio que representa un elemento del portafolio (imagen o video).
 class PortfolioItemModel {
-  final int id;
+  final String id;
   final String tipo;
   final String url;
   final String? titulo;
@@ -18,7 +18,7 @@ class PortfolioItemModel {
 
   factory PortfolioItemModel.fromJson(Map<String, dynamic> json) =>
       PortfolioItemModel(
-        id: json['id'] as int? ?? 0,
+        id: json['id']?.toString() ?? '',
         tipo: json['tipo']?.toString() ?? 'imagen',
         url: json['url']?.toString() ?? '',
         titulo: json['titulo']?.toString(),

@@ -1,7 +1,7 @@
 /// Modelo de dominio que representa el perfil del usuario (artista/comprador/gestor).
 class ProfileModel {
-  final int id;
-  final int userId;
+  final String id;
+  final String userId;
   final String nombreArtistico;
   final String disciplina;
   final String? biografia;
@@ -31,12 +31,12 @@ class ProfileModel {
   });
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) => ProfileModel(
-    id: json['id'] as int,
-    userId: json['user_id'] as int,
-    nombreArtistico: json['nombre_artistico'] as String,
-    disciplina: json['disciplina'] as String,
-    biografia: json['biografia'] as String?,
-    fotoUrl: json['foto_url'] as String?,
+    id: json['id']?.toString() ?? '',
+    userId: json['user_id']?.toString() ?? '',
+    nombreArtistico: json['nombre_artistico']?.toString() ?? '',
+    disciplina: json['disciplina']?.toString() ?? '',
+    biografia: json['biografia']?.toString(),
+    fotoUrl: json['foto_url']?.toString(),
     seguidores: json['seguidores'] as int? ?? 0,
     siguiendo: json['siguiendo'] as int? ?? 0,
     esSeguido: json['es_seguido'] as bool? ?? false,

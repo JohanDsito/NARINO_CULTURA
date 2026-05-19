@@ -25,7 +25,7 @@ const _kHeaderHeight = 340.0;
 class ArtworkDetailScreen extends ConsumerWidget {
   const ArtworkDetailScreen({super.key, required this.artworkId});
 
-  final int artworkId;
+  final String artworkId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

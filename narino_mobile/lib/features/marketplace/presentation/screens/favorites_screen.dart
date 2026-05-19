@@ -26,7 +26,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
     );
   }
 
-  Future<void> _removeFavorite(int obraId) async {
+  Future<void> _removeFavorite(String obraId) async {
     await ref.read(favoritesProvider.notifier).toggleFavorite(obraId);
   }
 
@@ -78,7 +78,7 @@ class _FavoritesBody extends StatelessWidget {
   const _FavoritesBody({required this.state, required this.onRemove});
 
   final dynamic state; // FavoritesState
-  final Future<void> Function(int obraId) onRemove;
+  final Future<void> Function(String obraId) onRemove;
 
   @override
   Widget build(BuildContext context) {

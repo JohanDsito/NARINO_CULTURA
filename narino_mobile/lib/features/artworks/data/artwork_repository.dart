@@ -43,7 +43,7 @@ class ArtworkRepository {
     }
   }
 
-  Future<ArtworkModel> getDetail(int id) async {
+  Future<ArtworkModel> getDetail(String id) async {
     try {
       final data = await _service.getArtworkDetail(id);
       return ArtworkModel.fromJson(data);
@@ -61,7 +61,7 @@ class ArtworkRepository {
     }
   }
 
-  Future<ArtworkModel> update(int id, FormData formData) async {
+  Future<ArtworkModel> update(String id, FormData formData) async {
     try {
       final data = await _service.updateArtwork(id, formData);
       return ArtworkModel.fromJson(data);
@@ -70,7 +70,7 @@ class ArtworkRepository {
     }
   }
 
-  Future<void> delete(int id) async {
+  Future<void> delete(String id) async {
     try {
       await _service.deleteArtwork(id);
     } on DioException catch (e) {
@@ -78,7 +78,7 @@ class ArtworkRepository {
     }
   }
 
-  Future<({bool esFavorito, int cantidad})> toggleFavorite(int id) async {
+  Future<({bool esFavorito, int cantidad})> toggleFavorite(String id) async {
     try {
       final data = await _service.toggleFavorite(id);
       return (

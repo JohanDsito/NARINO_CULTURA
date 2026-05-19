@@ -96,14 +96,14 @@ final _routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/artworks/:id',
             builder: (_, state) {
-              final id = int.parse(state.pathParameters['id']!);
+              final id = state.pathParameters['id']!;
               return ArtworkDetailScreen(artworkId: id);
             },
           ),
           GoRoute(
             path: '/artworks/:id/edit',
             builder: (_, state) {
-              final id = int.parse(state.pathParameters['id']!);
+              final id = state.pathParameters['id']!;
               return PublishArtworkScreen(artworkIdToEdit: id);
             },
           ),
@@ -118,14 +118,14 @@ final _routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/marketplace/checkout',
             builder: (_, state) {
-              final orderId = int.parse(state.uri.queryParameters['orderId']!);
+              final orderId = state.uri.queryParameters['orderId']!;
               return CheckoutScreen(orderId: orderId);
             },
           ),
           GoRoute(
             path: '/marketplace/payment-result',
             builder: (_, state) {
-              final orderId = int.parse(state.uri.queryParameters['orderId']!);
+              final orderId = state.uri.queryParameters['orderId']!;
               final success = state.uri.queryParameters['success'] == 'true';
               return PaymentResultScreen(orderId: orderId, success: success);
             },
@@ -145,7 +145,7 @@ final _routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/marketplace/order/:id',
             builder: (_, state) {
-              final id = int.parse(state.pathParameters['id']!);
+              final id = state.pathParameters['id']!;
               return OrderDetailScreen(orderId: id);
             },
           ),
@@ -162,7 +162,7 @@ final _routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/auctions/:id',
             builder: (_, state) {
-              final id = int.parse(state.pathParameters['id']!);
+              final id = state.pathParameters['id']!;
               return AuctionDetailScreen(auctionId: id);
             },
           ),
@@ -178,7 +178,7 @@ final _routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/events/:id',
             builder: (context, state) => EventDetailScreen(
-              eventId: int.parse(state.pathParameters['id']!),
+              eventId: state.pathParameters['id']!,
             ),
           ),
           GoRoute(path: '/chatbot', builder: (_, __) => const ChatbotScreen()),
@@ -219,7 +219,7 @@ final _routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/artistas/:id',
             builder: (context, state) => ArtistPublicProfileScreen(
-              artistId: int.parse(state.pathParameters['id']!),
+              artistId: state.pathParameters['id']!,
             ),
           ),
         ],

@@ -23,13 +23,13 @@ class AuctionsService {
     return const [];
   }
 
-  Future<Map<String, dynamic>> getAuctionDetail(int id) async {
+  Future<Map<String, dynamic>> getAuctionDetail(String id) async {
     final r = await _dio.get('${ApiConstants.auctions}$id/');
     return (r.data as Map).cast<String, dynamic>();
   }
 
   Future<Map<String, dynamic>> createAuction({
-    required int obraId,
+    required String obraId,
     required double precioBase,
     required int duracionDias,
     required DateTime fechaInicio,
@@ -47,11 +47,11 @@ class AuctionsService {
   }
 
   Future<Map<String, dynamic>> bid({
-    required int auctionId,
+    required String auctionId,
     required double monto,
   }) async {
     final url =
-        ApiConstants.auctionBid.replaceFirst('{id}', auctionId.toString());
+        ApiConstants.auctionBid.replaceFirst('{id}', auctionId);
     final r = await _dio.post(url, data: {'monto': monto});
     return (r.data as Map).cast<String, dynamic>();
   }

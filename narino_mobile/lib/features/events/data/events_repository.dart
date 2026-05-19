@@ -24,7 +24,7 @@ class EventsRepository {
     }
   }
 
-  Future<EventModel> getEventDetail(int id) async {
+  Future<EventModel> getEventDetail(String id) async {
     try {
       return EventModel.fromJson(await _service.getEventDetail(id));
     } on DioException catch (e) {

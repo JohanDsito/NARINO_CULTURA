@@ -62,7 +62,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
     );
   }
 
-  Future<void> _removeItem(int itemId) async {
+  Future<void> _removeItem(String itemId) async {
     final ok = await ref.read(cartProvider.notifier).removeFromCart(itemId);
     if (!mounted) return;
     _showSnackBar(
@@ -137,7 +137,7 @@ class _CartBody extends StatelessWidget {
   const _CartBody({required this.state, required this.onRemove});
 
   final dynamic state; // CartState
-  final Future<void> Function(int itemId) onRemove;
+  final Future<void> Function(String itemId) onRemove;
 
   @override
   Widget build(BuildContext context) {

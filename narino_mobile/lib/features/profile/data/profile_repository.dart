@@ -44,7 +44,7 @@ class ProfileRepository {
     }
   }
 
-  Future<ProfileModel> getProfileById(int id) async {
+  Future<ProfileModel> getProfileById(String id) async {
     try {
       final data = await _service.getProfileById(id);
       return ProfileModel.fromJson(data);
@@ -53,7 +53,7 @@ class ProfileRepository {
     }
   }
 
-  Future<List<PortfolioItemModel>> getPortfolio(int profileId) async {
+  Future<List<PortfolioItemModel>> getPortfolio(String profileId) async {
     try {
       final data = await _service.getPortfolio(profileId);
       return data
@@ -68,7 +68,7 @@ class ProfileRepository {
   }
 
   Future<PortfolioItemModel> addPortfolioItem({
-    required int profileId,
+    required String profileId,
     required File file,
     required String tipo,
     String? titulo,
@@ -89,8 +89,8 @@ class ProfileRepository {
   }
 
   Future<PortfolioItemModel> updatePortfolioItemOrder({
-    required int profileId,
-    required int itemId,
+    required String profileId,
+    required String itemId,
     required int orden,
   }) async {
     try {
@@ -105,7 +105,7 @@ class ProfileRepository {
     }
   }
 
-  Future<void> deletePortfolioItem(int profileId, int itemId) async {
+  Future<void> deletePortfolioItem(String profileId, String itemId) async {
     try {
       await _service.deletePortfolioItem(profileId, itemId);
     } on DioException catch (e) {
@@ -113,7 +113,7 @@ class ProfileRepository {
     }
   }
 
-  Future<ProfileModel> followArtist(int profileId) async {
+  Future<ProfileModel> followArtist(String profileId) async {
     try {
       final data = await _service.followArtist(profileId);
       return ProfileModel.fromJson(data);
@@ -122,7 +122,7 @@ class ProfileRepository {
     }
   }
 
-  Future<ProfileModel> unfollowArtist(int profileId) async {
+  Future<ProfileModel> unfollowArtist(String profileId) async {
     try {
       final data = await _service.unfollowArtist(profileId);
       return ProfileModel.fromJson(data);

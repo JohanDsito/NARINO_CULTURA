@@ -67,9 +67,9 @@ class FavoritesState {
   bool get isLoading => status == MarketplaceStatus.loading;
   bool get hasError => errorMessage != null;
 
-  bool isFavorite(int obraId) => favorites.any((f) => f.obraId == obraId);
+  bool isFavorite(String obraId) => favorites.any((f) => f.obraId == obraId);
 
-  int? getFavoriteId(int obraId) {
+  String? getFavoriteId(String obraId) {
     try {
       return favorites.firstWhere((f) => f.obraId == obraId).id;
     } catch (_) {

@@ -13,7 +13,7 @@ class PaymentResultScreen extends StatelessWidget {
     required this.success,
   });
 
-  final int orderId;
+  final String orderId;
   final bool success;
 
   @override
@@ -47,7 +47,7 @@ class PaymentResultScreen extends StatelessWidget {
 class _SuccessContent extends StatelessWidget {
   const _SuccessContent({required this.orderId});
 
-  final int orderId;
+  final String orderId;
 
   @override
   Widget build(BuildContext context) {
@@ -119,7 +119,7 @@ class _SuccessContent extends StatelessWidget {
 class _FailureContent extends StatelessWidget {
   const _FailureContent({required this.orderId});
 
-  final int orderId;
+  final String orderId;
 
   @override
   Widget build(BuildContext context) {

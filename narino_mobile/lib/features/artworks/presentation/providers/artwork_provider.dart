@@ -14,7 +14,7 @@ final artworkProvider = StateNotifierProvider<ArtworkNotifier, ArtworkState>(
 );
 
 final artworkDetailProvider =
-    FutureProvider.family.autoDispose<ArtworkModel, int>((ref, id) async {
+    FutureProvider.family.autoDispose<ArtworkModel, String>((ref, id) async {
   return ref.read(artworkRepositoryProvider).getDetail(id);
 });
 
@@ -99,7 +99,7 @@ class ArtworkNotifier extends StateNotifier<ArtworkState> {
     loadCatalog();
   }
 
-  Future<void> toggleFavorite(int artworkId) async {
+  Future<void> toggleFavorite(String artworkId) async {
     final idx = state.artworks.indexWhere((a) => a.id == artworkId);
     if (idx == -1) return;
 
@@ -142,7 +142,7 @@ class ArtworkNotifier extends StateNotifier<ArtworkState> {
     }
   }
 
-  Future<bool> deleteArtwork(int artworkId) async {
+  Future<bool> deleteArtwork(String artworkId) async {
     try {
       await _repo.delete(artworkId);
       state = state.copyWith(
@@ -170,7 +170,7 @@ class ArtworkNotifier extends StateNotifier<ArtworkState> {
     }
   }
 
-  Future<ArtworkModel?> update(int id, FormData formData) async {
+  Future<ArtworkModel?> update(String id, FormData formData) async {
     try {
       final updated = await _repo.update(id, formData);
       final updatedList =

@@ -34,8 +34,8 @@ class ArtworkService {
     return response.data as Map<String, dynamic>;
   }
 
-  Future<Map<String, dynamic>> getArtworkDetail(int id) async {
-    final url = ApiConstants.artworkDetail.replaceAll('{id}', '$id');
+  Future<Map<String, dynamic>> getArtworkDetail(String id) async {
+    final url = ApiConstants.artworkDetail.replaceAll('{id}', id);
     final response = await _dio.get(url);
     return response.data as Map<String, dynamic>;
   }
@@ -49,8 +49,8 @@ class ArtworkService {
     return response.data as Map<String, dynamic>;
   }
 
-  Future<Map<String, dynamic>> updateArtwork(int id, FormData formData) async {
-    final url = ApiConstants.artworkDetail.replaceAll('{id}', '$id');
+  Future<Map<String, dynamic>> updateArtwork(String id, FormData formData) async {
+    final url = ApiConstants.artworkDetail.replaceAll('{id}', id);
     final response = await _dio.patch(
       url,
       data: formData,
@@ -59,12 +59,12 @@ class ArtworkService {
     return response.data as Map<String, dynamic>;
   }
 
-  Future<void> deleteArtwork(int id) async {
-    final url = ApiConstants.artworkDetail.replaceAll('{id}', '$id');
+  Future<void> deleteArtwork(String id) async {
+    final url = ApiConstants.artworkDetail.replaceAll('{id}', id);
     await _dio.delete(url);
   }
 
-  Future<Map<String, dynamic>> toggleFavorite(int artworkId) async {
+  Future<Map<String, dynamic>> toggleFavorite(String artworkId) async {
     final response = await _dio.post(
       '${ApiConstants.artworks}$artworkId/favorito/',
     );

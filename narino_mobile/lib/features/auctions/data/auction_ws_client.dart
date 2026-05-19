@@ -11,7 +11,7 @@ class AuctionWsClient {
 
   Stream<dynamic>? get stream => _channel?.stream;
 
-  Future<void> connect(int auctionId) async {
+  Future<void> connect(String auctionId) async {
     await close();
 
     final token = await StorageUtils.getAccessToken();

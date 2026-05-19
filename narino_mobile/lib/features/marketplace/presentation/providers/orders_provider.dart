@@ -11,7 +11,7 @@ final ordersProvider = StateNotifierProvider<OrdersNotifier, OrdersState>(
   (ref) => OrdersNotifier(ref.read(marketplaceRepositoryProvider)),
 );
 
-final orderDetailProvider = FutureProvider.family<OrderModel, int>(
+final orderDetailProvider = FutureProvider.family<OrderModel, String>(
   (ref, id) async => ref.read(marketplaceRepositoryProvider).getOrderDetail(id),
 );
 
@@ -53,7 +53,7 @@ class OrdersNotifier extends StateNotifier<OrdersState> {
     }
   }
 
-  Future<String?> initiatePayment(int orderId) async {
+  Future<String?> initiatePayment(String orderId) async {
     try {
       return await _repo.initiatePayment(orderId);
     } catch (e) {
@@ -63,7 +63,7 @@ class OrdersNotifier extends StateNotifier<OrdersState> {
   }
 
   void startPaymentPolling({
-    required int orderId,
+    required String orderId,
     required void Function(String estado) onEstado,
     Duration interval = const Duration(seconds: 5),
   }) {

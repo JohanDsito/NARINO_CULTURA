@@ -29,7 +29,7 @@ class FavoritesNotifier extends StateNotifier<FavoritesState> {
     }
   }
 
-  Future<void> toggleFavorite(int obraId) async {
+  Future<void> toggleFavorite(String obraId) async {
     final existingId = state.getFavoriteId(obraId);
     if (existingId != null) {
       try {

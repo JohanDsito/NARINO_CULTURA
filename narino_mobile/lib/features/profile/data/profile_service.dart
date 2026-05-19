@@ -42,14 +42,14 @@ class ProfileService {
     return response.data as Map<String, dynamic>;
   }
 
-  Future<Map<String, dynamic>> getProfileById(int id) async {
-    final url = ApiConstants.profileById.replaceAll('{id}', '$id');
+  Future<Map<String, dynamic>> getProfileById(String id) async {
+    final url = ApiConstants.profileById.replaceAll('{id}', id);
     final response = await _dio.get(url);
     return response.data as Map<String, dynamic>;
   }
 
-  Future<List<dynamic>> getPortfolio(int profileId) async {
-    final url = ApiConstants.portfolioItems.replaceAll('{id}', '$profileId');
+  Future<List<dynamic>> getPortfolio(String profileId) async {
+    final url = ApiConstants.portfolioItems.replaceAll('{id}', profileId);
     final response = await _dio.get(url);
     final data = response.data;
     if (data is List) return data;
@@ -58,7 +58,7 @@ class ProfileService {
   }
 
   Future<Map<String, dynamic>> addPortfolioItem({
-    required int profileId,
+    required String profileId,
     required File file,
     required String tipo,
     String? titulo,
@@ -74,7 +74,7 @@ class ProfileService {
       ),
     });
 
-    final url = ApiConstants.portfolioItems.replaceAll('{id}', '$profileId');
+    final url = ApiConstants.portfolioItems.replaceAll('{id}', profileId);
     final response = await _dio.post(
       url,
       data: formData,
@@ -84,32 +84,32 @@ class ProfileService {
   }
 
   Future<Map<String, dynamic>> updatePortfolioItem(
-    int profileId,
-    int itemId,
+    String profileId,
+    String itemId,
     Map<String, dynamic> data,
   ) async {
     final url = ApiConstants.portfolioItem
-        .replaceAll('{id}', '$profileId')
-        .replaceAll('{item_id}', '$itemId');
+        .replaceAll('{id}', profileId)
+        .replaceAll('{item_id}', itemId);
     final response = await _dio.patch(url, data: data);
     return response.data as Map<String, dynamic>;
   }
 
-  Future<void> deletePortfolioItem(int profileId, int itemId) async {
+  Future<void> deletePortfolioItem(String profileId, String itemId) async {
     final url = ApiConstants.portfolioItem
-        .replaceAll('{id}', '$profileId')
-        .replaceAll('{item_id}', '$itemId');
+        .replaceAll('{id}', profileId)
+        .replaceAll('{item_id}', itemId);
     await _dio.delete(url);
   }
 
-  Future<Map<String, dynamic>> followArtist(int profileId) async {
-    final url = ApiConstants.followArtist.replaceAll('{id}', '$profileId');
+  Future<Map<String, dynamic>> followArtist(String profileId) async {
+    final url = ApiConstants.followArtist.replaceAll('{id}', profileId);
     final response = await _dio.post(url, data: {});
     return response.data as Map<String, dynamic>;
   }
 
-  Future<Map<String, dynamic>> unfollowArtist(int profileId) async {
-    final url = ApiConstants.unfollowArtist.replaceAll('{id}', '$profileId');
+  Future<Map<String, dynamic>> unfollowArtist(String profileId) async {
+    final url = ApiConstants.unfollowArtist.replaceAll('{id}', profileId);
     final response = await _dio.post(url, data: {});
     return response.data as Map<String, dynamic>;
   }

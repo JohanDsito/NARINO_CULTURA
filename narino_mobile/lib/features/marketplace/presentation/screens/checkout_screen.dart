@@ -13,7 +13,7 @@ import '../providers/orders_provider.dart';
 class CheckoutScreen extends ConsumerStatefulWidget {
   const CheckoutScreen({super.key, required this.orderId});
 
-  final int orderId;
+  final String orderId;
 
   @override
   ConsumerState<CheckoutScreen> createState() => _CheckoutScreenState();

@@ -1,6 +1,6 @@
 /// Modelo de dominio que representa una obra de arte dentro del catálogo/marketplace.
 class ArtworkModel {
-  final int id;
+  final String id;
   final String titulo;
   final String descripcion;
   final String categoria;
@@ -10,7 +10,7 @@ class ArtworkModel {
   final double? precio;
   final String estado;
   final List<String> imagenes;
-  final int artistaId;
+  final String artistaId;
   final String artistaNombre;
   final String? artistaFoto;
   final int cantidadFavoritos;
@@ -37,10 +37,10 @@ class ArtworkModel {
   });
 
   factory ArtworkModel.fromJson(Map<String, dynamic> json) => ArtworkModel(
-        id: json['id'] as int,
-        titulo: json['titulo'] as String,
+        id: json['id']?.toString() ?? '',
+        titulo: json['titulo'] as String? ?? '',
         descripcion: json['descripcion'] as String? ?? '',
-        categoria: json['categoria'] as String,
+        categoria: json['categoria'] as String? ?? '',
         tecnica: json['tecnica'] as String?,
         dimensiones: json['dimensiones'] as String?,
         anio: json['anio'] as int?,
@@ -52,7 +52,7 @@ class ArtworkModel {
                 ?.map((e) => e.toString())
                 .toList() ??
             [],
-        artistaId: json['artista_id'] as int,
+        artistaId: json['artista_id']?.toString() ?? '',
         artistaNombre: json['artista_nombre'] as String? ?? '',
         artistaFoto: json['artista_foto'] as String?,
         cantidadFavoritos: json['cantidad_favoritos'] as int? ?? 0,

@@ -2,8 +2,8 @@ import 'auction_bid_model.dart';
 
 /// Modelo de dominio que representa una subasta asociada a una obra.
 class AuctionModel {
-  final int id;
-  final int obraId;
+  final String id;
+  final String obraId;
   final String obraTitulo;
   final String artistaNombre;
   final String? imagenUrl;
@@ -16,9 +16,9 @@ class AuctionModel {
   final String? ganadorNombre;
   final List<AuctionBidModel> ultimasPujas;
 
-  final int? artistaId;
-  final int? ganadorId;
-  final int? orderId;
+  final String? artistaId;
+  final String? ganadorId;
+  final String? orderId;
 
   const AuctionModel({
     required this.id,
@@ -70,11 +70,8 @@ class AuctionModel {
         .map((e) => AuctionBidModel.fromJson(e.cast<String, dynamic>()))
         .toList();
 
-    final id = _asInt(json['id']) ?? 0;
-    final obraId = _asInt(json['obra_id']) ??
-        _asInt(obraMap?['id']) ??
-        _asInt(json['obraId']) ??
-        0;
+    final id = (json['id'] ?? json['obraId'])?.toString() ?? '';
+    final obraId = (json['obra_id'] ?? obraMap?['id'] ?? json['obraId'])?.toString() ?? '';
 
     final obraTitulo = (json['obra_titulo'] ??
             json['obraTitulo'] ??
@@ -93,6 +90,11 @@ class AuctionModel {
             obraMap?['imagen'])
         ?.toString();
 
+    final totalPujas = json['total_pujas'] ?? json['totalPujas'];
+    final totalPujasInt = totalPujas is int
+        ? totalPujas
+        : (int.tryParse(totalPujas?.toString() ?? '') ?? bidsList.length);
+
     return AuctionModel(
       id: id,
       obraId: obraId,
@@ -103,8 +105,7 @@ class AuctionModel {
           : null,
       precioBase: precioBase,
       precioActual: precioActual,
-      totalPujas:
-          _asInt(json['total_pujas'] ?? json['totalPujas']) ?? bidsList.length,
+      totalPujas: totalPujasInt,
       fechaInicio: inicio,
       fechaCierre: cierre,
       estado: (json['estado'] ?? json['status'])?.toString() ?? 'activa',
@@ -112,9 +113,9 @@ class AuctionModel {
           (json['ganador_nombre'] ?? json['ganadorNombre'] ?? json['ganador'])
               ?.toString(),
       ultimasPujas: bidsList,
-      artistaId: _asInt(json['artista_id'] ?? json['artistaId']),
-      ganadorId: _asInt(json['ganador_id'] ?? json['ganadorId']),
-      orderId: _asInt(json['order_id'] ?? json['orderId']),
+      artistaId: (json['artista_id'] ?? json['artistaId'])?.toString(),
+      ganadorId: (json['ganador_id'] ?? json['ganadorId'])?.toString(),
+      orderId: (json['order_id'] ?? json['orderId'])?.toString(),
     );
   }
 
@@ -123,8 +124,8 @@ class AuctionModel {
     int? totalPujas,
     String? estado,
     String? ganadorNombre,
-    int? ganadorId,
-    int? orderId,
+    String? ganadorId,
+    String? orderId,
     List<AuctionBidModel>? ultimasPujas,
     DateTime? fechaCierre,
   }) {
@@ -147,10 +148,4 @@ class AuctionModel {
       orderId: orderId ?? this.orderId,
     );
   }
-}
-
-int? _asInt(Object? v) {
-  if (v is int) return v;
-  if (v is num) return v.toInt();
-  return int.tryParse(v?.toString() ?? '');
 }

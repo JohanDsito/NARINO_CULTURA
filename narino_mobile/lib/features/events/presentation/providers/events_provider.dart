@@ -14,7 +14,7 @@ final eventsProvider =
 });
 
 final eventDetailProvider =
-    FutureProvider.family<EventModel, int>((ref, id) async {
+    FutureProvider.family<EventModel, String>((ref, id) async {
   return ref.read(eventsRepositoryProvider).getEventDetail(id);
 });
 

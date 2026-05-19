@@ -19,9 +19,9 @@ class EventsService {
     return r.data is List ? r.data as List : (r.data['results'] as List? ?? []);
   }
 
-  Future<Map<String, dynamic>> getEventDetail(int id) async {
+  Future<Map<String, dynamic>> getEventDetail(String id) async {
     final r =
-        await _dio.get(ApiConstants.eventDetail.replaceFirst('{id}', '$id'));
+        await _dio.get(ApiConstants.eventDetail.replaceFirst('{id}', id));
     return r.data as Map<String, dynamic>;
   }
 

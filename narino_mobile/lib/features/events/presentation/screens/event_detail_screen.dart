@@ -16,7 +16,7 @@ import '../providers/events_provider.dart';
 class EventDetailScreen extends ConsumerWidget {
   const EventDetailScreen({super.key, required this.eventId});
 
-  final int eventId;
+  final String eventId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

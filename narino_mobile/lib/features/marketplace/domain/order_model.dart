@@ -10,7 +10,7 @@ class OrderModel {
     this.wompiPaymentUrl,
   });
 
-  final int id;
+  final String id;
   final String estado;
   final double total;
   final DateTime creadoEn;
@@ -19,16 +19,16 @@ class OrderModel {
   final String? wompiPaymentUrl;
 
   factory OrderModel.fromJson(Map<String, dynamic> json) => OrderModel(
-        id: json['id'],
-        estado: json['estado'] ?? 'pendiente',
+        id: json['id']?.toString() ?? '',
+        estado: json['estado']?.toString() ?? 'pendiente',
         total: double.tryParse(json['total'].toString()) ?? 0,
         creadoEn: DateTime.tryParse(json['creado_en']?.toString() ?? '') ??
             DateTime.now(),
         items: (json['items'] as List? ?? [])
             .map((e) => OrderItemModel.fromJson(e))
             .toList(),
-        comprobantePdfUrl: json['comprobante_pdf_url'],
-        wompiPaymentUrl: json['wompi_payment_url'],
+        comprobantePdfUrl: json['comprobante_pdf_url']?.toString(),
+        wompiPaymentUrl: json['wompi_payment_url']?.toString(),
       );
 
   bool get isPendiente => estado == 'pendiente';
@@ -53,17 +53,17 @@ class OrderItemModel {
     this.imagenUrl,
   });
 
-  final int obraId;
+  final String obraId;
   final String obraTitulo;
   final String artistaNombre;
   final double precio;
   final String? imagenUrl;
 
   factory OrderItemModel.fromJson(Map<String, dynamic> json) => OrderItemModel(
-        obraId: json['obra_id'],
-        obraTitulo: json['obra_titulo'],
-        artistaNombre: json['artista_nombre'],
+        obraId: json['obra_id']?.toString() ?? '',
+        obraTitulo: json['obra_titulo']?.toString() ?? '',
+        artistaNombre: json['artista_nombre']?.toString() ?? '',
         precio: double.tryParse(json['precio'].toString()) ?? 0,
-        imagenUrl: json['imagen_url'],
+        imagenUrl: json['imagen_url']?.toString(),
       );
 }

@@ -1,6 +1,6 @@
 /// Modelo de dominio del usuario autenticado (perfil mínimo).
 class UserModel {
-  final int id;
+  final String id;
   final String email;
   final String nombre;
   final String rol;
@@ -13,10 +13,10 @@ class UserModel {
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
-        id: json['id'] as int,
+        id: json['id']?.toString() ?? '',
         email: json['email'] as String,
-        nombre: json['nombre'] as String,
-        rol: json['rol'] as String,
+        nombre: json['nombre'] as String? ?? json['first_name'] as String? ?? '',
+        rol: json['rol'] as String? ?? json['role'] as String? ?? '',
       );
 
   Map<String, dynamic> toJson() => {

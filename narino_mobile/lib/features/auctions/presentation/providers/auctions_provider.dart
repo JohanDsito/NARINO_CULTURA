@@ -18,7 +18,7 @@ final auctionsProvider =
 );
 
 final auctionDetailProvider =
-    FutureProvider.family.autoDispose<AuctionModel, int>((ref, id) async {
+    FutureProvider.family.autoDispose<AuctionModel, String>((ref, id) async {
   return ref.read(auctionsRepositoryProvider).getDetail(id);
 });
 

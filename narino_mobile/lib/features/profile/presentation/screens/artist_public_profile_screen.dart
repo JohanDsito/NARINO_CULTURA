@@ -9,7 +9,7 @@ import '../../domain/profile_model.dart';
 import '../providers/profile_provider.dart';
 
 class ArtistPublicProfileScreen extends ConsumerStatefulWidget {
-  final int artistId;
+  final String artistId;
   const ArtistPublicProfileScreen({super.key, required this.artistId});
 
   @override
@@ -225,7 +225,7 @@ class _ArtistPublicProfileScreenState
     );
   }
 
-  Future<void> _toggleFollow(int profileId, bool follow) async {
+  Future<void> _toggleFollow(String profileId, bool follow) async {
     setState(() => _loadingFollow = true);
     try {
       final repo = ref.read(profileRepositoryProvider);

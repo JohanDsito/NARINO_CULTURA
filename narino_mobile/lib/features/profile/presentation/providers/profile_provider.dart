@@ -17,7 +17,7 @@ final profileProvider = StateNotifierProvider<ProfileNotifier, ProfileState>(
 
 final myProfileProvider = profileProvider;
 
-final publicProfileProvider = FutureProvider.family<ProfileModel, int>(
+final publicProfileProvider = FutureProvider.family<ProfileModel, String>(
   (ref, id) => ref.read(profileRepositoryProvider).getProfileById(id),
 );
 
@@ -86,7 +86,7 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
     return saved != null;
   }
 
-  Future<void> loadPortfolio(int profileId) async {
+  Future<void> loadPortfolio(String profileId) async {
     state = state.copyWith(status: ProfileStatus.loading, clearError: true);
     try {
       final items = await _repo.getPortfolio(profileId);
@@ -132,7 +132,7 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
     }
   }
 
-  Future<bool> deletePortfolioItem(int itemId) async {
+  Future<bool> deletePortfolioItem(String itemId) async {
     state = state.copyWith(isSaving: true, clearError: true);
     try {
       final me = state.profile ?? await _repo.getMyProfile();
@@ -157,7 +157,7 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
   }
 
   Future<void> reorderPortfolio({
-    required int profileId,
+    required String profileId,
     required List<PortfolioItemModel> ordered,
   }) async {
     state = state.copyWith(portfolio: ordered);
@@ -175,7 +175,7 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
     await loadPortfolio(profileId);
   }
 
-  Future<ProfileModel?> followArtist(int profileId) async {
+  Future<ProfileModel?> followArtist(String profileId) async {
     state = state.copyWith(isSaving: true, clearError: true);
     try {
       final updated = await _repo.followArtist(profileId);
@@ -187,7 +187,7 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
     }
   }
 
-  Future<ProfileModel?> unfollowArtist(int profileId) async {
+  Future<ProfileModel?> unfollowArtist(String profileId) async {
     state = state.copyWith(isSaving: true, clearError: true);
     try {
       final updated = await _repo.unfollowArtist(profileId);

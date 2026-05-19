@@ -18,7 +18,7 @@ import '../providers/auctions_provider.dart';
 class AuctionDetailScreen extends ConsumerStatefulWidget {
   const AuctionDetailScreen({super.key, required this.auctionId});
 
-  final int auctionId;
+  final String auctionId;
 
   @override
   ConsumerState<AuctionDetailScreen> createState() =>

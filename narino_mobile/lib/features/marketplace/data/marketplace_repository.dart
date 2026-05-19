@@ -20,7 +20,7 @@ class MarketplaceRepository {
     }
   }
 
-  Future<CartItemModel> addToCart(int obraId) async {
+  Future<CartItemModel> addToCart(String obraId) async {
     try {
       return CartItemModel.fromJson(await _service.addToCart(obraId));
     } on DioException catch (e) {
@@ -28,7 +28,7 @@ class MarketplaceRepository {
     }
   }
 
-  Future<void> removeFromCart(int id) async {
+  Future<void> removeFromCart(String id) async {
     try {
       await _service.removeFromCart(id);
     } on DioException catch (e) {
@@ -54,7 +54,7 @@ class MarketplaceRepository {
     }
   }
 
-  Future<FavoriteModel> addFavorite(int obraId) async {
+  Future<FavoriteModel> addFavorite(String obraId) async {
     try {
       return FavoriteModel.fromJson(await _service.addFavorite(obraId));
     } on DioException catch (e) {
@@ -62,7 +62,7 @@ class MarketplaceRepository {
     }
   }
 
-  Future<void> removeFavorite(int id) async {
+  Future<void> removeFavorite(String id) async {
     try {
       await _service.removeFavorite(id);
     } on DioException catch (e) {
@@ -86,7 +86,7 @@ class MarketplaceRepository {
     }
   }
 
-  Future<OrderModel> getOrderDetail(int id) async {
+  Future<OrderModel> getOrderDetail(String id) async {
     try {
       return OrderModel.fromJson(await _service.getOrderDetail(id));
     } on DioException catch (e) {
@@ -94,7 +94,7 @@ class MarketplaceRepository {
     }
   }
 
-  Future<String> initiatePayment(int orderId) async {
+  Future<String> initiatePayment(String orderId) async {
     try {
       return (await _service.initiatePayment(orderId))['payment_url'] as String;
     } on DioException catch (e) {
@@ -102,7 +102,7 @@ class MarketplaceRepository {
     }
   }
 
-  Future<String> getPaymentStatus(int orderId) async {
+  Future<String> getPaymentStatus(String orderId) async {
     try {
       return (await _service.getPaymentStatus(orderId))['estado'] as String;
     } on DioException catch (e) {

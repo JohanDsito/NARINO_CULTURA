@@ -1,6 +1,6 @@
 /// Modelo de dominio que representa un evento cultural en la agenda.
 class EventModel {
-  final int id;
+  final String id;
   final String nombre;
   final String tipo;
   final DateTime fecha;
@@ -51,7 +51,7 @@ class EventModel {
         .toList();
 
     return EventModel(
-      id: json['id'] as int,
+      id: json['id']?.toString() ?? '',
       nombre: json['nombre'] as String,
       tipo: json['tipo'] as String? ?? 'otro',
       fecha: parsedFecha,

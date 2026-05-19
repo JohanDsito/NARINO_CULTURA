@@ -31,7 +31,7 @@ class AuctionsRepository {
     }
   }
 
-  Future<AuctionModel> getDetail(int id) async {
+  Future<AuctionModel> getDetail(String id) async {
     try {
       return AuctionModel.fromJson(await _service.getAuctionDetail(id));
     } on DioException catch (e) {
@@ -40,7 +40,7 @@ class AuctionsRepository {
   }
 
   Future<AuctionModel> createAuction({
-    required int obraId,
+    required String obraId,
     required double precioBase,
     required int duracionDias,
     required DateTime fechaInicio,
@@ -58,7 +58,7 @@ class AuctionsRepository {
     }
   }
 
-  Future<void> bid({required int auctionId, required double monto}) async {
+  Future<void> bid({required String auctionId, required double monto}) async {
     try {
       await _service.bid(auctionId: auctionId, monto: monto);
     } on DioException catch (e) {
