@@ -32,8 +32,8 @@ class CartNotifier extends StateNotifier<CartState> {
 
   Future<bool> addToCart(String obraId) async {
     try {
-      final item = await _repo.addToCart(obraId);
-      state = state.copyWith(items: [...state.items, item]);
+      await _repo.addToCart(obraId);
+      await loadCart();
       return true;
     } catch (e) {
       state = state.copyWith(errorMessage: e.toString());
@@ -41,10 +41,12 @@ class CartNotifier extends StateNotifier<CartState> {
     }
   }
 
-  Future<bool> removeFromCart(String id) async {
+  Future<bool> removeFromCart(String obraId) async {
     try {
-      await _repo.removeFromCart(id);
-      state = state.copyWith(items: state.items.where((i) => i.id != id).toList());
+      await _repo.removeFromCart(obraId);
+      state = state.copyWith(
+        items: state.items.where((i) => i.obraId != obraId).toList(),
+      );
       return true;
     } catch (e) {
       state = state.copyWith(errorMessage: e.toString());

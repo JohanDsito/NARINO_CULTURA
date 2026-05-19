@@ -14,23 +14,25 @@ class MarketplaceRepository {
 
   Future<List<CartItemModel>> getCart() async {
     try {
-      return (await _service.getCart()).map((e) => CartItemModel.fromJson(e)).toList();
+      return (await _service.getCart())
+          .map((e) => CartItemModel.fromJson(e as Map<String, dynamic>))
+          .toList();
     } on DioException catch (e) {
       throw _err(e);
     }
   }
 
-  Future<CartItemModel> addToCart(String obraId) async {
+  Future<void> addToCart(String obraId) async {
     try {
-      return CartItemModel.fromJson(await _service.addToCart(obraId));
+      await _service.addToCart(obraId);
     } on DioException catch (e) {
       throw _err(e);
     }
   }
 
-  Future<void> removeFromCart(String id) async {
+  Future<void> removeFromCart(String obraId) async {
     try {
-      await _service.removeFromCart(id);
+      await _service.removeFromCart(obraId);
     } on DioException catch (e) {
       throw _err(e);
     }
@@ -47,24 +49,24 @@ class MarketplaceRepository {
   Future<List<FavoriteModel>> getFavorites() async {
     try {
       return (await _service.getFavorites())
-          .map((e) => FavoriteModel.fromJson(e))
+          .map((e) => FavoriteModel.fromJson(e as Map<String, dynamic>))
           .toList();
     } on DioException catch (e) {
       throw _err(e);
     }
   }
 
-  Future<FavoriteModel> addFavorite(String obraId) async {
+  Future<void> addFavorite(String obraId) async {
     try {
-      return FavoriteModel.fromJson(await _service.addFavorite(obraId));
+      await _service.addFavorite(obraId);
     } on DioException catch (e) {
       throw _err(e);
     }
   }
 
-  Future<void> removeFavorite(String id) async {
+  Future<void> removeFavorite(String obraId) async {
     try {
-      await _service.removeFavorite(id);
+      await _service.removeFavorite(obraId);
     } on DioException catch (e) {
       throw _err(e);
     }
@@ -80,7 +82,9 @@ class MarketplaceRepository {
 
   Future<List<OrderModel>> getOrders() async {
     try {
-      return (await _service.getOrders()).map((e) => OrderModel.fromJson(e)).toList();
+      return (await _service.getOrders())
+          .map((e) => OrderModel.fromJson(e as Map<String, dynamic>))
+          .toList();
     } on DioException catch (e) {
       throw _err(e);
     }
@@ -96,7 +100,9 @@ class MarketplaceRepository {
 
   Future<String> initiatePayment(String orderId) async {
     try {
-      return (await _service.initiatePayment(orderId))['payment_url'] as String;
+      final data = await _service.initiatePayment(orderId);
+      return (data['payment_url'] ?? data['checkout_url'] ?? '')?.toString() ??
+          '';
     } on DioException catch (e) {
       throw _err(e);
     }
@@ -104,7 +110,8 @@ class MarketplaceRepository {
 
   Future<String> getPaymentStatus(String orderId) async {
     try {
-      return (await _service.getPaymentStatus(orderId))['estado'] as String;
+      return (await _service.getPaymentStatus(orderId))['status']?.toString() ??
+          'unknown';
     } on DioException catch (e) {
       throw _err(e);
     }
@@ -113,7 +120,7 @@ class MarketplaceRepository {
   Future<List<OrderModel>> getPurchaseHistory() async {
     try {
       return (await _service.getPurchaseHistory())
-          .map((e) => OrderModel.fromJson(e))
+          .map((e) => OrderModel.fromJson(e as Map<String, dynamic>))
           .toList();
     } on DioException catch (e) {
       throw _err(e);
@@ -123,7 +130,7 @@ class MarketplaceRepository {
   Future<List<OrderModel>> getSalesHistory() async {
     try {
       return (await _service.getSalesHistory())
-          .map((e) => OrderModel.fromJson(e))
+          .map((e) => OrderModel.fromJson(e as Map<String, dynamic>))
           .toList();
     } on DioException catch (e) {
       throw _err(e);

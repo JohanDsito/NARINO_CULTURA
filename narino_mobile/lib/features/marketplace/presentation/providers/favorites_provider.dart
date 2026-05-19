@@ -4,7 +4,8 @@ import '../../data/marketplace_repository.dart';
 import '../../domain/marketplace_state.dart';
 import 'cart_provider.dart';
 
-final favoritesProvider = StateNotifierProvider<FavoritesNotifier, FavoritesState>(
+final favoritesProvider =
+    StateNotifierProvider<FavoritesNotifier, FavoritesState>(
   (ref) => FavoritesNotifier(ref.read(marketplaceRepositoryProvider)),
 );
 
@@ -30,20 +31,21 @@ class FavoritesNotifier extends StateNotifier<FavoritesState> {
   }
 
   Future<void> toggleFavorite(String obraId) async {
-    final existingId = state.getFavoriteId(obraId);
-    if (existingId != null) {
+    final isFav = state.getFavoriteId(obraId) != null;
+    if (isFav) {
       try {
-        await _repo.removeFavorite(existingId);
+        await _repo.removeFavorite(obraId);
         state = state.copyWith(
-          favorites: state.favorites.where((f) => f.id != existingId).toList(),
+          favorites:
+              state.favorites.where((f) => f.obraId != obraId).toList(),
         );
       } catch (e) {
         state = state.copyWith(errorMessage: e.toString());
       }
     } else {
       try {
-        final fav = await _repo.addFavorite(obraId);
-        state = state.copyWith(favorites: [...state.favorites, fav]);
+        await _repo.addFavorite(obraId);
+        await loadFavorites();
       } catch (e) {
         state = state.copyWith(errorMessage: e.toString());
       }

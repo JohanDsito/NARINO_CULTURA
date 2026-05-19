@@ -77,6 +77,26 @@ class ArtworkCard extends StatelessWidget {
                         size: 32,
                       ),
                     ),
+                  if (artwork.estado == 'vendida')
+                    Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        color: Colors.black54,
+                        child: const Text(
+                          'Vendida',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),

@@ -65,10 +65,22 @@ class ArtworkService {
   }
 
   Future<Map<String, dynamic>> toggleFavorite(String artworkId) async {
-    final response = await _dio.post(
-      '${ApiConstants.artworks}$artworkId/favorito/',
-    );
-    return response.data as Map<String, dynamic>;
+    try {
+      await _dio.post(
+        ApiConstants.favorites,
+        data: {'artwork_id': artworkId},
+      );
+      return {'es_favorito': true};
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 400) {
+        await _dio.delete(
+          ApiConstants.favorites,
+          data: {'artwork_id': artworkId},
+        );
+        return {'es_favorito': false};
+      }
+      rethrow;
+    }
   }
 
   String _mapOrden(String orden) {

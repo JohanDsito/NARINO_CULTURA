@@ -119,7 +119,7 @@ class ArtworkNotifier extends StateNotifier<ArtworkState> {
       final result = await _repo.toggleFavorite(artworkId);
       final synced = before.copyWith(
         esFavorito: result.esFavorito,
-        cantidadFavoritos: result.cantidad,
+        cantidadFavoritos: optimistic.cantidadFavoritos,
       );
 
       final latest = [...state.artworks];

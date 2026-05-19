@@ -22,18 +22,18 @@ class AuthService {
   }
 
   Future<Map<String, dynamic>> register({
-    required String nombre,
+    required String firstName,
     required String email,
     required String password,
-    required String rol,
+    required String role,
   }) async {
     final response = await _dio.post(
       ApiConstants.register,
       data: {
-        'nombre': nombre,
+        'first_name': firstName,
         'email': email,
         'password': password,
-        'rol': rol,
+        'role': role,
       },
       options:
           Options(extra: const {'__skipAuth': true, '__skipAuthRefresh': true}),

@@ -18,10 +18,17 @@ class CartItemModel {
 
   factory CartItemModel.fromJson(Map<String, dynamic> json) => CartItemModel(
         id: json['id']?.toString() ?? '',
-        obraId: json['obra_id']?.toString() ?? '',
-        obraTitulo: json['obra_titulo']?.toString() ?? '',
+        obraId: json['artwork']?.toString() ??
+            json['obra_id']?.toString() ??
+            '',
+        obraTitulo: json['artwork_title']?.toString() ??
+            json['obra_titulo']?.toString() ??
+            '',
         artistaNombre: json['artista_nombre']?.toString() ?? '',
-        precio: double.tryParse(json['precio'].toString()) ?? 0,
+        precio: double.tryParse(
+              (json['artwork_price'] ?? json['precio'] ?? 0).toString(),
+            ) ??
+            0,
         imagenUrl: json['imagen_url']?.toString(),
       );
 

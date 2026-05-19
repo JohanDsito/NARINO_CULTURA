@@ -19,13 +19,21 @@ class OrderModel {
   final String? wompiPaymentUrl;
 
   factory OrderModel.fromJson(Map<String, dynamic> json) => OrderModel(
-        id: json['id']?.toString() ?? '',
-        estado: json['estado']?.toString() ?? 'pendiente',
-        total: double.tryParse(json['total'].toString()) ?? 0,
-        creadoEn: DateTime.tryParse(json['creado_en']?.toString() ?? '') ??
+        id: json['id']?.toString() ?? json['order_id']?.toString() ?? '',
+        estado: json['status']?.toString() ??
+            json['estado']?.toString() ??
+            'pendiente',
+        total: double.tryParse(
+              (json['total_amount'] ?? json['total'] ?? 0).toString(),
+            ) ??
+            0,
+        creadoEn: DateTime.tryParse(
+                json['created_at']?.toString() ??
+                    json['creado_en']?.toString() ??
+                    '') ??
             DateTime.now(),
         items: (json['items'] as List? ?? [])
-            .map((e) => OrderItemModel.fromJson(e))
+            .map((e) => OrderItemModel.fromJson(e as Map<String, dynamic>))
             .toList(),
         comprobantePdfUrl: json['comprobante_pdf_url']?.toString(),
         wompiPaymentUrl: json['wompi_payment_url']?.toString(),
@@ -60,10 +68,17 @@ class OrderItemModel {
   final String? imagenUrl;
 
   factory OrderItemModel.fromJson(Map<String, dynamic> json) => OrderItemModel(
-        obraId: json['obra_id']?.toString() ?? '',
-        obraTitulo: json['obra_titulo']?.toString() ?? '',
+        obraId: json['artwork']?.toString() ??
+            json['obra_id']?.toString() ??
+            '',
+        obraTitulo: json['artwork_title']?.toString() ??
+            json['obra_titulo']?.toString() ??
+            '',
         artistaNombre: json['artista_nombre']?.toString() ?? '',
-        precio: double.tryParse(json['precio'].toString()) ?? 0,
+        precio: double.tryParse(
+              (json['price'] ?? json['precio'] ?? 0).toString(),
+            ) ??
+            0,
         imagenUrl: json['imagen_url']?.toString(),
       );
 }

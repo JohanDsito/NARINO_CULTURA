@@ -142,10 +142,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     await ref.read(authProvider.notifier).register(
-          nombre: _nameCtrl.text.trim(),
+          firstName: _nameCtrl.text.trim(),
           email: _emailCtrl.text.trim(),
           password: _passwordCtrl.text,
-          rol: _rol!,
+          role: _rol!,
         );
   }
 

@@ -157,10 +157,10 @@ class _EventBodyState extends State<_EventBody> {
     try {
       final id = widget.event.id;
       if (_estaSuscrito) {
-        await ApiClient.instance.dio.delete('/events/$id/subscribe/');
+        await ApiClient.instance.dio.delete('/events/$id/register/');
         if (mounted) setState(() => _estaSuscrito = false);
       } else {
-        await ApiClient.instance.dio.post('/events/$id/subscribe/');
+        await ApiClient.instance.dio.post('/events/$id/register/');
         if (mounted) setState(() => _estaSuscrito = true);
       }
     } catch (_) {

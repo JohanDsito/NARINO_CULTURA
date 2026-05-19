@@ -10,55 +10,77 @@ class MarketplaceService {
     final r = await _dio.get(ApiConstants.cart);
     final data = r.data;
     if (data is List) return data;
-    if (data is Map) return (data['items'] as List? ?? data['results'] as List? ?? []);
+    if (data is Map) {
+      return (data['items'] as List?) ??
+          (data['results'] as List?) ??
+          [];
+    }
     return [];
   }
 
-  Future<Map<String, dynamic>> addToCart(String obraId) async {
-    final r = await _dio.post(ApiConstants.cart, data: {'obra_id': obraId});
-    return (r.data as Map).cast<String, dynamic>();
+  Future<void> addToCart(String obraId) async {
+    await _dio.post(ApiConstants.cartItems, data: {'artwork_id': obraId});
   }
 
-  Future<void> removeFromCart(String id) async {
-    await _dio.delete(ApiConstants.cartItem.replaceFirst('{id}', id));
+  Future<void> removeFromCart(String obraId) async {
+    await _dio.delete(
+      ApiConstants.cartItems,
+      data: {'artwork_id': obraId},
+    );
   }
 
   Future<void> clearCart() async {
-    await _dio.delete(ApiConstants.cart);
+    final items = await getCart();
+    for (final item in items) {
+      final obraId = item['artwork']?.toString() ?? item['obra_id']?.toString();
+      if (obraId != null && obraId.isNotEmpty) {
+        try {
+          await removeFromCart(obraId);
+        } catch (_) {}
+      }
+    }
   }
 
   Future<List<dynamic>> getFavorites() async {
     final r = await _dio.get(ApiConstants.favorites);
-    return r.data is List ? r.data : (r.data['results'] ?? []);
+    return r.data is List
+        ? r.data as List
+        : (r.data['results'] as List? ?? []);
   }
 
-  Future<Map<String, dynamic>> addFavorite(String obraId) async {
-    final r =
-        await _dio.post(ApiConstants.favorites, data: {'obra_id': obraId});
-    return (r.data as Map).cast<String, dynamic>();
+  Future<void> addFavorite(String obraId) async {
+    await _dio.post(ApiConstants.favorites, data: {'artwork_id': obraId});
   }
 
-  Future<void> removeFavorite(String id) async {
+  Future<void> removeFavorite(String obraId) async {
     await _dio.delete(
-      ApiConstants.favoriteItem.replaceFirst('{id}', id),
+      ApiConstants.favorites,
+      data: {'artwork_id': obraId},
     );
   }
 
   Future<Map<String, dynamic>> createOrder() async {
-    final r = await _dio.post(ApiConstants.orders);
+    final r = await _dio.post(ApiConstants.checkout);
     return (r.data as Map).cast<String, dynamic>();
   }
 
   Future<List<dynamic>> getOrders() async {
     final r = await _dio.get(ApiConstants.orders);
-    return r.data is List ? r.data : (r.data['results'] ?? []);
+    return r.data is List
+        ? r.data as List
+        : (r.data['results'] as List? ?? []);
   }
 
   Future<Map<String, dynamic>> getOrderDetail(String id) async {
-    final r = await _dio.get(
-      ApiConstants.orderDetail.replaceFirst('{id}', id),
+    final orders = await getOrders();
+    final order = orders.firstWhere(
+      (o) => o['id']?.toString() == id || o['order_id']?.toString() == id,
+      orElse: () => <String, dynamic>{},
     );
-    return (r.data as Map).cast<String, dynamic>();
+    if ((order as Map).isNotEmpty) {
+      return Map<String, dynamic>.from(order);
+    }
+    return {'id': id, 'items': [], 'status': 'unknown', 'total_amount': 0};
   }
 
   Future<Map<String, dynamic>> initiatePayment(String orderId) async {
@@ -70,19 +92,22 @@ class MarketplaceService {
   }
 
   Future<Map<String, dynamic>> getPaymentStatus(String orderId) async {
-    final r = await _dio.get(
-      ApiConstants.paymentStatus.replaceFirst('{id}', orderId),
+    final orders = await getOrders();
+    final order = orders.firstWhere(
+      (o) => o['id']?.toString() == orderId,
+      orElse: () => <String, dynamic>{},
     );
-    return (r.data as Map).cast<String, dynamic>();
+    return {'status': (order as Map)['status']?.toString() ?? 'unknown'};
   }
 
   Future<List<dynamic>> getPurchaseHistory() async {
-    final r = await _dio.get(ApiConstants.purchaseHistory);
-    return r.data is List ? r.data : (r.data['results'] ?? []);
+    return getOrders();
   }
 
   Future<List<dynamic>> getSalesHistory() async {
     final r = await _dio.get(ApiConstants.salesHistory);
-    return r.data is List ? r.data : (r.data['results'] ?? []);
+    return r.data is List
+        ? r.data as List
+        : (r.data['results'] as List? ?? []);
   }
 }

@@ -11,8 +11,36 @@ class ProfileService {
   final Dio _dio;
 
   Future<Map<String, dynamic>> getMyProfile() async {
-    final response = await _dio.get(ApiConstants.myProfile);
-    return response.data as Map<String, dynamic>;
+    final userResponse = await _dio.get(ApiConstants.myProfile);
+    final userData = Map<String, dynamic>.from(userResponse.data as Map);
+
+    if (userData['role'] == 'ARTISTA') {
+      try {
+        final artistsResponse = await _dio.get(ApiConstants.artists);
+        final artistsData = artistsResponse.data;
+        List<dynamic> artists;
+        if (artistsData is List) {
+          artists = artistsData;
+        } else if (artistsData is Map) {
+          artists = (artistsData['results'] as List?) ?? [];
+        } else {
+          artists = [];
+        }
+        final userId = userData['id']?.toString();
+        final Map? myArtist = artists.firstWhere(
+          (a) => a['user_id']?.toString() == userId,
+          orElse: () => null,
+        ) as Map?;
+        if (myArtist != null) {
+          final merged = Map<String, dynamic>.from(myArtist);
+          merged['avatar_url'] ??= userData['avatar_url'];
+          merged['is_verified'] = userData['is_verified'];
+          return merged;
+        }
+      } catch (_) {}
+    }
+
+    return userData;
   }
 
   Future<Map<String, dynamic>> updateMyProfile({
@@ -22,24 +50,69 @@ class ProfileService {
     File? foto,
     Map<String, String>? redesSociales,
   }) async {
-    final formData = FormData.fromMap({
-      if (nombreArtistico != null) 'nombre_artistico': nombreArtistico,
-      if (disciplina != null) 'disciplina': disciplina,
-      if (biografia != null) 'biografia': biografia,
-      if (redesSociales != null) 'redes_sociales': redesSociales,
-      if (foto != null)
-        'foto': await MultipartFile.fromFile(
+    final userUpdates = <String, dynamic>{};
+    if (nombreArtistico != null) userUpdates['first_name'] = nombreArtistico;
+    if (foto != null) {
+      final formData = FormData.fromMap({
+        ...userUpdates,
+        'avatar': await MultipartFile.fromFile(
           foto.path,
           filename: foto.path.split(Platform.pathSeparator).last,
         ),
-    });
+      });
+      await _dio.patch(
+        ApiConstants.myProfile,
+        data: formData,
+        options: Options(contentType: 'multipart/form-data'),
+      );
+    } else if (userUpdates.isNotEmpty) {
+      await _dio.patch(ApiConstants.myProfile, data: userUpdates);
+    }
 
-    final response = await _dio.patch(
-      ApiConstants.myProfile,
-      data: formData,
-      options: Options(contentType: 'multipart/form-data'),
-    );
-    return response.data as Map<String, dynamic>;
+    final artistUpdates = <String, dynamic>{};
+    if (nombreArtistico != null) artistUpdates['artistic_name'] = nombreArtistico;
+    if (disciplina != null) artistUpdates['discipline'] = disciplina;
+    if (biografia != null) artistUpdates['bio'] = biografia;
+    if (redesSociales != null) {
+      final instagram = redesSociales['instagram'];
+      final website = redesSociales['website'];
+      final facebook = redesSociales['facebook'];
+      final tiktok = redesSociales['tiktok'];
+      if (instagram != null) artistUpdates['instagram_url'] = instagram;
+      if (website != null) artistUpdates['website_url'] = website;
+      if (facebook != null) artistUpdates['facebook_url'] = facebook;
+      if (tiktok != null) artistUpdates['tiktok_url'] = tiktok;
+    }
+
+    if (artistUpdates.isNotEmpty) {
+      try {
+        final userResponse = await _dio.get(ApiConstants.myProfile);
+        final userId = (userResponse.data as Map)['id']?.toString();
+        final artistsResponse = await _dio.get(ApiConstants.artists);
+        final artistsData = artistsResponse.data;
+        List<dynamic> artists;
+        if (artistsData is List) {
+          artists = artistsData;
+        } else if (artistsData is Map) {
+          artists = (artistsData['results'] as List?) ?? [];
+        } else {
+          artists = [];
+        }
+        final Map? myArtist = artists.firstWhere(
+          (a) => a['user_id']?.toString() == userId,
+          orElse: () => null,
+        ) as Map?;
+        if (myArtist != null) {
+          final slug = myArtist['slug']?.toString() ?? '';
+          if (slug.isNotEmpty) {
+            final url = ApiConstants.profileById.replaceFirst('{id}', slug);
+            await _dio.patch(url, data: artistUpdates);
+          }
+        }
+      } catch (_) {}
+    }
+
+    return getMyProfile();
   }
 
   Future<Map<String, dynamic>> getProfileById(String id) async {
@@ -49,11 +122,6 @@ class ProfileService {
   }
 
   Future<List<dynamic>> getPortfolio(String profileId) async {
-    final url = ApiConstants.portfolioItems.replaceAll('{id}', profileId);
-    final response = await _dio.get(url);
-    final data = response.data;
-    if (data is List) return data;
-    if (data is Map) return (data['results'] as List? ?? const []);
     return const [];
   }
 
@@ -64,23 +132,7 @@ class ProfileService {
     String? titulo,
     String? descripcion,
   }) async {
-    final formData = FormData.fromMap({
-      'tipo': tipo,
-      if (titulo != null) 'titulo': titulo,
-      if (descripcion != null) 'descripcion': descripcion,
-      'file': await MultipartFile.fromFile(
-        file.path,
-        filename: file.path.split(Platform.pathSeparator).last,
-      ),
-    });
-
-    final url = ApiConstants.portfolioItems.replaceAll('{id}', profileId);
-    final response = await _dio.post(
-      url,
-      data: formData,
-      options: Options(contentType: 'multipart/form-data'),
-    );
-    return response.data as Map<String, dynamic>;
+    return const {};
   }
 
   Future<Map<String, dynamic>> updatePortfolioItem(
@@ -88,37 +140,26 @@ class ProfileService {
     String itemId,
     Map<String, dynamic> data,
   ) async {
-    final url = ApiConstants.portfolioItem
-        .replaceAll('{id}', profileId)
-        .replaceAll('{item_id}', itemId);
-    final response = await _dio.patch(url, data: data);
-    return response.data as Map<String, dynamic>;
+    return const {};
   }
 
   Future<void> deletePortfolioItem(String profileId, String itemId) async {
-    final url = ApiConstants.portfolioItem
-        .replaceAll('{id}', profileId)
-        .replaceAll('{item_id}', itemId);
-    await _dio.delete(url);
+    return;
   }
 
   Future<Map<String, dynamic>> followArtist(String profileId) async {
-    final url = ApiConstants.followArtist.replaceAll('{id}', profileId);
+    final url = ApiConstants.artistFollow.replaceAll('{id}', profileId);
     final response = await _dio.post(url, data: {});
     return response.data as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>> unfollowArtist(String profileId) async {
-    final url = ApiConstants.unfollowArtist.replaceAll('{id}', profileId);
+    final url = ApiConstants.artistFollow.replaceAll('{id}', profileId);
     final response = await _dio.post(url, data: {});
     return response.data as Map<String, dynamic>;
   }
 
   Future<List<dynamic>> getMyFollowing() async {
-    final response = await _dio.get(ApiConstants.myFollowing);
-    final data = response.data;
-    if (data is List) return data;
-    if (data is Map) return (data['results'] as List? ?? const []);
     return const [];
   }
 }

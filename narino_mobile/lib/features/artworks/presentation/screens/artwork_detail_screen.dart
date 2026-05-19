@@ -209,7 +209,7 @@ class _ArtworkDetailBodyState extends ConsumerState<_ArtworkDetailBody>
     final role = ref.watch(currentUserRoleProvider).value;
     final userId = ref.watch(currentUserIdProvider).value;
     final canManage =
-        role == 'admin' || (userId != null && userId == artwork.artistaId);
+        role == 'admin' || (userId != null && userId.toString() == artwork.artistaId);
 
     return CustomScrollView(
       slivers: [

@@ -37,37 +37,32 @@ class AuthRepository {
 
     await StorageUtils.saveTokens(accessToken: access, refreshToken: refresh);
 
-    final userJson = tokens['user'];
-    if (userJson is Map<String, dynamic>) {
-      return UserModel.fromJson(userJson);
+    try {
+      final meResponse = await _dio.get(ApiConstants.profile);
+      return UserModel.fromJson(meResponse.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw FormatException(_parseDioError(e));
     }
-    if (userJson is Map) {
-      return UserModel.fromJson(userJson.cast<String, dynamic>());
-    }
-    throw const FormatException('Respuesta inválida del servidor (usuario).');
   }
 
   Future<UserModel> register({
-    required String nombre,
+    required String firstName,
     required String email,
     required String password,
-    required String rol,
+    required String role,
   }) async {
-    final Map<String, dynamic> json;
     try {
-      json = await _service.register(
-        nombre: nombre,
+      await _service.register(
+        firstName: firstName,
         email: email,
         password: password,
-        rol: rol,
+        role: role,
       );
     } on DioException catch (e) {
       throw FormatException(_parseAuthError(e, isRegister: true));
     }
 
-    final user = UserModel.fromJson(json);
-    await login(email: email, password: password);
-    return user;
+    return login(email: email, password: password);
   }
 
   Future<bool> hasToken() => StorageUtils.hasToken();
@@ -84,6 +79,8 @@ class AuthRepository {
     try {
       await _dio.post(ApiConstants.resendVerification, data: {});
     } on DioException catch (e) {
+      final code = e.response?.statusCode;
+      if (code == 404 || code == 405) return;
       throw _parseDioError(e);
     }
   }

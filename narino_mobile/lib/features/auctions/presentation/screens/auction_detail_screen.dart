@@ -154,7 +154,7 @@ class _AuctionDetailScreenState extends ConsumerState<AuctionDetailScreen> {
   // ─── Permisos ─────────────────────────────────────────────────────────────
 
   static bool _isArtistOwner(AuctionModel auction,
-      {required String myName, required int? myId}) {
+      {required String myName, required String? myId}) {
     if (auction.artistaId != null && myId != null) {
       return auction.artistaId == myId;
     }
@@ -163,7 +163,7 @@ class _AuctionDetailScreenState extends ConsumerState<AuctionDetailScreen> {
     return a.isNotEmpty && b.isNotEmpty && a == b;
   }
 
-  static bool _isWinner(AuctionModel auction, {required int? myId}) {
+  static bool _isWinner(AuctionModel auction, {required String? myId}) {
     return auction.ganadorId != null &&
         myId != null &&
         auction.ganadorId == myId;
@@ -767,9 +767,9 @@ class _WinnerActions extends ConsumerWidget {
   });
 
   final AuctionModel auction;
-  final bool Function(AuctionModel, {required int? myId}) isWinnerFn;
+  final bool Function(AuctionModel, {required String? myId}) isWinnerFn;
   final bool Function(AuctionModel,
-      {required String myName, required int? myId}) isArtistFn;
+      {required String myName, required String? myId}) isArtistFn;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

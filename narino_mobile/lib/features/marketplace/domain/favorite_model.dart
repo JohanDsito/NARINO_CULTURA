@@ -20,12 +20,18 @@ class FavoriteModel {
 
   factory FavoriteModel.fromJson(Map<String, dynamic> json) => FavoriteModel(
         id: json['id']?.toString() ?? '',
-        obraId: json['obra_id']?.toString() ?? '',
-        obraTitulo: json['obra_titulo']?.toString() ?? '',
+        obraId: json['artwork_id']?.toString() ??
+            json['artwork']?.toString() ??
+            json['obra_id']?.toString() ??
+            '',
+        obraTitulo: json['title']?.toString() ??
+            json['obra_titulo']?.toString() ??
+            '',
         artistaNombre: json['artista_nombre']?.toString() ?? '',
         estado: json['estado']?.toString() ?? 'disponible',
-        precio:
-            json['precio'] != null ? double.tryParse(json['precio'].toString()) : null,
+        precio: json['precio'] != null
+            ? double.tryParse(json['precio'].toString())
+            : null,
         imagenUrl: json['imagen_url']?.toString(),
       );
 

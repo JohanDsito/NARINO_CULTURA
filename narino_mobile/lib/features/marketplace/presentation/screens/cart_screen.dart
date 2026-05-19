@@ -160,7 +160,7 @@ class _CartBody extends StatelessWidget {
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, i) => _CartItemCard(
         item: state.items[i],
-        onRemove: () => onRemove(state.items[i].id),
+        onRemove: () => onRemove(state.items[i].obraId),
       ),
     );
   }

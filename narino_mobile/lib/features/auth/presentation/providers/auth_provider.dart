@@ -49,10 +49,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<UserModel?> register({
-    required String nombre,
+    required String firstName,
     required String email,
     required String password,
-    required String rol,
+    required String role,
   }) async {
     state = state.copyWith(
       status: AuthStatus.loading,
@@ -62,10 +62,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
     try {
       final user = await _repository.register(
-        nombre: nombre,
+        firstName: firstName,
         email: email,
         password: password,
-        rol: rol,
+        role: role,
       );
       state = state.copyWith(
         status: AuthStatus.authenticated,
