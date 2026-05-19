@@ -1,0 +1,175 @@
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.conf import settings
+from django.utils.html import strip_tags
+from dataclasses import dataclass
+import logging
+import requests
+from urllib.parse import urlencode
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class EmailResult:
+    ok: bool
+    error_message: str | None = None
+
+
+class EmailService:
+    """Servicio para enviar emails desde el backend."""
+
+    @staticmethod
+    def _build_url(base_url: str, path: str, query_params: dict[str, str] | None = None) -> str:
+        normalized_base = (base_url or "").rstrip("/")
+        normalized_path = "/" + path.lstrip("/")
+        url = f"{normalized_base}{normalized_path}"
+        if query_params:
+            url = f"{url}?{urlencode(query_params)}"
+        return url
+
+    @staticmethod
+    def _send_via_resend(subject: str, user_email: str, html_message: str, text_message: str) -> EmailResult:
+        resend_api_key = getattr(settings, "RESEND_API_KEY", "")
+        resend_from_email = getattr(settings, "RESEND_FROM_EMAIL", "")
+
+        if not resend_api_key:
+            return EmailResult(ok=False, error_message="Resend API key no configurada")
+        if not resend_from_email:
+            return EmailResult(ok=False, error_message="Resend FROM_EMAIL no configurado")
+
+        try:
+            payload = {
+                "from": resend_from_email,
+                "to": [user_email],
+                "subject": subject,
+                "html": html_message,
+                "text": text_message,
+            }
+            headers = {
+                "Authorization": f"Bearer {resend_api_key}",
+                "Content-Type": "application/json",
+            }
+            response = requests.post(
+                "https://api.resend.com/emails",
+                json=payload,
+                headers=headers,
+                timeout=10,
+            )
+            if 200 <= response.status_code < 300:
+                return EmailResult(ok=True)
+            return EmailResult(
+                ok=False,
+                error_message=f"Resend API error {response.status_code}: {response.text}",
+            )
+        except requests.RequestException as e:
+            return EmailResult(ok=False, error_message=f"Error de red con Resend: {str(e)}")
+        except Exception as e:
+            return EmailResult(ok=False, error_message=f"Error inesperado con Resend: {str(e)}")
+
+    @staticmethod
+    def _send_via_smtp(subject: str, user_email: str, html_message: str, text_message: str) -> EmailResult:
+        try:
+            email = EmailMultiAlternatives(
+                subject=subject,
+                body=text_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[user_email],
+            )
+            email.attach_alternative(html_message, "text/html")
+            email.send(fail_silently=False)
+            return EmailResult(ok=True)
+        except Exception as e:
+            return EmailResult(ok=False, error_message=str(e))
+
+    @staticmethod
+    def _send_email(subject: str, user_email: str, html_message: str, text_message: str) -> EmailResult:
+        # Intentar Resend primero
+        resend_api_key = getattr(settings, "RESEND_API_KEY", "")
+        if resend_api_key:
+            result = EmailService._send_via_resend(subject, user_email, html_message, text_message)
+            if result.ok:
+                logger.info(f"Email enviado a {user_email} vía Resend")
+                return result
+            logger.warning(f"Resend falló, intentando SMTP: {result.error_message}")
+
+        # Fallback a SMTP
+        result = EmailService._send_via_smtp(subject, user_email, html_message, text_message)
+        if result.ok:
+            logger.info(f"Email enviado a {user_email} vía SMTP")
+        else:
+            logger.error(f"Error SMTP: {result.error_message}")
+        return result
+
+    @staticmethod
+    def send_verification_email(user_email: str, verification_token: str, user_name: str = "") -> EmailResult:
+        frontend_verification_url = EmailService._build_url(
+            settings.FRONTEND_URL,
+            "/verify-email",
+            {"token": verification_token},
+        )
+        api_base_url = getattr(settings, "API_BASE_URL", "")
+        verification_api_url = (
+            EmailService._build_url(
+                api_base_url,
+                "/api/v1/auth/verify-email/",
+                {"token": verification_token},
+            )
+            if api_base_url
+            else frontend_verification_url
+        )
+        context = {
+            "verification_url": frontend_verification_url,
+            "verification_api_url": verification_api_url,
+            "frontend_url": settings.FRONTEND_URL,
+            "frontend_verification_url": frontend_verification_url,
+            "token": verification_token,
+            "user_name": user_name or "Usuario",
+        }
+        html_message = render_to_string("emails/verify_email.html", context)
+        text_message = strip_tags(html_message)
+        subject = "Verifica tu correo en Nariño Cultura"
+        result = EmailService._send_email(subject, user_email, html_message, text_message)
+        if not result.ok:
+            error_message = f"Error al enviar email de verificación: {result.error_message}"
+            logger.error(error_message)
+            return EmailResult(ok=False, error_message=error_message)
+        return EmailResult(ok=True)
+
+    @staticmethod
+    def send_password_reset_email(user_email: str, reset_token: str) -> EmailResult:
+        reset_url = EmailService._build_url(
+            settings.FRONTEND_URL,
+            "/reset-password",
+            {"token": reset_token},
+        )
+        context = {
+            "reset_url": reset_url,
+            "frontend_url": settings.FRONTEND_URL,
+            "token": reset_token,
+        }
+        html_message = render_to_string("emails/reset_password.html", context)
+        text_message = strip_tags(html_message)
+        subject = "Recupera tu contraseña en Nariño Cultura"
+        result = EmailService._send_email(subject, user_email, html_message, text_message)
+        if not result.ok:
+            error_message = f"Error al enviar email de reset: {result.error_message}"
+            logger.error(error_message)
+            return EmailResult(ok=False, error_message=error_message)
+        return EmailResult(ok=True)
+
+    @staticmethod
+    def send_welcome_email(user_email: str, user_name: str = "") -> EmailResult:
+        context = {
+            "user_name": user_name,
+            "frontend_url": settings.FRONTEND_URL,
+        }
+        html_message = render_to_string("emails/welcome.html", context)
+        text_message = strip_tags(html_message)
+        subject = "¡Bienvenido a Nariño Cultura!"
+        result = EmailService._send_email(subject, user_email, html_message, text_message)
+        if not result.ok:
+            error_message = f"Error al enviar email de bienvenida: {result.error_message}"
+            logger.error(error_message)
+            return EmailResult(ok=False, error_message=error_message)
+        return EmailResult(ok=True)

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #F9F6F4;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(229, 153, 99, 0.2);
+            margin: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #E59963 0%, #D4885A 100%);
+            color: #ffffff;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+        }
+        .header p {
+            margin: 8px 0 0 0;
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .greeting {
+            font-size: 20px;
+            font-weight: 600;
+            color: #E59963;
+            margin-bottom: 20px;
+        }
+        .button {
+            display: inline-block;
+            background: linear-gradient(135deg, #E59963 0%, #D4885A 100%);
+            color: #ffffff;
+            padding: 16px 32px;
+            text-decoration: none;
+            border-radius: 8px;
+            margin: 30px 0;
+            font-weight: 600;
+            font-size: 16px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(229, 153, 99, 0.3);
+            transition: all 0.3s ease;
+        }
+        .button:hover {
+            background: linear-gradient(135deg, #D4885A 0%, #C1794B 100%);
+            box-shadow: 0 6px 16px rgba(229, 153, 99, 0.4);
+            transform: translateY(-2px);
+        }
+        .alternative-link {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 14px;
+            color: #666;
+        }
+        .alternative-link a {
+            color: #E59963;
+            text-decoration: underline;
+            font-weight: 500;
+        }
+        .alternative-link a:hover {
+            color: #D4885A;
+        }
+        .warning {
+            background-color: #FFF8F5;
+            border-left: 4px solid #E59963;
+            padding: 20px;
+            margin: 30px 0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .warning strong {
+            color: #D4885A;
+        }
+        .footer {
+            background-color: #F9F6F4;
+            padding: 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+        .footer a {
+            color: #E59963;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .footer a:hover {
+            color: #D4885A;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Nariño Cultura</h1>
+            <p>Verifica tu correo electrónico</p>
+        </div>
+
+        <div class="content">
+            <div class="greeting">¡Hola {{ user_name }}!</div>
+
+            <p>Gracias por registrarte en Nariño Cultura. Para completar tu registro y acceder a todas las funciones de nuestra plataforma, necesitamos que verifiques tu correo electrónico.</p>
+
+            <p style="text-align: center;">
+                <a href="{{ verification_url }}" class="button">Verificar mi correo</a>
+            </p>
+
+            <div class="alternative-link">
+                <p>Si el botón no funciona, <a href="{{ verification_url }}">dale click aquí</a></p>
+            </div>
+
+            {% if verification_api_url %}
+            <div class="alternative-link">
+                <p>Si sigues viendo un error en la página, usa este enlace alternativo: <a href="{{ verification_api_url }}">verificar directamente</a></p>
+            </div>
+            {% endif %}
+
+            <div class="warning">
+                <strong>Importante:</strong> Este enlace es válido por 24 horas. Si no verificas tu correo dentro de este tiempo, tendrás que solicitar un nuevo enlace de verificación.
+            </div>
+
+            <p style="margin-top: 30px; font-size: 14px; color: #666;">
+                Si no creaste esta cuenta, por favor ignora este correo.
+            </p>
+        </div>
+
+        <div class="footer">
+            <p>© 2024 Nariño Cultura. Todos los derechos reservados.</p>
+            <p><a href="{{ frontend_url }}">Visitar nuestro sitio web</a></p>
+        </div>
+    </div>
+</body>
+</html>
