@@ -5,6 +5,7 @@ from django.utils.html import strip_tags
 from dataclasses import dataclass
 import logging
 import requests
+from urllib.parse import urlencode
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +18,15 @@ class EmailResult:
 
 class EmailService:
     """Servicio para enviar emails desde el backend."""
+
+    @staticmethod
+    def _build_url(base_url: str, path: str, query_params: dict[str, str] | None = None) -> str:
+        normalized_base = (base_url or "").rstrip("/")
+        normalized_path = "/" + path.lstrip("/")
+        url = f"{normalized_base}{normalized_path}"
+        if query_params:
+            url = f"{url}?{urlencode(query_params)}"
+        return url
 
     @staticmethod
     def _send_via_resend(subject: str, user_email: str, html_message: str, text_message: str) -> EmailResult:
@@ -93,10 +103,26 @@ class EmailService:
 
     @staticmethod
     def send_verification_email(user_email: str, verification_token: str, user_name: str = "") -> EmailResult:
-        verification_url = f"{settings.FRONTEND_URL}/verify-email?token={verification_token}"
+        frontend_verification_url = EmailService._build_url(
+            settings.FRONTEND_URL,
+            "/verify-email",
+            {"token": verification_token},
+        )
+        api_base_url = getattr(settings, "API_BASE_URL", "")
+        verification_api_url = (
+            EmailService._build_url(
+                api_base_url,
+                "/api/v1/auth/verify-email/",
+                {"token": verification_token},
+            )
+            if api_base_url
+            else frontend_verification_url
+        )
         context = {
-            "verification_url": verification_url,
+            "verification_url": frontend_verification_url,
+            "verification_api_url": verification_api_url,
             "frontend_url": settings.FRONTEND_URL,
+            "frontend_verification_url": frontend_verification_url,
             "token": verification_token,
             "user_name": user_name or "Usuario",
         }
@@ -112,7 +138,11 @@ class EmailService:
 
     @staticmethod
     def send_password_reset_email(user_email: str, reset_token: str) -> EmailResult:
-        reset_url = f"{settings.FRONTEND_URL}/reset-password?token={reset_token}"
+        reset_url = EmailService._build_url(
+            settings.FRONTEND_URL,
+            "/reset-password",
+            {"token": reset_token},
+        )
         context = {
             "reset_url": reset_url,
             "frontend_url": settings.FRONTEND_URL,

@@ -20,3 +20,5 @@ dist/
 
 # Docker
 .dockerignore
+
+Narino_Front/

@@ -34,3 +34,18 @@ class AuthFlowTests(APITestCase):
         self.assertIn("access", r.data)
         self.assertIn("refresh", r.data)
 
+    def test_verify_email_via_get_link(self):
+        user = User.objects.create_user(
+            email="linktest@example.com",
+            password="StrongPass123!",
+            role="COMPRADOR",
+            is_verified=False,
+        )
+        verification = EmailVerification.issue_for_user(user)
+
+        r = self.client.get(f"/api/v1/auth/verify-email/?token={verification.token}")
+        self.assertEqual(r.status_code, 200)
+
+        user.refresh_from_db()
+        self.assertTrue(user.is_verified)
+

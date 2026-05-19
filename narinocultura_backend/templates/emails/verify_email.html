@@ -125,8 +125,14 @@
                 <p>Si el botón no funciona, <a href="{{ verification_url }}">dale click aquí</a></p>
             </div>
 
+            {% if verification_api_url %}
+            <div class="alternative-link">
+                <p>Si sigues viendo un error en la página, usa este enlace alternativo: <a href="{{ verification_api_url }}">verificar directamente</a></p>
+            </div>
+            {% endif %}
+
             <div class="warning">
-                <strong>⏰ Importante:</strong> Este enlace es válido por 24 horas. Si no verificas tu correo dentro de este tiempo, tendrás que solicitar un nuevo enlace de verificación.
+                <strong>Importante:</strong> Este enlace es válido por 24 horas. Si no verificas tu correo dentro de este tiempo, tendrás que solicitar un nuevo enlace de verificación.
             </div>
 
             <p style="margin-top: 30px; font-size: 14px; color: #666;">
