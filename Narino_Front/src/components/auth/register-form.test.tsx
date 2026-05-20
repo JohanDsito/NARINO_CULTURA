@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { toast } from 'sonner'
 
 import { register } from '@/api/auth.api'
 import { RegisterForm } from '@/components/auth/register-form'
@@ -19,6 +20,7 @@ vi.mock('sonner', () => ({
 }))
 
 const mockedRegister = vi.mocked(register)
+const mockedToast = vi.mocked(toast)
 
 function renderRegisterForm() {
   const queryClient = new QueryClient()
@@ -70,12 +72,12 @@ describe('RegisterForm', () => {
 
     await user.type(
       screen.getByLabelText(/^contraseña$/i),
-      'secret12',
+      'secret1234',
     )
 
     await user.type(
       screen.getByLabelText(/confirmar contraseña/i),
-      'secret12',
+      'secret1234',
     )
 
     await user.click(
@@ -132,12 +134,12 @@ describe('RegisterForm', () => {
 
     await user.type(
       screen.getByLabelText(/^contraseña$/i),
-      'secret12',
+      'secret1234',
     )
 
     await user.type(
       screen.getByLabelText(/confirmar contraseña/i),
-      'secret12',
+      'secret1234',
     )
 
     await user.click(
@@ -174,8 +176,8 @@ describe('RegisterForm', () => {
     await user.type(screen.getByLabelText(/nombre$/i), 'Bea')
     await user.type(screen.getByLabelText(/apellido/i), 'Rios')
     await user.type(screen.getByLabelText(/email/i), 'buyer@test.com')
-    await user.type(screen.getByLabelText(/^contraseña$/i), 'secret12')
-    await user.type(screen.getByLabelText(/confirmar contraseña/i), 'secret12')
+    await user.type(screen.getByLabelText(/^contraseña$/i), 'secret1234')
+    await user.type(screen.getByLabelText(/confirmar contraseña/i), 'secret1234')
 
     await user.click(screen.getByRole('button', { name: /crear cuenta/i }))
 
@@ -193,8 +195,8 @@ describe('RegisterForm', () => {
     await user.type(screen.getByLabelText(/nombre$/i), 'Bea')
     await user.type(screen.getByLabelText(/apellido/i), 'Rios')
     await user.type(screen.getByLabelText(/email/i), 'buyer@test.com')
-    await user.type(screen.getByLabelText(/^contraseña$/i), 'secret12')
-    await user.type(screen.getByLabelText(/confirmar contraseña/i), 'secret13')
+    await user.type(screen.getByLabelText(/^contraseña$/i), 'secret1234')
+    await user.type(screen.getByLabelText(/confirmar contraseña/i), 'secret1235')
     await user.click(screen.getByLabelText(/acepto los términos/i))
 
     await user.click(screen.getByRole('button', { name: /crear cuenta/i }))
@@ -202,6 +204,7 @@ describe('RegisterForm', () => {
     expect(
       await screen.findByText(/las contraseñas no coinciden/i),
     ).toBeInTheDocument()
+    expect(mockedToast.error).toHaveBeenCalledWith('Las contraseñas no coinciden.')
     expect(mockedRegister).not.toHaveBeenCalled()
   })
 })

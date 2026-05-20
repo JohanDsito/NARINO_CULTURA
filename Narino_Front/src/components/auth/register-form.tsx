@@ -18,8 +18,8 @@ import { setPendingArtistProfile } from '@/utils/pendingArtistProfile'
 const schema = z
   .object({
     email: z.string().email('Ingresa un email válido.'),
-    password: z.string().length(8, 'La contraseña debe tener 8 caracteres.'),
-    confirmPassword: z.string().length(8, 'Confirma la contraseña con 8 caracteres.'),
+    password: z.string().length(10, 'La contraseña debe tener 10 caracteres.'),
+    confirmPassword: z.string().length(10, 'Confirma la contraseña con 10 caracteres.'),
     firstName: z.string().min(1, 'El nombre es obligatorio.'),
     lastName: z.string().min(1, 'El apellido es obligatorio.'),
     role: z.enum(['buyer', 'artist', 'cultural_manager'] as const satisfies readonly Role[], {
@@ -123,7 +123,14 @@ export function RegisterForm() {
   return (
     <form
       className="space-y-3"
-      onSubmit={handleSubmit((values) => mutation.mutate(values))}
+      onSubmit={handleSubmit(
+        (values) => mutation.mutate(values),
+        (formErrors) => {
+          if (formErrors.confirmPassword?.message === 'Las contraseñas no coinciden.') {
+            toast.error('Las contraseñas no coinciden.')
+          }
+        },
+      )}
       aria-label="Formulario de registro"
     >
       <div className="grid gap-3 sm:grid-cols-2">
@@ -155,7 +162,7 @@ export function RegisterForm() {
           id="password"
           type="password"
           autoComplete="new-password"
-          maxLength={8}
+          maxLength={10}
           {...register('password')}
         />
         {errors.password ? (
@@ -169,7 +176,7 @@ export function RegisterForm() {
           id="confirmPassword"
           type="password"
           autoComplete="new-password"
-          maxLength={8}
+          maxLength={10}
           {...register('confirmPassword')}
         />
         {errors.confirmPassword ? (
