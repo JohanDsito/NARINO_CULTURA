@@ -18,7 +18,8 @@ import { setPendingArtistProfile } from '@/utils/pendingArtistProfile'
 const schema = z
   .object({
     email: z.string().email('Ingresa un email válido.'),
-    password: z.string().min(8, 'Mínimo 8 caracteres.'),
+    password: z.string().length(8, 'La contraseña debe tener 8 caracteres.'),
+    confirmPassword: z.string().length(8, 'Confirma la contraseña con 8 caracteres.'),
     firstName: z.string().min(1, 'El nombre es obligatorio.'),
     lastName: z.string().min(1, 'El apellido es obligatorio.'),
     role: z.enum(['buyer', 'artist', 'cultural_manager'] as const satisfies readonly Role[], {
@@ -29,8 +30,19 @@ const schema = z
     artisticName: z.string().optional(),
     discipline: z.string().optional(),
     city: z.string().optional(),
+    termsAccepted: z.boolean().refine((value) => value, {
+      message: 'Debes aceptar los términos y la política de privacidad.',
+    }),
   })
   .superRefine((values, ctx) => {
+    if (values.password !== values.confirmPassword) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Las contraseñas no coinciden.',
+        path: ['confirmPassword'],
+      })
+    }
+
     if (values.role === 'artist') {
       if (!values.artisticName?.trim()) {
         ctx.addIssue({
@@ -59,6 +71,7 @@ export function RegisterForm() {
     defaultValues: {
       email: '',
       password: '',
+      confirmPassword: '',
       firstName: '',
       lastName: '',
       role: 'buyer',
@@ -67,6 +80,7 @@ export function RegisterForm() {
       artisticName: '',
       discipline: '',
       city: '',
+      termsAccepted: false,
     },
     mode: 'onTouched',
   })
@@ -137,9 +151,29 @@ export function RegisterForm() {
 
       <div className="space-y-1">
         <Label htmlFor="password" className="text-xs font-medium">Contraseña</Label>
-        <Input id="password" type="password" autoComplete="new-password" {...register('password')} />
+        <Input
+          id="password"
+          type="password"
+          autoComplete="new-password"
+          maxLength={8}
+          {...register('password')}
+        />
         {errors.password ? (
           <p className="text-xs text-destructive">{errors.password.message}</p>
+        ) : null}
+      </div>
+
+      <div className="space-y-1">
+        <Label htmlFor="confirmPassword" className="text-xs font-medium">Confirmar contraseña</Label>
+        <Input
+          id="confirmPassword"
+          type="password"
+          autoComplete="new-password"
+          maxLength={8}
+          {...register('confirmPassword')}
+        />
+        {errors.confirmPassword ? (
+          <p className="text-xs text-destructive">{errors.confirmPassword.message}</p>
         ) : null}
       </div>
 
@@ -184,6 +218,20 @@ export function RegisterForm() {
           </div>
         </div>
       ) : null}
+
+      <div className="space-y-1">
+        <label className="flex items-start gap-2 text-xs leading-5 text-text-secondary">
+          <input
+            type="checkbox"
+            className="mt-1 h-4 w-4 rounded border-border text-tierra focus:ring-tierra"
+            {...register('termsAccepted')}
+          />
+          <span>Acepto los términos y la política de privacidad.</span>
+        </label>
+        {errors.termsAccepted ? (
+          <p className="text-xs text-destructive">{errors.termsAccepted.message}</p>
+        ) : null}
+      </div>
 
       <Button type="submit" className="w-full mt-4" disabled={mutation.isPending} aria-label="Crear cuenta">
         {mutation.isPending ? 'Creando…' : 'Crear cuenta'}

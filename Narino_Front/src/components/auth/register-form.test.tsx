@@ -69,8 +69,17 @@ describe('RegisterForm', () => {
     )
 
     await user.type(
-      screen.getByLabelText(/contraseña/i),
-      'secret123',
+      screen.getByLabelText(/^contraseña$/i),
+      'secret12',
+    )
+
+    await user.type(
+      screen.getByLabelText(/confirmar contraseña/i),
+      'secret12',
+    )
+
+    await user.click(
+      screen.getByLabelText(/acepto los términos/i),
     )
 
     await user.selectOptions(
@@ -122,8 +131,17 @@ describe('RegisterForm', () => {
     )
 
     await user.type(
-      screen.getByLabelText(/contraseña/i),
-      'secret123',
+      screen.getByLabelText(/^contraseña$/i),
+      'secret12',
+    )
+
+    await user.type(
+      screen.getByLabelText(/confirmar contraseña/i),
+      'secret12',
+    )
+
+    await user.click(
+      screen.getByLabelText(/acepto los términos/i),
     )
 
     await user.click(
@@ -146,5 +164,44 @@ describe('RegisterForm', () => {
     expect(
       await screen.findByText('Login page'),
     ).toBeInTheDocument()
+  })
+
+  it('requires accepting terms before registering', async () => {
+    const user = userEvent.setup()
+
+    renderRegisterForm()
+
+    await user.type(screen.getByLabelText(/nombre$/i), 'Bea')
+    await user.type(screen.getByLabelText(/apellido/i), 'Rios')
+    await user.type(screen.getByLabelText(/email/i), 'buyer@test.com')
+    await user.type(screen.getByLabelText(/^contraseña$/i), 'secret12')
+    await user.type(screen.getByLabelText(/confirmar contraseña/i), 'secret12')
+
+    await user.click(screen.getByRole('button', { name: /crear cuenta/i }))
+
+    expect(
+      await screen.findByText(/debes aceptar los términos/i),
+    ).toBeInTheDocument()
+    expect(mockedRegister).not.toHaveBeenCalled()
+  })
+
+  it('requires matching password confirmation', async () => {
+    const user = userEvent.setup()
+
+    renderRegisterForm()
+
+    await user.type(screen.getByLabelText(/nombre$/i), 'Bea')
+    await user.type(screen.getByLabelText(/apellido/i), 'Rios')
+    await user.type(screen.getByLabelText(/email/i), 'buyer@test.com')
+    await user.type(screen.getByLabelText(/^contraseña$/i), 'secret12')
+    await user.type(screen.getByLabelText(/confirmar contraseña/i), 'secret13')
+    await user.click(screen.getByLabelText(/acepto los términos/i))
+
+    await user.click(screen.getByRole('button', { name: /crear cuenta/i }))
+
+    expect(
+      await screen.findByText(/las contraseñas no coinciden/i),
+    ).toBeInTheDocument()
+    expect(mockedRegister).not.toHaveBeenCalled()
   })
 })
