@@ -223,7 +223,7 @@ export const router = createBrowserRouter([
         path: 'dashboard/artworks/new',
         element: (
           <ProtectedRoute allowedRoles={[ROLE.artist]}>
-            <UnderConstructionPage title="Nueva obra" description="Formulario de publicación de obra." />
+            {lazyPage(() => import('@/pages/artist/ArtworkCreatePage'), 'Cargando nueva obra...')}
           </ProtectedRoute>
         ),
       },

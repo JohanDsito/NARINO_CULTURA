@@ -168,6 +168,15 @@ describe('RegisterForm', () => {
     ).toBeInTheDocument()
   })
 
+  it('shows static password guidance', () => {
+    renderRegisterForm()
+
+    expect(screen.getByText(/la contraseña debe tener 10 caracteres/i)).toBeInTheDocument()
+    expect(
+      screen.getByText(/entre mayúsculas, minúsculas y caracteres \. , &/i),
+    ).toBeInTheDocument()
+  })
+
   it('requires accepting terms before registering', async () => {
     const user = userEvent.setup()
 
@@ -201,9 +210,10 @@ describe('RegisterForm', () => {
 
     await user.click(screen.getByRole('button', { name: /crear cuenta/i }))
 
-    expect(
-      await screen.findByText(/las contraseñas no coinciden/i),
-    ).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getAllByText(/las contraseñas no coinciden/i).length).toBeGreaterThan(0)
+    })
+    expect(screen.getByRole('alert')).toHaveClass('text-red-700')
     expect(mockedToast.error).toHaveBeenCalledWith('Las contraseñas no coinciden.')
     expect(mockedRegister).not.toHaveBeenCalled()
   })

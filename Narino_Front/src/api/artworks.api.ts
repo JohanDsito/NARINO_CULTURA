@@ -1,5 +1,5 @@
 import axiosInstance from './axiosInstance'
-import type { Artwork } from '@/types/auth'
+import type { Artwork, ArtworkCategory } from '@/types/auth'
 
 export interface ArtworkCategoryItem {
   id: number
@@ -15,8 +15,24 @@ export interface GetArtworksParams {
   page_size?: number
 }
 
+export interface CreateArtworkPayload {
+  title: string
+  description: string
+  price: number
+  category: ArtworkCategory
+  technique: string
+  dimensions?: string
+  year?: number
+  image_url?: string
+}
+
 export async function getArtworks(params?: GetArtworksParams) {
   const { data } = await axiosInstance.get<Artwork[]>('/api/v1/artworks/', { params })
+  return data
+}
+
+export async function createArtwork(payload: CreateArtworkPayload) {
+  const { data } = await axiosInstance.post<Artwork>('/api/v1/artworks/', payload)
   return data
 }
 

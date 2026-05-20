@@ -15,10 +15,14 @@ import { Select } from '@/components/ui/select'
 import { getApiErrorMessage } from '@/utils/apiError'
 import { setPendingArtistProfile } from '@/utils/pendingArtistProfile'
 
+const PASSWORD_LENGTH_MESSAGE = 'La contraseña debe tener 10 caracteres.'
+const PASSWORD_HINT_MESSAGE = 'Entre mayúsculas, minúsculas y caracteres . , &'
+const PASSWORD_MISMATCH_MESSAGE = 'Las contraseñas no coinciden.'
+
 const schema = z
   .object({
     email: z.string().email('Ingresa un email válido.'),
-    password: z.string().length(10, 'La contraseña debe tener 10 caracteres.'),
+    password: z.string().length(10, PASSWORD_LENGTH_MESSAGE),
     confirmPassword: z.string().length(10, 'Confirma la contraseña con 10 caracteres.'),
     firstName: z.string().min(1, 'El nombre es obligatorio.'),
     lastName: z.string().min(1, 'El apellido es obligatorio.'),
@@ -38,7 +42,7 @@ const schema = z
     if (values.password !== values.confirmPassword) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'Las contraseñas no coinciden.',
+        message: PASSWORD_MISMATCH_MESSAGE,
         path: ['confirmPassword'],
       })
     }
@@ -126,8 +130,8 @@ export function RegisterForm() {
       onSubmit={handleSubmit(
         (values) => mutation.mutate(values),
         (formErrors) => {
-          if (formErrors.confirmPassword?.message === 'Las contraseñas no coinciden.') {
-            toast.error('Las contraseñas no coinciden.')
+          if (formErrors.confirmPassword?.message === PASSWORD_MISMATCH_MESSAGE) {
+            toast.error(PASSWORD_MISMATCH_MESSAGE)
           }
         },
       )}
@@ -168,6 +172,10 @@ export function RegisterForm() {
         {errors.password ? (
           <p className="text-xs text-destructive">{errors.password.message}</p>
         ) : null}
+        <div className="space-y-0.5 text-xs text-text-secondary">
+          <p>{PASSWORD_LENGTH_MESSAGE}</p>
+          <p>{PASSWORD_HINT_MESSAGE}</p>
+        </div>
       </div>
 
       <div className="space-y-1">
@@ -183,6 +191,15 @@ export function RegisterForm() {
           <p className="text-xs text-destructive">{errors.confirmPassword.message}</p>
         ) : null}
       </div>
+
+      {errors.confirmPassword?.message === PASSWORD_MISMATCH_MESSAGE ? (
+        <div
+          role="alert"
+          className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-xs font-medium text-red-700"
+        >
+          {PASSWORD_MISMATCH_MESSAGE}
+        </div>
+      ) : null}
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1">
