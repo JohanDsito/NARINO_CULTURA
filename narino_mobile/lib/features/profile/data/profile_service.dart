@@ -14,7 +14,7 @@ class ProfileService {
     final userResponse = await _dio.get(ApiConstants.myProfile);
     final userData = Map<String, dynamic>.from(userResponse.data as Map);
 
-    if (userData['role'] == 'ARTISTA') {
+    if ((userData['role'] as String?)?.toLowerCase() == 'artista') {
       try {
         final artistsResponse = await _dio.get(ApiConstants.artists);
         final artistsData = artistsResponse.data;
@@ -122,7 +122,16 @@ class ProfileService {
   }
 
   Future<List<dynamic>> getPortfolio(String profileId) async {
-    return const [];
+    try {
+      final url = ApiConstants.artistPortfolio.replaceAll('{id}', profileId);
+      final r = await _dio.get(url);
+      if (r.data is List) return r.data as List;
+      if (r.data is Map) return (r.data['results'] as List?) ?? [];
+      return [];
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return [];
+      rethrow;
+    }
   }
 
   Future<Map<String, dynamic>> addPortfolioItem({
@@ -132,7 +141,22 @@ class ProfileService {
     String? titulo,
     String? descripcion,
   }) async {
-    return const {};
+    final url = ApiConstants.artistPortfolio.replaceAll('{id}', profileId);
+    final formData = FormData.fromMap({
+      'media': await MultipartFile.fromFile(
+        file.path,
+        filename: file.path.split(Platform.pathSeparator).last,
+      ),
+      'tipo': tipo,
+      if (titulo != null) 'titulo': titulo,
+      if (descripcion != null) 'descripcion': descripcion,
+    });
+    final r = await _dio.post(
+      url,
+      data: formData,
+      options: Options(contentType: 'multipart/form-data'),
+    );
+    return (r.data as Map).cast<String, dynamic>();
   }
 
   Future<Map<String, dynamic>> updatePortfolioItem(
@@ -140,11 +164,18 @@ class ProfileService {
     String itemId,
     Map<String, dynamic> data,
   ) async {
-    return const {};
+    final url = ApiConstants.artistPortfolioItem
+        .replaceAll('{id}', profileId)
+        .replaceAll('{item_id}', itemId);
+    final r = await _dio.patch(url, data: data);
+    return (r.data as Map).cast<String, dynamic>();
   }
 
   Future<void> deletePortfolioItem(String profileId, String itemId) async {
-    return;
+    final url = ApiConstants.artistPortfolioItem
+        .replaceAll('{id}', profileId)
+        .replaceAll('{item_id}', itemId);
+    await _dio.delete(url);
   }
 
   Future<Map<String, dynamic>> followArtist(String profileId) async {
@@ -160,6 +191,14 @@ class ProfileService {
   }
 
   Future<List<dynamic>> getMyFollowing() async {
-    return const [];
+    try {
+      final r = await _dio.get(ApiConstants.myFollowing);
+      if (r.data is List) return r.data as List;
+      if (r.data is Map) return (r.data['results'] as List?) ?? [];
+      return [];
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return [];
+      rethrow;
+    }
   }
 }

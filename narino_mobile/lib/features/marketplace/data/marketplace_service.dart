@@ -72,15 +72,23 @@ class MarketplaceService {
   }
 
   Future<Map<String, dynamic>> getOrderDetail(String id) async {
-    final orders = await getOrders();
-    final order = orders.firstWhere(
-      (o) => o['id']?.toString() == id || o['order_id']?.toString() == id,
-      orElse: () => <String, dynamic>{},
-    );
-    if ((order as Map).isNotEmpty) {
-      return Map<String, dynamic>.from(order);
+    try {
+      final url = ApiConstants.orderDetail.replaceAll('{id}', id);
+      final r = await _dio.get(url);
+      return (r.data as Map).cast<String, dynamic>();
+    } on DioException catch (e) {
+      // Si el endpoint individual no existe en el backend, filtramos la lista
+      if (e.response?.statusCode == 404) {
+        final orders = await getOrders();
+        final order = orders.firstWhere(
+          (o) => o['id']?.toString() == id || o['order_id']?.toString() == id,
+          orElse: () => <String, dynamic>{},
+        );
+        if ((order as Map).isNotEmpty) return Map<String, dynamic>.from(order);
+        return {'id': id, 'items': [], 'status': 'unknown', 'total_amount': 0};
+      }
+      rethrow;
     }
-    return {'id': id, 'items': [], 'status': 'unknown', 'total_amount': 0};
   }
 
   Future<Map<String, dynamic>> initiatePayment(String orderId) async {
