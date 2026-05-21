@@ -1,9 +1,8 @@
 allprojects {
     repositories {
+        maven { url = uri("https://repo.maven.apache.org/maven2") }
         google()
         mavenCentral()
-        maven { url = uri("https://maven.aliyun.com/repository/public") }
-        maven { url = uri("https://maven.aliyun.com/repository/google") }
     }
 }
 
