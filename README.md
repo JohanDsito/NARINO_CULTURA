@@ -1,159 +1,64 @@
-
 # 🎭 Nariño Cultura
 
-## Plataforma integral para la gestión, difusión y comercialización del ecosistema artístico de Nariño
+## Plataforma cultural para artistas, eventos y comercialización digital en Nariño
 
-![Python](https://img.shields.io/badge/Python-3.11+-blue)
-![Django](https://img.shields.io/badge/Django-5.x-green)
-![Django REST Framework](https://img.shields.io/badge/DRF-REST-red)
+![React](https://img.shields.io/badge/React-Frontend-blue)
+![Vite](https://img.shields.io/badge/Vite-Build-purple)
+![Django](https://img.shields.io/badge/Django-Backend-green)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-blue)
 ![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED)
 ![JWT](https://img.shields.io/badge/Auth-JWT-orange)
-![WebSockets](https://img.shields.io/badge/Realtime-WebSockets-purple)
-![Status](https://img.shields.io/badge/Status-En%20Desarrollo-success)
-![License](https://img.shields.io/badge/License-Academic-lightgrey)
 
 ---
 
-# 📌 Descripción del Proyecto
+# 📌 Descripción
 
-**Nariño Cultura** es una plataforma digital integral orientada a fortalecer el ecosistema cultural y artístico del departamento de Nariño, Colombia.
+**Nariño Cultura** es una plataforma web desarrollada como proyecto de grado orientada a fortalecer el ecosistema artístico y cultural del departamento de Nariño mediante herramientas digitales, inteligencia artificial y automatización.
 
-El proyecto busca brindar herramientas tecnológicas modernas para:
+La plataforma permite:
 
-- Promover la visibilidad de artistas y artesanos.
-- Facilitar la comercialización de obras y servicios culturales.
-- Impulsar el turismo cultural regional.
-- Centralizar eventos y actividades culturales.
-- Integrar procesos de automatización e inteligencia artificial.
-- Fortalecer la economía creativa mediante soluciones digitales.
-
-La plataforma está enfocada especialmente en artistas, artesanos y actores culturales relacionados con el **Carnaval de Negros y Blancos**, patrimonio cultural reconocido internacionalmente.
-
----
-
-# 🎯 Objetivo General
-
-Desarrollar una plataforma web integral que promueva la visibilidad, sostenibilidad económica y colaboración entre artistas, músicos, artesanos y gestores culturales de Nariño mediante herramientas tecnológicas, inteligencia artificial, automatización de procesos y un marketplace cultural.
-
----
-
-# 🚀 Características Principales
-
-## 🔐 Sistema de Autenticación
-
-- Registro y login con JWT.
-- Verificación de correo electrónico.
-- Recuperación y cambio de contraseña.
-- Roles y permisos personalizados.
-- Gestión de sesiones seguras.
-
-## 👨‍🎨 Gestión de Artistas
-
-- Creación de perfiles profesionales.
-- Información artística personalizada.
-- Redes sociales integradas.
-- Seguimiento de artistas.
-- Perfiles públicos y privados.
-
-## 🖼️ Gestión de Obras de Arte
-
-- Publicación de obras.
-- Categorías artísticas.
-- Gestión de imágenes.
-- Información técnica de obras.
-- Actualización y administración de contenido.
-
-## 🛒 Marketplace Cultural
-
-- Carrito de compras.
-- Gestión de órdenes.
-- Favoritos.
-- Compra y venta de obras.
-- Flujo comercial digital.
-
-## 🏷️ Sistema de Subastas
-
+- Gestión de artistas y perfiles culturales.
+- Publicación y comercialización de obras.
+- Marketplace cultural.
 - Subastas en tiempo real.
-- Gestión de pujas.
-- WebSockets con Django Channels.
-- Actualización dinámica de ofertas.
-- Control de tiempos de subasta.
+- Gestión de eventos culturales.
+- Automatización con n8n.
+- Integración de inteligencia artificial.
+- Sistema de autenticación seguro con JWT.
 
-## 📅 Gestión de Eventos
-
-- Calendario cultural.
-- Eventos artísticos.
-- Actividades culturales.
-- Organización de eventos.
-- Difusión cultural.
-
-## 🤖 Inteligencia Artificial
-
-- Generación automática de descripciones.
-- Personalización cultural.
-- Recomendaciones inteligentes.
-- Automatización de contenido.
-
-## 🔔 Sistema de Notificaciones
-
-- Correos automáticos.
-- Notificaciones del sistema.
-- Recordatorios.
-- Confirmaciones.
-
-## ⚙️ Automatización de Procesos
-
-- Integración con n8n.
-- Flujos automatizados.
-- Orquestación de procesos.
-- Integración de servicios.
+El sistema implementa una arquitectura cliente-servidor distribuida y desacoplada. :contentReference[oaicite:0]{index=0}
 
 ---
 
-# 🏗️ Arquitectura del Proyecto
+# 🏗️ Stack Tecnológico
 
-El proyecto implementa una arquitectura modular basada en servicios y aplicaciones desacopladas utilizando Django y Django REST Framework.
+| Capa | Tecnologías |
+|---|---|
+| Frontend | React + Vite + TypeScript + Zustand + React Query |
+| Backend | Python + Django + Django REST Framework |
+| Base de Datos | PostgreSQL |
+| Tiempo Real | Django Channels + WebSockets |
+| IA | FastAPI + LangChain + scikit-learn |
+| Automatización | n8n |
+| Pagos | Wompi API |
+| Despliegue | Render + Vercel |
+| Testing | Vitest + Postman |
 
-## 📂 Estructura General del Backend
+Frontend construido con React + Vite para interfaces dinámicas y reutilizables. :contentReference[oaicite:1]{index=1}
 
-```bash
-narinocultura_backend/
-│
-├── apps/
-│   ├── administration/
-│   ├── artists/
-│   ├── artworks/
-│   ├── auctions/
-│   ├── events/
-│   ├── marketplace/
-│   ├── notifications/
-│   ├── payments/
-│   ├── system/
-│   └── users/
-│
-├── config/
-│   ├── settings/
-│   ├── urls.py
-│   ├── asgi.py
-│   └── routing.py
-│
-├── services/
-│   ├── ai_service.py
-│   ├── auction_service.py
-│   ├── email_service.py
-│   ├── event_service.py
-│   ├── marketplace_service.py
-│   ├── notification_service.py
-│   └── payment_service.py
-│
-├── templates/
-├── utils/
-├── docs/
-├── Dockerfile
-├── docker-compose.yml
-└── requirements.txt
-```
+---
+
+# ⚙️ Tecnologías Frontend
+
+El frontend implementa:
+
+- React + Vite.
+- TypeScript.
+- Zustand para manejo de estado global. :contentReference[oaicite:2]{index=2}
+- React Query para consumo de APIs.
+- TailwindCSS.
+- Testing con Vitest. :contentReference[oaicite:3]{index=3}
+- Variables de entorno para API REST, WebSockets y servicios externos. :contentReference[oaicite:4]{index=4}
 
 ---
 
@@ -176,14 +81,13 @@ PostgreSQL      IA / Emails / n8n
 
 ---
 
-# 🔐 Seguridad Implementada
+# 🔐 Seguridad
 
 - Autenticación JWT.
 - Protección de rutas.
 - Roles y permisos.
-- Verificación de email.
+- Verificación de correo.
 - Middleware personalizado.
-- Validaciones de entrada.
 - Gestión segura de tokens.
 - Control de acceso basado en permisos.
 
@@ -199,7 +103,6 @@ POST /auth/login/
 POST /auth/logout/
 POST /auth/verify-email/
 POST /auth/password-reset/
-POST /auth/password-reset/confirm/
 ```
 
 ## 👨‍🎨 Artistas
@@ -209,7 +112,6 @@ GET    /artists/
 POST   /artists/
 GET    /artists/{slug}/
 PATCH  /artists/{slug}/
-POST   /artists/{slug}/follow/
 ```
 
 ## 🖼️ Obras de Arte
@@ -218,8 +120,6 @@ POST   /artists/{slug}/follow/
 GET    /artworks/
 POST   /artworks/
 GET    /artworks/{id}/
-PATCH  /artworks/{id}/
-POST   /artworks/{id}/ai-enhance/
 ```
 
 ## 🏷️ Subastas
@@ -235,24 +135,41 @@ POST   /auctions/{id}/bid/
 ```http
 GET    /marketplace/cart/
 POST   /marketplace/cart/items/
-GET    /marketplace/favorites/
-POST   /marketplace/favorites/
 ```
 
 ---
 
-# ⚡ Instalación del Proyecto
+# 📂 Arquitectura Backend
 
-## 1️⃣ Clonar el repositorio
+```bash
+apps/
+├── artists/
+├── artworks/
+├── auctions/
+├── marketplace/
+├── notifications/
+├── events/
+└── users/
+
+services/
+├── ai_service.py
+├── email_service.py
+├── notification_service.py
+└── payment_service.py
+```
+
+---
+
+# ⚡ Instalación
+
+## Clonar repositorio
 
 ```bash
 git clone https://github.com/tu-usuario/narino-cultura.git
 cd narino-cultura
 ```
 
----
-
-## 2️⃣ Crear entorno virtual
+## Crear entorno virtual
 
 ```bash
 python -m venv venv
@@ -267,59 +184,37 @@ source venv/bin/activate
 ### Windows
 
 ```bash
-venv\\Scripts\\activate
+venv\Scripts\activate
 ```
 
----
-
-## 3️⃣ Instalar dependencias
+## Instalar dependencias
 
 ```bash
 pip install -r requirements.txt
 ```
 
----
-
-## 4️⃣ Configurar variables de entorno
-
-Crear archivo `.env`
+## Variables de entorno
 
 ```env
 DEBUG=True
 SECRET_KEY=your_secret_key
 DATABASE_URL=postgresql://user:password@localhost:5432/narinocultura
-EMAIL_HOST=smtp.example.com
-EMAIL_PORT=587
-EMAIL_HOST_USER=example@example.com
-EMAIL_HOST_PASSWORD=password
 JWT_SECRET_KEY=jwt_secret
 ```
 
----
-
-## 5️⃣ Ejecutar migraciones
+## Migraciones
 
 ```bash
 python manage.py migrate
 ```
 
----
-
-## 6️⃣ Crear superusuario
-
-```bash
-python manage.py createsuperuser
-```
-
----
-
-## 7️⃣ Ejecutar servidor
+## Ejecutar servidor
 
 ```bash
 python manage.py runserver
 ```
 
-Servidor disponible en:
+Servidor:
 
 ```bash
 http://127.0.0.1:8000/
@@ -327,9 +222,7 @@ http://127.0.0.1:8000/
 
 ---
 
-# 🐳 Ejecución con Docker
-
-## Construcción y ejecución
+# 🐳 Docker
 
 ```bash
 docker-compose up --build
@@ -337,32 +230,21 @@ docker-compose up --build
 
 ---
 
-# 🧪 Testing
+# 🔄 WebSockets
 
-El proyecto incluye pruebas automatizadas para módulos críticos.
+El sistema utiliza Django Channels para:
 
-## Ejecutar tests
+- Subastas en tiempo real.
+- Comunicación bidireccional.
+- Eventos dinámicos.
 
-```bash
-python manage.py test
+```python
+ASGI_APPLICATION = 'config.asgi.application'
 ```
-
-## Módulos con pruebas
-
-- Users
-- Payments
-- Auctions
 
 ---
 
 # 📬 Sistema de Correos
-
-La plataforma implementa:
-
-- Verificación de correo.
-- Bienvenida automática.
-- Recuperación de contraseña.
-- Notificaciones automatizadas.
 
 Plantillas disponibles:
 
@@ -373,68 +255,55 @@ templates/emails/
 └── welcome.html
 ```
 
+El sistema implementa correos automáticos para:
+
+- Verificación de cuenta.
+- Recuperación de contraseña.
+- Bienvenida automática. :contentReference[oaicite:5]{index=5}
+
 ---
 
-# 🔄 WebSockets y Tiempo Real
+# 🧪 Testing
 
-El sistema utiliza Django Channels para:
-
-- Actualización de subastas.
-- Pujas en tiempo real.
-- Comunicación bidireccional.
-- Eventos en vivo.
-
-Configuración principal:
-
-```python
-ASGI_APPLICATION = 'config.asgi.application'
+```bash
+python manage.py test
 ```
 
----
-
-# 📁 Documentación Técnica
-
-El proyecto incluye documentación adicional:
-
-```text
-docs/
-├── BREVO-SETUP.md
-├── CAMBIOS-BREVO.md
-├── n8n/
-└── postman/
-```
+Frontend con pruebas utilizando Vitest y Testing Library. :contentReference[oaicite:6]{index=6}
 
 ---
 
-# 📮 Colecciones Postman
+# 🤖 Inteligencia Artificial
 
-Incluye:
+La plataforma integra servicios de IA para:
 
-- Colecciones de endpoints.
-- Variables de entorno.
-- Payloads de ejemplo.
-- Guías rápidas.
-- Scripts automatizados.
+- Generación automática de descripciones.
+- Recomendaciones culturales.
+- Chatbot cultural.
+- Automatización inteligente. :contentReference[oaicite:7]{index=7}
+
+---
+
+# ⚙️ Automatización con n8n
+
+Flujos automatizados para:
+
+- Notificaciones.
+- Alertas de subastas.
+- Confirmaciones de pago.
+- Correos automáticos. :contentReference[oaicite:8]{index=8}
 
 ---
 
 # 📊 Calidad del Software
 
-La plataforma fue evaluada utilizando:
+Evaluación mediante:
 
 - Google Lighthouse.
-- Pruebas funcionales.
+- Postman.
+- Pruebas unitarias.
 - Pruebas de integración.
-- Validaciones de usabilidad.
-- Métricas de rendimiento.
-
-## Aspectos evaluados
-
-- Rendimiento.
-- Accesibilidad.
-- SEO.
-- Buenas prácticas.
-- Experiencia de usuario.
+- Testing frontend y backend. :contentReference[oaicite:9]{index=9}
 
 ---
 
@@ -448,139 +317,47 @@ La plataforma fue evaluada utilizando:
 
 ---
 
-# 🤖 Inteligencia Artificial Integrada
-
-El sistema incorpora servicios de IA para:
-
-- Mejorar descripciones de obras.
-- Automatizar contenido.
-- Personalizar experiencias culturales.
-- Optimizar interacción con usuarios.
-
-Archivo principal:
-
-```text
-services/ai_service.py
-```
-
----
-
-# ⚙️ Automatización con n8n
-
-El proyecto integra automatizaciones mediante n8n para:
-
-- Flujos de autenticación.
-- Correos automáticos.
-- Integración de servicios.
-- Orquestación de eventos.
-
-Configuraciones disponibles:
-
-```text
-docs/n8n/
-```
-
----
-
-# 📈 Futuras Mejoras
-
-- Aplicación móvil iOS.
-- Sistema avanzado de recomendaciones IA.
-- Integración con pasarelas de pago internacionales.
-- Analítica cultural avanzada.
-- Streaming de eventos culturales.
-- Dashboard institucional.
-- Sistema avanzado de turismo cultural.
-
----
-
 # 👨‍💻 Equipo de Desarrollo
-
-## Autores
 
 - Juan Manuel Matabanchoy Cabrera
 - Johan David Delgado Delgado
 - Valery Nickol Rosero Molina
 
-## Universidad
-
 **Universidad Cooperativa de Colombia**  
-Facultad de Ingeniería  
 Ingeniería de Software  
 San Juan de Pasto – Colombia
-
----
-
-# 📚 Contexto Académico
-
-Proyecto de grado desarrollado como propuesta tecnológica orientada a fortalecer el ecosistema artístico y cultural del departamento de Nariño mediante soluciones digitales innovadoras.
-
----
-
-# 🌎 Impacto del Proyecto
-
-## Social
-
-- Democratización del acceso cultural.
-- Mayor visibilidad para artistas.
-- Fortalecimiento de identidad regional.
-
-## Económico
-
-- Impulso a la economía creativa.
-- Nuevos canales de comercialización.
-- Conexión entre turismo y cultura.
-
-## Tecnológico
-
-- Integración de IA.
-- Arquitectura escalable.
-- Automatización de procesos.
 
 ---
 
 # 📌 Estado Actual
 
 ```diff
-+ Backend principal implementado
 + API REST funcional
-+ Sistema de autenticación completo
-+ Marketplace funcional
++ Sistema JWT implementado
++ Marketplace operativo
 + Subastas en tiempo real
-+ Integración con IA
-+ Automatización con n8n
-- Aplicación móvil finalizada
-- Integraciones externas avanzadas
++ Integración IA
++ Automatización n8n
+- Aplicación iOS
 ```
 
 ---
 
 # 📝 Licencia
 
-Este proyecto fue desarrollado con fines académicos y educativos.
+Proyecto desarrollado con fines académicos y educativos.
 
 ---
 
 # ⭐ Recomendaciones
 
-Si este proyecto te resulta interesante:
-
 - Dale una estrella ⭐ al repositorio.
-- Comparte el proyecto.
-- Contribuye con mejoras.
 - Reporta errores o sugerencias.
-
----
-
-# 📬 Contacto
-
-Para dudas, mejoras o colaboración:
-
-📧 Contacto académico y de desarrollo disponible mediante GitHub.
+- Contribuye con mejoras.
 
 ---
 
 # 🙌 Agradecimientos
 
-A la comunidad artística y cultural de Nariño por inspirar el desarrollo de soluciones tecnológicas orientadas al fortalecimiento de la identidad regional y la preservación del patrimonio cultural.
-````
+A la comunidad artística y cultural de Nariño por inspirar el desarrollo de soluciones tecnológicas orientadas al fortalecimiento del patrimonio cultural regional.
+
