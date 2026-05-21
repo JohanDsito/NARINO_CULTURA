@@ -26,19 +26,19 @@ class _RoleOption {
 const _kRoles = <_RoleOption>[
   _RoleOption(
     label: 'Artista',
-    value: 'artista',
+    value: 'ARTISTA',
     icon: Icons.palette_outlined,
     description: 'Publica y vende tu obra',
   ),
   _RoleOption(
     label: 'Comprador',
-    value: 'comprador',
+    value: 'COMPRADOR',
     icon: Icons.shopping_bag_outlined,
     description: 'Descubre y adquiere arte',
   ),
   _RoleOption(
     label: 'Gestor Cultural',
-    value: 'gestor',
+    value: 'GESTOR_CULTURAL',
     icon: Icons.account_balance_outlined,
     description: 'Gestiona eventos y espacios',
   ),

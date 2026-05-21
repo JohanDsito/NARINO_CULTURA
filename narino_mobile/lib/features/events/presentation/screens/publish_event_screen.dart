@@ -11,13 +11,14 @@ import '../providers/events_provider.dart';
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
+// Valores que coinciden con Event.Type del backend
 const _kTipos = [
-  'concierto',
-  'exposicion',
-  'taller',
-  'feria',
-  'convocatoria',
-  'otro',
+  'CONCIERTO',
+  'EXPOSICION',
+  'TALLER',
+  'FERIA',
+  'ESPECTACULO',
+  'OTRO',
 ];
 
 // ─── Pantalla principal ───────────────────────────────────────────────────────
