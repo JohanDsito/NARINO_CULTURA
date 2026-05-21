@@ -1,4 +1,4 @@
-````markdown
+
 # 🎭 Nariño Cultura
 
 ## Plataforma integral para la gestión, difusión y comercialización del ecosistema artístico de Nariño
