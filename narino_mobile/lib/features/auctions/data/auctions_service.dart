@@ -34,13 +34,15 @@ class AuctionsService {
     required int duracionDias,
     required DateTime fechaInicio,
   }) async {
+    final startsAt = fechaInicio;
+    final endsAt = fechaInicio.add(Duration(days: duracionDias));
     final r = await _dio.post(
       ApiConstants.auctions,
       data: {
-        'obra_id': obraId,
-        'precio_base': precioBase,
-        'duracion_dias': duracionDias,
-        'fecha_inicio': fechaInicio.toIso8601String(),
+        'artwork': obraId,
+        'base_price': precioBase,
+        'starts_at': startsAt.toIso8601String(),
+        'ends_at': endsAt.toIso8601String(),
       },
     );
     return (r.data as Map).cast<String, dynamic>();
@@ -50,9 +52,8 @@ class AuctionsService {
     required String auctionId,
     required double monto,
   }) async {
-    final url =
-        ApiConstants.auctionBid.replaceFirst('{id}', auctionId);
-    final r = await _dio.post(url, data: {'monto': monto});
+    final url = ApiConstants.auctionBid.replaceFirst('{id}', auctionId);
+    final r = await _dio.post(url, data: {'amount': monto});
     return (r.data as Map).cast<String, dynamic>();
   }
 }
