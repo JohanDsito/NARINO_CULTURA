@@ -19,6 +19,7 @@ class ApiConstants {
   static const String marketplace = '/marketplace/';
   static const String cart = '/marketplace/cart/';
   static const String orders = '/marketplace/orders/';
+  static const String orderDetail = '/marketplace/orders/{id}/';
 
   static const String auctions = '/auctions/';
   static const String auctionBid = '/auctions/{id}/bid/';
@@ -42,8 +43,11 @@ class ApiConstants {
 
   // Perfiles / artistas
   static const String myProfile = '/users/me/';
+  static const String myFollowing = '/users/me/following/';
   static const String profileById = '/artists/{id}/';
   static const String artistFollow = '/artists/{id}/follow/';
+  static const String artistPortfolio = '/artists/{id}/portfolio/';
+  static const String artistPortfolioItem = '/artists/{id}/portfolio/{item_id}/';
 
   // Eventos
   static const String eventDetail = '/events/{id}/';
