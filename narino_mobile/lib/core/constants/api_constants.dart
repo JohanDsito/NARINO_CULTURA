@@ -5,78 +5,78 @@ class ApiConstants {
 
   static String get baseUrl => EnvConstants.apiBaseUrl;
 
-  static const String login = '/auth/login/';
-  static const String register = '/auth/register/';
-  static const String refreshToken = '/auth/token/refresh/';
-  static const String logout = '/auth/logout/';
+  // Auth
+  static const String login = '/api/v1/auth/login/';
+  static const String register = '/api/v1/auth/register/';
+  static const String refreshToken = '/api/v1/auth/token/refresh/';
+  static const String logout = '/api/v1/auth/logout/';
+  static const String resendVerification = '/api/v1/auth/resend-verification/';
+  static const String forgotPassword = '/api/v1/auth/password-reset/';
+  static const String changeEmail = '/api/v1/auth/change-email/';
+  static const String activeSessions = '/api/v1/auth/sessions/';
+  static const String sessionDetail = '/api/v1/auth/sessions/{id}/';
+  static const String deleteAccount = '/api/v1/auth/delete-account/';
 
-  static const String artists = '/artists/';
-  static const String artistDetail = '/artists/{id}/';
+  // Perfil de usuario
+  static const String profile = '/api/v1/users/me/';
+  static const String myProfile = '/api/v1/users/me/';
+  static const String myFollowing = '/api/v1/users/me/following/';
 
-  static const String artworks = '/artworks/';
-  static const String artworkDetail = '/artworks/{id}/';
+  // Artistas
+  static const String artists = '/api/v1/artists/';
+  static const String artistDetail = '/api/v1/artists/{id}/';
+  static const String profileById = '/api/v1/artists/{id}/';
+  static const String artistFollow = '/api/v1/artists/{id}/follow/';
+  static const String artistPortfolio = '/api/v1/artists/{id}/portfolio/';
+  static const String artistPortfolioItem =
+      '/api/v1/artists/{id}/portfolio/{item_id}/';
 
-  static const String marketplace = '/marketplace/';
-  static const String cart = '/marketplace/cart/';
-  static const String orders = '/marketplace/orders/';
-  static const String orderDetail = '/marketplace/orders/{id}/';
+  // Obras
+  static const String artworks = '/api/v1/artworks/';
+  static const String artworkDetail = '/api/v1/artworks/{id}/';
 
-  static const String auctions = '/auctions/';
-  static const String auctionBid = '/auctions/{id}/bid/';
+  // Marketplace
+  static const String marketplace = '/api/v1/marketplace/';
+  static const String cart = '/api/v1/marketplace/cart/';
+  static const String cartItems = '/api/v1/marketplace/cart/items/';
+  static const String orders = '/api/v1/marketplace/orders/';
+  static const String orderDetail = '/api/v1/marketplace/orders/{id}/';
+  static const String favorites = '/api/v1/marketplace/favorites/';
+  static const String checkout = '/api/v1/marketplace/checkout/';
+  static const String salesHistory = '/api/v1/marketplace/sales/';
 
-  static const String events = '/events/';
-
-  static const String profile = '/users/me/';
-
-  static const int connectTimeout = 15000;
-  static const int receiveTimeout = 15000;
-
-  static const String cartItems = '/marketplace/cart/items/';
-  static const String favorites = '/marketplace/favorites/';
-  static const String checkout = '/marketplace/checkout/';
-  static const String salesHistory = '/marketplace/sales/';
-  static const String initiatePayment = '/payments/initiate/';
-
-  // Auth Sprint 2
-  static const String resendVerification = '/auth/resend-verification/';
-  static const String forgotPassword = '/auth/password-reset/';
-
-  // Perfiles / artistas
-  static const String myProfile = '/users/me/';
-  static const String myFollowing = '/users/me/following/';
-  static const String profileById = '/artists/{id}/';
-  static const String artistFollow = '/artists/{id}/follow/';
-  static const String artistPortfolio = '/artists/{id}/portfolio/';
-  static const String artistPortfolioItem = '/artists/{id}/portfolio/{item_id}/';
-
-  // Eventos
-  static const String eventDetail = '/events/{id}/';
+  // Pagos
+  static const String initiatePayment = '/api/v1/payments/initiate/';
 
   // Subastas
-  static const String auctionDetail = '/auctions/{id}/';
-  static const String auctionCancel = '/auctions/{id}/cancel/';
+  static const String auctions = '/api/v1/auctions/';
+  static const String auctionBid = '/api/v1/auctions/{id}/bid/';
+  static const String auctionDetail = '/api/v1/auctions/{id}/';
+  static const String auctionCancel = '/api/v1/auctions/{id}/cancel/';
 
-  // WebSocket (usa ws:// en desarrollo, wss:// en producción automáticamente)
-  static String get auctionWsBase => EnvConstants.auctionWsBaseUrl;
-
-  // Auth Sprint 2 pendiente
-  static const String changeEmail = '/auth/change-email/';
-  static const String activeSessions = '/auth/sessions/';
-  static const String sessionDetail = '/auth/sessions/{id}/';
-  static const String deleteAccount = '/auth/delete-account/';
+  // Eventos
+  static const String events = '/api/v1/events/';
+  static const String eventDetail = '/api/v1/events/{id}/';
 
   // Inteligencia Artificial
-  static const String aiChat = '/ai/chat/';
-  static const String aiRecommendations = '/ai/recommendations/';
-  static const String aiEventRecommendations = '/ai/event-recommendations/';
-  static const String aiArtistStats = '/ai/artist-stats/';
+  static const String aiChat = '/api/v1/ai/chat/';
+  static const String aiRecommendations = '/api/v1/ai/recommendations/';
+  static const String aiEventRecommendations =
+      '/api/v1/ai/event-recommendations/';
+  static const String aiArtistStats = '/api/v1/ai/artist-stats/';
 
-  // Notificaciones (generadas por n8n)
-  static const String notifications = '/notifications/';
-  static const String notificationRead = '/notifications/{id}/read/';
-  static const String notificationsReadAll = '/notifications/read-all/';
-
-  // Preferencias de notificación de eventos (HU-34)
+  // Notificaciones
+  static const String notifications = '/api/v1/notifications/';
+  static const String notificationRead = '/api/v1/notifications/{id}/read/';
+  static const String notificationsReadAll =
+      '/api/v1/notifications/read-all/';
   static const String eventNotificationPreferences =
-      '/notifications/event-preferences/';
+      '/api/v1/notifications/event-preferences/';
+
+  // WebSocket
+  static String get auctionWsBase => EnvConstants.auctionWsBaseUrl;
+
+  // Timeouts
+  static const int connectTimeout = 15000;
+  static const int receiveTimeout = 15000;
 }
