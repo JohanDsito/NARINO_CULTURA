@@ -186,9 +186,6 @@ export function RegisterForm() {
           maxLength={PASSWORD_MAX_LENGTH}
           {...register('confirmPassword')}
         />
-        {errors.confirmPassword ? (
-          <p className="text-xs text-destructive">{errors.confirmPassword.message}</p>
-        ) : null}
       </div>
 
       {errors.confirmPassword?.message === PASSWORD_MISMATCH_MESSAGE ? (
