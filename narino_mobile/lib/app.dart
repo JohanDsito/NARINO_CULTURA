@@ -36,6 +36,7 @@ import 'features/profile/presentation/screens/change_email_screen.dart';
 import 'features/profile/presentation/screens/active_sessions_screen.dart';
 import 'features/profile/presentation/screens/delete_account_screen.dart';
 import 'features/profile/presentation/screens/artist_stats_screen.dart';
+import 'features/profile/presentation/screens/privacy_policy_screen.dart';
 import 'features/artworks/presentation/screens/catalog_screen.dart';
 import 'features/artworks/presentation/screens/artwork_detail_screen.dart';
 import 'features/artworks/presentation/screens/publish_artwork_screen.dart';
@@ -216,6 +217,10 @@ final _routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/profile/stats',
             builder: (_, __) => const ArtistStatsScreen(),
+          ),
+          GoRoute(
+            path: '/profile/privacy',
+            builder: (_, __) => const PrivacyPolicyScreen(),
           ),
           GoRoute(
             path: '/artistas/:id',
