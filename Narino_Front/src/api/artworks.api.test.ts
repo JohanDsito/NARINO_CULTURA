@@ -28,6 +28,17 @@ describe('artworks.api', () => {
     })
   })
 
+  it('normalizes paginated artworks', async () => {
+    const artworks = [{ id: 1, title: 'MontaÃ±a' }]
+    mockedAxios.get.mockResolvedValueOnce({ data: { count: 1, results: artworks } })
+
+    await expect(getArtworks()).resolves.toBe(artworks)
+
+    expect(mockedAxios.get).toHaveBeenCalledWith('/api/v1/artworks/', {
+      params: undefined,
+    })
+  })
+
   it('loads an artwork by id', async () => {
     const artwork = { id: 1, title: 'Montaña' }
     mockedAxios.get.mockResolvedValueOnce({ data: artwork })

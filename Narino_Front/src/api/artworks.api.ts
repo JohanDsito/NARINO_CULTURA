@@ -12,8 +12,13 @@ interface ArtworkCategoryListResponse {
   results?: ArtworkCategoryItem[]
 }
 
+interface ArtworkListResponse {
+  results?: Artwork[]
+}
+
 export interface GetArtworksParams {
   category?: string
+  artist?: string | number
   search?: string
   page?: number
   page_size?: number
@@ -35,8 +40,8 @@ export interface CreateArtworkPayload {
 }
 
 export async function getArtworks(params?: GetArtworksParams) {
-  const { data } = await axiosInstance.get<Artwork[]>('/api/v1/artworks/', { params })
-  return data
+  const { data } = await axiosInstance.get<Artwork[] | ArtworkListResponse>('/api/v1/artworks/', { params })
+  return Array.isArray(data) ? data : data.results || []
 }
 
 export async function createArtwork(payload: CreateArtworkPayload) {
