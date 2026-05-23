@@ -171,7 +171,7 @@ describe('RegisterForm', () => {
   it('shows static password guidance', () => {
     renderRegisterForm()
 
-    expect(screen.getByText(/la contraseña debe tener 10 caracteres/i)).toBeInTheDocument()
+    expect(screen.getByText(/la contraseña debe tener entre 8 y 14 caracteres/i)).toBeInTheDocument()
     expect(
       screen.getByText(/entre mayúsculas, minúsculas y caracteres \. , &/i),
     ).toBeInTheDocument()
@@ -216,5 +216,20 @@ describe('RegisterForm', () => {
     expect(screen.getByRole('alert')).toHaveClass('text-red-700')
     expect(mockedToast.error).toHaveBeenCalledWith('Las contraseñas no coinciden.')
     expect(mockedRegister).not.toHaveBeenCalled()
+  })
+
+  it('limits password fields to 14 characters', async () => {
+    const user = userEvent.setup()
+
+    renderRegisterForm()
+
+    const passwordInput = screen.getByLabelText(/^contraseña$/i)
+    const confirmPasswordInput = screen.getByLabelText(/confirmar contraseña/i)
+
+    await user.type(passwordInput, '123456789012345')
+    await user.type(confirmPasswordInput, 'abcdefghijklmno')
+
+    expect(passwordInput).toHaveValue('12345678901234')
+    expect(confirmPasswordInput).toHaveValue('abcdefghijklmn')
   })
 })

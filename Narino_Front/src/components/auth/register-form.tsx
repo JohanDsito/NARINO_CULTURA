@@ -15,15 +15,17 @@ import { Select } from '@/components/ui/select'
 import { getApiErrorMessage } from '@/utils/apiError'
 import { setPendingArtistProfile } from '@/utils/pendingArtistProfile'
 
-const PASSWORD_LENGTH_MESSAGE = 'La contraseña debe tener 10 caracteres.'
+const PASSWORD_MIN_LENGTH = 8
+const PASSWORD_MAX_LENGTH = 14
+const PASSWORD_LENGTH_MESSAGE = `La contraseña debe tener entre ${PASSWORD_MIN_LENGTH} y ${PASSWORD_MAX_LENGTH} caracteres.`
 const PASSWORD_HINT_MESSAGE = 'Entre mayúsculas, minúsculas y caracteres . , &'
 const PASSWORD_MISMATCH_MESSAGE = 'Las contraseñas no coinciden.'
 
 const schema = z
   .object({
     email: z.string().email('Ingresa un email válido.'),
-    password: z.string().length(10, PASSWORD_LENGTH_MESSAGE),
-    confirmPassword: z.string().length(10, 'Confirma la contraseña con 10 caracteres.'),
+    password: z.string().min(PASSWORD_MIN_LENGTH, PASSWORD_LENGTH_MESSAGE).max(PASSWORD_MAX_LENGTH, PASSWORD_LENGTH_MESSAGE),
+    confirmPassword: z.string().min(PASSWORD_MIN_LENGTH, PASSWORD_LENGTH_MESSAGE).max(PASSWORD_MAX_LENGTH, PASSWORD_LENGTH_MESSAGE),
     firstName: z.string().min(1, 'El nombre es obligatorio.'),
     lastName: z.string().min(1, 'El apellido es obligatorio.'),
     role: z.enum(['buyer', 'artist', 'cultural_manager'] as const satisfies readonly Role[], {
@@ -166,7 +168,7 @@ export function RegisterForm() {
           id="password"
           type="password"
           autoComplete="new-password"
-          maxLength={10}
+          maxLength={PASSWORD_MAX_LENGTH}
           {...register('password')}
         />
         {errors.password ? (
@@ -184,7 +186,7 @@ export function RegisterForm() {
           id="confirmPassword"
           type="password"
           autoComplete="new-password"
-          maxLength={10}
+          maxLength={PASSWORD_MAX_LENGTH}
           {...register('confirmPassword')}
         />
         {errors.confirmPassword ? (
