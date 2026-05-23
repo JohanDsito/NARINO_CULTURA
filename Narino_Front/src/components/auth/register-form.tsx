@@ -171,9 +171,6 @@ export function RegisterForm() {
           maxLength={PASSWORD_MAX_LENGTH}
           {...register('password')}
         />
-        {errors.password ? (
-          <p className="text-xs text-destructive">{errors.password.message}</p>
-        ) : null}
         <div className="space-y-0.5 text-xs text-text-secondary">
           <p>{PASSWORD_LENGTH_MESSAGE}</p>
           <p>{PASSWORD_HINT_MESSAGE}</p>
