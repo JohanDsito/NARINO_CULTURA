@@ -8,6 +8,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../providers/profile_provider.dart';
 import '../../../auth/data/auth_repository.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../marketplace/presentation/providers/favorites_provider.dart';
 
 final _authRepoProvider = Provider<AuthRepository>((ref) => AuthRepository());
@@ -49,7 +50,9 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
       ),
     );
     if (confirm == true && mounted) {
-      await ref.read(_authRepoProvider).logout();
+      try {
+        await ref.read(authProvider.notifier).logout();
+      } catch (_) {}
       if (mounted) context.go('/login');
     }
   }
@@ -217,6 +220,12 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                   ),
                   const SizedBox(height: 16),
                   _buildThemeToggle(),
+                  _buildMenuTile(
+                    Icons.shield_outlined,
+                    'Privacidad',
+                    'Política de privacidad y tratamiento de datos',
+                    () => context.push('/profile/privacy'),
+                  ),
                   _buildMenuTile(
                     Icons.alternate_email_outlined,
                     'Cambiar correo',

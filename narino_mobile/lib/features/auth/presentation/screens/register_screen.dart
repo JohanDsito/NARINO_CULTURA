@@ -65,6 +65,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _confirmFocus = FocusNode();
 
   String? _rol;
+  bool _acceptedTerms = false;
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
   late final ProviderSubscription<AuthState> _authSub;
@@ -136,6 +137,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         ..clearSnackBars()
         ..showSnackBar(
           const SnackBar(content: Text('Selecciona un rol para continuar')),
+        );
+      return;
+    }
+    if (!_acceptedTerms) {
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+                'Debes aceptar los Términos y Condiciones para registrarte'),
+          ),
         );
       return;
     }
@@ -282,6 +294,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                               onSelect: (v) => setState(() => _rol = v),
                             ),
                             const SizedBox(height: 20),
+
+                            // Términos y condiciones
+                            _TermsCheckbox(
+                              accepted: _acceptedTerms,
+                              disabled: isLoading,
+                              onChanged: (v) =>
+                                  setState(() => _acceptedTerms = v),
+                            ),
+                            const SizedBox(height: 16),
 
                             // Botón
                             _SubmitButton(
@@ -582,6 +603,83 @@ class _ErrorBanner extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _TermsCheckbox extends StatelessWidget {
+  const _TermsCheckbox({
+    required this.accepted,
+    required this.disabled,
+    required this.onChanged,
+  });
+
+  final bool accepted;
+  final bool disabled;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final textSecondary =
+        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final bgSubtle = isDark ? AppColors.bgSubtleDark : AppColors.bgSubtleLight;
+
+    return InkWell(
+      onTap: disabled ? null : () => onChanged(!accepted),
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: accepted ? cs.primary.withValues(alpha: 0.06) : bgSubtle,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: accepted ? cs.primary.withValues(alpha: 0.5) : border,
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 24,
+              height: 24,
+              child: Checkbox(
+                value: accepted,
+                onChanged: disabled ? null : (v) => onChanged(v ?? false),
+                activeColor: cs.primary,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                visualDensity: VisualDensity.compact,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: RichText(
+                text: TextSpan(
+                  style: AppTypography.bodySmall(color: textSecondary),
+                  children: const [
+                    TextSpan(
+                        text:
+                            'He leído y acepto los '),
+                    TextSpan(
+                      text: 'Términos y Condiciones',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    TextSpan(text: ' y la '),
+                    TextSpan(
+                      text: 'Política de Privacidad',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    TextSpan(text: ' de Nariño Cultura.'),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
