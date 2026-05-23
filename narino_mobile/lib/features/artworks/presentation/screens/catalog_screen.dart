@@ -82,7 +82,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
             IconButton(
               icon: const Icon(Icons.add, color: AppColors.oroClaro),
               tooltip: 'Publicar obra',
-              onPressed: () => context.go('/artworks/publish'),
+              onPressed: () => context.push('/artworks/publish'),
             ),
         ],
       ),
@@ -471,7 +471,7 @@ class _ArtworkCard extends ConsumerWidget {
     final border = isDark ? AppColors.borderDark : AppColors.borderLight;
 
     return GestureDetector(
-      onTap: () => context.go('/artworks/${artwork.id}'),
+      onTap: () => context.push('/artworks/${artwork.id}'),
       child: Container(
         decoration: BoxDecoration(
           color: bgCard,

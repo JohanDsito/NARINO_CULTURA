@@ -262,7 +262,7 @@ class _AuctionDetailScreenState extends ConsumerState<AuctionDetailScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.history, color: AppColors.oroClaro),
-            onPressed: () => context.go('/auctions/history'),
+            onPressed: () => context.push('/auctions/history'),
           ),
         ],
       ),
@@ -811,7 +811,7 @@ class _WinnerActions extends ConsumerWidget {
                   );
                   return;
                 }
-                context.go('/marketplace/checkout?orderId=$orderId');
+                context.push('/marketplace/checkout?orderId=$orderId');
               },
               icon: const Icon(Icons.shopping_bag_outlined),
               label: Text(

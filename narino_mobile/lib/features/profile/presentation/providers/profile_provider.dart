@@ -51,6 +51,7 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
     String? biografia,
     File? foto,
     Map<String, String>? redesSociales,
+    String? artistId,
   }) async {
     state = state.copyWith(isSaving: true, clearError: true);
     try {
@@ -60,6 +61,7 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
         biografia: biografia,
         foto: foto,
         redesSociales: redesSociales,
+        artistId: artistId,
       );
       state = state.copyWith(profile: saved, isSaving: false);
       return saved;
@@ -75,6 +77,7 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
     String? biografia,
     File? foto,
     Map<String, String>? redesSociales,
+    String? artistId,
   }) async {
     final saved = await updateMyProfile(
       nombreArtistico: nombreArtistico,
@@ -82,6 +85,7 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
       biografia: biografia,
       foto: foto,
       redesSociales: redesSociales,
+      artistId: artistId,
     );
     return saved != null;
   }

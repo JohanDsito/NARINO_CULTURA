@@ -56,7 +56,7 @@ class _AuctionsScreenState extends ConsumerState<AuctionsScreen> {
         ),
         actions: [
           TextButton.icon(
-            onPressed: () => context.go('/auctions/history'),
+            onPressed: () => context.push('/auctions/history'),
             icon:
                 const Icon(Icons.history, color: AppColors.oroClaro, size: 18),
             label: Text(
@@ -68,7 +68,7 @@ class _AuctionsScreenState extends ConsumerState<AuctionsScreen> {
             IconButton(
               icon: const Icon(Icons.add, color: AppColors.oroClaro),
               tooltip: 'Abrir subasta',
-              onPressed: () => context.go('/auctions/new'),
+              onPressed: () => context.push('/auctions/new'),
             ),
         ],
       ),
@@ -256,7 +256,7 @@ class _AuctionCard extends StatelessWidget {
     final isUrgent = remaining.inMinutes < 60 && auction.estado == 'activa';
 
     return InkWell(
-      onTap: () => context.go('/auctions/${auction.id}'),
+      onTap: () => context.push('/auctions/${auction.id}'),
       borderRadius: BorderRadius.circular(14),
       child: Container(
         decoration: BoxDecoration(

@@ -212,7 +212,7 @@ class _HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
         _NotificationBell(unread: unread),
         IconButton(
           icon: const Icon(Icons.person_outline, color: AppColors.oroClaro),
-          onPressed: () => context.go('/profile'),
+          onPressed: () => context.push('/profile'),
         ),
       ],
     );
@@ -434,7 +434,7 @@ class _FeaturedArtworks extends StatelessWidget {
           }
           return _ArtworkCardReal(
             artwork: items[i],
-            onTap: () => context.go('/artworks/${items[i].id}'),
+            onTap: () => context.push('/artworks/${items[i].id}'),
           );
         },
       ),

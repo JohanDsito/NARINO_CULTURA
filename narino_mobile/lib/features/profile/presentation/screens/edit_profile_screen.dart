@@ -60,25 +60,25 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-    final redesSociales = <String, String>{};
-    if (_igCtrl.text.trim().isNotEmpty) {
-      redesSociales['instagram'] = _igCtrl.text.trim();
-    }
-    if (_fbCtrl.text.trim().isNotEmpty) {
-      redesSociales['facebook'] = _fbCtrl.text.trim();
-    }
-    if (_ttCtrl.text.trim().isNotEmpty) {
-      redesSociales['tiktok'] = _ttCtrl.text.trim();
-    }
+
+    final profile = ref.read(myProfileProvider).profile;
+    final redesSociales = <String, String>{
+      'instagram': _igCtrl.text.trim(),
+      'facebook': _fbCtrl.text.trim(),
+      'tiktok': _ttCtrl.text.trim(),
+    };
 
     final ok = await ref.read(myProfileProvider.notifier).updateProfile(
           nombreArtistico: _nombreCtrl.text.trim(),
           disciplina: _disciplina!,
-          biografia: _bioCtrl.text.trim().isEmpty ? null : _bioCtrl.text.trim(),
+          biografia: _bioCtrl.text.trim(),
           foto: _nuevaFoto,
           redesSociales: redesSociales,
+          artistId: profile?.id,
         );
     if (ok && mounted) {
+      await ref.read(myProfileProvider.notifier).loadMyProfile();
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('✅ Perfil actualizado'),
           backgroundColor: AppColors.selvaAndina));

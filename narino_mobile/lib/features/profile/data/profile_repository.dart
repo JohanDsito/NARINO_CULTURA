@@ -29,6 +29,7 @@ class ProfileRepository {
     String? biografia,
     File? foto,
     Map<String, String>? redesSociales,
+    String? artistId,
   }) async {
     try {
       final data = await _service.updateMyProfile(
@@ -37,6 +38,7 @@ class ProfileRepository {
         biografia: biografia,
         foto: foto,
         redesSociales: redesSociales,
+        artistId: artistId,
       );
       return ProfileModel.fromJson(data);
     } on DioException catch (e) {
