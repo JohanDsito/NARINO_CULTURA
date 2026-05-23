@@ -1,5 +1,5 @@
 import axiosInstance from './axiosInstance'
-import type { Artwork, ArtworkCategory } from '@/types/auth'
+import type { Artwork } from '@/types/auth'
 
 export interface ArtworkCategoryItem {
   id: number
@@ -18,12 +18,16 @@ export interface GetArtworksParams {
 export interface CreateArtworkPayload {
   title: string
   description: string
-  price: number
-  category: ArtworkCategory
-  technique: string
+  category: number
+  price?: number
+  technique?: string
   dimensions?: string
   year?: number
   image_url?: string
+  release_date?: string
+  composer?: string
+  genre?: string
+  demo?: File
 }
 
 export async function getArtworks(params?: GetArtworksParams) {
@@ -32,6 +36,29 @@ export async function getArtworks(params?: GetArtworksParams) {
 }
 
 export async function createArtwork(payload: CreateArtworkPayload) {
+  if (payload.demo) {
+    const formData = new FormData()
+
+    formData.append('title', payload.title)
+    formData.append('description', payload.description)
+    formData.append('category', String(payload.category))
+
+    if (payload.price !== undefined) formData.append('price', String(payload.price))
+    if (payload.technique) formData.append('technique', payload.technique)
+    if (payload.dimensions) formData.append('dimensions', payload.dimensions)
+    if (payload.year !== undefined) formData.append('year', String(payload.year))
+    if (payload.image_url) formData.append('image_url', payload.image_url)
+    if (payload.release_date) formData.append('release_date', payload.release_date)
+    if (payload.composer) formData.append('composer', payload.composer)
+    if (payload.genre) formData.append('genre', payload.genre)
+    formData.append('demo', payload.demo)
+
+    const { data } = await axiosInstance.post<Artwork>('/api/v1/artworks/', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return data
+  }
+
   const { data } = await axiosInstance.post<Artwork>('/api/v1/artworks/', payload)
   return data
 }

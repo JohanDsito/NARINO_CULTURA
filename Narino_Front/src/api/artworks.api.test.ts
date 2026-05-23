@@ -43,7 +43,7 @@ describe('artworks.api', () => {
       title: 'Montaña',
       description: 'Paisaje de Nariño',
       price: 120000,
-      category: 'PINTURA' as const,
+      category: 1,
       technique: 'Óleo',
     }
 
