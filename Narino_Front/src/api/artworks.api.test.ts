@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 import axiosInstance from './axiosInstance'
-import { createArtwork, getArtworkById, getArtworks } from './artworks.api'
+import { createArtwork, getArtworkById, getArtworkCategories, getArtworks } from './artworks.api'
 
 vi.mock('./axiosInstance', () => ({
   default: {
@@ -35,6 +35,15 @@ describe('artworks.api', () => {
     await expect(getArtworkById(1)).resolves.toBe(artwork)
 
     expect(mockedAxios.get).toHaveBeenCalledWith('/api/v1/artworks/1/')
+  })
+
+  it('normalizes paginated artwork categories', async () => {
+    const categories = [{ id: 1, name: 'Musica', slug: 'musica' }]
+    mockedAxios.get.mockResolvedValueOnce({ data: { count: 1, results: categories } })
+
+    await expect(getArtworkCategories()).resolves.toBe(categories)
+
+    expect(mockedAxios.get).toHaveBeenCalledWith('/api/v1/artworks/categories/')
   })
 
   it('creates artworks', async () => {

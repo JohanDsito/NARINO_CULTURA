@@ -8,6 +8,10 @@ export interface ArtworkCategoryItem {
   description?: string
 }
 
+interface ArtworkCategoryListResponse {
+  results?: ArtworkCategoryItem[]
+}
+
 export interface GetArtworksParams {
   category?: string
   search?: string
@@ -69,8 +73,13 @@ export async function getArtworkById(id: string | number) {
 }
 
 export async function getArtworkCategories() {
-  const { data } = await axiosInstance.get<ArtworkCategoryItem[]>('/api/v1/artworks/categories/')
-  return data
+  const { data } = await axiosInstance.get<ArtworkCategoryItem[] | ArtworkCategoryListResponse>(
+    '/api/v1/artworks/categories/',
+  )
+
+  if (Array.isArray(data)) return data
+
+  return data.results ?? []
 }
 
 export async function getArtworkCategoryById(id: string | number) {
