@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/providers/theme_provider.dart';
 import '../../../../core/providers/user_role_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
@@ -215,6 +216,7 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                         : AppColors.borderLight,
                   ),
                   const SizedBox(height: 16),
+                  _buildThemeToggle(),
                   _buildMenuTile(
                     Icons.alternate_email_outlined,
                     'Cambiar correo',
@@ -375,6 +377,46 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
       ),
       trailing: Icon(Icons.chevron_right, color: textMuted),
       onTap: onTap,
+    );
+  }
+
+  Widget _buildThemeToggle() {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final textPrimary =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+    final iconBg = isDark ? AppColors.bgSubtleDark : AppColors.tierraPalida;
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: iconBg,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(
+          isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
+          color: cs.primary,
+          size: 20,
+        ),
+      ),
+      title: Text(
+        isDark ? 'Modo oscuro' : 'Modo claro',
+        style: AppTypography.labelSemiBold(color: textPrimary),
+      ),
+      subtitle: Text(
+        'Cambia la apariencia de la app',
+        style: AppTypography.caption(color: textMuted),
+      ),
+      trailing: Switch(
+        value: isDark,
+        onChanged: (_) => ref.read(themeModeProvider.notifier).toggle(),
+        activeThumbColor: cs.primary,
+      ),
     );
   }
 }

@@ -764,7 +764,7 @@ class _ArtistCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(_kSectionRadius - 4),
-          onTap: () => context.go('/profile'),
+          onTap: () => context.push('/profile'),
           child: Padding(
             padding: const EdgeInsets.all(4),
             child: Row(

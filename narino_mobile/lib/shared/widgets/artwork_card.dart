@@ -29,7 +29,7 @@ class ArtworkCard extends StatelessWidget {
         artwork.imagenes.isNotEmpty ? artwork.imagenes.first : null;
 
     return GestureDetector(
-      onTap: () => context.go('/artworks/${artwork.id}'),
+      onTap: () => context.push('/artworks/${artwork.id}'),
       child: Container(
         decoration: BoxDecoration(
           color: bgCard,

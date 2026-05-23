@@ -45,8 +45,8 @@ class ProfileModel {
     if (tiktokUrl != null) redes['tiktok'] = tiktokUrl;
 
     return ProfileModel(
-      id: json['id']?.toString() ?? '',
-      userId: json['user_id']?.toString() ?? '',
+      id: json['slug']?.toString() ?? json['id']?.toString() ?? '',
+      userId: json['user_id']?.toString() ?? json['id']?.toString() ?? '',
       nombreArtistico: json['artistic_name']?.toString() ??
           json['nombre_artistico']?.toString() ??
           json['first_name']?.toString() ??

@@ -248,7 +248,7 @@ class _OrderCard extends StatelessWidget {
     final label = _labelFiltro(order.estado);
 
     return InkWell(
-      onTap: () => context.go('/marketplace/order/${order.id}'),
+      onTap: () => context.push('/marketplace/order/${order.id}'),
       borderRadius: BorderRadius.circular(16),
       child: Container(
         decoration: BoxDecoration(

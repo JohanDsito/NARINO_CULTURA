@@ -288,7 +288,7 @@ class _AuctionTile extends StatelessWidget {
     final estado = auction.estado;
 
     return InkWell(
-      onTap: () => context.go('/auctions/${auction.id}'),
+      onTap: () => context.push('/auctions/${auction.id}'),
       borderRadius: BorderRadius.circular(16),
       child: Container(
         decoration: BoxDecoration(

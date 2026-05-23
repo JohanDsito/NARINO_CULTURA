@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'core/constants/app_constants.dart';
+import 'core/providers/theme_provider.dart';
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auctions/presentation/screens/auctions_screen.dart';
@@ -234,11 +235,12 @@ class NarinoCulturaApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(_routerProvider);
+    final themeMode = ref.watch(themeModeProvider);
     return MaterialApp.router(
       title: AppConstants.appName,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.system,
+      themeMode: themeMode,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
     );
@@ -299,10 +301,23 @@ class MainShell extends ConsumerStatefulWidget {
 }
 
 class _MainShellState extends ConsumerState<MainShell> {
-  int get _currentIndex {
-    final idx =
-        MainShell._tabs.indexWhere((t) => widget.location.startsWith(t.path));
-    return idx < 0 ? 0 : idx;
+  int _selectedIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _updateIndex(widget.location);
+  }
+
+  @override
+  void didUpdateWidget(MainShell oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _updateIndex(widget.location);
+  }
+
+  void _updateIndex(String location) {
+    final idx = MainShell._tabs.indexWhere((t) => location.startsWith(t.path));
+    if (idx >= 0) setState(() => _selectedIndex = idx);
   }
 
   @override
@@ -310,8 +325,11 @@ class _MainShellState extends ConsumerState<MainShell> {
     return Scaffold(
       body: widget.child,
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) => context.go(MainShell._tabs[index].path),
+        currentIndex: _selectedIndex,
+        onTap: (index) {
+          setState(() => _selectedIndex = index);
+          context.go(MainShell._tabs[index].path);
+        },
         selectedItemColor: AppColors.tierraProfunda,
         items: [
           for (final tab in MainShell._tabs)
