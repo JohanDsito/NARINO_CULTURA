@@ -35,11 +35,18 @@ export function Navbar() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const logout = useLogout()
 
+  const artistDashboardPath = (() => {
+    const discipline = localStorage.getItem('artist_discipline')
+    if (discipline === 'musico') return '/dashboard/musician/profile'
+    if (discipline) return '/dashboard/profile'
+    return '/dashboard'
+  })()
+
   const accountPath =
     user?.role === 'admin'
       ? '/admin/dashboard'
       : user?.role === 'artist'
-        ? '/dashboard'
+        ? artistDashboardPath
         : user?.role === 'cultural_manager'
           ? '/events'
           : '/marketplace'
