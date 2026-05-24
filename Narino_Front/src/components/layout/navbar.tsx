@@ -16,6 +16,7 @@ import { useLogout } from '@/hooks/useAuth'
 import { useAuthStore } from '@/store/authStore'
 import { useCartStore } from '@/store/cartStore'
 import { useThemeStore } from '@/store/themeStore'
+import { getArtistDashboardPath } from '@/utils/artistDiscipline'
 
 const links = [
   { to: '/artists', label: 'Artistas' },
@@ -35,12 +36,7 @@ export function Navbar() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const logout = useLogout()
 
-  const artistDashboardPath = (() => {
-    const discipline = localStorage.getItem('artist_discipline')
-    if (discipline === 'musico') return '/dashboard/musician/profile'
-    if (discipline) return '/dashboard/profile'
-    return '/dashboard'
-  })()
+  const artistDashboardPath = user?.id ? getArtistDashboardPath(user.id) : '/dashboard'
 
   const accountPath =
     user?.role === 'admin'

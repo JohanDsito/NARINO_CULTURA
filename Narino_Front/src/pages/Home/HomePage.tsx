@@ -5,18 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { PageShell } from '@/components/layout/page-shell'
 import { EventCalendar } from '@/components/events/event-calendar'
 import { useAuthStore } from '@/store/authStore'
+import { getArtistDashboardPath } from '@/utils/artistDiscipline'
 
 export default function HomePage() {
   const { user, isAuthenticated } = useAuthStore()
   const isAdmin = user?.role === 'admin' || user?.role === 'cultural_manager'
   const accountPath = (() => {
     if (user?.role === 'admin') return '/admin/dashboard'
-    if (user?.role === 'artist') {
-      const discipline = localStorage.getItem('artist_discipline')
-      if (discipline === 'musico') return '/dashboard/musician/profile'
-      if (discipline) return '/dashboard/profile'
-      return '/dashboard'
-    }
+    if (user?.role === 'artist') return user.id ? getArtistDashboardPath(user.id) : '/dashboard'
     if (user?.role === 'cultural_manager') return '/events'
     return '/marketplace'
   })()

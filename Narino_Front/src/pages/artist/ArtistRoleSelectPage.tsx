@@ -3,8 +3,8 @@ import { Camera, Music, Paintbrush, Scissors, Box } from 'lucide-react'
 
 import { Card, CardContent } from '@/components/ui/card'
 import { ROUTES } from '@/constants/routes'
-
-export const ARTIST_DISCIPLINE_KEY = 'artist_discipline'
+import { setArtistDiscipline } from '@/utils/artistDiscipline'
+import { useAuthStore } from '@/store/authStore'
 
 const disciplines = [
   {
@@ -45,8 +45,10 @@ const disciplines = [
 ] as const
 
 export default function ArtistRoleSelectPage() {
+  const userId = useAuthStore((s) => s.user?.id ?? '')
+
   const saveDiscipline = (key: string) => {
-    localStorage.setItem(ARTIST_DISCIPLINE_KEY, key)
+    if (userId) setArtistDiscipline(userId, key)
   }
 
   return (

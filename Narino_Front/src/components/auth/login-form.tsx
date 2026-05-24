@@ -16,6 +16,7 @@ import {
   clearPendingArtistProfile,
   getPendingArtistProfile,
 } from '@/utils/pendingArtistProfile'
+import { getArtistDashboardPath } from '@/utils/artistDiscipline'
 
 const schema = z.object({
   email: z.string().email('Ingresa un email válido.'),
@@ -24,16 +25,12 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>
 
-function getRedirectPathByRole(role: string) {
+function getRedirectPathByRole(role: string, userId?: string) {
   switch (role) {
     case 'admin':
       return '/admin/dashboard'
-    case 'artist': {
-      const discipline = localStorage.getItem('artist_discipline')
-      if (discipline === 'musico') return '/dashboard/musician/profile'
-      if (discipline) return '/dashboard/profile'
-      return '/dashboard'
-    }
+    case 'artist':
+      return userId ? getArtistDashboardPath(userId) : '/dashboard'
     case 'cultural_manager':
       return '/events'
     case 'buyer':
@@ -77,7 +74,7 @@ export function LoginForm() {
     onSuccess: (user) => {
       toast.success('Bienvenido/a.')
       const from = (location.state as { from?: string } | null)?.from
-      navigate(from ?? getRedirectPathByRole(user.role), { replace: true })
+      navigate(from ?? getRedirectPathByRole(user.role, user.id), { replace: true })
     },
     onError: (err) => {
       toast.error(getApiErrorMessage(err))

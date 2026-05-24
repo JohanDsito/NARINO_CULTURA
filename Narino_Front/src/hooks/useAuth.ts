@@ -5,6 +5,7 @@ import { authApi } from '@/api/auth.api'
 import { syncCartToServer } from '@/hooks/useCartSync'
 import { useAuthStore } from '@/store/authStore'
 import type { LoginCredentials, RegisterData } from '@/types/auth'
+import { getArtistDashboardPath } from '@/utils/artistDiscipline'
 
 export function useLogin() {
   const { setAuth } = useAuthStore()
@@ -14,19 +15,12 @@ export function useLogin() {
     mutationFn: (credentials: LoginCredentials) => authApi.login(credentials),
     onSuccess: ({ tokens, user }) => {
       setAuth(user, tokens.access, tokens.refresh)
-      // Sync local guest cart to backend server cart silently
       void syncCartToServer()
       toast.success(`Bienvenido, ${user.first_name}`)
 
-      const getArtistPath = () => {
-        const discipline = localStorage.getItem('artist_discipline')
-        if (discipline === 'musico') return '/dashboard/musician/profile'
-        if (discipline) return '/dashboard/profile'
-        return '/dashboard'
-      }
       const roleRoutes: Record<string, string> = {
         admin: '/admin/dashboard',
-        artist: getArtistPath(),
+        artist: getArtistDashboardPath(user.id),
         cultural_manager: '/events',
         buyer: '/marketplace',
       }
@@ -54,10 +48,13 @@ export function useRegister() {
 }
 
 export function useLogout() {
-  const { logout } = useAuthStore()
+  const { user, logout } = useAuthStore()
   const navigate = useNavigate()
 
   return async () => {
+    if (user?.id) {
+      localStorage.removeItem(`artist_discipline_${user.id}`)
+    }
     await authApi.logout()
     logout()
     toast.success('Sesión cerrada exitosamente')
