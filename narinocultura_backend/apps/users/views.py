@@ -19,6 +19,7 @@ from apps.users.serializers import (
     RegisterSerializer,
     UserMeSerializer,
 )
+from rest_framework.permissions import IsAuthenticated
 from services.email_service import EmailService
 from utils.throttling import AuthAnonThrottle, PasswordResetThrottle
 
@@ -235,3 +236,59 @@ class MePasswordAPIView(APIView):
         request.user.set_password(new_password)
         request.user.save(update_fields=["password", "updated_at"])
         return Response({"detail": "Contrasena actualizada correctamente."})
+
+
+class DeleteAccountAPIView(APIView):
+    """
+    Endpoint para eliminar la cuenta del usuario autenticado.
+    Requiere autenticación JWT y validación de contraseña.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request):
+        """
+        Elimina la cuenta del usuario actual y todos sus datos asociados.
+
+        Request body:
+        {
+            "password": "tu_contraseña_actual"
+        }
+        """
+        password = request.data.get("password", "").strip()
+
+        if not password:
+            return Response(
+                {"detail": "La contraseña es requerida para eliminar la cuenta."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not request.user.check_password(password):
+            return Response(
+                {"detail": "La contraseña no es correcta."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user_email = request.user.email
+        user_id = request.user.id
+
+        try:
+            with transaction.atomic():
+                # Eliminar el usuario (CASCADE se encarga de los datos relacionados)
+                request.user.delete()
+
+            logger.info(f"Usuario {user_email} (ID: {user_id}) eliminó su cuenta exitosamente.")
+
+            return Response(
+                {
+                    "detail": "Tu cuenta ha sido eliminada permanentemente.",
+                    "message": "Los datos asociados a tu perfil también han sido eliminados.",
+                },
+                status=status.HTTP_204_NO_CONTENT,
+            )
+        except Exception as e:
+            logger.error(f"Error al eliminar cuenta del usuario {user_email}: {str(e)}")
+            return Response(
+                {"detail": "Ocurrió un error al eliminar tu cuenta. Intenta más tarde."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
