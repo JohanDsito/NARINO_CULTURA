@@ -48,13 +48,10 @@ export function useRegister() {
 }
 
 export function useLogout() {
-  const { user, logout } = useAuthStore()
+  const { logout } = useAuthStore()
   const navigate = useNavigate()
 
   return async () => {
-    if (user?.id) {
-      localStorage.removeItem(`artist_discipline_${user.id}`)
-    }
     await authApi.logout()
     logout()
     toast.success('Sesión cerrada exitosamente')
