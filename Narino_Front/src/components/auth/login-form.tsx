@@ -28,8 +28,12 @@ function getRedirectPathByRole(role: string) {
   switch (role) {
     case 'admin':
       return '/admin/dashboard'
-    case 'artist':
-      return '/dashboard/profile'
+    case 'artist': {
+      const discipline = localStorage.getItem('artist_discipline')
+      if (discipline === 'musico') return '/dashboard/musician/profile'
+      if (discipline) return '/dashboard/profile'
+      return '/dashboard'
+    }
     case 'cultural_manager':
       return '/events'
     case 'buyer':

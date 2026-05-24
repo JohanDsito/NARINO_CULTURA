@@ -18,9 +18,15 @@ export function useLogin() {
       void syncCartToServer()
       toast.success(`Bienvenido, ${user.first_name}`)
 
+      const getArtistPath = () => {
+        const discipline = localStorage.getItem('artist_discipline')
+        if (discipline === 'musico') return '/dashboard/musician/profile'
+        if (discipline) return '/dashboard/profile'
+        return '/dashboard'
+      }
       const roleRoutes: Record<string, string> = {
         admin: '/admin/dashboard',
-        artist: '/dashboard',
+        artist: getArtistPath(),
         cultural_manager: '/events',
         buyer: '/marketplace',
       }

@@ -9,14 +9,17 @@ import { useAuthStore } from '@/store/authStore'
 export default function HomePage() {
   const { user, isAuthenticated } = useAuthStore()
   const isAdmin = user?.role === 'admin' || user?.role === 'cultural_manager'
-  const accountPath =
-    user?.role === 'admin'
-      ? '/admin/dashboard'
-      : user?.role === 'artist'
-        ? '/dashboard/profile'
-        : user?.role === 'cultural_manager'
-          ? '/events'
-          : '/marketplace'
+  const accountPath = (() => {
+    if (user?.role === 'admin') return '/admin/dashboard'
+    if (user?.role === 'artist') {
+      const discipline = localStorage.getItem('artist_discipline')
+      if (discipline === 'musico') return '/dashboard/musician/profile'
+      if (discipline) return '/dashboard/profile'
+      return '/dashboard'
+    }
+    if (user?.role === 'cultural_manager') return '/events'
+    return '/marketplace'
+  })()
 
   return (
     <div className="min-h-screen bg-background">
