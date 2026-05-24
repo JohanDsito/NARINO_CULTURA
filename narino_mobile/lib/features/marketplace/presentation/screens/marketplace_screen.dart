@@ -38,7 +38,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
     final artworksState = ref.watch(artworkProvider);
     final cartState = ref.watch(cartProvider);
     final role = ref.watch(currentUserRoleProvider).value;
-    final canBuy = role == 'comprador' || role == 'admin';
+    final canBuy = role != null;
     final disponibles =
         artworksState.artworks.where((a) => a.isDisponible).toList();
 
