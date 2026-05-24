@@ -24,6 +24,11 @@ class Event(TimeStampedUUIDModel):
     longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     image_url = models.URLField(blank=True)
     is_published = models.BooleanField(default=False)
+    featured_musicians = models.ManyToManyField(
+        "musicians.MusicianProfile",
+        related_name="events",
+        blank=True,
+    )
 
     class Meta:
         ordering = ["-start_date"]
