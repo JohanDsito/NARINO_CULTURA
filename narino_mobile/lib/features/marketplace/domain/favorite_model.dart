@@ -24,15 +24,22 @@ class FavoriteModel {
             json['artwork']?.toString() ??
             json['obra_id']?.toString() ??
             '',
-        obraTitulo: json['title']?.toString() ??
+        obraTitulo: json['artwork_title']?.toString() ??
+            json['title']?.toString() ??
             json['obra_titulo']?.toString() ??
             '',
         artistaNombre: json['artista_nombre']?.toString() ?? '',
-        estado: json['estado']?.toString() ?? 'disponible',
-        precio: json['precio'] != null
-            ? double.tryParse(json['precio'].toString())
-            : null,
-        imagenUrl: json['imagen_url']?.toString(),
+        estado: (json['status']?.toString() ??
+                json['estado']?.toString() ??
+                'disponible')
+            .toLowerCase(),
+        precio: json['price'] != null
+            ? double.tryParse(json['price'].toString())
+            : json['precio'] != null
+                ? double.tryParse(json['precio'].toString())
+                : null,
+        imagenUrl: json['main_image_url']?.toString() ??
+            json['imagen_url']?.toString(),
       );
 
   bool get isDisponible => estado == 'disponible';

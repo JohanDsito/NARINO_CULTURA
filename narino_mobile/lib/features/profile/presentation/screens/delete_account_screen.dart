@@ -49,7 +49,7 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
       builder: (_) => AlertDialog(
         title: const Text('Eliminar cuenta'),
         content: const Text(
-          'Esta acción desactivará tu cuenta. ¿Deseas continuar?',
+          'Esta acción eliminará tu cuenta permanentemente. ¿Deseas continuar?',
         ),
         actions: [
           TextButton(
@@ -113,8 +113,8 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Se desactivará tu cuenta y perderás acceso a tus datos y funcionalidades. '
-                    'El backend enviará un correo confirmando el proceso.',
+                    'Se eliminarán permanentemente tu cuenta y todos tus datos. '
+                    'Esta acción no se puede deshacer.',
                     style: AppTypography.bodyMedium(
                         color: Theme.of(context).brightness == Brightness.dark
                             ? AppColors.textPrimaryDark

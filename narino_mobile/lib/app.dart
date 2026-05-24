@@ -6,6 +6,7 @@ import 'core/constants/app_constants.dart';
 import 'core/providers/theme_provider.dart';
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
+import 'core/utils/storage_utils.dart';
 import 'features/auctions/presentation/screens/auctions_screen.dart';
 import 'features/auctions/presentation/screens/auction_detail_screen.dart';
 import 'features/auctions/presentation/screens/auction_history_screen.dart';
@@ -41,6 +42,9 @@ import 'features/artworks/presentation/screens/catalog_screen.dart';
 import 'features/artworks/presentation/screens/artwork_detail_screen.dart';
 import 'features/artworks/presentation/screens/publish_artwork_screen.dart';
 import 'features/ai/presentation/screens/chatbot_screen.dart';
+import 'features/musicians/presentation/screens/musicians_screen.dart';
+import 'features/musicians/presentation/screens/musician_detail_screen.dart';
+import 'features/music_discovery/presentation/screens/music_discovery_screen.dart';
 import 'features/notifications/presentation/screens/notifications_screen.dart';
 
 const _publicRoutes = ['/login', '/register', '/forgot-password'];
@@ -49,34 +53,40 @@ final _routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/login',
     redirect: (context, state) async {
-      final isAuth = await ref.read(isAuthenticatedProvider.future);
-      final isPublic = _publicRoutes.contains(state.matchedLocation);
+      try {
+        final isAuth = await StorageUtils.hasToken();
+        final isPublic = _publicRoutes.contains(state.matchedLocation);
 
-      if (!isAuth && !isPublic) return '/login';
-      if (isAuth && isPublic) return '/home';
-      if (isAuth && !isPublic) {
-        final isVerified = await ref.read(isEmailVerifiedProvider.future);
-        if (!isVerified) {
-          final loc = state.matchedLocation;
-          final allowedPrefixes = <String>[
-            '/home',
-            '/catalog',
-            '/marketplace',
-            '/events',
-            '/auctions',
-            '/artworks/',
-            '/artistas/',
-          ];
+        if (!isAuth && !isPublic) return '/login';
+        if (isAuth && isPublic) return '/home';
+        if (isAuth && !isPublic) {
+          final isVerified = await ref.read(isEmailVerifiedProvider.future);
+          if (!isVerified) {
+            final loc = state.matchedLocation;
+            final allowedPrefixes = <String>[
+              '/home',
+              '/catalog',
+              '/marketplace',
+              '/events',
+              '/auctions',
+              '/artworks/',
+              '/artistas/',
+              '/musicians',
+              '/music-discovery',
+            ];
 
-          final isAllowed = allowedPrefixes.any((p) {
-            if (loc == p) return true;
-            return loc.startsWith(p);
-          });
+            final isAllowed = allowedPrefixes.any((p) {
+              if (loc == p) return true;
+              return loc.startsWith(p);
+            });
 
-          if (!isAllowed) return '/catalog';
+            if (!isAllowed) return '/catalog';
+          }
         }
+        return null;
+      } catch (_) {
+        return '/login';
       }
-      return null;
     },
     routes: [
       GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
@@ -184,6 +194,20 @@ final _routerProvider = Provider<GoRouter>((ref) {
             ),
           ),
           GoRoute(path: '/chatbot', builder: (_, __) => const ChatbotScreen()),
+          GoRoute(
+            path: '/musicians',
+            builder: (_, __) => const MusiciansScreen(),
+          ),
+          GoRoute(
+            path: '/musicians/:slug',
+            builder: (_, state) => MusicianDetailScreen(
+              slug: state.pathParameters['slug']!,
+            ),
+          ),
+          GoRoute(
+            path: '/music-discovery',
+            builder: (_, __) => const MusicDiscoveryScreen(),
+          ),
           GoRoute(
             path: '/notifications',
             builder: (_, __) => const NotificationsScreen(),

@@ -11,6 +11,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/providers/user_role_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../marketplace/domain/marketplace_state.dart';
+import '../../../marketplace/presentation/providers/favorites_provider.dart';
 import '../../domain/artwork_model.dart';
 import '../providers/artwork_provider.dart';
 
@@ -128,7 +130,10 @@ class _ArtworkDetailBodyState extends ConsumerState<_ArtworkDetailBody>
   @override
   void initState() {
     super.initState();
-    _esFavorito = widget.artwork.esFavorito;
+    // Use the favorites provider as source of truth — the catalog API never
+    // returns es_favorito so artwork.esFavorito is always false.
+    _esFavorito =
+        ref.read(favoritesProvider).isFavorite(widget.artwork.id);
     _cantidadFavoritos = widget.artwork.cantidadFavoritos;
 
     _favAnimController = AnimationController(
@@ -138,6 +143,24 @@ class _ArtworkDetailBodyState extends ConsumerState<_ArtworkDetailBody>
     _favScale = Tween<double>(begin: 1, end: 1.3).animate(
       CurvedAnimation(parent: _favAnimController, curve: Curves.easeOutBack),
     );
+
+    // If favorites haven't been fetched yet (e.g. user opened the detail
+    // without visiting the profile tab), load them now so _esFavorito is
+    // correct after the first frame.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final status = ref.read(favoritesProvider).status;
+      if (status == MarketplaceStatus.initial) {
+        ref.read(favoritesProvider.notifier).loadFavorites().then((_) {
+          if (mounted) {
+            setState(() {
+              _esFavorito = ref
+                  .read(favoritesProvider)
+                  .isFavorite(widget.artwork.id);
+            });
+          }
+        });
+      }
+    });
   }
 
   @override
@@ -151,12 +174,28 @@ class _ArtworkDetailBodyState extends ConsumerState<_ArtworkDetailBody>
   void _toggleFavorito() {
     HapticFeedback.lightImpact();
     _favAnimController.forward().then((_) => _favAnimController.reverse());
+
+    // Optimistic UI update.
     setState(() {
       _esFavorito = !_esFavorito;
       _cantidadFavoritos =
           (_cantidadFavoritos + (_esFavorito ? 1 : -1)).clamp(0, 1 << 30);
     });
-    ref.read(artworkProvider.notifier).toggleFavorite(widget.artwork.id);
+
+    // FavoritesNotifier checks local state first (isFav → remove, else add),
+    // so it can never create a duplicate like or silently delete an existing one.
+    ref
+        .read(favoritesProvider.notifier)
+        .toggleFavorite(widget.artwork.id)
+        .then((_) {
+      // Sync displayed state with the authoritative provider result.
+      if (mounted) {
+        setState(() {
+          _esFavorito =
+              ref.read(favoritesProvider).isFavorite(widget.artwork.id);
+        });
+      }
+    });
   }
 
   Future<void> _openZoom(BuildContext context) async {
@@ -815,32 +854,49 @@ class _ArtistCard extends StatelessWidget {
   }
 }
 
-class _ActionButton extends StatelessWidget {
+class _ActionButton extends ConsumerWidget {
   const _ActionButton({required this.artwork});
 
   final ArtworkModel artwork;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (artwork.estado != 'disponible' || artwork.precio == null) {
       return const SizedBox.shrink();
     }
 
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: FilledButton.icon(
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Carrito disponible próximamente')),
-          );
-        },
-        icon: const Icon(Icons.shopping_cart_outlined),
-        label: Text(
-          'Agregar al carrito',
-          style: AppTypography.labelSemiBold(color: Colors.white),
+    final role = ref.watch(currentUserRoleProvider).value;
+    final canBuy = role == 'comprador' || role == 'admin';
+    final roleLoaded = role != null;
+
+    if (!roleLoaded) return const SizedBox.shrink();
+
+    if (canBuy) {
+      return SizedBox(
+        width: double.infinity,
+        height: 52,
+        child: FilledButton.icon(
+          onPressed: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Carrito disponible próximamente')),
+            );
+          },
+          icon: const Icon(Icons.shopping_cart_outlined),
+          label: Text(
+            'Agregar al carrito',
+            style: AppTypography.labelSemiBold(color: Colors.white),
+          ),
         ),
-      ),
+      );
+    }
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+    return Text(
+      'Las compras están disponibles para compradores registrados',
+      style: AppTypography.caption(color: textMuted),
+      textAlign: TextAlign.center,
     );
   }
 }

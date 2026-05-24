@@ -63,7 +63,13 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
         redesSociales: redesSociales,
         artistId: artistId,
       );
-      state = state.copyWith(profile: saved, isSaving: false);
+      state = state.copyWith(
+        profile: saved,
+        isSaving: false,
+        // Incrementar versión de foto para que los widgets que muestran el
+        // avatar usen un key distinto y no muestren la imagen cacheada.
+        photoVersion: foto != null ? state.photoVersion + 1 : null,
+      );
       return saved;
     } catch (e) {
       state = state.copyWith(isSaving: false, errorMessage: e.toString());

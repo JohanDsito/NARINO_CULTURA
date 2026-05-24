@@ -34,7 +34,7 @@ class AccountSecurityService {
   }
 
   Future<void> deleteAccount({required String password}) async {
-    await _dio.post(
+    await _dio.delete(
       ApiConstants.deleteAccount,
       data: {'password': password},
     );

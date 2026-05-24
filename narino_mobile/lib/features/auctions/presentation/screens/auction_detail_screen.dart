@@ -33,6 +33,7 @@ class _AuctionDetailScreenState extends ConsumerState<AuctionDetailScreen> {
   bool _isLoading = true;
   bool _isBidding = false;
   String? _error;
+  bool _isOwner = false;
 
   Timer? _timer;
   Duration _remaining = Duration.zero;
@@ -70,6 +71,7 @@ class _AuctionDetailScreenState extends ConsumerState<AuctionDetailScreen> {
       _syncCountdown();
       _startCountdown();
       await _connectWs();
+      _checkOwnership(auction);
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -149,6 +151,18 @@ class _AuctionDetailScreenState extends ConsumerState<AuctionDetailScreen> {
       _syncCountdown();
       if (_remaining == Duration.zero) _timer?.cancel();
     });
+  }
+
+  // ─── Verificar propiedad ──────────────────────────────────────────────────
+
+  Future<void> _checkOwnership(AuctionModel auction) async {
+    try {
+      final me = await ref.read(profileRepositoryProvider).getMyProfile();
+      if (!mounted || me == null) return;
+      final isOwner =
+          _isArtistOwner(auction, myName: me.nombreArtistico, myId: me.id);
+      setState(() => _isOwner = isOwner);
+    } catch (_) {}
   }
 
   // ─── Permisos ─────────────────────────────────────────────────────────────
@@ -303,13 +317,17 @@ class _AuctionDetailScreenState extends ConsumerState<AuctionDetailScreen> {
             _BidsList(bids: auction.ultimasPujas.take(5).toList()),
             const SizedBox(height: 18),
             if (auction.estado == 'activa') ...[
-              _BidField(
-                controller: _bidCtrl,
-                isBidding: _isBidding,
-                minPrice: auction.precioActual * 1.05,
-              ),
-              const SizedBox(height: 12),
-              _BidButton(isBidding: _isBidding, onPressed: _placeBid),
+              if (_isOwner)
+                _OwnerAuctionNotice()
+              else ...[
+                _BidField(
+                  controller: _bidCtrl,
+                  isBidding: _isBidding,
+                  minPrice: auction.precioActual * 1.05,
+                ),
+                const SizedBox(height: 12),
+                _BidButton(isBidding: _isBidding, onPressed: _placeBid),
+              ],
               const SizedBox(height: 18),
             ],
             _WinnerActions(
@@ -715,6 +733,39 @@ class _BidButton extends StatelessWidget {
           isBidding ? 'Enviando...' : 'Pujar',
           style: AppTypography.buttonText(color: Colors.white),
         ),
+      ),
+    );
+  }
+}
+
+// ─── Aviso propietario de subasta ────────────────────────────────────────────
+
+class _OwnerAuctionNotice extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+    final bgCard = isDark ? AppColors.bgCardDark : AppColors.bgCardLight;
+    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: bgCard,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: border),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline, size: 16, color: textMuted),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Eres el propietario de esta subasta',
+              style: AppTypography.caption(color: textMuted),
+            ),
+          ),
+        ],
       ),
     );
   }

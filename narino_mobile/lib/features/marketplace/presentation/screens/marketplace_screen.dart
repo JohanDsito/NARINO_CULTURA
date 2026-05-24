@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/providers/user_role_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../artworks/presentation/providers/artwork_provider.dart';
@@ -36,6 +37,8 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
   Widget build(BuildContext context) {
     final artworksState = ref.watch(artworkProvider);
     final cartState = ref.watch(cartProvider);
+    final role = ref.watch(currentUserRoleProvider).value;
+    final canBuy = role == 'comprador' || role == 'admin';
     final disponibles =
         artworksState.artworks.where((a) => a.isDisponible).toList();
 
@@ -54,7 +57,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
             tooltip: 'Favoritos',
             onPressed: () => context.push('/marketplace/favorites'),
           ),
-          _CartBadge(itemCount: cartState.itemCount),
+          if (canBuy) _CartBadge(itemCount: cartState.itemCount),
         ],
       ),
       body: Column(
