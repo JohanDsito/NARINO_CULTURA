@@ -35,9 +35,9 @@ class _PublishArtworkScreenState extends ConsumerState<PublishArtworkScreen> {
   final _descCtrl = TextEditingController();
   final _dimensionesCtrl = TextEditingController();
   final _precioCtrl = TextEditingController();
-  final _anioCtrl = TextEditingController();
 
-  String? _categoria;
+  // Categoria: ID entero que se envía al backend; el nombre se muestra en el dropdown
+  int? _categoriaId;
   String? _tecnica;
   List<XFile> _imagenesSeleccionadas = [];
   ArtworkModel? _obraOriginal;
@@ -51,8 +51,7 @@ class _PublishArtworkScreenState extends ConsumerState<PublishArtworkScreen> {
   bool get _canSuggestCategory =>
       _imagenesSeleccionadas.isNotEmpty && _tituloCtrl.text.trim().isNotEmpty;
   bool get _canGenerateDesc =>
-      _tituloCtrl.text.trim().isNotEmpty &&
-      (_categoria?.trim().isNotEmpty == true);
+      _tituloCtrl.text.trim().isNotEmpty && _categoriaId != null;
 
   final _picker = ImagePicker();
 
@@ -68,7 +67,6 @@ class _PublishArtworkScreenState extends ConsumerState<PublishArtworkScreen> {
     _descCtrl.dispose();
     _dimensionesCtrl.dispose();
     _precioCtrl.dispose();
-    _anioCtrl.dispose();
     super.dispose();
   }
 
@@ -84,8 +82,8 @@ class _PublishArtworkScreenState extends ConsumerState<PublishArtworkScreen> {
       _descCtrl.text = obra.descripcion;
       _dimensionesCtrl.text = obra.dimensiones ?? '';
       _precioCtrl.text = obra.precio?.toStringAsFixed(0) ?? '';
-      _anioCtrl.text = obra.anio?.toString() ?? '';
-      _categoria = obra.categoria;
+      // obra.categoria almacena el ID entero como string (viene del JSON del back)
+      _categoriaId = int.tryParse(obra.categoria);
       _tecnica = obra.tecnica;
     });
   }
@@ -112,7 +110,6 @@ class _PublishArtworkScreenState extends ConsumerState<PublishArtworkScreen> {
       final categoria = (data is Map ? data['categoria'] : null)?.toString();
       if (categoria == null || categoria.isEmpty) throw Exception('Vacío');
       if (!mounted) return;
-      setState(() => _categoria = categoria);
       _showSnackBar(
           'Categoría sugerida: $categoria. Puedes cambiarla si prefieres.');
     } catch (_) {
@@ -127,8 +124,7 @@ class _PublishArtworkScreenState extends ConsumerState<PublishArtworkScreen> {
 
   Future<void> _generarDescripcionConIA() async {
     final titulo = _tituloCtrl.text.trim();
-    final categoria = _categoria?.trim() ?? '';
-    if (titulo.isEmpty || categoria.isEmpty) return;
+    if (titulo.isEmpty || _categoriaId == null) return;
 
     if (_descCtrl.text.trim().isNotEmpty) {
       final replace = await _confirmReplace();
@@ -139,7 +135,7 @@ class _PublishArtworkScreenState extends ConsumerState<PublishArtworkScreen> {
     try {
       final response = await ApiClient.instance.dio.post(
         '/ai/generate-description/',
-        data: {'titulo': titulo, 'categoria': categoria},
+        data: {'titulo': titulo, 'categoria': _categoriaId},
       );
       final data = response.data;
       final descripcion =
@@ -158,7 +154,7 @@ class _PublishArtworkScreenState extends ConsumerState<PublishArtworkScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_categoria == null) {
+    if (_categoriaId == null) {
       _showSnackBar('Selecciona una categoría');
       return;
     }
@@ -169,23 +165,24 @@ class _PublishArtworkScreenState extends ConsumerState<PublishArtworkScreen> {
 
     setState(() => _isLoading = true);
 
+    // Precio: requerido por el back (DecimalField sin null/blank/default).
+    // Se envía 0 si el usuario no especificó precio (obra para exhibición).
+    final precio = double.tryParse(_precioCtrl.text.trim()) ?? 0.0;
+
     final formData = FormData.fromMap({
-      'titulo': _tituloCtrl.text.trim(),
-      'descripcion': _descCtrl.text.trim(),
-      'categoria': _categoria!,
-      if (_tecnica?.trim().isNotEmpty == true) 'tecnica': _tecnica!.trim(),
+      'title': _tituloCtrl.text.trim(),
+      'description': _descCtrl.text.trim(),
+      'price': precio,
+      'category': _categoriaId,
+      if (_tecnica?.trim().isNotEmpty == true) 'technique': _tecnica!.trim(),
       if (_dimensionesCtrl.text.trim().isNotEmpty)
-        'dimensiones': _dimensionesCtrl.text.trim(),
-      if (_precioCtrl.text.trim().isNotEmpty)
-        'precio': double.tryParse(_precioCtrl.text.trim()),
-      if (_anioCtrl.text.trim().isNotEmpty)
-        'anio': int.tryParse(_anioCtrl.text),
+        'dimensions': _dimensionesCtrl.text.trim(),
+      // main_image: el serializer no lo expone aún, pero se envía para que
+      // funcione automáticamente cuando el back agregue el campo al serializer.
       if (_imagenesSeleccionadas.isNotEmpty)
-        'imagenes': await Future.wait(
-          _imagenesSeleccionadas
-              .map(
-                  (f) async => MultipartFile.fromFile(f.path, filename: f.name))
-              .toList(),
+        'main_image': await MultipartFile.fromFile(
+          _imagenesSeleccionadas.first.path,
+          filename: _imagenesSeleccionadas.first.name,
         ),
     });
 
@@ -231,7 +228,6 @@ class _PublishArtworkScreenState extends ConsumerState<PublishArtworkScreen> {
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        // ✅ FIX: color del AlertDialog resuelto desde el tema
         backgroundColor: theme.cardTheme.color ?? theme.colorScheme.surface,
         title: Text(
           'Eliminar obra',
@@ -290,7 +286,6 @@ class _PublishArtworkScreenState extends ConsumerState<PublishArtworkScreen> {
   Future<bool?> _confirmReplace() => showDialog<bool>(
         context: context,
         builder: (context) {
-          // ✅ FIX: color del AlertDialog resuelto desde el tema
           final theme = Theme.of(context);
           return AlertDialog(
             backgroundColor: theme.cardTheme.color ?? theme.colorScheme.surface,
@@ -315,6 +310,9 @@ class _PublishArtworkScreenState extends ConsumerState<PublishArtworkScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final categoriesAsync = ref.watch(categoriesProvider);
+    final categories = categoriesAsync.valueOrNull ?? const [];
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -364,8 +362,9 @@ class _PublishArtworkScreenState extends ConsumerState<PublishArtworkScreen> {
               ],
               const SizedBox(height: 14),
               _CategoriaDropdown(
-                value: _categoria,
-                onChanged: (v) => setState(() => _categoria = v),
+                categories: categories,
+                value: _categoriaId,
+                onChanged: (v) => setState(() => _categoriaId = v),
               ),
               const SizedBox(height: 14),
               _TecnicaDropdown(
@@ -386,10 +385,7 @@ class _PublishArtworkScreenState extends ConsumerState<PublishArtworkScreen> {
                 onPressed: _generarDescripcionConIA,
               ),
               const SizedBox(height: 14),
-              _DimensionesAnioRow(
-                dimensionesCtrl: _dimensionesCtrl,
-                anioCtrl: _anioCtrl,
-              ),
+              _DimensionesRow(controller: _dimensionesCtrl),
               const SizedBox(height: 14),
               _PrecioField(controller: _precioCtrl),
               const SizedBox(height: 28),
@@ -415,7 +411,6 @@ class _SoldWarning extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ FIX: colores hardcodeados → resueltos desde el tema
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textMuted =
         isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
@@ -423,7 +418,7 @@ class _SoldWarning extends StatelessWidget {
     final bgColor = textMuted.withValues(alpha: 0.08);
 
     return Container(
-      padding: _kFieldPadding, // ✅ USO de _kFieldPadding
+      padding: _kFieldPadding,
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: bgColor,
@@ -459,7 +454,6 @@ class _ImageSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ FIX: colores hardcodeados → resueltos desde el tema
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textMuted =
         isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
@@ -472,7 +466,7 @@ class _ImageSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Imágenes de la obra',
+          'Imagen de la obra',
           style: AppTypography.labelSemiBold(color: textSecondary),
         ),
         const SizedBox(height: 8),
@@ -513,8 +507,8 @@ class _ImageSection extends StatelessWidget {
                         const SizedBox(height: 6),
                         Text(
                           modoEdicion
-                              ? 'Toca para cambiar imágenes'
-                              : 'Toca para seleccionar imágenes *',
+                              ? 'Toca para cambiar imagen'
+                              : 'Toca para seleccionar imagen *',
                           style: AppTypography.caption(color: textMuted),
                         ),
                       ],
@@ -540,7 +534,6 @@ class _TituloField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ FIX: color del texto resuelto desde el tema
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary =
         isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
@@ -552,7 +545,7 @@ class _TituloField extends StatelessWidget {
       decoration: const InputDecoration(
         labelText: 'Título de la obra *',
         prefixIcon: Icon(Icons.title),
-        contentPadding: _kFieldPadding, // ✅ USO de _kFieldPadding
+        contentPadding: _kFieldPadding,
       ),
       validator: (v) =>
           (v == null || v.trim().isEmpty) ? 'El título es obligatorio' : null,
@@ -563,16 +556,17 @@ class _TituloField extends StatelessWidget {
 
 class _CategoriaDropdown extends StatelessWidget {
   const _CategoriaDropdown({
+    required this.categories,
     required this.value,
     required this.onChanged,
   });
 
-  final String? value;
-  final ValueChanged<String?> onChanged;
+  final List<CategoryModel> categories;
+  final int? value;
+  final ValueChanged<int?> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    // ✅ FIX: colores resueltos desde el tema
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final textMuted =
@@ -580,22 +574,27 @@ class _CategoriaDropdown extends StatelessWidget {
     final textPrimary =
         isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
 
-    return DropdownButtonFormField<String>(
-      initialValue: value,
+    // Si la categoría seleccionada ya no está en la lista (cargando), se ignora
+    final validValue =
+        categories.any((c) => c.id == value) ? value : null;
+
+    return DropdownButtonFormField<int>(
+      initialValue: validValue,
       style: AppTypography.bodyMedium(color: textPrimary),
       dropdownColor: theme.cardTheme.color ?? theme.colorScheme.surface,
-      hint: Text(
-        'Categoría artística *',
-        style: AppTypography.bodyMedium(color: textMuted),
-      ),
-      items: kCategoriasNarino
-          .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+      hint: categories.isEmpty
+          ? Text('Cargando categorías…',
+              style: AppTypography.bodyMedium(color: textMuted))
+          : Text('Categoría artística *',
+              style: AppTypography.bodyMedium(color: textMuted)),
+      items: categories
+          .map((c) => DropdownMenuItem(value: c.id, child: Text(c.name)))
           .toList(),
       onChanged: onChanged,
       validator: (v) => v == null ? 'Selecciona una categoría' : null,
       decoration: const InputDecoration(
         prefixIcon: Icon(Icons.category_outlined),
-        contentPadding: _kFieldPadding, // ✅ USO de _kFieldPadding
+        contentPadding: _kFieldPadding,
       ),
     );
   }
@@ -612,7 +611,6 @@ class _TecnicaDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ FIX: colores resueltos desde el tema
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final textMuted =
@@ -637,7 +635,7 @@ class _TecnicaDropdown extends StatelessWidget {
       onChanged: onChanged,
       decoration: const InputDecoration(
         prefixIcon: Icon(Icons.brush_outlined),
-        contentPadding: _kFieldPadding, // ✅ USO de _kFieldPadding
+        contentPadding: _kFieldPadding,
       ),
     );
   }
@@ -654,7 +652,6 @@ class _DescripcionField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ FIX: color del texto resuelto desde el tema
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary =
         isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
@@ -667,7 +664,7 @@ class _DescripcionField extends StatelessWidget {
       decoration: const InputDecoration(
         labelText: 'Descripción',
         alignLabelWithHint: true,
-        contentPadding: _kFieldPadding, // ✅ USO de _kFieldPadding
+        contentPadding: _kFieldPadding,
         prefixIcon: Padding(
           padding: EdgeInsets.only(bottom: 56),
           child: Icon(Icons.description_outlined),
@@ -678,60 +675,26 @@ class _DescripcionField extends StatelessWidget {
   }
 }
 
-class _DimensionesAnioRow extends StatelessWidget {
-  const _DimensionesAnioRow({
-    required this.dimensionesCtrl,
-    required this.anioCtrl,
-  });
+class _DimensionesRow extends StatelessWidget {
+  const _DimensionesRow({required this.controller});
 
-  final TextEditingController dimensionesCtrl;
-  final TextEditingController anioCtrl;
+  final TextEditingController controller;
 
   @override
   Widget build(BuildContext context) {
-    // ✅ FIX: color del texto resuelto desde el tema
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary =
         isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
 
-    return Row(
-      children: [
-        Expanded(
-          child: TextFormField(
-            controller: dimensionesCtrl,
-            style: AppTypography.bodyMedium(color: textPrimary),
-            decoration: const InputDecoration(
-              labelText: 'Dimensiones',
-              hintText: '50x70 cm',
-              prefixIcon: Icon(Icons.straighten_outlined),
-              contentPadding: _kFieldPadding, // ✅ USO de _kFieldPadding
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: TextFormField(
-            controller: anioCtrl,
-            keyboardType: TextInputType.number,
-            style: AppTypography.bodyMedium(color: textPrimary),
-            decoration: const InputDecoration(
-              labelText: 'Año',
-              hintText: '2024',
-              prefixIcon: Icon(Icons.calendar_today_outlined),
-              contentPadding: _kFieldPadding, // ✅ USO de _kFieldPadding
-            ),
-            validator: (v) {
-              if (v != null && v.isNotEmpty) {
-                final y = int.tryParse(v);
-                if (y == null || y < 1900 || y > DateTime.now().year) {
-                  return 'Año inválido';
-                }
-              }
-              return null;
-            },
-          ),
-        ),
-      ],
+    return TextFormField(
+      controller: controller,
+      style: AppTypography.bodyMedium(color: textPrimary),
+      decoration: const InputDecoration(
+        labelText: 'Dimensiones (opcional)',
+        hintText: '50x70 cm',
+        prefixIcon: Icon(Icons.straighten_outlined),
+        contentPadding: _kFieldPadding,
+      ),
     );
   }
 }
@@ -743,7 +706,6 @@ class _PrecioField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ FIX: color del texto resuelto desde el tema
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary =
         isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
@@ -753,12 +715,19 @@ class _PrecioField extends StatelessWidget {
       keyboardType: TextInputType.number,
       style: AppTypography.bodyMedium(color: textPrimary),
       decoration: const InputDecoration(
-        labelText: 'Precio en COP (opcional)',
-        hintText: 'Déjalo vacío si es para exhibición',
+        labelText: 'Precio en COP',
+        hintText: 'Ingresa 0 si es para exhibición',
         prefixIcon: Icon(Icons.sell_outlined),
         prefixText: r'$ ',
-        contentPadding: _kFieldPadding, // ✅ USO de _kFieldPadding
+        contentPadding: _kFieldPadding,
       ),
+      validator: (v) {
+        if (v != null && v.trim().isNotEmpty) {
+          final n = double.tryParse(v.trim());
+          if (n == null || n < 0) return 'Ingresa un precio válido';
+        }
+        return null;
+      },
     );
   }
 }
@@ -780,8 +749,6 @@ class _AiButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ FIX: colores del botón IA resueltos desde el tema para que se adapten
-    // al modo oscuro. En dark se usa tierraDark; en light, tierraProfunda.
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final aiColor = isDark ? AppColors.tierraDark : AppColors.tierraProfunda;
 
@@ -834,7 +801,6 @@ class _SubmitButton extends StatelessWidget {
       height: 52,
       child: ElevatedButton(
         onPressed: isDisabled ? null : onPressed,
-        // ✅ FIX: color del botón de envío resuelto desde el tema
         style: ElevatedButton.styleFrom(
           backgroundColor: cs.primary,
           foregroundColor: cs.onPrimary,

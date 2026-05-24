@@ -48,7 +48,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  Future<UserModel?> register({
+  Future<void> register({
     required String firstName,
     required String email,
     required String password,
@@ -61,25 +61,23 @@ class AuthNotifier extends StateNotifier<AuthState> {
     );
 
     try {
-      final user = await _repository.register(
+      await _repository.register(
         firstName: firstName,
         email: email,
         password: password,
         role: role,
       );
       state = state.copyWith(
-        status: AuthStatus.authenticated,
+        status: AuthStatus.registrationPending,
         errorMessage: null,
         successMessage: null,
       );
-      return user;
     } catch (e) {
       state = state.copyWith(
         status: AuthStatus.error,
         errorMessage: _mapError(e),
         successMessage: null,
       );
-      return null;
     }
   }
 

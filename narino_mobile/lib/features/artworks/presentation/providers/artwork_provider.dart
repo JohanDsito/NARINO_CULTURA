@@ -1,9 +1,27 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/api_client.dart';
 import '../../data/artwork_repository.dart';
 import '../../domain/artwork_model.dart';
 import '../../domain/artwork_state.dart';
+
+final categoriesProvider =
+    FutureProvider.autoDispose<List<CategoryModel>>((ref) async {
+  final response = await ApiClient.instance.dio.get('/api/v1/artworks/categories/');
+  final data = response.data;
+  final List<dynamic> list;
+  if (data is Map && data.containsKey('results')) {
+    list = data['results'] as List<dynamic>;
+  } else if (data is List) {
+    list = data;
+  } else {
+    return const [];
+  }
+  return list
+      .map((e) => CategoryModel.fromJson(e as Map<String, dynamic>))
+      .toList();
+});
 
 final artworkRepositoryProvider = Provider<ArtworkRepository>((ref) {
   return ArtworkRepository();

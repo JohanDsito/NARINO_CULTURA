@@ -12,9 +12,11 @@ import 'features/auctions/presentation/screens/auction_detail_screen.dart';
 import 'features/auctions/presentation/screens/auction_history_screen.dart';
 import 'features/auctions/presentation/screens/create_auction_screen.dart';
 import 'features/auth/presentation/providers/auth_guard_provider.dart';
+import 'features/auth/presentation/screens/artistic_profile_screen.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/auth/presentation/screens/register_screen.dart';
 import 'features/auth/presentation/screens/forgot_password_screen.dart';
+import 'features/auth/presentation/screens/verify_email_pending_screen.dart';
 import 'features/events/presentation/screens/events_screen.dart';
 import 'features/events/presentation/screens/event_detail_screen.dart';
 import 'features/events/presentation/screens/publish_event_screen.dart';
@@ -47,7 +49,7 @@ import 'features/musicians/presentation/screens/musician_detail_screen.dart';
 import 'features/music_discovery/presentation/screens/music_discovery_screen.dart';
 import 'features/notifications/presentation/screens/notifications_screen.dart';
 
-const _publicRoutes = ['/login', '/register', '/forgot-password'];
+const _publicRoutes = ['/login', '/register', '/forgot-password', '/verify-email-pending'];
 
 final _routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -73,6 +75,7 @@ final _routerProvider = Provider<GoRouter>((ref) {
               '/artistas/',
               '/musicians',
               '/music-discovery',
+              '/artistic-profile',
             ];
 
             final isAllowed = allowedPrefixes.any((p) {
@@ -94,6 +97,17 @@ final _routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/forgot-password',
         builder: (_, __) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/artistic-profile',
+        builder: (_, __) => const ArtisticProfileScreen(),
+      ),
+      GoRoute(
+        path: '/verify-email-pending',
+        builder: (_, state) {
+          final email = state.extra as String? ?? '';
+          return VerifyEmailPendingScreen(email: email);
+        },
       ),
       ShellRoute(
         builder: (context, state, child) =>

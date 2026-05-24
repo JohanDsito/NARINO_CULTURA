@@ -96,16 +96,19 @@ class DeleteAccountNotifier extends StateNotifier<AsyncValue<void>> {
   Future<void> submit({required String password}) async {
     state = const AsyncValue.loading();
     try {
-      // Check activa auctions only for artistas; ignore errors for other roles
+      // Check active auctions only for artistas; silently skip for any API error
       try {
         final activeAuctions =
             await _auctionsRepo.getAuctions(artista: 'me', estado: 'activa');
         if (activeAuctions.isNotEmpty) {
-          throw 'No puedes eliminar tu cuenta mientras tengas subastas activas.';
+          state = AsyncValue.error(
+            'No puedes eliminar tu cuenta mientras tengas subastas activas.',
+            StackTrace.current,
+          );
+          return;
         }
-      } catch (e) {
-        if (e is String) rethrow;
-        // For non-artistas or unsupported filters, skip the check
+      } catch (_) {
+        // Endpoint unavailable, 403 for non-artistas, etc. — proceed with deletion.
       }
 
       await _repo.deleteAccount(password: password);

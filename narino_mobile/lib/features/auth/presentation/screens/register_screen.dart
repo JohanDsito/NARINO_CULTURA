@@ -7,43 +7,6 @@ import '../../../../core/theme/app_typography.dart';
 import '../../domain/auth_state.dart';
 import '../providers/auth_provider.dart';
 
-// ─── Modelo de rol ────────────────────────────────────────────────────────────
-
-class _RoleOption {
-  const _RoleOption({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.description,
-  });
-
-  final String label;
-  final String value;
-  final IconData icon;
-  final String description;
-}
-
-const _kRoles = <_RoleOption>[
-  _RoleOption(
-    label: 'Artista',
-    value: 'ARTISTA',
-    icon: Icons.palette_outlined,
-    description: 'Publica y vende tu obra',
-  ),
-  _RoleOption(
-    label: 'Comprador',
-    value: 'COMPRADOR',
-    icon: Icons.shopping_bag_outlined,
-    description: 'Descubre y adquiere arte',
-  ),
-  _RoleOption(
-    label: 'Gestor Cultural',
-    value: 'GESTOR_CULTURAL',
-    icon: Icons.account_balance_outlined,
-    description: 'Gestiona eventos y espacios',
-  ),
-];
-
 // ─── Pantalla principal ───────────────────────────────────────────────────────
 
 class RegisterScreen extends ConsumerStatefulWidget {
@@ -64,7 +27,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _passwordFocus = FocusNode();
   final _confirmFocus = FocusNode();
 
-  String? _rol;
   bool _acceptedTerms = false;
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
@@ -75,7 +37,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     super.initState();
     _authSub = ref.listenManual<AuthState>(authProvider, (prev, next) {
       if (!mounted) return;
-      if (next.status == AuthStatus.authenticated) context.go('/home');
+      if (next.status == AuthStatus.registrationPending) {
+        context.go(
+          '/verify-email-pending',
+          extra: _emailCtrl.text.trim(),
+        );
+      }
     });
   }
 
@@ -132,14 +99,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
 
-    if (_rol == null) {
-      ScaffoldMessenger.of(context)
-        ..clearSnackBars()
-        ..showSnackBar(
-          const SnackBar(content: Text('Selecciona un rol para continuar')),
-        );
-      return;
-    }
     if (!_acceptedTerms) {
       ScaffoldMessenger.of(context)
         ..clearSnackBars()
@@ -157,7 +116,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           firstName: _nameCtrl.text.trim(),
           email: _emailCtrl.text.trim(),
           password: _passwordCtrl.text,
-          role: _rol!,
+          role: 'ARTISTA',
         );
   }
 
@@ -287,14 +246,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             ),
                             const SizedBox(height: 20),
 
-                            // Selector de rol
-                            _RolSelector(
-                              selected: _rol,
-                              disabled: isLoading,
-                              onSelect: (v) => setState(() => _rol = v),
-                            ),
-                            const SizedBox(height: 20),
-
                             // Términos y condiciones
                             _TermsCheckbox(
                               accepted: _acceptedTerms,
@@ -374,135 +325,6 @@ class _RegisterHero extends StatelessWidget {
               'Nariño Cultura',
               style: AppTypography.displayBold(color: AppColors.oroClaro)
                   .copyWith(fontSize: 22),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Selector de rol con tarjetas ─────────────────────────────────────────────
-
-class _RolSelector extends StatelessWidget {
-  const _RolSelector({
-    required this.selected,
-    required this.disabled,
-    required this.onSelect,
-  });
-
-  final String? selected;
-  final bool disabled;
-  final ValueChanged<String> onSelect;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final textMuted =
-        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
-    final textSecondary =
-        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(Icons.badge_outlined, size: 16, color: textMuted),
-            const SizedBox(width: 6),
-            Text(
-              'Rol',
-              style: AppTypography.labelSemiBold(color: textSecondary),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        ...List.generate(_kRoles.length, (i) {
-          final role = _kRoles[i];
-          final isSelected = selected == role.value;
-          return Padding(
-            padding: EdgeInsets.only(bottom: i < _kRoles.length - 1 ? 8 : 0),
-            child: _RolCard(
-              role: role,
-              isSelected: isSelected,
-              disabled: disabled,
-              onTap: () => onSelect(role.value),
-            ),
-          );
-        }),
-      ],
-    );
-  }
-}
-
-class _RolCard extends StatelessWidget {
-  const _RolCard({
-    required this.role,
-    required this.isSelected,
-    required this.disabled,
-    required this.onTap,
-  });
-
-  final _RoleOption role;
-  final bool isSelected;
-  final bool disabled;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    final bgCard = theme.cardTheme.color ?? cs.surface;
-    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
-    final selectedBg = isDark ? AppColors.bgSubtleDark : AppColors.tierraPalida;
-    final textPrimary =
-        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-    final textMuted =
-        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
-    return GestureDetector(
-      onTap: disabled ? null : onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? selectedBg : bgCard,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? cs.primary : border,
-            width: isSelected ? 1.5 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              role.icon,
-              size: 22,
-              color: isSelected ? cs.primary : textMuted,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    role.label,
-                    style: AppTypography.labelSemiBold(
-                      color: isSelected ? cs.primary : textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    role.description,
-                    style: AppTypography.caption(color: textMuted),
-                  ),
-                ],
-              ),
-            ),
-            AnimatedOpacity(
-              opacity: isSelected ? 1 : 0,
-              duration: const Duration(milliseconds: 180),
-              child: Icon(Icons.check_circle, color: cs.primary, size: 20),
             ),
           ],
         ),
