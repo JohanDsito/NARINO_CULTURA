@@ -39,7 +39,7 @@ export function Navbar() {
     user?.role === 'admin'
       ? '/admin/dashboard'
       : user?.role === 'artist'
-        ? '/dashboard/profile'
+        ? '/dashboard'
         : user?.role === 'cultural_manager'
           ? '/events'
           : '/marketplace'
