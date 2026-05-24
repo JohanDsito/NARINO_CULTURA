@@ -1,7 +1,8 @@
 """
-Custom JWT serializers para incluir claims personalizados como role.
+Custom JWT serializers y tokens para incluir claims personalizados como role.
 """
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -12,8 +13,15 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
-
-        # Agregar claim personalizado: role
         token["role"] = user.role
+        return token
 
+
+class CustomRefreshToken(RefreshToken):
+    """Refresh token con claim 'role' incluido."""
+
+    @classmethod
+    def for_user(cls, user):
+        token = super().for_user(user)
+        token['role'] = user.role
         return token
