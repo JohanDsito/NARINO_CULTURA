@@ -15,7 +15,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ("email", "password", "first_name", "last_name", "role", "phone", "avatar_url")
+        fields = ("email", "password", "first_name", "last_name", "role", "phone")
 
     def validate_role(self, value):
         roles = {c for c, _ in User.Role.choices}
@@ -74,10 +74,19 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
 
 
 class UserMeSerializer(serializers.ModelSerializer):
+    avatar_url = serializers.SerializerMethodField(read_only=True)
+    avatar = serializers.ImageField(write_only=True, required=False, allow_null=True)
+
     class Meta:
         model = User
-        fields = ("id", "email", "first_name", "last_name", "role", "phone", "avatar_url", "is_verified")
+        fields = ("id", "email", "first_name", "last_name", "role", "phone", "avatar_url", "avatar", "is_verified")
         read_only_fields = ("id", "email", "role", "is_verified")
+
+    def get_avatar_url(self, obj):
+        if not obj.avatar:
+            return ""
+        request = self.context.get("request")
+        return request.build_absolute_uri(obj.avatar.url) if request else obj.avatar.url
 
 
 class PasswordChangeSerializer(serializers.Serializer):
