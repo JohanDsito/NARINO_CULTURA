@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { CheckCircle, XCircle, Eye } from 'lucide-react'
+import { CheckCircle, XCircle, Eye, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { getPendingArtworks, moderateArtwork } from '@/api/admin.api'
+import { getPendingArtworks, moderateArtwork, deleteAdminArtwork } from '@/api/admin.api'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { PageShell } from '@/components/layout/page-shell'
@@ -14,6 +14,22 @@ export default function AdminArtworksPage() {
     queryFn: getPendingArtworks,
     staleTime: 60 * 1000,
   })
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteAdminArtwork,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['admin-pending-artworks'] })
+      await queryClient.invalidateQueries({ queryKey: ['admin-metrics'] })
+      toast.success('Obra eliminada.')
+    },
+    onError: () => toast.error('No se pudo eliminar la obra.'),
+  })
+
+  const handleDelete = (id: string, title: string) => {
+    if (!window.confirm(`¿Eliminar permanentemente "${title}"? Esta acción no se puede deshacer.`))
+      return
+    deleteMutation.mutate(id)
+  }
 
   const moderateMutation = useMutation({
     mutationFn: ({ id, status, reason }: { id: string; status: 'DISPONIBLE' | 'INACTIVA'; reason?: string }) =>
@@ -71,7 +87,7 @@ export default function AdminArtworksPage() {
                     )}
                     <Badge variant="tierra" className="mt-1 text-[10px]">{artwork.status}</Badge>
                   </div>
-                  <div className="flex gap-2 flex-none">
+                  <div className="flex gap-2 flex-none flex-wrap">
                     <Button
                       variant="secondary"
                       className="gap-1.5 text-[13px] px-3 py-1.5"
@@ -83,7 +99,7 @@ export default function AdminArtworksPage() {
                     <Button
                       variant="primary"
                       className="gap-1.5 text-[13px] px-3 py-1.5 bg-selva hover:bg-selva/90"
-                      disabled={moderateMutation.isPending}
+                      disabled={moderateMutation.isPending || deleteMutation.isPending}
                       onClick={() => moderateMutation.mutate({ id: artwork.id, status: 'DISPONIBLE' })}
                     >
                       <CheckCircle size={14} />
@@ -92,11 +108,20 @@ export default function AdminArtworksPage() {
                     <Button
                       variant="secondary"
                       className="gap-1.5 text-[13px] px-3 py-1.5 text-error border-error/30 hover:bg-error/5"
-                      disabled={moderateMutation.isPending}
+                      disabled={moderateMutation.isPending || deleteMutation.isPending}
                       onClick={() => moderateMutation.mutate({ id: artwork.id, status: 'INACTIVA', reason: 'No cumple los requisitos' })}
                     >
                       <XCircle size={14} />
                       Rechazar
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      className="gap-1.5 text-[13px] px-3 py-1.5 text-destructive border-destructive/30 hover:bg-destructive/5"
+                      disabled={moderateMutation.isPending || deleteMutation.isPending}
+                      onClick={() => handleDelete(artwork.id, artwork.title)}
+                    >
+                      <Trash2 size={14} />
+                      Eliminar
                     </Button>
                   </div>
                 </div>
