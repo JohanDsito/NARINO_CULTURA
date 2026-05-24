@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Music, Save, UserRound } from 'lucide-react'
+import { CalendarPlus, Music, Save, UserRound } from 'lucide-react'
 import { toast } from 'sonner'
 
 import {
@@ -240,28 +240,48 @@ export default function MusicianDashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Works card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Music size={18} />
-                Obras musicales
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Administra tus obras musicales publicadas, añade canciones, videos o podcasts.
-              </p>
-              <div className="grid gap-3">
-                <Button asChild variant="outline">
-                  <Link to={ROUTES.DASHBOARD.MUSICIAN.WORKS}>Ver mis obras</Link>
+          {/* Right column cards */}
+          <div className="flex flex-col gap-5">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Music size={18} />
+                  Obras musicales
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Administra tus obras musicales publicadas, añade canciones, videos o podcasts.
+                </p>
+                <div className="grid gap-3">
+                  <Button asChild variant="outline">
+                    <Link to={ROUTES.DASHBOARD.MUSICIAN.WORKS}>Ver mis obras</Link>
+                  </Button>
+                  <Button asChild>
+                    <Link to={ROUTES.DASHBOARD.MUSICIAN.WORKS_NEW}>Añadir obra</Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <CalendarPlus size={18} />
+                  Eventos
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Publica conciertos o presentaciones. El evento será revisado por el administrador
+                  antes de aparecer en el calendario.
+                </p>
+                <Button asChild className="w-full">
+                  <Link to={ROUTES.DASHBOARD.EVENTS_NEW}>Crear evento</Link>
                 </Button>
-                <Button asChild>
-                  <Link to={ROUTES.DASHBOARD.MUSICIAN.WORKS_NEW}>Añadir obra</Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </section>
       </main>
     </div>

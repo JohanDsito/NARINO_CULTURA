@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ImagePlus, Palette, Save, UserRound } from 'lucide-react'
+import { CalendarPlus, ImagePlus, Palette, Save, UserRound } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { createArtistProfile, listArtistProfiles, updateArtistProfile } from '@/api/artists.api'
@@ -91,7 +91,7 @@ export default function ArtistDashboardPage() {
           </Button>
         </section>
 
-        <section className="grid gap-5 lg:grid-cols-[1.4fr_0.8fr]">
+        <section className="grid gap-5 lg:grid-cols-[1.4fr_0.8fr] lg:items-start">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
@@ -150,27 +150,47 @@ export default function ArtistDashboardPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Palette size={18} />
-                Obras
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Administra tus obras publicadas, crea una nueva pieza o edita las existentes.
-              </p>
-              <div className="grid gap-3">
-                <Button asChild variant="outline">
-                  <Link to="/dashboard/artworks">Ver mis obras</Link>
+          <div className="flex flex-col gap-5">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Palette size={18} />
+                  Obras
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Administra tus obras publicadas, crea una nueva pieza o edita las existentes.
+                </p>
+                <div className="grid gap-3">
+                  <Button asChild variant="outline">
+                    <Link to="/dashboard/artworks">Ver mis obras</Link>
+                  </Button>
+                  <Button asChild>
+                    <Link to="/dashboard/artworks/new">Añadir obra</Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <CalendarPlus size={18} />
+                  Eventos
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Publica exposiciones, talleres o presentaciones. El evento será revisado por el
+                  administrador antes de aparecer en el calendario.
+                </p>
+                <Button asChild className="w-full">
+                  <Link to="/dashboard/events/new">Crear evento</Link>
                 </Button>
-                <Button asChild>
-                  <Link to="/dashboard/artworks/new">Añadir obra</Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </section>
       </main>
     </div>

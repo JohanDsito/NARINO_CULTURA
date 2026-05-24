@@ -233,6 +233,16 @@ export const router = createBrowserRouter([
         ),
       },
 
+      // ── Crear evento (artista / músico) ───────────────────────────────────
+      {
+        path: 'dashboard/events/new',
+        element: (
+          <ProtectedRoute allowedRoles={[ROLE.artist]}>
+            {lazyPage(() => import('@/pages/events/ArtistEventCreatePage'), 'Cargando formulario…')}
+          </ProtectedRoute>
+        ),
+      },
+
       // ── Dashboard del músico ──────────────────────────────────────────────
       {
         path: 'dashboard/musician/profile',

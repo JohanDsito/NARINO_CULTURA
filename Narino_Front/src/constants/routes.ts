@@ -37,6 +37,7 @@ export const ROUTES = {
       WORKS_NEW: '/dashboard/musician/works/new',
       WORK_EDIT: (id: string) => `/dashboard/musician/works/${id}/edit`,
     },
+    EVENTS_NEW: '/dashboard/events/new',
   },
   ADMIN: {
     DASHBOARD: '/admin/dashboard',

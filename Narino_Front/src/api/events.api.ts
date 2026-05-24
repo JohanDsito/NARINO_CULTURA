@@ -32,6 +32,8 @@ export interface CreateEventPayload {
   latitude?: number
   longitude?: number
   image_url?: string
+  ticket_url?: string
+  flyer?: File
   is_published?: boolean
 }
 
@@ -87,6 +89,23 @@ export const eventsApi = {
   // Crear un evento (solo admin/cultural manager)
   createEvent: (payload: CreateEventPayload) => {
     return axiosInstance.post<Event>('/api/v1/events/', payload)
+  },
+
+  // Crear un evento como artista/músico (pendiente de aprobación)
+  createArtistEvent: (payload: CreateEventPayload) => {
+    const formData = new FormData()
+    formData.append('title', payload.title)
+    formData.append('description', payload.description)
+    formData.append('event_type', payload.event_type)
+    formData.append('start_date', payload.start_date)
+    formData.append('end_date', payload.end_date)
+    formData.append('location', payload.location)
+    formData.append('is_published', 'false')
+    if (payload.ticket_url) formData.append('ticket_url', payload.ticket_url)
+    if (payload.flyer) formData.append('image', payload.flyer)
+    return axiosInstance.post<Event>('/api/v1/events/', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
   },
 
   // Actualizar un evento (solo el organizador/admin)
