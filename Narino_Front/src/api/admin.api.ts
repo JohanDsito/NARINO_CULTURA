@@ -25,18 +25,15 @@ export async function getAdminMetrics() {
 // ── Users ─────────────────────────────────────────────────────────────────────
 
 export async function listAdminUsers(): Promise<AdminUserListItem[]> {
-  try {
-    const { data } = await axiosInstance.get<AdminUserListItem[] | { results: AdminUserListItem[] }>(
-      '/api/v1/admin/users/',
-    )
-    return Array.isArray(data) ? data : (data as { results?: AdminUserListItem[] }).results ?? []
-  } catch {
-    // Fallback: /api/v1/admin/users/ may not be registered on this backend
-    const { data } = await axiosInstance.get<AdminUserListItem[] | { results: AdminUserListItem[] }>(
-      '/api/v1/users/',
-    )
-    return Array.isArray(data) ? data : (data as { results?: AdminUserListItem[] }).results ?? []
-  }
+  const { data } = await axiosInstance.get<
+    AdminUserListItem[] | { results?: AdminUserListItem[]; users?: AdminUserListItem[] }
+  >('/api/v1/admin/users/')
+  // eslint-disable-next-line no-console
+  console.debug('[admin] listAdminUsers raw response:', data)
+  if (Array.isArray(data)) return data
+  if (Array.isArray((data as { results?: AdminUserListItem[] }).results)) return (data as { results: AdminUserListItem[] }).results
+  if (Array.isArray((data as { users?: AdminUserListItem[] }).users)) return (data as { users: AdminUserListItem[] }).users
+  return []
 }
 
 export async function getAdminUser(uuid: string) {

@@ -29,11 +29,12 @@ export default function AdminUsersPage() {
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
 
-  const { data: users = [], isLoading } = useQuery({
+  const { data: users = [], isLoading, isError, error } = useQuery({
     queryKey: ['admin-users'],
     queryFn: listAdminUsers,
     staleTime: 30_000,
     refetchInterval: 30_000,
+    retry: 1,
   })
 
   const deleteMutation = useMutation({
@@ -90,6 +91,16 @@ export default function AdminUsersPage() {
                 className="h-14 animate-pulse rounded-lg border border-border bg-muted"
               />
             ))}
+          </div>
+        ) : isError ? (
+          <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-6 text-center">
+            <p className="text-sm font-medium text-destructive mb-1">Error al cargar usuarios</p>
+            <p className="text-xs text-muted-foreground font-mono">
+              {(error as { response?: { status?: number; data?: { detail?: string } } })?.response?.status
+                ? `HTTP ${(error as { response: { status: number; data?: { detail?: string } } }).response.status}: ${(error as { response: { status: number; data: { detail?: string } } }).response.data?.detail ?? 'Sin detalles'}`
+                : String(error)}
+            </p>
+            <p className="text-xs text-muted-foreground mt-2">Verifica que el endpoint <code className="bg-muted px-1 rounded">/api/v1/admin/users/</code> esté disponible en el backend.</p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-24 text-muted-foreground">
