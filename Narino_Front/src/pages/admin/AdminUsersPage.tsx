@@ -93,14 +93,17 @@ export default function AdminUsersPage() {
             ))}
           </div>
         ) : isError ? (
-          <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-6 text-center">
-            <p className="text-sm font-medium text-destructive mb-1">Error al cargar usuarios</p>
-            <p className="text-xs text-muted-foreground font-mono">
-              {(error as { response?: { status?: number; data?: { detail?: string } } })?.response?.status
-                ? `HTTP ${(error as { response: { status: number; data?: { detail?: string } } }).response.status}: ${(error as { response: { status: number; data: { detail?: string } } }).response.data?.detail ?? 'Sin detalles'}`
-                : String(error)}
+          <div className="rounded-xl border border-amber-300 bg-amber-50 dark:bg-amber-950/20 p-6 space-y-3">
+            <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+              El backend no expone el listado de usuarios
             </p>
-            <p className="text-xs text-muted-foreground mt-2">Verifica que el endpoint <code className="bg-muted px-1 rounded">/api/v1/admin/users/</code> esté disponible en el backend.</p>
+            <p className="text-xs text-amber-700 dark:text-amber-400">
+              El endpoint <code className="bg-amber-100 dark:bg-amber-900 px-1 py-0.5 rounded font-mono">/api/v1/admin/users/</code> responde con <strong>405 (Method Not Allowed)</strong>, lo que significa que el ViewSet en Django no tiene la acción <code className="font-mono">list</code> habilitada.
+            </p>
+            <div className="text-xs text-amber-700 dark:text-amber-400 space-y-1">
+              <p className="font-semibold">Fix en el backend (Django):</p>
+              <pre className="bg-amber-100 dark:bg-amber-900 rounded p-2 text-[11px] overflow-x-auto">{`# En el archivo donde está AdminUserViewSet,\n# asegúrate de que herede de ModelViewSet:\n\nfrom rest_framework import viewsets, permissions\n\nclass AdminUserViewSet(viewsets.ModelViewSet):\n    permission_classes = [permissions.IsAdminUser]\n    queryset = User.objects.all().order_by('-date_joined')\n    serializer_class = UserSerializer\n\n# En urls.py:\n# router.register(r'admin/users', AdminUserViewSet)`}</pre>
+            </div>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-24 text-muted-foreground">

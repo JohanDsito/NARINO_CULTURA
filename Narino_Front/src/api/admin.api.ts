@@ -25,15 +25,33 @@ export async function getAdminMetrics() {
 // ── Users ─────────────────────────────────────────────────────────────────────
 
 export async function listAdminUsers(): Promise<AdminUserListItem[]> {
+  // Try detail-compatible list endpoint variants
+  const endpoints = [
+    '/api/v1/admin/users/list/',
+    '/api/v1/users/all/',
+    '/api/v1/admin/list-users/',
+  ]
+
+  for (const url of endpoints) {
+    try {
+      const { data } = await axiosInstance.get<
+        AdminUserListItem[] | { results?: AdminUserListItem[] }
+      >(url)
+      const list = Array.isArray(data)
+        ? data
+        : (data as { results?: AdminUserListItem[] }).results ?? []
+      if (list.length > 0 || Array.isArray(data)) return list
+    } catch {
+      // continue trying
+    }
+  }
+
+  // None worked — let the original endpoint throw so the UI shows the real error
   const { data } = await axiosInstance.get<
-    AdminUserListItem[] | { results?: AdminUserListItem[]; users?: AdminUserListItem[] }
+    AdminUserListItem[] | { results?: AdminUserListItem[] }
   >('/api/v1/admin/users/')
-  // eslint-disable-next-line no-console
-  console.debug('[admin] listAdminUsers raw response:', data)
   if (Array.isArray(data)) return data
-  if (Array.isArray((data as { results?: AdminUserListItem[] }).results)) return (data as { results: AdminUserListItem[] }).results
-  if (Array.isArray((data as { users?: AdminUserListItem[] }).users)) return (data as { users: AdminUserListItem[] }).users
-  return []
+  return (data as { results?: AdminUserListItem[] }).results ?? []
 }
 
 export async function getAdminUser(uuid: string) {
