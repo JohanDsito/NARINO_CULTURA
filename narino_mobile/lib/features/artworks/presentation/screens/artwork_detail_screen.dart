@@ -866,37 +866,23 @@ class _ActionButton extends ConsumerWidget {
     }
 
     final role = ref.watch(currentUserRoleProvider).value;
-    final canBuy = role == 'comprador' || role == 'admin';
-    final roleLoaded = role != null;
+    if (role == null) return const SizedBox.shrink();
 
-    if (!roleLoaded) return const SizedBox.shrink();
-
-    if (canBuy) {
-      return SizedBox(
-        width: double.infinity,
-        height: 52,
-        child: FilledButton.icon(
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Carrito disponible próximamente')),
-            );
-          },
-          icon: const Icon(Icons.shopping_cart_outlined),
-          label: Text(
-            'Agregar al carrito',
-            style: AppTypography.labelSemiBold(color: Colors.white),
-          ),
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: FilledButton.icon(
+        onPressed: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Carrito disponible próximamente')),
+          );
+        },
+        icon: const Icon(Icons.shopping_cart_outlined),
+        label: Text(
+          'Agregar al carrito',
+          style: AppTypography.labelSemiBold(color: Colors.white),
         ),
-      );
-    }
-
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textMuted =
-        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
-    return Text(
-      'Las compras están disponibles para compradores registrados',
-      style: AppTypography.caption(color: textMuted),
-      textAlign: TextAlign.center,
+      ),
     );
   }
 }

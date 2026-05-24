@@ -65,7 +65,6 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
     final favState = ref.watch(favoritesProvider);
     final role = ref.watch(currentUserRoleProvider).value;
     final isArtistOrAdmin = role == 'artista' || role == 'admin';
-    final isComprador = role == 'comprador';
 
     if (state.isLoading) {
       return const Scaffold(
@@ -128,17 +127,16 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                     onTap: () => context.push('/profile/stats'),
                   ),
               ]),
-            ] else if (isComprador) ...[
-              const _SectionLabel(label: 'Mi contenido'),
-              _MenuSection(children: [
-                _MenuTile(
-                  icon: Icons.shopping_bag_outlined,
-                  title: 'Mis compras',
-                  subtitle: 'Historial de compras',
-                  onTap: () => context.push('/marketplace/purchases'),
-                ),
-              ]),
             ],
+            const _SectionLabel(label: 'Mi contenido'),
+            _MenuSection(children: [
+              _MenuTile(
+                icon: Icons.shopping_bag_outlined,
+                title: 'Mis compras',
+                subtitle: 'Historial de compras',
+                onTap: () => context.push('/marketplace/purchases'),
+              ),
+            ]),
 
             // ── Mi actividad ─────────────────────────────────────────
             const _SectionLabel(label: 'Mi actividad'),
@@ -545,7 +543,7 @@ class _RoleBadge extends StatelessWidget {
       case 'artista':
         return (Icons.palette_outlined, 'Artista', AppColors.selvaAndina);
       case 'comprador':
-        return (Icons.shopping_bag_outlined, 'Comprador', AppColors.oroAndino);
+        return (Icons.explore_outlined, 'Visitante', AppColors.oroAndino);
       case 'gestor':
       case 'gestor_cultural':
         return (Icons.event_outlined, 'Gestor Cultural', AppColors.tierraProfunda);
