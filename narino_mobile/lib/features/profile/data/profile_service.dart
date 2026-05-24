@@ -35,49 +35,40 @@ class ProfileService {
     Map<String, String>? redesSociales,
     String? artistId,
   }) async {
-    // ─── 1. PATCH registro de usuario (nombre + avatar) ───────────────────
+    // ─── 1. PATCH usuario: nombre (avatar_url es URLField, sin subida de archivos) ──
     final userUpdates = <String, dynamic>{};
     if (nombreArtistico != null && nombreArtistico.isNotEmpty) {
       userUpdates['first_name'] = nombreArtistico;
     }
-    if (foto != null) {
-      final formData = FormData.fromMap({
-        ...userUpdates,
-        'avatar': await MultipartFile.fromFile(
-          foto.path,
-          filename: foto.path.split(Platform.pathSeparator).last,
-        ),
-      });
-      await _dio.patch(
-        ApiConstants.myProfile,
-        data: formData,
-        options: Options(contentType: 'multipart/form-data'),
-      );
-    } else if (userUpdates.isNotEmpty) {
+    if (userUpdates.isNotEmpty) {
       await _dio.patch(ApiConstants.myProfile, data: userUpdates);
     }
 
-    // ─── 2. PATCH perfil de artista vía /me/ (sin depender de slug/ID) ───
-    final artistUpdates = <String, dynamic>{};
-    if (nombreArtistico != null) artistUpdates['artistic_name'] = nombreArtistico;
-    if (disciplina != null) artistUpdates['discipline'] = disciplina;
-    if (biografia != null) artistUpdates['bio'] = biografia;
-    if (redesSociales != null) {
-      // URLField(blank=True) en Django acepta '' para limpiar el campo.
-      String toUrl(String? v) => v?.trim() ?? '';
-      artistUpdates['instagram_url'] = toUrl(redesSociales['instagram']);
-      artistUpdates['facebook_url'] = toUrl(redesSociales['facebook']);
-      artistUpdates['tiktok_url'] = toUrl(redesSociales['tiktok']);
-      final website = toUrl(redesSociales['website']);
-      if (website.isNotEmpty) artistUpdates['website_url'] = website;
-    }
+    // ─── 2. PATCH artista: usa slug-based URL (/api/v1/artists/{slug}/) ───
+    // /me/ solo soporta GET; PATCH requiere el slug real del perfil.
+    if (artistId != null && artistId.isNotEmpty) {
+      final artistUpdates = <String, dynamic>{};
+      if (nombreArtistico != null) artistUpdates['artistic_name'] = nombreArtistico;
+      if (disciplina != null) artistUpdates['discipline'] = disciplina;
+      if (biografia != null) artistUpdates['bio'] = biografia;
+      if (redesSociales != null) {
+        String toUrl(String? v) => v?.trim() ?? '';
+        artistUpdates['instagram_url'] = toUrl(redesSociales['instagram']);
+        artistUpdates['facebook_url'] = toUrl(redesSociales['facebook']);
+        artistUpdates['tiktok_url'] = toUrl(redesSociales['tiktok']);
+        final website = toUrl(redesSociales['website']);
+        if (website.isNotEmpty) artistUpdates['website_url'] = website;
+      }
 
-    if (artistUpdates.isNotEmpty) {
-      await _dio.patch(
-        ApiConstants.artistMe,
-        data: artistUpdates,
-        options: Options(contentType: 'application/json'),
-      );
+      if (artistUpdates.isNotEmpty) {
+        final artistPatchUrl =
+            ApiConstants.artistDetail.replaceAll('{id}', artistId);
+        await _dio.patch(
+          artistPatchUrl,
+          data: artistUpdates,
+          options: Options(contentType: 'application/json'),
+        );
+      }
     }
 
     // ─── 3. Refrescar desde /me/ para devolver datos actualizados ─────────

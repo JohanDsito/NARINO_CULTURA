@@ -14,7 +14,8 @@ class AuctionsService {
     final qp = <String, dynamic>{};
     if (participante != null) qp['participante'] = participante;
     if (artista != null) qp['artista'] = artista;
-    if (estado != null && estado.isNotEmpty) qp['estado'] = estado;
+    // Backend uses 'status' with uppercase values (ACTIVA, CERRADA, CANCELADA)
+    if (estado != null && estado.isNotEmpty) qp['status'] = estado.toUpperCase();
 
     final r = await _dio.get(ApiConstants.auctions, queryParameters: qp);
     final data = r.data;

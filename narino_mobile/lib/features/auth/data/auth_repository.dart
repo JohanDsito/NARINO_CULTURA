@@ -45,7 +45,7 @@ class AuthRepository {
     }
   }
 
-  Future<UserModel> register({
+  Future<void> register({
     required String firstName,
     required String email,
     required String password,
@@ -61,8 +61,6 @@ class AuthRepository {
     } on DioException catch (e) {
       throw FormatException(_parseAuthError(e, isRegister: true));
     }
-
-    return login(email: email, password: password);
   }
 
   Future<bool> hasToken() => StorageUtils.hasToken();

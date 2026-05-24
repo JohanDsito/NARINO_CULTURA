@@ -96,8 +96,8 @@ class _AuctionDetailScreenState extends ConsumerState<AuctionDetailScreen> {
 
   void _handleWsMessage(Map<String, dynamic> data) {
     final type = (data['type'] ?? data['event'])?.toString();
-    final forceClosed =
-        type != null && type.isNotEmpty && type == 'auction_closed';
+    // Backend emits 'closed' on close, 'bid' on new bid, 'snapshot' on connect
+    final forceClosed = type == 'closed' || type == 'auction_closed';
     _applyServerState(data, forceClosed: forceClosed);
     if (forceClosed) _timer?.cancel();
   }
@@ -107,31 +107,53 @@ class _AuctionDetailScreenState extends ConsumerState<AuctionDetailScreen> {
     final current = _auction;
     if (current == null) return;
 
-    final rawAuction = data['auction'];
-    final map = rawAuction is Map ? rawAuction.cast<String, dynamic>() : data;
+    // WS messages are flat (bid/snapshot), not full auction objects.
+    // Extract fields directly instead of running full fromJson.
+    double? newPrecio = _parseDouble(data['current_price']) ??
+        _parseDouble(data['amount']);
 
-    AuctionModel updated;
-    try {
-      updated = AuctionModel.fromJson(map);
-    } catch (_) {
-      updated = current;
+    DateTime? newCierre =
+        DateTime.tryParse(data['ends_at']?.toString() ?? '');
+
+    // Fallback: try nested 'auction' map (future-proofing)
+    final rawAuction = data['auction'];
+    if (rawAuction is Map) {
+      final nested = rawAuction.cast<String, dynamic>();
+      newPrecio ??= _parseDouble(nested['current_price']);
+      newCierre ??= DateTime.tryParse(nested['ends_at']?.toString() ?? '');
     }
 
+    // Bids list from WS (if included)
+    final bidsRaw = data['bids'] ?? data['ultimas_pujas'];
+    final newBids = bidsRaw is List
+        ? bidsRaw
+            .whereType<Map>()
+            .map((e) =>
+                AuctionBidModel.fromJson(e.cast<String, dynamic>()))
+            .take(5)
+            .toList()
+        : null;
+
+    // Winner from close event
+    final winnerId = data['winner_id']?.toString();
+
     final merged = current.copyWith(
-      precioActual: updated.precioActual,
-      totalPujas: updated.totalPujas,
-      ultimasPujas: updated.ultimasPujas.isNotEmpty
-          ? updated.ultimasPujas.take(5).toList()
-          : current.ultimasPujas,
-      estado: forceClosed ? 'cerrada' : updated.estado,
-      ganadorNombre: updated.ganadorNombre ?? current.ganadorNombre,
-      ganadorId: updated.ganadorId ?? current.ganadorId,
-      orderId: updated.orderId ?? current.orderId,
-      fechaCierre: updated.fechaCierre,
+      precioActual: newPrecio ?? current.precioActual,
+      fechaCierre: newCierre ?? current.fechaCierre,
+      totalPujas: newBids != null ? newBids.length : current.totalPujas,
+      ultimasPujas: newBids ?? current.ultimasPujas,
+      estado: forceClosed ? 'cerrada' : current.estado,
+      ganadorId: winnerId ?? current.ganadorId,
     );
 
     setState(() => _auction = merged);
     _syncCountdown();
+  }
+
+  static double? _parseDouble(dynamic v) {
+    if (v is num) return v.toDouble();
+    if (v is String) return double.tryParse(v);
+    return null;
   }
 
   // ─── Countdown ────────────────────────────────────────────────────────────

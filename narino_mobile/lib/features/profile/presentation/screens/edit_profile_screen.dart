@@ -56,7 +56,18 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   Future<void> _pickPhoto() async {
     final picked = await _picker.pickImage(
         source: ImageSource.gallery, imageQuality: 85, maxWidth: 800);
-    if (picked != null) setState(() => _nuevaFoto = File(picked.path));
+    if (picked != null) {
+      setState(() => _nuevaFoto = File(picked.path));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+                'La foto se muestra localmente. La subida de imágenes estará disponible pronto.'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _save() async {

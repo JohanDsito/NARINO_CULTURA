@@ -43,8 +43,11 @@ class AuctionModel {
     final obraRaw = json['obra'];
     final obraMap = obraRaw is Map ? obraRaw.cast<String, dynamic>() : null;
 
-    final rawPrecioBase = json['precio_base'] ?? json['precioBase'];
-    final rawPrecioActual = json['precio_actual'] ?? json['precioActual'];
+    // Prices — English (backend) first, then Spanish (legacy)
+    final rawPrecioBase =
+        json['base_price'] ?? json['precio_base'] ?? json['precioBase'];
+    final rawPrecioActual =
+        json['current_price'] ?? json['precio_actual'] ?? json['precioActual'];
 
     final precioBase = rawPrecioBase is num
         ? rawPrecioBase.toDouble()
@@ -53,8 +56,11 @@ class AuctionModel {
         ? rawPrecioActual.toDouble()
         : double.tryParse(rawPrecioActual?.toString() ?? '') ?? precioBase;
 
-    final rawInicio = json['fecha_inicio'] ?? json['fechaInicio'];
-    final rawCierre = json['fecha_cierre'] ?? json['fechaCierre'];
+    // Dates — English (backend) first, then Spanish (legacy)
+    final rawInicio =
+        json['starts_at'] ?? json['fecha_inicio'] ?? json['fechaInicio'];
+    final rawCierre =
+        json['ends_at'] ?? json['fecha_cierre'] ?? json['fechaCierre'];
 
     final inicio =
         DateTime.tryParse(rawInicio?.toString() ?? '') ?? DateTime.now();
@@ -71,7 +77,14 @@ class AuctionModel {
         .toList();
 
     final id = (json['id'] ?? json['obraId'])?.toString() ?? '';
-    final obraId = (json['obra_id'] ?? obraMap?['id'] ?? json['obraId'])?.toString() ?? '';
+
+    // artwork_id comes from backend as separate field; fallback to nested obra map
+    final obraId = (json['artwork_id'] ??
+            json['obra_id'] ??
+            obraMap?['id'] ??
+            json['obraId'])
+        ?.toString() ??
+        '';
 
     final obraTitulo = (json['obra_titulo'] ??
             json['obraTitulo'] ??
@@ -95,6 +108,18 @@ class AuctionModel {
         ? totalPujas
         : (int.tryParse(totalPujas?.toString() ?? '') ?? bidsList.length);
 
+    // Status — normalize to lowercase so comparisons like == 'activa' always work
+    final estado =
+        (json['status'] ?? json['estado'])?.toString().toLowerCase() ??
+            'activa';
+
+    // Winner — backend returns FK UUID in 'winner' field
+    final ganadorId = (json['winner'] ??
+            json['winner_id'] ??
+            json['ganador_id'] ??
+            json['ganadorId'])
+        ?.toString();
+
     return AuctionModel(
       id: id,
       obraId: obraId,
@@ -108,13 +133,13 @@ class AuctionModel {
       totalPujas: totalPujasInt,
       fechaInicio: inicio,
       fechaCierre: cierre,
-      estado: (json['estado'] ?? json['status'])?.toString() ?? 'activa',
+      estado: estado,
       ganadorNombre:
           (json['ganador_nombre'] ?? json['ganadorNombre'] ?? json['ganador'])
               ?.toString(),
       ultimasPujas: bidsList,
       artistaId: (json['artista_id'] ?? json['artistaId'])?.toString(),
-      ganadorId: (json['ganador_id'] ?? json['ganadorId'])?.toString(),
+      ganadorId: ganadorId,
       orderId: (json['order_id'] ?? json['orderId'])?.toString(),
     );
   }

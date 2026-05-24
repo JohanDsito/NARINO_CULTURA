@@ -1,3 +1,23 @@
+class CategoryModel {
+  const CategoryModel({
+    required this.id,
+    required this.name,
+    required this.slug,
+  });
+
+  final int id;
+  final String name;
+  final String slug;
+
+  factory CategoryModel.fromJson(Map<String, dynamic> json) {
+    return CategoryModel(
+      id: json['id'] as int,
+      name: json['name'] as String? ?? '',
+      slug: json['slug'] as String? ?? '',
+    );
+  }
+}
+
 /// Modelo de dominio que representa una obra de arte dentro del catálogo/marketplace.
 class ArtworkModel {
   final String id;
