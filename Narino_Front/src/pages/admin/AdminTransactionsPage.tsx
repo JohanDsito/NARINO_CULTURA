@@ -67,7 +67,9 @@ export default function AdminTransactionsPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3 font-body text-text-muted text-sm">
-                        {format(new Date(order.created_at), "d MMM yyyy", { locale: es })}
+                        {order.created_at
+                          ? format(new Date(order.created_at), 'd MMM yyyy', { locale: es })
+                          : '—'}
                       </td>
                     </tr>
                   )

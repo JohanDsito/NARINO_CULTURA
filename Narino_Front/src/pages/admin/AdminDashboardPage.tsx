@@ -284,9 +284,9 @@ export default function AdminDashboardPage() {
                         key={art.id}
                         className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 px-3 py-2.5"
                       >
-                        {(art.main_image_url || art.images[0]?.image_url) && (
+                        {(art.main_image_url || art.images?.[0]?.image_url) && (
                           <img
-                            src={art.main_image_url || art.images[0].image_url}
+                            src={art.main_image_url || art.images?.[0]?.image_url}
                             alt={art.title}
                             className="h-9 w-9 flex-none rounded object-cover"
                           />
@@ -416,13 +416,13 @@ export default function AdminDashboardPage() {
                         return (
                           <tr key={order.id} className="hover:bg-muted/30 transition-colors">
                             <td className="py-2.5 pr-4 font-mono text-xs text-foreground">
-                              #{order.id.slice(0, 8).toUpperCase()}
+                              #{(order.id ?? '').slice(0, 8).toUpperCase()}
                             </td>
                             <td className="py-2.5 pr-4 text-xs text-muted-foreground">
                               {order.order_type === 'COMPRA_DIRECTA' ? 'Directa' : 'Subasta'}
                             </td>
                             <td className="py-2.5 pr-4 text-xs font-semibold text-foreground">
-                              {formatCOP(parseFloat(order.total_amount))}
+                              {order.total_amount ? formatCOP(parseFloat(order.total_amount)) : '—'}
                             </td>
                             <td className="py-2.5 pr-4">
                               <span
@@ -432,7 +432,9 @@ export default function AdminDashboardPage() {
                               </span>
                             </td>
                             <td className="py-2.5 text-xs text-muted-foreground">
-                              {format(new Date(order.created_at), 'd MMM yyyy', { locale: es })}
+                              {order.created_at
+                                ? format(new Date(order.created_at), 'd MMM yyyy', { locale: es })
+                                : '—'}
                             </td>
                           </tr>
                         )

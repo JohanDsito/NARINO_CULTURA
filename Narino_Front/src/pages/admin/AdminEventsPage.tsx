@@ -123,7 +123,9 @@ export default function AdminEventsPage() {
                           {ev.location}
                         </span>
                         <span>
-                          {format(new Date(ev.start_date), "d MMM yyyy, HH:mm", { locale: es })}
+                          {ev.start_date
+                            ? format(new Date(ev.start_date), 'd MMM yyyy, HH:mm', { locale: es })
+                            : '—'}
                         </span>
                         <span className="text-muted-foreground/70">
                           Por: {ev.organizer.first_name} {ev.organizer.last_name}
