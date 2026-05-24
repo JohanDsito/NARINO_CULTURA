@@ -140,9 +140,21 @@ class MusicianProfileViewSet(viewsets.ModelViewSet):
 
 class MusicalWorkViewSet(viewsets.ModelViewSet):
     serializer_class = MusicalWorkSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return MusicalWork.objects.filter(musician__user=self.request.user)
+
+    def perform_create(self, serializer):
+        """Asigna automáticamente el músico del usuario actual."""
+        try:
+            musician = MusicianProfile.objects.get(user=self.request.user)
+            serializer.save(musician=musician)
+        except MusicianProfile.DoesNotExist:
+            return Response(
+                {"detail": "Necesitas crear un perfil de músico primero."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
     @action(detail=True, methods=["post"], url_path="view")
     def register_view(self, request, pk=None):

@@ -277,3 +277,136 @@ class FullAuthFlowTests(APITestCase):
         # 5. Logout
         r = self.client.post("/api/v1/auth/logout/", {"refresh": refresh}, format="json")
         self.assertEqual(r.status_code, 200)
+
+
+class JWTRoleClaimTests(APITestCase):
+    """Verify that JWT tokens include the 'role' claim."""
+
+    def setUp(self):
+        self.user = UserFactory(email="jwt@test.com", role="ARTISTA", is_verified=True)
+        self.user.set_password("StrongPass123!")
+        self.user.save()
+
+    def test_jwt_includes_role_claim(self):
+        """Login should return JWT with 'role' claim."""
+        r = self.client.post(
+            "/api/v1/auth/login/",
+            {"email": "jwt@test.com", "password": "StrongPass123!"},
+            format="json",
+        )
+        self.assertEqual(r.status_code, 200)
+
+        # Decode JWT to check role claim
+        import jwt
+        from django.conf import settings
+
+        token = r.data["access"]
+        decoded = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+
+        self.assertIn("role", decoded)
+        self.assertEqual(decoded["role"], "ARTISTA")
+
+    def test_jwt_role_claim_for_different_roles(self):
+        """Different roles should be included in JWT."""
+        roles = ["COMPRADOR", "GESTOR_CULTURAL", "ADMINISTRADOR"]
+
+        for role in roles:
+            user = UserFactory(email=f"user-{role}@test.com", role=role, is_verified=True)
+            user.set_password("StrongPass123!")
+            user.save()
+
+            r = self.client.post(
+                "/api/v1/auth/login/",
+                {"email": f"user-{role}@test.com", "password": "StrongPass123!"},
+                format="json",
+            )
+            self.assertEqual(r.status_code, 200)
+
+            import jwt
+            from django.conf import settings
+
+            token = r.data["access"]
+            decoded = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+            self.assertEqual(decoded["role"], role)
+
+
+class DeleteAccountTests(APITestCase):
+    """Test account deletion functionality."""
+
+    def setUp(self):
+        self.user = UserFactory(email="delete@test.com", is_verified=True)
+        self.user.set_password("StrongPass123!")
+        self.user.save()
+
+    def _get_token(self, user):
+        from rest_framework_simplejwt.tokens import RefreshToken
+        return str(RefreshToken.for_user(user).access_token)
+
+    def test_delete_account_requires_authentication(self):
+        """Delete account endpoint requires authentication."""
+        r = self.client.delete(
+            "/api/v1/auth/delete-account/",
+            {"password": "StrongPass123!"},
+            format="json",
+        )
+        self.assertEqual(r.status_code, 401)
+
+    def test_delete_account_requires_password(self):
+        """Delete account requires password confirmation."""
+        token = self._get_token(self.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
+
+        r = self.client.delete("/api/v1/auth/delete-account/", {}, format="json")
+        self.assertEqual(r.status_code, 400)
+        self.assertIn("contraseña", r.data["detail"].lower())
+
+    def test_delete_account_with_wrong_password_fails(self):
+        """Delete account with wrong password should fail."""
+        token = self._get_token(self.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
+
+        r = self.client.delete(
+            "/api/v1/auth/delete-account/",
+            {"password": "WrongPassword!"},
+            format="json",
+        )
+        self.assertEqual(r.status_code, 400)
+
+    def test_delete_account_with_correct_password_succeeds(self):
+        """Delete account with correct password should succeed."""
+        token = self._get_token(self.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
+
+        user_id = self.user.id
+
+        r = self.client.delete(
+            "/api/v1/auth/delete-account/",
+            {"password": "StrongPass123!"},
+            format="json",
+        )
+        self.assertEqual(r.status_code, 204)
+
+        # Verify user is deleted
+        self.assertFalse(User.objects.filter(id=user_id).exists())
+
+    def test_deleted_account_cannot_login(self):
+        """After deletion, user cannot login with same credentials."""
+        # First delete
+        token = self._get_token(self.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
+
+        r = self.client.delete(
+            "/api/v1/auth/delete-account/",
+            {"password": "StrongPass123!"},
+            format="json",
+        )
+        self.assertEqual(r.status_code, 204)
+
+        # Try to login with deleted account
+        self.client.credentials()  # Clear auth
+        r = self.client.post(
+            "/api/v1/auth/login/",
+            {"email": "delete@test.com", "password": "StrongPass123!"},
+            format="json",
+        )
+        self.assertEqual(r.status_code, 401)

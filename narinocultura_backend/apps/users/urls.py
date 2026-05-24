@@ -11,6 +11,7 @@ urlpatterns = [
     path("auth/logout/", views.LogoutAPIView.as_view()),
     path("auth/password-reset/", views.PasswordResetRequestAPIView.as_view()),
     path("auth/password-reset/confirm/", views.PasswordResetConfirmAPIView.as_view()),
+    path("auth/delete-account/", views.DeleteAccountAPIView.as_view()),
     path("users/me/", views.MeAPIView.as_view()),
     path("users/me/password/", views.MePasswordAPIView.as_view()),
 ]

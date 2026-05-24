@@ -184,6 +184,7 @@ SIMPLE_JWT = {
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     "UPDATE_LAST_LOGIN": True,
+    "TOKEN_OBTAIN_SERIALIZER": "apps.users.token_serializers.CustomTokenObtainPairSerializer",
 }
 
 CORS_ALLOWED_ORIGINS = [o for o in config("CORS_ALLOWED_ORIGINS", default="", cast=Csv()) if o]
