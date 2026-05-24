@@ -7,6 +7,7 @@ from utils.models import TimeStampedUUIDModel
 
 class Auction(TimeStampedUUIDModel):
     class Status(models.TextChoices):
+        PENDIENTE = "PENDIENTE", "Pendiente de aprobación"
         ACTIVA = "ACTIVA", "Activa"
         CERRADA = "CERRADA", "Cerrada"
         CANCELADA = "CANCELADA", "Cancelada"

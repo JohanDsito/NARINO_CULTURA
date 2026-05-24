@@ -32,12 +32,38 @@ class AuctionService:
             current_price=base_price,
             starts_at=starts_at,
             ends_at=ends_at,
-            status=Auction.Status.ACTIVA,
+            status=Auction.Status.PENDIENTE,
         )
-        artwork.status = Artwork.Status.EN_SUBASTA
-        artwork.save(update_fields=["status", "updated_at"])
-        NotificationService.send("AUCTION_OPENED", {"auction_id": str(auction.id), "artwork_id": str(artwork.id)}, user=seller)
+        NotificationService.send("AUCTION_PENDING", {"auction_id": str(auction.id), "artwork_id": str(artwork.id)}, user=seller)
         return auction
+
+    @staticmethod
+    @transaction.atomic
+    def approve_auction(*, auction: Auction, actor) -> Auction:
+        if getattr(actor, "role", None) != "ADMINISTRADOR":
+            raise ValueError("Solo un administrador puede aprobar subastas.")
+        locked = Auction.objects.select_for_update().select_related("artwork").get(id=auction.id)
+        if locked.status != Auction.Status.PENDIENTE:
+            raise ValueError("Solo se pueden aprobar subastas en estado PENDIENTE.")
+        locked.status = Auction.Status.ACTIVA
+        locked.save(update_fields=["status", "updated_at"])
+        locked.artwork.status = Artwork.Status.EN_SUBASTA
+        locked.artwork.save(update_fields=["status", "updated_at"])
+        NotificationService.send("AUCTION_OPENED", {"auction_id": str(locked.id), "artwork_id": str(locked.artwork_id)}, user=actor)
+        return locked
+
+    @staticmethod
+    @transaction.atomic
+    def reject_auction(*, auction: Auction, actor) -> Auction:
+        if getattr(actor, "role", None) != "ADMINISTRADOR":
+            raise ValueError("Solo un administrador puede rechazar subastas.")
+        locked = Auction.objects.select_for_update().select_related("artwork").get(id=auction.id)
+        if locked.status != Auction.Status.PENDIENTE:
+            raise ValueError("Solo se pueden rechazar subastas en estado PENDIENTE.")
+        locked.status = Auction.Status.CANCELADA
+        locked.save(update_fields=["status", "updated_at"])
+        NotificationService.send("AUCTION_REJECTED", {"auction_id": str(locked.id)}, user=actor)
+        return locked
 
     @staticmethod
     @transaction.atomic

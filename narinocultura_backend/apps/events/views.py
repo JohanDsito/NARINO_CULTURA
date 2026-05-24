@@ -13,6 +13,7 @@ from apps.events.serializers import (
 )
 from services.event_service import EventService
 from services.notification_service import NotificationService
+from utils.permissions import IsAdmin
 
 
 class EventViewSet(viewsets.ModelViewSet):
@@ -88,6 +89,28 @@ class EventViewSet(viewsets.ModelViewSet):
             response_data["event"] = EventSerializer(event, context={"request": request}).data
 
         return Response(response_data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["post"], url_path="approve", permission_classes=[IsAdmin])
+    def approve(self, request, pk=None):
+        event = self.get_object()
+        if event.is_published:
+            return Response({"detail": "El evento ya está publicado."}, status=400)
+        event.is_published = True
+        event.save(update_fields=["is_published"])
+        NotificationService.send(
+            "EVENT_PUBLISHED",
+            {"event_id": str(event.id), "title": event.title, "start_date": event.start_date.isoformat()},
+            user=request.user,
+        )
+        return Response({"detail": "Evento aprobado y publicado."})
+
+    @action(detail=True, methods=["post"], url_path="reject", permission_classes=[IsAdmin])
+    def reject(self, request, pk=None):
+        event = self.get_object()
+        if event.is_published:
+            return Response({"detail": "No se puede rechazar un evento ya publicado."}, status=400)
+        event.delete()
+        return Response({"detail": "Evento rechazado y eliminado."}, status=200)
 
     @action(detail=True, methods=["post"], url_path="register")
     @transaction.atomic

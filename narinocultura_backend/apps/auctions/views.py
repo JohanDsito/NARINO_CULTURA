@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from apps.auctions.models import Auction
 from apps.auctions.serializers import AuctionSerializer, BidCreateSerializer
 from services.auction_service import AuctionService
+from utils.permissions import IsAdmin
 
 
 class AuctionViewSet(viewsets.ModelViewSet):
@@ -67,4 +68,22 @@ class AuctionViewSet(viewsets.ModelViewSet):
         except ValueError as e:
             return Response({"detail": str(e)}, status=400)
         return Response({"detail": "Subasta cerrada."})
+
+    @action(detail=True, methods=["post"], url_path="approve", permission_classes=[IsAdmin])
+    def approve(self, request, pk=None):
+        auction = self.get_object()
+        try:
+            AuctionService.approve_auction(auction=auction, actor=request.user)
+        except ValueError as e:
+            return Response({"detail": str(e)}, status=400)
+        return Response({"detail": "Subasta aprobada y activada."})
+
+    @action(detail=True, methods=["post"], url_path="reject", permission_classes=[IsAdmin])
+    def reject(self, request, pk=None):
+        auction = self.get_object()
+        try:
+            AuctionService.reject_auction(auction=auction, actor=request.user)
+        except ValueError as e:
+            return Response({"detail": str(e)}, status=400)
+        return Response({"detail": "Subasta rechazada."})
 
