@@ -144,7 +144,12 @@ REST_FRAMEWORK = {
     # TEMPORAL: Rate limiting desactivado mientras se agrega Redis a Railway
     # TODO: Re-habilitar después de comprar espacio en Railway para Redis
     "DEFAULT_THROTTLE_CLASSES": [],
-    "DEFAULT_THROTTLE_RATES": {},
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "200/hour",
+        "user": "2000/hour",
+        "auth_anon": "5/minute",
+        "password_reset": "3/hour",
+    },
 }
 
 SPECTACULAR_SETTINGS = {
