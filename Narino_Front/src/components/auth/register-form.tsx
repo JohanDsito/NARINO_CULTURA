@@ -28,7 +28,7 @@ const schema = z
     confirmPassword: z.string().min(PASSWORD_MIN_LENGTH, PASSWORD_LENGTH_MESSAGE).max(PASSWORD_MAX_LENGTH, PASSWORD_LENGTH_MESSAGE),
     firstName: z.string().min(1, 'El nombre es obligatorio.'),
     lastName: z.string().min(1, 'El apellido es obligatorio.'),
-    role: z.enum(['buyer', 'artist', 'cultural_manager'] as const satisfies readonly Role[], {
+    role: z.enum(['buyer', 'artist'] as const satisfies readonly Role[], {
       message: 'Selecciona un tipo de usuario.',
     }),
     phone: z.string().optional(),
@@ -203,7 +203,6 @@ export function RegisterForm() {
           <Select id="role" {...register('role')} aria-label="Seleccionar tipo de usuario">
             <option value="buyer">Comprador</option>
             <option value="artist">Artista</option>
-            <option value="cultural_manager">Gestor cultural</option>
           </Select>
           {errors.role ? <p className="text-xs text-destructive">{errors.role.message}</p> : null}
         </div>
