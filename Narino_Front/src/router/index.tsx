@@ -177,6 +177,14 @@ export const router = createBrowserRouter([
 
       // ── Dashboard del artista ─────────────────────────────────────────────
       {
+        path: 'dashboard',
+        element: (
+          <ProtectedRoute allowedRoles={[ROLE.artist]}>
+            {lazyPage(() => import('@/pages/artist/ArtistRoleSelectPage'), 'Cargando panel…')}
+          </ProtectedRoute>
+        ),
+      },
+      {
         path: 'dashboard/profile',
         element: (
           <ProtectedRoute allowedRoles={[ROLE.artist]}>
@@ -221,6 +229,32 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={[ROLE.artist]}>
             {lazyPage(() => import('@/pages/artist/ArtistAnalyticsPage'), 'Cargando analítica…')}
+          </ProtectedRoute>
+        ),
+      },
+
+      // ── Dashboard del músico ──────────────────────────────────────────────
+      {
+        path: 'dashboard/musician/profile',
+        element: (
+          <ProtectedRoute allowedRoles={[ROLE.artist]}>
+            {lazyPage(() => import('@/pages/musicians/MusicianDashboardPage'), 'Cargando panel musical…')}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'dashboard/musician/works',
+        element: (
+          <ProtectedRoute allowedRoles={[ROLE.artist]}>
+            {lazyPage(() => import('@/pages/musicians/MusicianWorksPage'), 'Cargando obras…')}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'dashboard/musician/works/new',
+        element: (
+          <ProtectedRoute allowedRoles={[ROLE.artist]}>
+            {lazyPage(() => import('@/pages/musicians/MusicianWorkCreatePage'), 'Cargando formulario…')}
           </ProtectedRoute>
         ),
       },

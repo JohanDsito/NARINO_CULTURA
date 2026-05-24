@@ -117,3 +117,64 @@ export async function musicDiscovery(query: string): Promise<MusicDiscoveryResul
   )
   return data
 }
+
+// ── Musical Works (owner) ──────────────────────────────────────────────────────
+
+export interface CreateMusicalWorkPayload {
+  title: string
+  work_type: 'VIDEO' | 'LIVE' | 'STUDIO' | 'COVER' | 'PODCAST'
+  youtube_url?: string
+  soundcloud_embed?: string
+  spotify_track_url?: string
+  description?: string
+  release_date?: string
+  duration_seconds?: number
+  is_featured?: boolean
+}
+
+export async function listMyMusicalWorks(): Promise<MusicalWork[]> {
+  const { data } = await axiosInstance.get<MusicalWork[] | PaginatedResponse<MusicalWork>>(
+    '/api/v1/musicians/works/',
+  )
+  return Array.isArray(data) ? data : data.results ?? []
+}
+
+export async function createMusicalWork(payload: CreateMusicalWorkPayload): Promise<MusicalWork> {
+  const { data } = await axiosInstance.post<MusicalWork>('/api/v1/musicians/works/', payload)
+  return data
+}
+
+export async function getMusicalWork(id: string): Promise<MusicalWork> {
+  const { data } = await axiosInstance.get<MusicalWork>(`/api/v1/musicians/works/${id}/`)
+  return data
+}
+
+export async function updateMusicalWork(
+  id: string,
+  payload: Partial<CreateMusicalWorkPayload>,
+): Promise<MusicalWork> {
+  const { data } = await axiosInstance.patch<MusicalWork>(
+    `/api/v1/musicians/works/${id}/`,
+    payload,
+  )
+  return data
+}
+
+export async function deleteMusicalWork(id: string): Promise<void> {
+  await axiosInstance.delete(`/api/v1/musicians/works/${id}/`)
+}
+
+export async function registerWorkView(id: string): Promise<void> {
+  await axiosInstance.post(`/api/v1/musicians/works/${id}/view/`)
+}
+
+export async function addMusicianReview(
+  slug: string,
+  payload: { rating: number; comment: string },
+): Promise<MusicianReview> {
+  const { data } = await axiosInstance.post<MusicianReview>(
+    `/api/v1/musicians/${slug}/reviews/`,
+    payload,
+  )
+  return data
+}

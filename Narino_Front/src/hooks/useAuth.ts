@@ -20,7 +20,7 @@ export function useLogin() {
 
       const roleRoutes: Record<string, string> = {
         admin: '/admin/dashboard',
-        artist: '/dashboard/profile',
+        artist: '/dashboard',
         cultural_manager: '/events',
         buyer: '/marketplace',
       }

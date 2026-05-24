@@ -24,12 +24,19 @@ export const ROUTES = {
   PAYMENT_PENDING: '/payment/pending',
   PAYMENT_DECLINED: '/payment/declined',
   DASHBOARD: {
+    SELECT: '/dashboard',
     PROFILE: '/dashboard/profile',
     ARTWORKS: '/dashboard/artworks',
     ARTWORKS_NEW: '/dashboard/artworks/new',
     ARTWORK_EDIT: (id: string | number) => `/dashboard/artworks/${id}/edit`,
     SALES: '/dashboard/sales',
     ANALYTICS: '/dashboard/analytics',
+    MUSICIAN: {
+      PROFILE: '/dashboard/musician/profile',
+      WORKS: '/dashboard/musician/works',
+      WORKS_NEW: '/dashboard/musician/works/new',
+      WORK_EDIT: (id: string) => `/dashboard/musician/works/${id}/edit`,
+    },
   },
   ADMIN: {
     DASHBOARD: '/admin/dashboard',
