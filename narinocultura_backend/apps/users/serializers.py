@@ -16,6 +16,9 @@ class RegisterSerializer(serializers.ModelSerializer):
         roles = {c for c, _ in User.Role.choices}
         if value not in roles:
             raise serializers.ValidationError("Rol inválido.")
+        self_registerable = {User.Role.ARTISTA, User.Role.COMPRADOR}
+        if value not in self_registerable:
+            raise serializers.ValidationError("Este rol solo puede ser asignado por un administrador.")
         return value
 
     def create(self, validated_data):

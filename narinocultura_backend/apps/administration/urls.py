@@ -4,6 +4,7 @@ from apps.administration import views
 
 
 urlpatterns = [
+    path("admin/users/", views.AdminCreateUserAPIView.as_view()),
     path("admin/users/<uuid:pk>/", views.AdminUserDetailAPIView.as_view()),
     path("admin/artworks/pending/", views.PendingArtworksAPIView.as_view()),
     path("admin/artworks/<uuid:pk>/moderate/", views.ModerateArtworkAPIView.as_view()),

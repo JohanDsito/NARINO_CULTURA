@@ -1,3 +1,6 @@
+import logging
+import secrets
+
 from django.db.models import Count
 from rest_framework import generics, status
 from rest_framework.response import Response
@@ -10,8 +13,55 @@ from apps.marketplace.models import Order
 from apps.notifications.models import NotificationLog
 from apps.payments.models import Transaction
 from apps.users.models import User
-from apps.administration.serializers import AdminUserSerializer, ArtworkModerationSerializer
+from apps.administration.serializers import AdminCreateUserSerializer, AdminUserSerializer, ArtworkModerationSerializer
+from services.email_service import EmailService
 from utils.permissions import IsAdmin
+
+logger = logging.getLogger(__name__)
+
+
+class AdminCreateUserAPIView(APIView):
+    """Create a user account with any role (including GESTOR_CULTURAL). Admin only."""
+
+    permission_classes = [IsAdmin]
+
+    def post(self, request):
+        serializer = AdminCreateUserSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        temp_password = secrets.token_urlsafe(12)
+        user = User.objects.create_user(
+            email=data["email"],
+            password=temp_password,
+            first_name=data["first_name"],
+            last_name=data["last_name"],
+            role=data["role"],
+            phone=data.get("phone", ""),
+            is_verified=True,
+        )
+
+        full_name = f"{user.first_name} {user.last_name}".strip() or user.email
+        result = EmailService.send_admin_created_account_email(
+            user_email=user.email,
+            user_name=full_name,
+            temp_password=temp_password,
+            role_display=user.get_role_display(),
+        )
+        if not result.ok:
+            logger.warning(f"No se pudo enviar email de credenciales a {user.email}: {result.error_message}")
+
+        return Response(
+            {
+                "id": str(user.id),
+                "email": user.email,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "role": user.role,
+                "is_verified": user.is_verified,
+            },
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class AdminUserDetailAPIView(generics.RetrieveUpdateAPIView):

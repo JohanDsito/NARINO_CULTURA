@@ -1,19 +1,103 @@
 services:
   postgres:
     image: postgres:15
+    container_name: narinocultura-postgres
     environment:
       POSTGRES_DB: ${DB_NAME:-narinocultura}
       POSTGRES_USER: ${DB_USER:-narinocultura}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-change-me}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-narinocultura123}
+      PGUSER: ${DB_USER:-narinocultura}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-narinocultura}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
-    image: redis:7
+    image: redis:7-alpine
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  django:
+    build: .
+    container_name: narinocultura-django
+    env_file:
+      - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.development
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./narinocultura_backend:/app/narinocultura_backend/narinocultura_backend
+      - mediafiles:/app/mediafiles
+    command: >
+      sh -c "cd /app/narinocultura_backend &&
+             python manage.py migrate &&
+             python manage.py seed_music_genres &&
+             python -m daphne -b 0.0.0.0 -p 8000 config.asgi:application"
+
+  celery_worker:
+    build: .
+    container_name: narinocultura-celery-worker
+    env_file:
+      - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.development
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./narinocultura_backend:/app/narinocultura_backend
+    command: sh -c "cd /app/narinocultura_backend && celery -A config worker --loglevel=info --concurrency=2"
+
+  celery_beat:
+    build: .
+    container_name: narinocultura-celery-beat
+    env_file:
+      - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.development
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      django:
+        condition: service_started
+    volumes:
+      - ./narinocultura_backend:/app/narinocultura_backend
+    command: sh -c "cd /app/narinocultura_backend && sleep 5 && celery -A config beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler"
+
+  ai_service:
+    build: ./ai_service
+    ports:
+      - "8001:8001"
+    env_file:
+      - .env
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
 
   n8n:
     image: n8nio/n8n:latest
@@ -27,21 +111,7 @@ services:
     volumes:
       - n8n_data:/home/node/.n8n
 
-  django:
-    build: .
-    env_file:
-      - .env
-    environment:
-      - DJANGO_SETTINGS_MODULE=config.settings.development
-    depends_on:
-      - postgres
-      - redis
-    ports:
-      - "8000:8000"
-    command: >
-      sh -c "python manage.py migrate &&
-              python -m daphne -b 0.0.0.0 -p 8000 config.asgi:application"
-
 volumes:
   postgres_data:
   n8n_data:
+  mediafiles:

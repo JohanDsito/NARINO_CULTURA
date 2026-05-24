@@ -1,17 +1,20 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-COPY requirements.txt /app/requirements.txt
+# Copy requirements first for better caching
+COPY requirements.txt /app/
+
+# Install dependencies
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
-COPY . /app
+# Copy the entire project
+COPY . /app/
 
 EXPOSE 8000
 
-WORKDIR /app/narinocultura_backend
-
-CMD ["python", "-m", "daphne", "-b", "0.0.0.0", "-p", "8000", "config.asgi:application"]
+# Default command for Django service
+CMD ["sh", "-c", "cd /app/narinocultura_backend && python manage.py migrate && python manage.py seed_music_genres && python -m daphne -b 0.0.0.0 -p 8000 config.asgi:application"]

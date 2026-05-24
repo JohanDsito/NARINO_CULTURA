@@ -22,3 +22,24 @@ dist/
 .dockerignore
 
 Narino_Front/
+
+ARCHITECTURE.md
+
+DEPLOYMENT.md
+
+IMPLEMENTATION_STATUS.md
+
+postman_musicians_collection.json
+
+QUICKSTART_TESTING.md
+
+repomix-output.xml
+
+TESTING_MUSICIANS_MODULE.md
+
+TESTING_EMAIL_SYSTEM.md
+
+.claude/
+.github/
+.vscode/
+.docs/
