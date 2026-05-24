@@ -1,9 +1,11 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
+// Local UI cart — used for guests (no auth required).
+// On login, syncCartToServer() transfers items to the backend server cart.
 export interface CartItem {
-  id: number
-  artwork_id: number
+  id: string          // artwork UUID (used as unique key)
+  artwork_id: string  // same as id — kept for semantic clarity
   title: string
   artist_name: string
   price: number
@@ -23,8 +25,8 @@ interface CartState {
   items: CartItem[]
   isOpen: boolean
   addItem: (item: Omit<CartItem, 'quantity'>) => void
-  removeItem: (artwork_id: number) => void
-  updateQuantity: (artwork_id: number, quantity: number) => void
+  removeItem: (artwork_id: string) => void
+  updateQuantity: (artwork_id: string, quantity: number) => void
   clearCart: () => void
   toggleCart: () => void
   total: () => number
@@ -44,12 +46,14 @@ export const useCartStore = create<CartState>()(
       },
 
       removeItem: (artwork_id) =>
-        set((state) => ({ items: state.items.filter((i) => i.artwork_id !== artwork_id) })),
+        set((state) => ({
+          items: state.items.filter((i) => i.artwork_id !== artwork_id),
+        })),
 
       updateQuantity: (artwork_id, quantity) =>
         set((state) => ({
           items: state.items.map((i) =>
-            i.artwork_id === artwork_id ? { ...i, quantity } : i
+            i.artwork_id === artwork_id ? { ...i, quantity } : i,
           ),
         })),
 
@@ -64,6 +68,6 @@ export const useCartStore = create<CartState>()(
     {
       name: 'cart-storage',
       partialize: (state) => ({ items: state.items }),
-    }
-  )
+    },
+  ),
 )

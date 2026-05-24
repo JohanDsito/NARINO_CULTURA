@@ -13,20 +13,21 @@ import {
 } from 'lucide-react'
 
 import { useLogout } from '@/hooks/useAuth'
-import { useTheme } from '@/hooks/useTheme'
 import { useAuthStore } from '@/store/authStore'
 import { useCartStore } from '@/store/cartStore'
+import { useThemeStore } from '@/store/themeStore'
 
 const links = [
   { to: '/artists', label: 'Artistas' },
   { to: '/artworks', label: 'Obras' },
+  { to: '/musicians', label: 'Músicos' },
   { to: '/marketplace', label: 'Marketplace' },
   { to: '/auctions', label: 'Subastas' },
   { to: '/events', label: 'Eventos' },
 ]
 
 export function Navbar() {
-  const { theme, toggle } = useTheme()
+  const { theme, toggle } = useThemeStore()
   const { pathname } = useLocation()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const cartCount = useCartStore((s) => s.items.length)

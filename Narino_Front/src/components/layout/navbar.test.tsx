@@ -81,19 +81,20 @@ describe('Navbar', () => {
       accessToken: 'access-token',
       refreshToken: 'refresh-token',
       user: {
-        id: 1,
+        id: '1',
         email: 'artist@test.com',
         first_name: 'Ana',
         last_name: 'Mora',
         role: 'artist',
+        is_verified: true,
       },
     })
 
     useCartStore.setState({
       items: [
         {
-          id: 1,
-          artwork_id: 10,
+          id: '1',
+          artwork_id: '10',
           title: 'Obra',
           artist_name: 'Ana',
           price: 1000,
@@ -131,11 +132,12 @@ describe('Navbar', () => {
       accessToken: 'access-token',
       refreshToken: 'refresh-token',
       user: {
-        id: 1,
+        id: '1',
         email: 'admin@test.com',
         first_name: 'Admin',
         last_name: 'User',
         role: 'admin',
+        is_verified: true,
       },
     })
 

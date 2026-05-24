@@ -67,13 +67,12 @@ describe('ArtistDashboardPage', () => {
       accessToken: 'access-token',
       refreshToken: 'refresh-token',
       user: {
-        id: 7,
+        id: '7',
         email: 'artist@test.com',
         first_name: 'Ana',
         last_name: 'Mora',
         role: 'artist',
-        city: 'Pasto',
-        category: 'Música',
+        is_verified: true,
       },
     })
   })

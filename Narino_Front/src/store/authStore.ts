@@ -63,7 +63,16 @@ export const useAuthStore = create<AuthState>()(
         return {
           ...current,
           ...state,
-          user: state.user ? { ...state.user, role: normalizeUserRole(state.user.role) } : null,
+          user: state.user
+            ? {
+                ...state.user,
+                role: normalizeUserRole(state.user.role),
+                // Shim: old localStorage may have "avatar" instead of "avatar_url"
+                avatar_url:
+                  state.user.avatar_url ??
+                  (state.user as unknown as Record<string, string>)['avatar'],
+              }
+            : null,
           accessToken,
           refreshToken,
           isAuthenticated: Boolean(accessToken),

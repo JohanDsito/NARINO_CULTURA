@@ -2,6 +2,7 @@ import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { authApi } from '@/api/auth.api'
+import { syncCartToServer } from '@/hooks/useCartSync'
 import { useAuthStore } from '@/store/authStore'
 import type { LoginCredentials, RegisterData } from '@/types/auth'
 
@@ -13,6 +14,8 @@ export function useLogin() {
     mutationFn: (credentials: LoginCredentials) => authApi.login(credentials),
     onSuccess: ({ tokens, user }) => {
       setAuth(user, tokens.access, tokens.refresh)
+      // Sync local guest cart to backend server cart silently
+      void syncCartToServer()
       toast.success(`Bienvenido, ${user.first_name}`)
 
       const roleRoutes: Record<string, string> = {

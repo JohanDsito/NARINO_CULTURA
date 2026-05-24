@@ -21,11 +21,7 @@ const mockedListArtistProfiles = vi.mocked(listArtistProfiles)
 
 function renderArtistArtworksPage() {
   const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-      },
-    },
+    defaultOptions: { queries: { retry: false } },
   })
 
   return render(
@@ -47,11 +43,12 @@ describe('ArtistArtworksPage', () => {
       accessToken: 'access-token',
       refreshToken: 'refresh-token',
       user: {
-        id: 7,
+        id: '7',
         email: 'artist@test.com',
         first_name: 'Ana',
         last_name: 'Mora',
         role: 'artist',
+        is_verified: true,
       },
     })
 
@@ -77,63 +74,51 @@ describe('ArtistArtworksPage', () => {
     ])
   })
 
-  it('renders artworks owned by the logged artist', async () => {
-    mockedGetArtworks.mockResolvedValue([
-      {
-        id: 10,
-        title: 'Cancion del sur',
-        slug: 'cancion-del-sur',
-        description: 'Demo musical inspirado en Narino',
-        price: 0,
-        category: 'MUSICA',
-        technique: '',
-        status: 'DISPONIBLE',
-        images: [],
-        artist: {
-          id: 3,
-          slug: 'ana-mora',
-          artistic_name: 'Ana Mora',
+  it('renders artworks returned by the server for this artist', async () => {
+    mockedGetArtworks.mockResolvedValue({
+      count: 1,
+      next: null,
+      previous: null,
+      results: [
+        {
+          id: '10',
+          title: 'Pintura del sur',
+          description: 'Obra inspirada en Nariño',
+          price: '150000',
+          category: { id: 1, name: 'Pintura', slug: 'pintura' },
+          technique: 'Óleo',
+          dimensions: '',
+          material: '',
+          status: 'DISPONIBLE',
+          main_image_url: '',
+          ai_tags: {},
+          ai_description: '',
+          views_count: 0,
+          images: [],
+          artist: '3',
+          created_at: '',
+          updated_at: '',
         },
-        views_count: 0,
-        likes_count: 0,
-        created_at: '',
-        updated_at: '',
-        genre: 'Andina',
-        release_date: '2026-05-01',
-      },
-      {
-        id: 11,
-        title: 'Obra de otro artista',
-        slug: 'obra-otro',
-        description: 'No debe aparecer',
-        price: 1000,
-        category: 'PINTURA',
-        technique: 'Oleo',
-        status: 'DISPONIBLE',
-        images: [],
-        artist: {
-          id: 99,
-          slug: 'otro-artista',
-          artistic_name: 'Otro Artista',
-        },
-        views_count: 0,
-        likes_count: 0,
-        created_at: '',
-        updated_at: '',
-      },
-    ] as Awaited<ReturnType<typeof getArtworks>>)
+      ],
+    })
 
     renderArtistArtworksPage()
 
-    expect(await screen.findByText('Cancion del sur')).toBeInTheDocument()
-    expect(screen.queryByText('Obra de otro artista')).not.toBeInTheDocument()
+    expect(await screen.findByText('Pintura del sur')).toBeInTheDocument()
   })
 
   it('shows an empty state when the artist has no artworks', async () => {
-    mockedGetArtworks.mockResolvedValue([])
+    mockedGetArtworks.mockResolvedValue({
+      count: 0,
+      next: null,
+      previous: null,
+      results: [],
+    })
 
     renderArtistArtworksPage()
 
-    expect(await screen.findByText(/aun no tienes obras registradas/i)).toBeInTheDocument()
+    expect(
+      await screen.findByText(/aún no tienes obras registradas/i),
+    ).toBeInTheDocument()
   })
 })

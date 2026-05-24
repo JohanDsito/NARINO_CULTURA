@@ -18,7 +18,7 @@ export default function ArtistDashboardPage() {
 
   const profileQuery = useQuery({
     queryKey: ['artist-profile', 'me'],
-    queryFn: listArtistProfiles,
+    queryFn: () => listArtistProfiles(),
     enabled: user?.role === 'artist',
   })
 
@@ -30,10 +30,10 @@ export default function ArtistDashboardPage() {
   const initialForm = useMemo(() => {
     const defaultName = `${user?.first_name ?? ''} ${user?.last_name ?? ''}`.trim()
     return {
-      artistic_name: profile?.artistic_name ?? user?.artistic_name ?? defaultName,
-      city: profile?.city ?? user?.city ?? '',
-      discipline: profile?.discipline ?? user?.category ?? '',
-      bio: profile?.bio ?? user?.bio ?? '',
+      artistic_name: profile?.artistic_name ?? defaultName,
+      city: profile?.city ?? '',
+      discipline: profile?.discipline ?? '',
+      bio: profile?.bio ?? '',
     }
   }, [profile, user])
 

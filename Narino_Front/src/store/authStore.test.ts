@@ -6,12 +6,12 @@ import {
 } from '@/store/authStore'
 
 const user: User = {
-  id: 1,
+  id: '1',
   email: 'ana@test.com',
   first_name: 'Ana',
   last_name: 'Mora',
-  artistic_name: 'ARTISTA',
   role: 'artist',
+  is_verified: true,
 }
 
 describe('authStore', () => {

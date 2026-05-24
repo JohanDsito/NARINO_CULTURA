@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Edit, ImageIcon, Music, Plus, RefreshCw } from 'lucide-react'
+import { Edit, ImageIcon, Plus, RefreshCw } from 'lucide-react'
 
 import { getArtworks } from '@/api/artworks.api'
 import { listArtistProfiles } from '@/api/artists.api'
@@ -10,75 +10,32 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { ROUTES } from '@/constants/routes'
 import { useAuthStore } from '@/store/authStore'
-import type { Artwork } from '@/types/auth'
+import type { ArtworkStatus } from '@/types/auth'
 
-type ArtworkLike = Artwork & {
-  image?: string
-  image_url?: string
-  category?: string | { id?: number; name?: string; slug?: string }
-  release_date?: string
-  composer?: string
-  genre?: string
-  demo?: string
-  artist?: Artwork['artist'] & {
-    user_id?: string | number
-    artistic_name?: string
-    user?: { id?: string | number }
-  }
-}
-
-function formatPrice(value?: number) {
+function formatPrice(value: string | undefined) {
   if (!value) return 'Sin precio'
-
+  const n = parseFloat(value)
+  if (isNaN(n)) return 'Sin precio'
   return new Intl.NumberFormat('es-CO', {
     style: 'currency',
     currency: 'COP',
     maximumFractionDigits: 0,
-  }).format(value)
+  }).format(n)
 }
 
-function getArtworkImage(artwork: ArtworkLike) {
-  return artwork.images?.[0]?.url || artwork.image_url || artwork.image || ''
-}
-
-function getCategoryName(category: ArtworkLike['category']) {
-  if (!category) return 'Sin categoria'
-  if (typeof category === 'string') return category
-  return category.name || category.slug || 'Sin categoria'
-}
-
-function isMusicArtwork(artwork: ArtworkLike) {
-  const category = getCategoryName(artwork.category)
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-
-  return category.includes('music') || Boolean(artwork.demo || artwork.release_date || artwork.genre)
-}
-
-function statusLabel(status?: string) {
-  const labels: Record<string, string> = {
-    DISPONIBLE: 'Disponible',
-    EN_SUBASTA: 'En subasta',
-    VENDIDO: 'Vendido',
-    PENDIENTE: 'Pendiente',
-  }
-
-  return labels[status ?? ''] ?? status ?? 'Publicada'
+const STATUS_LABELS: Record<ArtworkStatus, string> = {
+  DISPONIBLE: 'Disponible',
+  EN_SUBASTA: 'En subasta',
+  VENDIDA: 'Vendida',
+  INACTIVA: 'Inactiva',
 }
 
 export default function ArtistArtworksPage() {
   const user = useAuthStore((state) => state.user)
 
-  const artworksQuery = useQuery({
-    queryKey: ['artist-artworks', user?.id],
-    queryFn: () => getArtworks(),
-    enabled: Boolean(user?.id),
-  })
-
   const profilesQuery = useQuery({
     queryKey: ['artist-profile', 'me'],
-    queryFn: listArtistProfiles,
+    queryFn: () => listArtistProfiles(),
     enabled: user?.role === 'artist',
   })
 
@@ -87,26 +44,13 @@ export default function ArtistArtworksPage() {
     [profilesQuery.data, user?.id],
   )
 
-  const artworks = useMemo(() => {
-    const items = (artworksQuery.data ?? []) as ArtworkLike[]
-    const hasArtistMetadata = items.some((artwork) => Boolean(artwork.artist))
+  const artworksQuery = useQuery({
+    queryKey: ['artist-artworks', profile?.slug],
+    queryFn: () => getArtworks({ artist: profile!.slug }),
+    enabled: Boolean(profile?.slug),
+  })
 
-    if (!hasArtistMetadata) return items
-
-    return items.filter((artwork) => {
-      const artist = artwork.artist
-      if (!artist || !user) return false
-
-      return (
-        String(artist.user_id ?? '') === String(user.id) ||
-        String(artist.user?.id ?? '') === String(user.id) ||
-        Boolean(profile?.id && String(artist.id) === String(profile.id)) ||
-        Boolean(profile?.slug && artist.slug === profile.slug) ||
-        Boolean(profile?.artistic_name && artist.artistic_name === profile.artistic_name)
-      )
-    })
-  }, [artworksQuery.data, profile, user])
-
+  const artworks = artworksQuery.data?.results ?? []
   const isLoading = artworksQuery.isLoading || profilesQuery.isLoading
 
   return (
@@ -115,22 +59,17 @@ export default function ArtistArtworksPage() {
         <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-medium text-muted-foreground">Panel de artista</p>
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-              Mis obras
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Gestion de obras publicadas y demos musicales.
-            </p>
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground">Mis obras</h1>
           </div>
           <Button asChild>
             <Link to={ROUTES.DASHBOARD.ARTWORKS_NEW} className="gap-2">
               <Plus size={16} />
-              Anadir obra
+              Añadir obra
             </Link>
           </Button>
         </section>
 
-        {artworksQuery.isError ? (
+        {artworksQuery.isError && (
           <Card>
             <CardContent className="flex flex-col gap-3 p-6">
               <p className="text-sm text-destructive">No fue posible cargar tus obras.</p>
@@ -145,12 +84,12 @@ export default function ArtistArtworksPage() {
               </Button>
             </CardContent>
           </Card>
-        ) : null}
+        )}
 
-        {isLoading ? (
+        {isLoading && (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 3 }).map((_, index) => (
-              <Card key={index}>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Card key={i}>
                 <CardContent className="space-y-4 p-4">
                   <div className="aspect-[4/3] animate-pulse rounded-md bg-muted" />
                   <div className="h-4 w-2/3 animate-pulse rounded bg-muted" />
@@ -159,18 +98,20 @@ export default function ArtistArtworksPage() {
               </Card>
             ))}
           </div>
-        ) : null}
+        )}
 
-        {!isLoading && !artworksQuery.isError && artworks.length === 0 ? (
+        {!isLoading && !artworksQuery.isError && artworks.length === 0 && (
           <Card>
             <CardContent className="flex flex-col items-start gap-4 p-6">
               <div className="rounded-full bg-tierra-pale p-3 text-tierra">
                 <ImageIcon size={22} />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-foreground">Aun no tienes obras registradas</h2>
+                <h2 className="text-lg font-semibold text-foreground">
+                  Aún no tienes obras registradas
+                </h2>
                 <p className="mt-1 max-w-xl text-sm text-muted-foreground">
-                  Cuando guardes una obra o un demo musical, aparecera aqui para que puedas revisarlo.
+                  Cuando guardes una obra, aparecerá aquí para que puedas revisarla y editarla.
                 </p>
               </div>
               <Button asChild>
@@ -178,13 +119,13 @@ export default function ArtistArtworksPage() {
               </Button>
             </CardContent>
           </Card>
-        ) : null}
+        )}
 
-        {!isLoading && artworks.length > 0 ? (
+        {!isLoading && artworks.length > 0 && (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {artworks.map((artwork) => {
-              const image = getArtworkImage(artwork)
-              const isMusic = isMusicArtwork(artwork)
+              const image = artwork.main_image_url || artwork.images[0]?.image_url || ''
+              const categoryName = artwork.category?.name ?? 'Sin categoría'
 
               return (
                 <Card key={artwork.id} className="overflow-hidden">
@@ -198,13 +139,11 @@ export default function ArtistArtworksPage() {
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-                        {isMusic ? <Music size={36} /> : <ImageIcon size={36} />}
+                        <ImageIcon size={36} />
                       </div>
                     )}
                     <div className="absolute left-3 top-3">
-                      <Badge variant={isMusic ? 'indigo' : 'tierra'}>
-                        {isMusic ? 'Musica' : getCategoryName(artwork.category)}
-                      </Badge>
+                      <Badge variant="tierra">{categoryName}</Badge>
                     </div>
                   </div>
 
@@ -221,14 +160,14 @@ export default function ArtistArtworksPage() {
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <p className="text-xs text-muted-foreground">
-                          {isMusic ? artwork.genre || 'Demo musical' : artwork.technique || 'Tecnica no registrada'}
+                          {artwork.technique || 'Sin técnica'}
                         </p>
                         <p className="text-sm font-semibold text-tierra">
-                          {isMusic ? artwork.release_date || 'Sin fecha' : formatPrice(artwork.price)}
+                          {formatPrice(artwork.price)}
                         </p>
                       </div>
                       <Badge variant={artwork.status === 'DISPONIBLE' ? 'selva' : 'oro'}>
-                        {statusLabel(artwork.status)}
+                        {STATUS_LABELS[artwork.status] ?? artwork.status}
                       </Badge>
                     </div>
 
@@ -248,7 +187,7 @@ export default function ArtistArtworksPage() {
               )
             })}
           </div>
-        ) : null}
+        )}
       </main>
     </div>
   )

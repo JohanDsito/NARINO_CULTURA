@@ -5,7 +5,6 @@ import { AppLayout } from '@/components/layout/app-layout'
 import { ProtectedRoute } from '@/components/auth/protected-route'
 import { PageLoader } from '@/components/layout/page-loader'
 import { ANY_AUTH, ROLE } from '@/constants/roles'
-import UnderConstructionPage from '@/pages/Shared/UnderConstructionPage'
 
 function lazyPage<T extends { default: ComponentType }>(
   importer: () => Promise<T>,
@@ -24,8 +23,13 @@ export const router = createBrowserRouter([
     path: '/',
     element: <AppLayout />,
     children: [
-      { index: true, element: lazyPage(() => import('@/pages/Home/HomePage'), 'Cargando inicio…') },
+      // ── Inicio ───────────────────────────────────────────────────────────
+      {
+        index: true,
+        element: lazyPage(() => import('@/pages/Home/HomePage'), 'Cargando inicio…'),
+      },
 
+      // ── Auth ─────────────────────────────────────────────────────────────
       {
         path: 'login',
         element: lazyPage(() => import('@/pages/Auth/LoginPage'), 'Cargando login…'),
@@ -40,113 +44,83 @@ export const router = createBrowserRouter([
       },
       {
         path: 'forgot-password',
-        element: lazyPage(
-          () => import('@/pages/Auth/ForgotPasswordPage'),
-          'Cargando recuperación…',
-        ),
+        element: lazyPage(() => import('@/pages/Auth/ForgotPasswordPage'), 'Cargando recuperación…'),
       },
       {
         path: 'reset-password',
-        element: (
-          <UnderConstructionPage
-            title="Restablecer contraseña"
-            description="Formulario para crear una nueva contraseña."
-          />
-        ),
+        element: lazyPage(() => import('@/pages/Auth/ResetPasswordPage'), 'Restableciendo contraseña…'),
       },
 
+      // ── Artistas ──────────────────────────────────────────────────────────
       {
         path: 'artists',
-        element: (
-          <UnderConstructionPage
-            title="Artistas"
-            description="Directorio de artistas con filtros, búsqueda y paginación infinita."
-          />
-        ),
+        element: lazyPage(() => import('@/pages/artists/ArtistsPage'), 'Cargando artistas…'),
       },
       {
         path: 'artists/:slug',
-        element: (
-          <UnderConstructionPage
-            title="Perfil de artista"
-            description="Banner, bio, seguidores, portafolio y obras del artista."
-          />
-        ),
+        element: lazyPage(() => import('@/pages/artist/ArtistProfilePage'), 'Cargando perfil…'),
       },
 
+      // ── Obras ─────────────────────────────────────────────────────────────
       {
         path: 'artworks',
-        element: (
-          <UnderConstructionPage
-            title="Obras"
-            description="Catálogo con filtros, ordenamiento y vista grid/lista."
-          />
-        ),
+        element: lazyPage(() => import('@/pages/artworks/ArtworksCatalogPage'), 'Cargando catálogo…'),
       },
       {
         path: 'artworks/:id',
-        element: (
-          <UnderConstructionPage
-            title="Detalle de obra"
-            description="Galería, información y acciones: carrito o subasta."
-          />
-        ),
+        element: lazyPage(() => import('@/pages/artworks/ArtworkDetailPage'), 'Cargando obra…'),
       },
 
+      // ── Músicos ───────────────────────────────────────────────────────────
       {
-        path: 'marketplace',
-        element: (
-          <UnderConstructionPage
-            title="Marketplace"
-            description="Explora novedades, más vendidos y artistas destacados."
-          />
-        ),
+        path: 'musicians',
+        element: lazyPage(() => import('@/pages/musicians/MusicianDirectoryPage'), 'Cargando músicos…'),
       },
       {
+        path: 'musicians/:slug',
+        element: lazyPage(() => import('@/pages/musicians/MusicianProfilePage'), 'Cargando perfil…'),
+      },
+      {
+        path: 'music-discovery',
+        element: lazyPage(() => import('@/pages/musicians/MusicDiscoveryPage'), 'Cargando descubrimiento…'),
+      },
+
+      // ── Marketplace ───────────────────────────────────────────────────────
+      {
+        path: 'marketplace',
+        element: lazyPage(() => import('@/pages/marketplace/MarketplacePage'), 'Cargando marketplace…'),
+      },
+
+      // ── Subastas ──────────────────────────────────────────────────────────
+      {
         path: 'auctions',
-        element: (
-          <UnderConstructionPage
-            title="Subastas"
-            description="Subastas activas, próximas y finalizadas con countdown."
-          />
-        ),
+        element: lazyPage(() => import('@/pages/auctions/AuctionsPage'), 'Cargando subastas…'),
       },
       {
         path: 'auctions/:id',
         element: (
-          <UnderConstructionPage
-            title="Sala de subasta"
-            description="Puja en tiempo real con WebSocket, historial y participantes."
-          />
-        ),
-      },
-      {
-        path: 'events',
-        element: (
-          <UnderConstructionPage
-            title="Eventos"
-            description="Agenda cultural con vista calendario y lista."
-          />
-        ),
-      },
-      {
-        path: 'events/:id',
-        element: (
-          <UnderConstructionPage
-            title="Detalle de evento"
-            description="Información completa, mapa y registro de interés."
-          />
+          <ProtectedRoute allowedRoles={ANY_AUTH}>
+            {lazyPage(() => import('@/pages/auctions/AuctionRoomPage'), 'Entrando a la sala…')}
+          </ProtectedRoute>
         ),
       },
 
+      // ── Eventos ───────────────────────────────────────────────────────────
+      {
+        path: 'events',
+        element: lazyPage(() => import('@/pages/events/EventsPage'), 'Cargando eventos…'),
+      },
+      {
+        path: 'events/:id',
+        element: lazyPage(() => import('@/pages/events/EventDetailPage'), 'Cargando evento…'),
+      },
+
+      // ── Rutas protegidas (cualquier usuario autenticado) ──────────────────
       {
         path: 'checkout',
         element: (
           <ProtectedRoute allowedRoles={ANY_AUTH}>
-            <UnderConstructionPage
-              title="Checkout"
-              description="Resumen de orden, datos de envío e integración Wompi."
-            />
+            {lazyPage(() => import('@/pages/checkout/CheckoutPage'), 'Cargando checkout…')}
           </ProtectedRoute>
         ),
       },
@@ -154,7 +128,7 @@ export const router = createBrowserRouter([
         path: 'orders',
         element: (
           <ProtectedRoute allowedRoles={ANY_AUTH}>
-            <UnderConstructionPage title="Mis pedidos" description="Historial de órdenes y estados." />
+            {lazyPage(() => import('@/pages/user/OrdersPage'), 'Cargando pedidos…')}
           </ProtectedRoute>
         ),
       },
@@ -162,10 +136,7 @@ export const router = createBrowserRouter([
         path: 'notifications',
         element: (
           <ProtectedRoute allowedRoles={ANY_AUTH}>
-            <UnderConstructionPage
-              title="Notificaciones"
-              description="Centro de notificaciones del usuario autenticado."
-            />
+            {lazyPage(() => import('@/pages/user/NotificationsPage'), 'Cargando notificaciones…')}
           </ProtectedRoute>
         ),
       },
@@ -173,16 +144,17 @@ export const router = createBrowserRouter([
         path: 'profile',
         element: (
           <ProtectedRoute allowedRoles={ANY_AUTH}>
-            <UnderConstructionPage title="Mi perfil" description="Preferencias, datos y seguridad." />
+            {lazyPage(() => import('@/pages/user/UserProfilePage'), 'Cargando perfil…')}
           </ProtectedRoute>
         ),
       },
 
+      // ── Pagos ─────────────────────────────────────────────────────────────
       {
         path: 'payment/success',
         element: (
           <ProtectedRoute allowedRoles={ANY_AUTH}>
-            <UnderConstructionPage title="Pago exitoso" description="Resultado final de la transacción." />
+            {lazyPage(() => import('@/pages/payment/PaymentSuccessPage'))}
           </ProtectedRoute>
         ),
       },
@@ -190,7 +162,7 @@ export const router = createBrowserRouter([
         path: 'payment/pending',
         element: (
           <ProtectedRoute allowedRoles={ANY_AUTH}>
-            <UnderConstructionPage title="Pago pendiente" description="La transacción está en proceso." />
+            {lazyPage(() => import('@/pages/payment/PaymentPendingPage'))}
           </ProtectedRoute>
         ),
       },
@@ -198,16 +170,17 @@ export const router = createBrowserRouter([
         path: 'payment/declined',
         element: (
           <ProtectedRoute allowedRoles={ANY_AUTH}>
-            <UnderConstructionPage title="Pago rechazado" description="La transacción no fue aprobada." />
+            {lazyPage(() => import('@/pages/payment/PaymentDeclinedPage'))}
           </ProtectedRoute>
         ),
       },
 
+      // ── Dashboard del artista ─────────────────────────────────────────────
       {
         path: 'dashboard/profile',
         element: (
           <ProtectedRoute allowedRoles={[ROLE.artist]}>
-            {lazyPage(() => import('@/pages/artist/ArtistDashboardPage'), 'Cargando perfil de artista...')}
+            {lazyPage(() => import('@/pages/artist/ArtistDashboardPage'), 'Cargando dashboard…')}
           </ProtectedRoute>
         ),
       },
@@ -215,7 +188,7 @@ export const router = createBrowserRouter([
         path: 'dashboard/artworks',
         element: (
           <ProtectedRoute allowedRoles={[ROLE.artist]}>
-            {lazyPage(() => import('@/pages/artist/ArtistArtworksPage'), 'Cargando mis obras...')}
+            {lazyPage(() => import('@/pages/artist/ArtistArtworksPage'), 'Cargando mis obras…')}
           </ProtectedRoute>
         ),
       },
@@ -223,7 +196,7 @@ export const router = createBrowserRouter([
         path: 'dashboard/artworks/new',
         element: (
           <ProtectedRoute allowedRoles={[ROLE.artist]}>
-            {lazyPage(() => import('@/pages/artist/ArtworkCreatePage'), 'Cargando nueva obra...')}
+            {lazyPage(() => import('@/pages/artist/ArtworkCreatePage'), 'Cargando nueva obra…')}
           </ProtectedRoute>
         ),
       },
@@ -231,7 +204,7 @@ export const router = createBrowserRouter([
         path: 'dashboard/artworks/:id/edit',
         element: (
           <ProtectedRoute allowedRoles={[ROLE.artist]}>
-            <UnderConstructionPage title="Editar obra" description="Formulario de edición de obra." />
+            {lazyPage(() => import('@/pages/artist/ArtworkEditPage'), 'Cargando edición…')}
           </ProtectedRoute>
         ),
       },
@@ -239,7 +212,7 @@ export const router = createBrowserRouter([
         path: 'dashboard/sales',
         element: (
           <ProtectedRoute allowedRoles={[ROLE.artist]}>
-            <UnderConstructionPage title="Ventas" description="Métricas y órdenes recibidas." />
+            {lazyPage(() => import('@/pages/artist/ArtistAnalyticsPage'), 'Cargando analítica…')}
           </ProtectedRoute>
         ),
       },
@@ -247,11 +220,12 @@ export const router = createBrowserRouter([
         path: 'dashboard/analytics',
         element: (
           <ProtectedRoute allowedRoles={[ROLE.artist]}>
-            <UnderConstructionPage title="Analítica" description="Panel analítico del artista." />
+            {lazyPage(() => import('@/pages/artist/ArtistAnalyticsPage'), 'Cargando analítica…')}
           </ProtectedRoute>
         ),
       },
 
+      // ── Admin ─────────────────────────────────────────────────────────────
       {
         path: 'admin',
         element: <Navigate to="/admin/dashboard" replace />,
@@ -260,10 +234,7 @@ export const router = createBrowserRouter([
         path: 'admin/dashboard',
         element: (
           <ProtectedRoute allowedRoles={[ROLE.admin]}>
-            <UnderConstructionPage
-              title="Admin — Dashboard"
-              description="Métricas, gráficos y actividad reciente."
-            />
+            {lazyPage(() => import('@/pages/admin/AdminDashboardPage'), 'Cargando admin…')}
           </ProtectedRoute>
         ),
       },
@@ -271,7 +242,7 @@ export const router = createBrowserRouter([
         path: 'admin/users',
         element: (
           <ProtectedRoute allowedRoles={[ROLE.admin]}>
-            <UnderConstructionPage title="Admin — Usuarios" description="Gestión de roles y estado." />
+            {lazyPage(() => import('@/pages/admin/AdminUsersPage'), 'Cargando usuarios…')}
           </ProtectedRoute>
         ),
       },
@@ -279,10 +250,7 @@ export const router = createBrowserRouter([
         path: 'admin/artworks',
         element: (
           <ProtectedRoute allowedRoles={[ROLE.admin]}>
-            <UnderConstructionPage
-              title="Admin — Moderación"
-              description="Aprobar o rechazar obras pendientes."
-            />
+            {lazyPage(() => import('@/pages/admin/AdminArtworksPage'), 'Cargando moderación…')}
           </ProtectedRoute>
         ),
       },
@@ -290,7 +258,7 @@ export const router = createBrowserRouter([
         path: 'admin/events',
         element: (
           <ProtectedRoute allowedRoles={[ROLE.admin]}>
-            <UnderConstructionPage title="Admin — Eventos" description="CRUD completo de eventos." />
+            {lazyPage(() => import('@/pages/admin/AdminEventsPage'), 'Cargando eventos…')}
           </ProtectedRoute>
         ),
       },
@@ -298,14 +266,12 @@ export const router = createBrowserRouter([
         path: 'admin/transactions',
         element: (
           <ProtectedRoute allowedRoles={[ROLE.admin]}>
-            <UnderConstructionPage
-              title="Admin — Transacciones"
-              description="Auditoría financiera y exportación CSV."
-            />
+            {lazyPage(() => import('@/pages/admin/AdminTransactionsPage'), 'Cargando transacciones…')}
           </ProtectedRoute>
         ),
       },
 
+      // ── 404 ───────────────────────────────────────────────────────────────
       { path: '*', element: lazyPage(() => import('@/pages/NotFound/NotFoundPage')) },
     ],
   },

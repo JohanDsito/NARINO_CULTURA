@@ -1,5 +1,5 @@
 import axiosInstance from './axiosInstance'
-import type { Artwork } from '@/types/auth'
+import type { Artwork, PaginatedResponse } from '@/types/auth'
 
 export interface ArtworkCategoryItem {
   id: number
@@ -8,18 +8,12 @@ export interface ArtworkCategoryItem {
   description?: string
 }
 
-interface ArtworkCategoryListResponse {
-  results?: ArtworkCategoryItem[]
-}
-
-interface ArtworkListResponse {
-  results?: Artwork[]
-}
-
 export interface GetArtworksParams {
-  category?: string
-  artist?: string | number
+  category?: string | number
+  artist?: string
   search?: string
+  ordering?: string
+  status?: string
   page?: number
   page_size?: number
 }
@@ -27,67 +21,88 @@ export interface GetArtworksParams {
 export interface CreateArtworkPayload {
   title: string
   description: string
-  category: number
+  category?: number           // FK id to Category model
   price?: number
   technique?: string
   dimensions?: string
-  year?: number
-  image_url?: string
-  release_date?: string
-  composer?: string
-  genre?: string
-  demo?: File
+  material?: string
+  main_image?: File           // FileField — backend path: artworks/covers/
 }
 
-export async function getArtworks(params?: GetArtworksParams) {
-  const { data } = await axiosInstance.get<Artwork[] | ArtworkListResponse>('/api/v1/artworks/', { params })
-  return Array.isArray(data) ? data : data.results || []
-}
-
-export async function createArtwork(payload: CreateArtworkPayload) {
-  if (payload.demo) {
-    const formData = new FormData()
-
-    formData.append('title', payload.title)
-    formData.append('description', payload.description)
-    formData.append('category', String(payload.category))
-
-    if (payload.price !== undefined) formData.append('price', String(payload.price))
-    if (payload.technique) formData.append('technique', payload.technique)
-    if (payload.dimensions) formData.append('dimensions', payload.dimensions)
-    if (payload.year !== undefined) formData.append('year', String(payload.year))
-    if (payload.image_url) formData.append('image_url', payload.image_url)
-    if (payload.release_date) formData.append('release_date', payload.release_date)
-    if (payload.composer) formData.append('composer', payload.composer)
-    if (payload.genre) formData.append('genre', payload.genre)
-    formData.append('demo', payload.demo)
-
-    const { data } = await axiosInstance.post<Artwork>('/api/v1/artworks/', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    })
-    return data
+export async function getArtworks(
+  params?: GetArtworksParams,
+): Promise<PaginatedResponse<Artwork>> {
+  const { data } = await axiosInstance.get<PaginatedResponse<Artwork> | Artwork[]>(
+    '/api/v1/artworks/',
+    { params },
+  )
+  if (Array.isArray(data)) {
+    return { count: data.length, next: null, previous: null, results: data }
   }
-
-  const { data } = await axiosInstance.post<Artwork>('/api/v1/artworks/', payload)
   return data
 }
 
-export async function getArtworkById(id: string | number) {
+export async function createArtwork(payload: CreateArtworkPayload): Promise<Artwork> {
+  const formData = new FormData()
+  formData.append('title', payload.title)
+  formData.append('description', payload.description)
+  if (payload.category !== undefined) formData.append('category', String(payload.category))
+  if (payload.price !== undefined) formData.append('price', String(payload.price))
+  if (payload.technique) formData.append('technique', payload.technique)
+  if (payload.dimensions) formData.append('dimensions', payload.dimensions)
+  if (payload.material) formData.append('material', payload.material)
+  if (payload.main_image) formData.append('main_image', payload.main_image)
+
+  const { data } = await axiosInstance.post<Artwork>('/api/v1/artworks/', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return data
+}
+
+export async function getArtworkById(id: string | number): Promise<Artwork> {
   const { data } = await axiosInstance.get<Artwork>(`/api/v1/artworks/${id}/`)
   return data
 }
 
-export async function getArtworkCategories() {
-  const { data } = await axiosInstance.get<ArtworkCategoryItem[] | ArtworkCategoryListResponse>(
-    '/api/v1/artworks/categories/',
-  )
+export async function updateArtwork(
+  id: string | number,
+  payload: Partial<CreateArtworkPayload>,
+): Promise<Artwork> {
+  const formData = new FormData()
+  if (payload.title) formData.append('title', payload.title)
+  if (payload.description) formData.append('description', payload.description)
+  if (payload.category !== undefined) formData.append('category', String(payload.category))
+  if (payload.price !== undefined) formData.append('price', String(payload.price))
+  if (payload.technique) formData.append('technique', payload.technique)
+  if (payload.dimensions) formData.append('dimensions', payload.dimensions)
+  if (payload.material) formData.append('material', payload.material)
+  if (payload.main_image) formData.append('main_image', payload.main_image)
 
-  if (Array.isArray(data)) return data
-
-  return data.results ?? []
+  const { data } = await axiosInstance.patch<Artwork>(`/api/v1/artworks/${id}/`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return data
 }
 
-export async function getArtworkCategoryById(id: string | number) {
-  const { data } = await axiosInstance.get<ArtworkCategoryItem>(`/api/v1/artworks/categories/${id}/`)
+export async function deleteArtwork(id: string | number): Promise<void> {
+  await axiosInstance.delete(`/api/v1/artworks/${id}/delete/`)
+}
+
+export async function aiEnhanceArtwork(
+  id: string | number,
+  regenerateDescription = false,
+): Promise<{ ai_tags: Record<string, unknown>; ai_description: string }> {
+  const { data } = await axiosInstance.post<{
+    ai_tags: Record<string, unknown>
+    ai_description: string
+  }>(`/api/v1/artworks/${id}/ai-enhance/`, { regenerate_description: regenerateDescription })
   return data
+}
+
+export async function getArtworkCategories(): Promise<ArtworkCategoryItem[]> {
+  const { data } = await axiosInstance.get<
+    ArtworkCategoryItem[] | { results?: ArtworkCategoryItem[] }
+  >('/api/v1/artworks/categories/')
+  if (Array.isArray(data)) return data
+  return data.results ?? []
 }
