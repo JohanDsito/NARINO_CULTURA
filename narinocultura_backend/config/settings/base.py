@@ -138,16 +138,10 @@ REST_FRAMEWORK = {
         "rest_framework.filters.OrderingFilter",
     ),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-    "DEFAULT_THROTTLE_CLASSES": [
-        "rest_framework.throttling.AnonRateThrottle",
-        "rest_framework.throttling.UserRateThrottle",
-    ],
-    "DEFAULT_THROTTLE_RATES": {
-        "anon": "200/hour",
-        "user": "2000/hour",
-        "auth_anon": "5/minute",
-        "password_reset": "3/hour",
-    },
+    # TEMPORAL: Rate limiting desactivado mientras se agrega Redis a Railway
+    # TODO: Re-habilitar después de comprar espacio en Railway para Redis
+    "DEFAULT_THROTTLE_CLASSES": [],
+    "DEFAULT_THROTTLE_RATES": {},
 }
 
 SPECTACULAR_SETTINGS = {
@@ -193,14 +187,23 @@ CORS_ALLOW_ALL_ORIGINS = config(
 
 CSRF_TRUSTED_ORIGINS = [o for o in config("CSRF_TRUSTED_ORIGINS", default="", cast=Csv()) if o]
 
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [config("REDIS_URL", default="redis://localhost:6379/0")],
-        },
+# WebSockets - Usa Redis si está disponible, sino usa in-memory
+if REDIS_URL_CONFIGURED:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [REDIS_URL_CONFIGURED],
+            },
+        }
     }
-}
+else:
+    # TEMPORAL: Channel layer en memoria (subastas solo funcionan en una instancia)
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer"
+        }
+    }
 
 # Email Configuration
 EMAIL_BACKEND = config("EMAIL_BACKEND", default="django.core.mail.backends.smtp.EmailBackend")
@@ -231,9 +234,17 @@ WOMPI_PUBLIC_KEY = config("WOMPI_PUBLIC_KEY", default="")
 WOMPI_PRIVATE_KEY = config("WOMPI_PRIVATE_KEY", default="")
 WOMPI_INTEGRITY_KEY = config("WOMPI_INTEGRITY_KEY", default="")
 
-# Celery
-CELERY_BROKER_URL = config("REDIS_URL", default="redis://localhost:6379/0")
-CELERY_RESULT_BACKEND = config("REDIS_URL", default="redis://localhost:6379/0")
+# Celery - Usa Redis si está disponible, sino ejecuta tareas sincronamente
+if REDIS_URL_CONFIGURED:
+    CELERY_BROKER_URL = REDIS_URL_CONFIGURED
+    CELERY_RESULT_BACKEND = REDIS_URL_CONFIGURED
+else:
+    # TEMPORAL: Celery sin broker (tareas ejecutan sincronamente)
+    CELERY_ALWAYS_EAGER = True
+    CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
+    CELERY_BROKER_URL = "memory://"
+    CELERY_RESULT_BACKEND = "cache"
+
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
@@ -245,15 +256,25 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
-# Cache (Redis)
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": config("REDIS_URL", default="redis://localhost:6379/1"),
-        "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
-        "KEY_PREFIX": "narino",
+# Cache - Usa Redis si está disponible, sino usa memoria local
+REDIS_URL_CONFIGURED = config("REDIS_URL", default="").strip()
+if REDIS_URL_CONFIGURED:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": REDIS_URL_CONFIGURED,
+            "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
+            "KEY_PREFIX": "narino",
+        }
     }
-}
+else:
+    # TEMPORAL: Fallback a cache en memoria mientras no hay Redis
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "narino-cache",
+        }
+    }
 
 # Media files (artwork image uploads)
 USE_S3 = config("USE_S3", default=False, cast=bool)

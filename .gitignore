@@ -43,3 +43,4 @@ TESTING_EMAIL_SYSTEM.md
 .github/
 .vscode/
 .docs/
+.env.example
