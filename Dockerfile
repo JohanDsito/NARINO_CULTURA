@@ -17,4 +17,4 @@ COPY . /app/
 EXPOSE 8000
 
 # Default command for Django service
-CMD ["sh", "-c", "cd /app/narinocultura_backend && python manage.py migrate && python manage.py seed_music_genres && python -m daphne -b 0.0.0.0 -p 8000 config.asgi:application"]
+CMD ["sh", "-c", "cd /app/narinocultura_backend && python manage.py migrate && python manage.py seed_music_genres && python manage.py create_admin && python -m daphne -b 0.0.0.0 -p 8000 config.asgi:application"]
