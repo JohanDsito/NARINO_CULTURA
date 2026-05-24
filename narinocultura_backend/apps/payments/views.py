@@ -1,3 +1,8 @@
+import hashlib
+import hmac
+import logging
+
+from django.conf import settings
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -6,6 +11,8 @@ from rest_framework.views import APIView
 from apps.payments.models import Transaction
 from apps.payments.serializers import PaymentInitiateSerializer, TransactionSerializer
 from services.payment_service import PaymentService
+
+logger = logging.getLogger("apps.payments")
 
 
 class InitiatePaymentAPIView(APIView):
@@ -20,10 +27,24 @@ class InitiatePaymentAPIView(APIView):
 
 
 class WompiWebhookAPIView(APIView):
+    """Receives Wompi payment events. Verifies HMAC-SHA256 signature when configured."""
+
     permission_classes = [AllowAny]
     authentication_classes = []
 
     def post(self, request):
+        integrity_key = getattr(settings, "WOMPI_INTEGRITY_KEY", "")
+        if integrity_key:
+            signature = request.headers.get("X-Event-Checksum", "")
+            expected = hmac.new(
+                integrity_key.encode(),
+                request.body,
+                hashlib.sha256,
+            ).hexdigest()
+            if not hmac.compare_digest(signature, expected):
+                logger.warning("Wompi webhook: invalid signature received")
+                return Response({"detail": "Firma invalida."}, status=401)
+
         try:
             PaymentService.process_wompi_webhook(payload=request.data)
         except ValueError as e:

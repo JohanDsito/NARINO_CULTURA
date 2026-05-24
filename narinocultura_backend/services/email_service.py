@@ -159,6 +159,27 @@ class EmailService:
         return EmailResult(ok=True)
 
     @staticmethod
+    def send_admin_created_account_email(
+        user_email: str, user_name: str, temp_password: str, role_display: str
+    ) -> EmailResult:
+        context = {
+            "user_email": user_email,
+            "user_name": user_name,
+            "temp_password": temp_password,
+            "role_display": role_display,
+            "frontend_url": settings.FRONTEND_URL,
+        }
+        html_message = render_to_string("emails/admin_created_account.html", context)
+        text_message = strip_tags(html_message)
+        subject = "Tu cuenta en Nariño Cultura ha sido creada"
+        result = EmailService._send_email(subject, user_email, html_message, text_message)
+        if not result.ok:
+            error_message = f"Error al enviar email de cuenta creada: {result.error_message}"
+            logger.error(error_message)
+            return EmailResult(ok=False, error_message=error_message)
+        return EmailResult(ok=True)
+
+    @staticmethod
     def send_welcome_email(user_email: str, user_name: str = "") -> EmailResult:
         context = {
             "user_name": user_name,

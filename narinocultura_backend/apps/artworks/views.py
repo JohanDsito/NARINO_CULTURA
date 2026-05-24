@@ -1,5 +1,8 @@
+from django.core.cache import cache
 from django.db import transaction
 from django.db.models import F
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -22,6 +25,10 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = CategorySerializer
     permission_classes = [AllowAny]
     lookup_field = "slug"
+
+    @method_decorator(cache_page(60 * 60))  # 1 hour — categories rarely change
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
 
 class ArtworkViewSet(viewsets.ModelViewSet):
@@ -51,6 +58,7 @@ class ArtworkViewSet(viewsets.ModelViewSet):
         if not profile:
             raise ValidationError({"detail": "Perfil de artista no encontrado."})
         serializer.save(artist=profile)
+        cache.delete_pattern("*.artworks*") if hasattr(cache, "delete_pattern") else None
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()

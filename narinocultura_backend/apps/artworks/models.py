@@ -35,6 +35,8 @@ class Artwork(TimeStampedUUIDModel):
     category = models.ForeignKey(Category, null=True, blank=True, on_delete=models.SET_NULL)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.INACTIVA)
     main_image_url = models.URLField(blank=True)
+    # FileField used instead of ImageField — upgrade to ImageField once Pillow supports Python 3.14+
+    main_image = models.FileField(upload_to="artworks/covers/", null=True, blank=True)
     ai_tags = models.JSONField(default=dict, blank=True)
     ai_description = models.TextField(blank=True)
     views_count = models.PositiveIntegerField(default=0)
@@ -57,7 +59,8 @@ class Artwork(TimeStampedUUIDModel):
 
 class ArtworkImage(TimeStampedUUIDModel):
     artwork = models.ForeignKey(Artwork, on_delete=models.CASCADE, related_name="images")
-    image_url = models.URLField()
+    image_url = models.URLField(blank=True)
+    image = models.FileField(upload_to="artworks/gallery/", null=True, blank=True)
     order = models.PositiveIntegerField(default=0)
 
     class Meta:

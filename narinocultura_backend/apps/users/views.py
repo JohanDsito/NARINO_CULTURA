@@ -1,3 +1,5 @@
+import logging
+
 from django.db import transaction
 from django.http import HttpResponse
 from rest_framework import generics, status
@@ -18,10 +20,14 @@ from apps.users.serializers import (
     UserMeSerializer,
 )
 from services.email_service import EmailService
+from utils.throttling import AuthAnonThrottle, PasswordResetThrottle
+
+logger = logging.getLogger(__name__)
 
 
 class RegisterAPIView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [AuthAnonThrottle]
 
     @transaction.atomic
     def post(self, request):
@@ -29,15 +35,11 @@ class RegisterAPIView(APIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save(is_active=True, is_verified=False)
         verification = EmailVerification.issue_for_user(user)
-
-        import logging
-
-        logger = logging.getLogger(__name__)
+#temporaaaaal
         logger.info(f"Intentando enviar email de verificacion a {user.email}")
         logger.info(f"Token generado: {verification.token[:10]}...")
-
         try:
-            email_result = EmailService.send_verification_email(
+            email_result = EmailService.send_verification_email(  # noqa: F841
                 user.email,
                 verification.token,
                 user.first_name,
@@ -62,9 +64,9 @@ class RegisterAPIView(APIView):
                 status=status.HTTP_201_CREATED,
             )
         except Exception as e:
-            logger.error(f"Excepcion al enviar email: {str(e)}")
             import traceback
 
+            logger.error(f"Excepcion al enviar email: {str(e)}")
             logger.error(traceback.format_exc())
             return Response(
                 {"detail": f"Registro creado pero hubo un error inesperado: {str(e)}"},
@@ -123,6 +125,7 @@ class VerifyEmailAPIView(APIView):
 
 class LoginAPIView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [AuthAnonThrottle]
 
     def post(self, request):
         serializer = LoginSerializer(data=request.data, context={"request": request})
@@ -167,6 +170,7 @@ class LogoutAPIView(APIView):
 
 class PasswordResetRequestAPIView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [PasswordResetThrottle]
 
     @transaction.atomic
     def post(self, request):

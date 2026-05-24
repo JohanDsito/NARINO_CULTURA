@@ -6,6 +6,9 @@ from decouple import Csv, config
 load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
+# REDIS_URL - Define early since it's used in multiple configurations
+REDIS_URL_CONFIGURED = config("REDIS_URL", default="").strip()
+
 SECRET_KEY = config("SECRET_KEY", default="unsafe-secret-key-change-me")
 DEBUG = config("DEBUG", default=False, cast=bool)
 
@@ -35,6 +38,8 @@ INSTALLED_APPS = [
     "corsheaders",
     "django_filters",
     "channels",
+    "drf_spectacular",
+    "django_celery_beat",
     "apps.users.apps.UsersConfig",
     "apps.artists.apps.ArtistsConfig",
     "apps.artworks.apps.ArtworksConfig",
@@ -45,6 +50,8 @@ INSTALLED_APPS = [
     "apps.notifications.apps.NotificationsConfig",
     "apps.administration.apps.AdministrationConfig",
     "apps.system.apps.SystemConfig",
+    "apps.musicians.apps.MusiciansConfig",
+    "apps.music_discovery.apps.MusicDiscoveryConfig",
 ]
 
 MIDDLEWARE = [
@@ -133,6 +140,42 @@ REST_FRAMEWORK = {
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ),
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    # TEMPORAL: Rate limiting desactivado mientras se agrega Redis a Railway
+    # TODO: Re-habilitar después de comprar espacio en Railway para Redis
+    "DEFAULT_THROTTLE_CLASSES": [],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "200/hour",
+        "user": "2000/hour",
+        "auth_anon": "5/minute",
+        "password_reset": "3/hour",
+    },
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Nariño Cultura API",
+    "DESCRIPTION": (
+        "Plataforma de marketplace y cultura artística de la región Nariño, Colombia. "
+        "Permite a artistas exhibir y subastar obras, gestores culturales organizar eventos "
+        "y compradores adquirir arte de forma segura."
+    ),
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "COMPONENT_SPLIT_REQUEST": True,
+    "TAGS": [
+        {"name": "auth", "description": "Autenticación y gestión de sesiones"},
+        {"name": "users", "description": "Perfil de usuario"},
+        {"name": "artists", "description": "Perfiles de artistas plásticos"},
+        {"name": "artworks", "description": "Catálogo de obras de arte"},
+        {"name": "marketplace", "description": "Carrito, órdenes y favoritos"},
+        {"name": "auctions", "description": "Subastas en tiempo real"},
+        {"name": "payments", "description": "Pagos e integración Wompi"},
+        {"name": "events", "description": "Eventos culturales"},
+        {"name": "musicians", "description": "Perfiles de músicos, bandas y solistas de Nariño"},
+        {"name": "music-discovery", "description": "Descubrimiento musical con lenguaje natural"},
+        {"name": "admin", "description": "Administración del sistema"},
+        {"name": "system", "description": "Health check y utilidades"},
+    ],
 }
 
 SIMPLE_JWT = {
@@ -152,14 +195,23 @@ CORS_ALLOW_ALL_ORIGINS = config(
 
 CSRF_TRUSTED_ORIGINS = [o for o in config("CSRF_TRUSTED_ORIGINS", default="", cast=Csv()) if o]
 
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [config("REDIS_URL", default="redis://localhost:6379/0")],
-        },
+# WebSockets - Usa Redis si está disponible, sino usa in-memory
+if REDIS_URL_CONFIGURED:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [REDIS_URL_CONFIGURED],
+            },
+        }
     }
-}
+else:
+    # TEMPORAL: Channel layer en memoria (subastas solo funcionan en una instancia)
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer"
+        }
+    }
 
 # Email Configuration
 EMAIL_BACKEND = config("EMAIL_BACKEND", default="django.core.mail.backends.smtp.EmailBackend")
@@ -189,4 +241,87 @@ WOMPI_BASE_URL = config("WOMPI_BASE_URL", default="https://sandbox.wompi.co/v1")
 WOMPI_PUBLIC_KEY = config("WOMPI_PUBLIC_KEY", default="")
 WOMPI_PRIVATE_KEY = config("WOMPI_PRIVATE_KEY", default="")
 WOMPI_INTEGRITY_KEY = config("WOMPI_INTEGRITY_KEY", default="")
+
+# Celery - Usa Redis si está disponible, sino ejecuta tareas sincronamente
+if REDIS_URL_CONFIGURED:
+    CELERY_BROKER_URL = REDIS_URL_CONFIGURED
+    CELERY_RESULT_BACKEND = REDIS_URL_CONFIGURED
+else:
+    # TEMPORAL: Celery sin broker (tareas ejecutan sincronamente)
+    CELERY_ALWAYS_EAGER = True
+    CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
+    CELERY_BROKER_URL = "memory://"
+    CELERY_RESULT_BACKEND = "cache"
+
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = "America/Bogota"
+CELERY_BEAT_SCHEDULE = {
+    "close-expired-auctions": {
+        "task": "apps.auctions.tasks.close_expired_auctions",
+        "schedule": 60.0,
+    },
+}
+
+# Cache - Usa Redis si está disponible, sino usa memoria local
+if REDIS_URL_CONFIGURED:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": REDIS_URL_CONFIGURED,
+            "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
+            "KEY_PREFIX": "narino",
+        }
+    }
+else:
+    # TEMPORAL: Fallback a cache en memoria mientras no hay Redis
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "narino-cache",
+        }
+    }
+
+# Media files (artwork image uploads)
+USE_S3 = config("USE_S3", default=False, cast=bool)
+if USE_S3:
+    AWS_ACCESS_KEY_ID = config("AWS_ACCESS_KEY_ID", default="")
+    AWS_SECRET_ACCESS_KEY = config("AWS_SECRET_ACCESS_KEY", default="")
+    AWS_STORAGE_BUCKET_NAME = config("AWS_STORAGE_BUCKET_NAME", default="")
+    AWS_S3_REGION_NAME = config("AWS_S3_REGION_NAME", default="us-east-1")
+    AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com"
+    AWS_DEFAULT_ACL = "public-read"
+    DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+    MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/media/"
+else:
+    MEDIA_URL = "/media/"
+    MEDIA_ROOT = BASE_DIR / "mediafiles"
+
+# Structured logging
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "json": {
+            "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
+            "format": "%(asctime)s %(name)s %(levelname)s %(message)s",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "json",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "WARNING",
+    },
+    "loggers": {
+        "django": {"handlers": ["console"], "level": "WARNING", "propagate": False},
+        "apps": {"handlers": ["console"], "level": "INFO", "propagate": False},
+        "services": {"handlers": ["console"], "level": "INFO", "propagate": False},
+    },
+}
 
