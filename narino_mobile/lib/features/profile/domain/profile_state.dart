@@ -10,6 +10,7 @@ class ProfileState {
     this.portfolio = const [],
     this.errorMessage,
     this.isSaving = false,
+    this.photoVersion = 0,
   });
 
   final ProfileStatus status;
@@ -17,6 +18,9 @@ class ProfileState {
   final List<PortfolioItemModel> portfolio;
   final String? errorMessage;
   final bool isSaving;
+  // Incrementado cada vez que se sube una nueva foto; sirve para invalidar
+  // el cache de imagen en los widgets que muestran el avatar.
+  final int photoVersion;
 
   ProfileState copyWith({
     ProfileStatus? status,
@@ -25,6 +29,7 @@ class ProfileState {
     String? errorMessage,
     bool clearError = false,
     bool? isSaving,
+    int? photoVersion,
   }) =>
       ProfileState(
         status: status ?? this.status,
@@ -32,6 +37,7 @@ class ProfileState {
         portfolio: portfolio ?? this.portfolio,
         errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
         isSaving: isSaving ?? this.isSaving,
+        photoVersion: photoVersion ?? this.photoVersion,
       );
 
   bool get isLoading => status == ProfileStatus.loading;

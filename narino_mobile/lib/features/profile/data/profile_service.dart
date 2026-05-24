@@ -16,27 +16,11 @@ class ProfileService {
 
     if ((userData['role'] as String?)?.toLowerCase() == 'artista') {
       try {
-        final artistsResponse = await _dio.get(ApiConstants.artists);
-        final artistsData = artistsResponse.data;
-        List<dynamic> artists;
-        if (artistsData is List) {
-          artists = artistsData;
-        } else if (artistsData is Map) {
-          artists = (artistsData['results'] as List?) ?? [];
-        } else {
-          artists = [];
-        }
-        final userId = userData['id']?.toString();
-        final Map? myArtist = artists.firstWhere(
-          (a) => a['user_id']?.toString() == userId,
-          orElse: () => null,
-        ) as Map?;
-        if (myArtist != null) {
-          final merged = Map<String, dynamic>.from(myArtist);
-          merged['avatar_url'] ??= userData['avatar_url'];
-          merged['is_verified'] = userData['is_verified'];
-          return merged;
-        }
+        final artistResponse = await _dio.get(ApiConstants.artistMe);
+        final artistData = Map<String, dynamic>.from(artistResponse.data as Map);
+        artistData['avatar_url'] ??= userData['avatar_url'];
+        artistData['is_verified'] = userData['is_verified'];
+        return artistData;
       } catch (_) {}
     }
 
@@ -51,17 +35,6 @@ class ProfileService {
     Map<String, String>? redesSociales,
     String? artistId,
   }) async {
-    // ─── 0. Resolver artistId ──────────────────────────────────────────────
-    // Si el llamador ya conoce el ID del artista (perfil cargado en estado),
-    // se usa directamente. De lo contrario se busca vía getMyProfile().
-    String? resolvedArtistId = (artistId?.isNotEmpty == true) ? artistId : null;
-    if (resolvedArtistId == null) {
-      final currentData = await getMyProfile();
-      resolvedArtistId = currentData.containsKey('user_id')
-          ? (currentData['slug']?.toString() ?? currentData['id']?.toString())
-          : null;
-    }
-
     // ─── 1. PATCH registro de usuario (nombre + avatar) ───────────────────
     final userUpdates = <String, dynamic>{};
     if (nombreArtistico != null && nombreArtistico.isNotEmpty) {
@@ -84,43 +57,30 @@ class ProfileService {
       await _dio.patch(ApiConstants.myProfile, data: userUpdates);
     }
 
-    // ─── 2. PATCH perfil de artista (solo si se resolvió el ID) ──────────
-    if (resolvedArtistId != null && resolvedArtistId.isNotEmpty) {
-      final artistUpdates = <String, dynamic>{};
-      if (nombreArtistico != null) artistUpdates['artistic_name'] = nombreArtistico;
-      if (disciplina != null) artistUpdates['discipline'] = disciplina;
-      if (biografia != null) artistUpdates['bio'] = biografia;
-      if (redesSociales != null) {
-        artistUpdates['instagram_url'] = redesSociales['instagram'] ?? '';
-        artistUpdates['facebook_url'] = redesSociales['facebook'] ?? '';
-        artistUpdates['tiktok_url'] = redesSociales['tiktok'] ?? '';
-        final website = redesSociales['website'];
-        if (website != null) artistUpdates['website_url'] = website;
-      }
-
-      if (artistUpdates.isNotEmpty) {
-        final url = ApiConstants.artistDetail.replaceFirst('{id}', resolvedArtistId);
-        await _dio.patch(url, data: artistUpdates);
-      }
+    // ─── 2. PATCH perfil de artista vía /me/ (sin depender de slug/ID) ───
+    final artistUpdates = <String, dynamic>{};
+    if (nombreArtistico != null) artistUpdates['artistic_name'] = nombreArtistico;
+    if (disciplina != null) artistUpdates['discipline'] = disciplina;
+    if (biografia != null) artistUpdates['bio'] = biografia;
+    if (redesSociales != null) {
+      // URLField(blank=True) en Django acepta '' para limpiar el campo.
+      String toUrl(String? v) => v?.trim() ?? '';
+      artistUpdates['instagram_url'] = toUrl(redesSociales['instagram']);
+      artistUpdates['facebook_url'] = toUrl(redesSociales['facebook']);
+      artistUpdates['tiktok_url'] = toUrl(redesSociales['tiktok']);
+      final website = toUrl(redesSociales['website']);
+      if (website.isNotEmpty) artistUpdates['website_url'] = website;
     }
 
-    // ─── 3. Refrescar: leer el detalle del artista directamente (no la lista)
-    // para evitar datos cacheados del endpoint de lista.
-    if (resolvedArtistId != null && resolvedArtistId.isNotEmpty) {
-      try {
-        final detailUrl = ApiConstants.artistDetail.replaceFirst('{id}', resolvedArtistId);
-        final artistResp = await _dio.get(detailUrl);
-        final userResp = await _dio.get(ApiConstants.myProfile);
-        final artistData = Map<String, dynamic>.from(artistResp.data as Map);
-        final userData = userResp.data as Map;
-        artistData['avatar_url'] ??= userData['avatar_url'];
-        artistData['is_verified'] = userData['is_verified'];
-        return artistData;
-      } catch (_) {
-        return getMyProfile();
-      }
+    if (artistUpdates.isNotEmpty) {
+      await _dio.patch(
+        ApiConstants.artistMe,
+        data: artistUpdates,
+        options: Options(contentType: 'application/json'),
+      );
     }
 
+    // ─── 3. Refrescar desde /me/ para devolver datos actualizados ─────────
     return getMyProfile();
   }
 

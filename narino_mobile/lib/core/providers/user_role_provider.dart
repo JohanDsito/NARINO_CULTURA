@@ -36,7 +36,7 @@ final currentUserClaimsProvider = FutureProvider<CurrentUserClaims>((
             json['role'] ??
             json['user_role'] ??
             json['userRole'];
-        role = roleValue?.toString();
+        role = roleValue?.toString().toLowerCase();
 
         final idValue =
             json['user_id'] ?? json['userId'] ?? json['id'] ?? json['sub'];
@@ -52,13 +52,13 @@ final currentUserClaimsProvider = FutureProvider<CurrentUserClaims>((
   }
 
   try {
-    final response = await ApiClient.instance.dio.get('/auth/me/');
+    final response = await ApiClient.instance.dio.get('/api/v1/users/me/');
     final data = response.data;
     if (data is Map) {
-      final roleValue = data['rol'] ?? data['role'];
+      final roleValue = data['role'] ?? data['rol'];
       final idValue = data['id'] ?? data['user_id'] ?? data['userId'];
       return CurrentUserClaims(
-        role: role ?? roleValue?.toString(),
+        role: role ?? roleValue?.toString().toLowerCase(),
         userId: userId ?? int.tryParse(idValue?.toString() ?? ''),
       );
     }

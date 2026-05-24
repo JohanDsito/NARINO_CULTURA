@@ -8,6 +8,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../domain/profile_model.dart';
 import '../../domain/profile_state.dart';
 import '../providers/profile_provider.dart';
+import '../../../../core/providers/user_role_provider.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -61,7 +62,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final role = ref.read(currentUserRoleProvider).value;
+    final needsDisciplina = role == 'artista' || role == 'admin' || role == null;
+    final disciplina = _disciplina;
+    if (needsDisciplina && (disciplina == null || disciplina.isEmpty)) return;
+
     final profile = ref.read(myProfileProvider).profile;
+    final oldFotoUrl = profile?.fotoUrl;
+
     final redesSociales = <String, String>{
       'instagram': _igCtrl.text.trim(),
       'facebook': _fbCtrl.text.trim(),
@@ -70,19 +78,30 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
     final ok = await ref.read(myProfileProvider.notifier).updateProfile(
           nombreArtistico: _nombreCtrl.text.trim(),
-          disciplina: _disciplina!,
+          disciplina: disciplina ?? '',
           biografia: _bioCtrl.text.trim(),
           foto: _nuevaFoto,
           redesSociales: redesSociales,
           artistId: profile?.id,
         );
-    if (ok && mounted) {
-      await ref.read(myProfileProvider.notifier).loadMyProfile();
-      if (!mounted) return;
+
+    if (!mounted) return;
+
+    if (ok) {
+      // Invalidar cache de la foto anterior para que la nueva se muestre de inmediato
+      if (_nuevaFoto != null && oldFotoUrl != null) {
+        imageCache.evict(NetworkImage(oldFotoUrl));
+      }
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('✅ Perfil actualizado'),
+          content: Text('Perfil actualizado correctamente'),
           backgroundColor: AppColors.selvaAndina));
       context.pop();
+    } else {
+      final errMsg = ref.read(myProfileProvider).errorMessage;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(errMsg ?? 'No se pudieron guardar los cambios'),
+        backgroundColor: AppColors.error,
+      ));
     }
   }
 
@@ -202,6 +221,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
     final textMuted =
         isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+    final role = ref.watch(currentUserRoleProvider).value;
+    final showDisciplina = role == 'artista' || role == 'admin' || role == null;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Form(
@@ -267,19 +288,21 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             ),
             const SizedBox(height: 14),
 
-            DropdownButtonFormField<String>(
-              initialValue: _disciplina,
-              decoration: const InputDecoration(
-                  labelText: 'Disciplina *',
-                  prefixIcon: Icon(Icons.brush_outlined)),
-              style: AppTypography.bodyMedium(color: textPrimary),
-              items: ArtisticDisciplines.all
-                  .map((d) => DropdownMenuItem(value: d, child: Text(d)))
-                  .toList(),
-              onChanged: (v) => setState(() => _disciplina = v),
-              validator: (v) => v == null ? 'Selecciona una disciplina' : null,
-            ),
-            const SizedBox(height: 14),
+            if (showDisciplina) ...[
+              DropdownButtonFormField<String>(
+                initialValue: _disciplina,
+                decoration: const InputDecoration(
+                    labelText: 'Disciplina *',
+                    prefixIcon: Icon(Icons.brush_outlined)),
+                style: AppTypography.bodyMedium(color: textPrimary),
+                items: ArtisticDisciplines.all
+                    .map((d) => DropdownMenuItem(value: d, child: Text(d)))
+                    .toList(),
+                onChanged: (v) => setState(() => _disciplina = v),
+                validator: (v) => v == null ? 'Selecciona una disciplina' : null,
+              ),
+              const SizedBox(height: 14),
+            ],
 
             TextFormField(
               controller: _bioCtrl,

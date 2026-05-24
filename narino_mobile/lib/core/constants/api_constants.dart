@@ -24,6 +24,7 @@ class ApiConstants {
 
   // Artistas
   static const String artists = '/api/v1/artists/';
+  static const String artistMe = '/api/v1/artists/me/';
   static const String artistDetail = '/api/v1/artists/{id}/';
   static const String profileById = '/api/v1/artists/{id}/';
   static const String artistFollow = '/api/v1/artists/{id}/follow/';
@@ -58,8 +59,21 @@ class ApiConstants {
   static const String events = '/api/v1/events/';
   static const String eventDetail = '/api/v1/events/{id}/';
 
+  // Músicos
+  static const String musicians = '/api/v1/musicians/';
+  static const String musicianMe = '/api/v1/musicians/me/';
+  static const String musicianGenres = '/api/v1/musicians/genres/';
+  static const String musicianDetail = '/api/v1/musicians/{slug}/';
+  static const String musicianFollow = '/api/v1/musicians/{slug}/follow/';
+  static const String musicianWorks = '/api/v1/musicians/{slug}/works/';
+  static const String musicianReviews = '/api/v1/musicians/{slug}/reviews/';
+
+  // Descubrimiento musical
+  static const String musicDiscoveryRecommendations =
+      '/api/v1/music-discovery/recommendations/';
+
   // Inteligencia Artificial
-  static const String aiChat = '/api/v1/ai/chat/';
+  static const String aiChat = '/api/v1/chat/';
   static const String aiRecommendations = '/api/v1/ai/recommendations/';
   static const String aiEventRecommendations =
       '/api/v1/ai/event-recommendations/';
