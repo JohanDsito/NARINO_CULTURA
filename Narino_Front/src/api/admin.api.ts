@@ -25,10 +25,18 @@ export async function getAdminMetrics() {
 // ── Users ─────────────────────────────────────────────────────────────────────
 
 export async function listAdminUsers(): Promise<AdminUserListItem[]> {
-  const { data } = await axiosInstance.get<AdminUserListItem[] | { results: AdminUserListItem[] }>(
-    '/api/v1/admin/users/',
-  )
-  return Array.isArray(data) ? data : data.results ?? []
+  try {
+    const { data } = await axiosInstance.get<AdminUserListItem[] | { results: AdminUserListItem[] }>(
+      '/api/v1/admin/users/',
+    )
+    return Array.isArray(data) ? data : (data as { results?: AdminUserListItem[] }).results ?? []
+  } catch {
+    // Fallback: /api/v1/admin/users/ may not be registered on this backend
+    const { data } = await axiosInstance.get<AdminUserListItem[] | { results: AdminUserListItem[] }>(
+      '/api/v1/users/',
+    )
+    return Array.isArray(data) ? data : (data as { results?: AdminUserListItem[] }).results ?? []
+  }
 }
 
 export async function getAdminUser(uuid: string) {
@@ -56,7 +64,15 @@ export async function moderateArtwork(uuid: string, payload: { status: string; r
 }
 
 export async function deleteAdminArtwork(uuid: string): Promise<void> {
-  await axiosInstance.delete(`/api/v1/artworks/${uuid}/`)
+  await axiosInstance.delete(`/api/v1/artworks/${uuid}/delete/`)
+}
+
+export async function getAllArtworks(params?: { status?: string; page?: number }): Promise<Artwork[]> {
+  const { data } = await axiosInstance.get<Artwork[] | { results?: Artwork[] }>(
+    '/api/v1/artworks/',
+    { params },
+  )
+  return Array.isArray(data) ? data : data.results ?? []
 }
 
 // ── Events ────────────────────────────────────────────────────────────────────
@@ -64,6 +80,13 @@ export async function deleteAdminArtwork(uuid: string): Promise<void> {
 export async function getPendingEvents(): Promise<Event[]> {
   const { data } = await axiosInstance.get<Event[] | { results: Event[] }>('/api/v1/events/', {
     params: { is_published: false },
+  })
+  return Array.isArray(data) ? data : data.results ?? []
+}
+
+export async function getApprovedEvents(): Promise<Event[]> {
+  const { data } = await axiosInstance.get<Event[] | { results: Event[] }>('/api/v1/events/', {
+    params: { is_published: true },
   })
   return Array.isArray(data) ? data : data.results ?? []
 }
