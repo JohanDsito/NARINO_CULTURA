@@ -6,6 +6,9 @@ from decouple import Csv, config
 load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
+# REDIS_URL - Define early since it's used in multiple configurations
+REDIS_URL_CONFIGURED = config("REDIS_URL", default="").strip()
+
 SECRET_KEY = config("SECRET_KEY", default="unsafe-secret-key-change-me")
 DEBUG = config("DEBUG", default=False, cast=bool)
 
@@ -257,7 +260,6 @@ CELERY_BEAT_SCHEDULE = {
 }
 
 # Cache - Usa Redis si está disponible, sino usa memoria local
-REDIS_URL_CONFIGURED = config("REDIS_URL", default="").strip()
 if REDIS_URL_CONFIGURED:
     CACHES = {
         "default": {
