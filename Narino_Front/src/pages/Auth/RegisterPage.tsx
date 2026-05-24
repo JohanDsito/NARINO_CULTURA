@@ -23,7 +23,7 @@ export default function RegisterPage() {
           </div>
 
           <p className="text-lg text-text-secondary dark:text-text-secondary leading-relaxed">
-            Únete a nuestra comunidad de artistas, compradores y gestores culturales para transformar el ecosistema artístico de Nariño.
+            Únete a nuestra comunidad de artistas, visitantes y gestores culturales para transformar el ecosistema artístico de Nariño.
           </p>
 
           <Button asChild className="w-fit text-base py-3 px-6" aria-label="Explorar artistas">

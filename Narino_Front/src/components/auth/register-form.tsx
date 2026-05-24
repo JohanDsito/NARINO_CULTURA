@@ -201,7 +201,7 @@ export function RegisterForm() {
         <div className="space-y-1">
           <Label htmlFor="role" className="text-xs font-medium">Tipo de usuario</Label>
           <Select id="role" {...register('role')} aria-label="Seleccionar tipo de usuario">
-            <option value="buyer">Comprador</option>
+            <option value="buyer">Visitante</option>
             <option value="artist">Artista</option>
           </Select>
           {errors.role ? <p className="text-xs text-destructive">{errors.role.message}</p> : null}

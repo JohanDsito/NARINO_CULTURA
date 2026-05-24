@@ -24,7 +24,7 @@ type FormData = z.infer<typeof schema>
 
 const ROLE_LABELS: Record<string, string> = {
   artist: 'Artista',
-  buyer: 'Comprador',
+  buyer: 'Visitante',
   cultural_manager: 'Gestor Cultural',
   admin: 'Administrador',
 }
