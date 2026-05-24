@@ -1,4 +1,4 @@
-# 🎭 Nariño Cultura
+# 🎭 Nariño Cultura.
 
 ## Plataforma cultural para artistas, eventos y comercialización digital en Nariño
 

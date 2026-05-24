@@ -20,3 +20,14 @@ dist/
 
 # Docker
 .dockerignore
+ARCHITECTURE.md
+DEPLOYMENT.md
+IMPLEMENTATION_STATUS.md
+.claude/
+.github/
+.vscode/
+narinocultura_backend/
+postman_musicians_collection.json
+QUICKSTART_TESTING.md
+repomix-output.xml
+TESTING_MUSICIANS_MODULE.md
