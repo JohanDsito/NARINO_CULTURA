@@ -9,6 +9,8 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
+from django.db.models import ProtectedError
+
 from apps.artists.models import ArtistProfile
 from apps.artworks.models import Artwork, Category
 from apps.artworks.permissions import IsArtworkOwnerOrReadOnly
@@ -72,7 +74,13 @@ class ArtworkViewSet(viewsets.ModelViewSet):
         artwork = Artwork.objects.filter(id=pk).first()
         if not artwork:
             return Response({"detail": "Obra no encontrada."}, status=404)
-        artwork.delete()
+        try:
+            artwork.delete()
+        except ProtectedError:
+            return Response(
+                {"detail": "No se puede eliminar esta obra porque tiene órdenes de compra asociadas. Márcala como INACTIVA en su lugar."},
+                status=409,
+            )
         return Response(status=204)
 
     @action(detail=True, methods=["post"], url_path="ai-enhance")

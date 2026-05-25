@@ -83,12 +83,6 @@ class MusicianProfileSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         )
-
-    def get_profile_image_url(self, obj):
-        if not obj.profile_image:
-            return ""
-        request = self.context.get("request")
-        return request.build_absolute_uri(obj.profile_image.url) if request else obj.profile_image.url
         read_only_fields = (
             "id",
             "user_id",
@@ -99,6 +93,12 @@ class MusicianProfileSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         )
+
+    def get_profile_image_url(self, obj):
+        if not obj.profile_image:
+            return ""
+        request = self.context.get("request")
+        return request.build_absolute_uri(obj.profile_image.url) if request else obj.profile_image.url
 
     def get_works_count(self, obj):
         return obj.works.count()
@@ -137,6 +137,7 @@ class MusicianProfileSerializer(serializers.ModelSerializer):
 
 class MusicianProfileListSerializer(serializers.ModelSerializer):
     genres = MusicGenreSerializer(many=True, read_only=True)
+    profile_image_url = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = MusicianProfile
@@ -149,7 +150,7 @@ class MusicianProfileListSerializer(serializers.ModelSerializer):
             "region",
             "bio",
             "genres",
-            "profile_image",
+            "profile_image_url",
             "spotify_url",
             "youtube_url",
             "instagram_handle",
@@ -157,6 +158,12 @@ class MusicianProfileListSerializer(serializers.ModelSerializer):
             "followers_count",
             "popularity_score",
         )
+
+    def get_profile_image_url(self, obj):
+        if not obj.profile_image:
+            return ""
+        request = self.context.get("request")
+        return request.build_absolute_uri(obj.profile_image.url) if request else obj.profile_image.url
 
 
 class MusicianReviewSerializer(serializers.ModelSerializer):
