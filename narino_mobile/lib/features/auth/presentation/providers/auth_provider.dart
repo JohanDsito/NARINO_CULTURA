@@ -90,6 +90,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
     );
   }
 
+  void forceSignOut() {
+    state = state.copyWith(
+      status: AuthStatus.unauthenticated,
+      errorMessage: null,
+      successMessage: null,
+    );
+  }
+
   void clearError() {
     state = state.copyWith(errorMessage: null);
   }

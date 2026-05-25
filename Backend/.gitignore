@@ -1,0 +1,46 @@
+# Entorno Virtual
+venv/
+env/
+ENV/
+
+# Variables de entorno (¡MUY IMPORTANTE!)
+.env
+
+# Base de datos local
+db.sqlite3
+
+# Archivos de Python (Caché)
+**/__pycache__/
+*.pyc
+
+# Frontend (Node modules y builds)
+node_modules/
+dist/
+.eslintcache
+
+# Docker
+.dockerignore
+
+Narino_Front/
+
+ARCHITECTURE.md
+
+DEPLOYMENT.md
+
+IMPLEMENTATION_STATUS.md
+
+postman_musicians_collection.json
+
+QUICKSTART_TESTING.md
+
+repomix-output.xml
+
+TESTING_MUSICIANS_MODULE.md
+
+TESTING_EMAIL_SYSTEM.md
+
+.claude/
+.github/
+.vscode/
+.docs/
+.env.example

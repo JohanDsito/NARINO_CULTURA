@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/account_security_provider.dart';
 
 class DeleteAccountScreen extends ConsumerStatefulWidget {
@@ -73,6 +74,7 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
     final state = ref.read(deleteAccountProvider);
     if (state.hasError) return;
 
+    ref.read(authProvider.notifier).forceSignOut();
     context.go('/login');
   }
 

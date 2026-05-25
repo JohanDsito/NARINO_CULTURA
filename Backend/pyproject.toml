@@ -1,0 +1,35 @@
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+exclude = [
+    "**/migrations/**",
+    "venv/**",
+    ".venv/**",
+    "node_modules/**",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP"]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    "N806",   # variable in function should be lowercase (conflicts with Django patterns)
+]
+
+[tool.coverage.run]
+source = ["narinocultura_backend"]
+omit = [
+    "*/migrations/*",
+    "*/tests/*",
+    "*/test_*",
+    "manage.py",
+    "config/asgi.py",
+    "config/wsgi.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+]
+show_missing = true
