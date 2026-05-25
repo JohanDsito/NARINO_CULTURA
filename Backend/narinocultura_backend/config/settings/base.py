@@ -52,6 +52,8 @@ INSTALLED_APPS = [
     "apps.system.apps.SystemConfig",
     "apps.musicians.apps.MusiciansConfig",
     "apps.music_discovery.apps.MusicDiscoveryConfig",
+    "cloudinary_storage",
+    "cloudinary",
 ]
 
 MIDDLEWARE = [
@@ -285,17 +287,21 @@ else:
         }
     }
 
-# Media files (artwork image uploads)
-USE_S3 = config("USE_S3", default=False, cast=bool)
-if USE_S3:
-    AWS_ACCESS_KEY_ID = config("AWS_ACCESS_KEY_ID", default="")
-    AWS_SECRET_ACCESS_KEY = config("AWS_SECRET_ACCESS_KEY", default="")
-    AWS_STORAGE_BUCKET_NAME = config("AWS_STORAGE_BUCKET_NAME", default="")
-    AWS_S3_REGION_NAME = config("AWS_S3_REGION_NAME", default="us-east-1")
-    AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com"
-    AWS_DEFAULT_ACL = "public-read"
-    DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
-    MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/media/"
+# Media files — Cloudinary (producción) o filesystem local (desarrollo)
+CLOUDINARY_CLOUD_NAME = config("CLOUDINARY_CLOUD_NAME", default="")
+CLOUDINARY_API_KEY = config("CLOUDINARY_API_KEY", default="")
+CLOUDINARY_API_SECRET = config("CLOUDINARY_API_SECRET", default="")
+
+if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
+    import cloudinary
+    cloudinary.config(
+        cloud_name=CLOUDINARY_CLOUD_NAME,
+        api_key=CLOUDINARY_API_KEY,
+        api_secret=CLOUDINARY_API_SECRET,
+        secure=True,
+    )
+    DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
+    MEDIA_URL = f"https://res.cloudinary.com/{CLOUDINARY_CLOUD_NAME}/"
 else:
     MEDIA_URL = "/media/"
     MEDIA_ROOT = BASE_DIR / "mediafiles"

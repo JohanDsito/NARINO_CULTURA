@@ -46,6 +46,8 @@ class MusicianProfileSerializer(serializers.ModelSerializer):
     )
     user_id = serializers.UUIDField(source="user.id", read_only=True)
     works_count = serializers.SerializerMethodField()
+    profile_image_url = serializers.SerializerMethodField(read_only=True)
+    profile_image = serializers.FileField(write_only=True, required=False, allow_null=True)
 
     class Meta:
         model = MusicianProfile
@@ -72,6 +74,7 @@ class MusicianProfileSerializer(serializers.ModelSerializer):
             "booking_email",
             "phone",
             "profile_image",
+            "profile_image_url",
             "is_verified",
             "is_active",
             "followers_count",
@@ -80,6 +83,12 @@ class MusicianProfileSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         )
+
+    def get_profile_image_url(self, obj):
+        if not obj.profile_image:
+            return ""
+        request = self.context.get("request")
+        return request.build_absolute_uri(obj.profile_image.url) if request else obj.profile_image.url
         read_only_fields = (
             "id",
             "user_id",

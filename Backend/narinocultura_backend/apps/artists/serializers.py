@@ -5,6 +5,8 @@ from apps.artists.models import ArtistProfile, Follow
 
 class ArtistProfileSerializer(serializers.ModelSerializer):
     user_id = serializers.UUIDField(source="user.id", read_only=True)
+    profile_image_url = serializers.SerializerMethodField(read_only=True)
+    profile_image = serializers.FileField(write_only=True, required=False, allow_null=True)
 
     class Meta:
         model = ArtistProfile
@@ -21,12 +23,20 @@ class ArtistProfileSerializer(serializers.ModelSerializer):
             "instagram_url",
             "facebook_url",
             "tiktok_url",
+            "profile_image",
+            "profile_image_url",
             "followers_count",
             "is_public",
             "created_at",
             "updated_at",
         )
         read_only_fields = ("id", "user_id", "slug", "followers_count", "created_at", "updated_at")
+
+    def get_profile_image_url(self, obj):
+        if not obj.profile_image:
+            return ""
+        request = self.context.get("request")
+        return request.build_absolute_uri(obj.profile_image.url) if request else obj.profile_image.url
 
     def validate(self, attrs):
         request = self.context.get("request")
