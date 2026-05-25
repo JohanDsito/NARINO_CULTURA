@@ -82,8 +82,8 @@ function FollowList({
             </div>
           )}
           {isError && (
-            <p className="text-xs text-muted-foreground">
-              No se pudo cargar la lista.
+            <p className="text-xs text-amber-600 dark:text-amber-400">
+              El servidor aún no tiene este endpoint activo. Contacta al administrador.
             </p>
           )}
           {!isLoading && !isError && data.length === 0 && (
