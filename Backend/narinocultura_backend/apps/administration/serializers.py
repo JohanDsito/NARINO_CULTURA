@@ -5,10 +5,18 @@ from apps.users.models import User
 
 
 class AdminUserSerializer(serializers.ModelSerializer):
+    avatar_url = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = User
         fields = ("id", "email", "first_name", "last_name", "role", "is_active", "is_verified", "phone", "avatar_url")
         read_only_fields = ("id", "email")
+
+    def get_avatar_url(self, obj):
+        if not obj.avatar:
+            return ""
+        request = self.context.get("request")
+        return request.build_absolute_uri(obj.avatar.url) if request else obj.avatar.url
 
 
 class AdminCreateUserSerializer(serializers.Serializer):
