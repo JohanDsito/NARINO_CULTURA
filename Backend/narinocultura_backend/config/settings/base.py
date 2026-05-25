@@ -52,8 +52,6 @@ INSTALLED_APPS = [
     "apps.system.apps.SystemConfig",
     "apps.musicians.apps.MusiciansConfig",
     "apps.music_discovery.apps.MusicDiscoveryConfig",
-    "cloudinary_storage",
-    "cloudinary",
 ]
 
 MIDDLEWARE = [
@@ -300,6 +298,7 @@ if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
         api_secret=CLOUDINARY_API_SECRET,
         secure=True,
     )
+    INSTALLED_APPS += ["cloudinary_storage", "cloudinary"]
     DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
     MEDIA_URL = f"https://res.cloudinary.com/{CLOUDINARY_CLOUD_NAME}/"
 else:
