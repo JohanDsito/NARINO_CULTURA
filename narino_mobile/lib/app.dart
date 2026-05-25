@@ -46,6 +46,7 @@ import 'features/artworks/presentation/screens/publish_artwork_screen.dart';
 import 'features/ai/presentation/screens/chatbot_screen.dart';
 import 'features/musicians/presentation/screens/musicians_screen.dart';
 import 'features/musicians/presentation/screens/musician_detail_screen.dart';
+import 'features/musicians/presentation/screens/publish_musical_work_screen.dart';
 import 'features/music_discovery/presentation/screens/music_discovery_screen.dart';
 import 'features/notifications/presentation/screens/notifications_screen.dart';
 
@@ -211,6 +212,10 @@ final _routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/musicians',
             builder: (_, __) => const MusiciansScreen(),
+          ),
+          GoRoute(
+            path: '/musicians/works/publish',
+            builder: (_, __) => const PublishMusicalWorkScreen(),
           ),
           GoRoute(
             path: '/musicians/:slug',

@@ -34,6 +34,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final user = await _repository.login(email: email, password: password);
       state = state.copyWith(
         status: AuthStatus.authenticated,
+        role: user.rol,
         errorMessage: null,
         successMessage: null,
       );
@@ -83,19 +84,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> logout() async {
     await _repository.logout();
-    state = state.copyWith(
-      status: AuthStatus.unauthenticated,
-      errorMessage: null,
-      successMessage: null,
-    );
+    state = const AuthState(status: AuthStatus.unauthenticated);
   }
 
   void forceSignOut() {
-    state = state.copyWith(
-      status: AuthStatus.unauthenticated,
-      errorMessage: null,
-      successMessage: null,
-    );
+    state = const AuthState(status: AuthStatus.unauthenticated);
   }
 
   void clearError() {

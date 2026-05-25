@@ -30,7 +30,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.initState();
     _authSub = ref.listenManual<AuthState>(authProvider, (prev, next) {
       if (!mounted) return;
-      if (next.status == AuthStatus.authenticated) context.go('/home');
+      if (next.status == AuthStatus.authenticated) {
+        if (next.isArtista) {
+          context.go('/artistic-profile');
+        } else {
+          context.go('/home');
+        }
+      }
     });
   }
 

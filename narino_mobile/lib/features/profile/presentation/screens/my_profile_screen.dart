@@ -5,9 +5,11 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/providers/theme_provider.dart';
 import '../../../../core/providers/user_role_provider.dart';
+import '../../../musicians/presentation/providers/musician_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/storage_utils.dart';
+import '../../../../core/widgets/app_avatar.dart';
 import '../providers/profile_provider.dart';
 import '../../domain/profile_model.dart';
 import '../../../auth/data/auth_repository.dart';
@@ -101,12 +103,13 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
             if (isArtistOrAdmin) ...[
               const _SectionLabel(label: 'Mi contenido'),
               _MenuSection(children: [
-                _MenuTile(
-                  icon: Icons.palette_outlined,
-                  title: 'Mis obras',
-                  subtitle: 'Ver y gestionar tus obras publicadas',
-                  onTap: () => context.go('/catalog'),
-                ),
+                if (profile?.disciplina != 'Música')
+                  _MenuTile(
+                    icon: Icons.palette_outlined,
+                    title: 'Mis obras',
+                    subtitle: 'Ver y gestionar tus obras publicadas',
+                    onTap: () => context.go('/catalog'),
+                  ),
                 _MenuTile(
                   icon: Icons.collections_outlined,
                   title: 'Mi portafolio',
@@ -127,8 +130,11 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                     onTap: () => context.push('/profile/stats'),
                   ),
               ]),
+              // Sección exclusiva para músicos
+              if (profile?.disciplina == 'Música')
+                const _MusicianSection(),
             ],
-            const _SectionLabel(label: 'Mi contenido'),
+            const _SectionLabel(label: 'Mis compras'),
             _MenuSection(children: [
               _MenuTile(
                 icon: Icons.shopping_bag_outlined,
@@ -295,23 +301,13 @@ class _ProfilePreviewCard extends ConsumerWidget {
                 child: Column(
                   children: [
                     // key cambia con photoVersion → descarta la imagen cacheada
-                    CircleAvatar(
+                    AppAvatar(
                       key: ValueKey('avatar-$photoVersion'),
                       radius: 46,
-                      backgroundColor: AppColors.tierraPalida,
-                      backgroundImage: profile?.fotoUrl != null
-                          ? NetworkImage(profile!.fotoUrl!)
-                          : null,
-                      child: profile?.fotoUrl == null
-                          ? Text(
-                              profile?.nombreArtistico.isNotEmpty == true
-                                  ? profile!.nombreArtistico[0].toUpperCase()
-                                  : '?',
-                              style: AppTypography.displayBold(
-                                color: AppColors.tierraProfunda,
-                              ),
-                            )
-                          : null,
+                      url: profile?.fotoUrl,
+                      initials: profile?.nombreArtistico.isNotEmpty == true
+                          ? profile!.nombreArtistico
+                          : '?',
                     ),
                     const SizedBox(height: 10),
                     Text(
@@ -825,6 +821,65 @@ class _ThemeToggleTile extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ─── Sección exclusiva para músicos ──────────────────────────────────────────
+
+class _MusicianSection extends ConsumerWidget {
+  const _MusicianSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final slugAsync = ref.watch(myMusicianSlugProvider);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionLabel(label: 'Mi perfil musical'),
+        _MenuSection(children: [
+          slugAsync.when(
+            data: (slug) => slug != null
+                ? _MenuTile(
+                    icon: Icons.mic_outlined,
+                    title: 'Mi perfil de músico',
+                    subtitle: 'Ver tus obras, reseñas y seguidores',
+                    onTap: () => context.push('/musicians/$slug'),
+                  )
+                : _MenuTile(
+                    icon: Icons.mic_outlined,
+                    title: 'Completar perfil musical',
+                    subtitle: 'Agrega géneros y tipo de agrupación',
+                    onTap: () => context.push('/profile/edit'),
+                  ),
+            loading: () => _MenuTile(
+              icon: Icons.mic_outlined,
+              title: 'Mi perfil de músico',
+              subtitle: 'Cargando...',
+              onTap: () {},
+            ),
+            error: (_, __) => _MenuTile(
+              icon: Icons.mic_outlined,
+              title: 'Mi perfil de músico',
+              subtitle: 'No disponible',
+              onTap: () => ref.invalidate(myMusicianSlugProvider),
+            ),
+          ),
+          _MenuTile(
+            icon: Icons.library_music_outlined,
+            title: 'Publicar obra musical',
+            subtitle: 'Agrega canciones, videos o grabaciones',
+            onTap: () => context.push('/musicians/works/publish'),
+          ),
+          _MenuTile(
+            icon: Icons.explore_outlined,
+            title: 'Descubrimiento musical',
+            subtitle: 'Explora músicos y géneros de Nariño',
+            onTap: () => context.push('/music-discovery'),
+          ),
+        ]),
+      ],
     );
   }
 }

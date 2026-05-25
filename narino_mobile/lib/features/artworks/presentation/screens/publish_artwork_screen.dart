@@ -227,7 +227,7 @@ class _PublishArtworkScreenState extends ConsumerState<PublishArtworkScreen> {
 
     final confirmar = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogCtx) => AlertDialog(
         backgroundColor: theme.cardTheme.color ?? theme.colorScheme.surface,
         title: Text(
           'Eliminar obra',
@@ -240,11 +240,11 @@ class _PublishArtworkScreenState extends ConsumerState<PublishArtworkScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () => Navigator.pop(dialogCtx, false),
             child: const Text('Cancelar'),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.pop(dialogCtx, true),
             style: TextButton.styleFrom(foregroundColor: AppColors.error),
             child: const Text('Eliminar'),
           ),

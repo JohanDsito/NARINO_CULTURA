@@ -27,6 +27,12 @@ class MusicalWorkModel {
   final int? year;
   final String? genre;
   final DateTime createdAt;
+  final String? workType;
+  final String? youtubeUrl;
+  final String? soundcloudEmbed;
+  final String? spotifyTrackUrl;
+  final String? releaseDate;
+  final int? durationSeconds;
 
   const MusicalWorkModel({
     required this.id,
@@ -37,6 +43,12 @@ class MusicalWorkModel {
     this.year,
     this.genre,
     required this.createdAt,
+    this.workType,
+    this.youtubeUrl,
+    this.soundcloudEmbed,
+    this.spotifyTrackUrl,
+    this.releaseDate,
+    this.durationSeconds,
   });
 
   factory MusicalWorkModel.fromJson(Map<String, dynamic> json) {
@@ -54,6 +66,12 @@ class MusicalWorkModel {
       createdAt: DateTime.tryParse(
               json['created_at']?.toString() ?? '') ??
           DateTime.now(),
+      workType: json['work_type']?.toString(),
+      youtubeUrl: json['youtube_url']?.toString(),
+      soundcloudEmbed: json['soundcloud_embed']?.toString(),
+      spotifyTrackUrl: json['spotify_track_url']?.toString(),
+      releaseDate: json['release_date']?.toString(),
+      durationSeconds: (json['duration_seconds'] as num?)?.toInt(),
     );
   }
 }
