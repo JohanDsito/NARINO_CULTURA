@@ -36,6 +36,41 @@ final artworkDetailProvider =
   return ref.read(artworkRepositoryProvider).getDetail(id);
 });
 
+/// Fetches all published artworks for a specific artist slug.
+final artistArtworksProvider =
+    FutureProvider.family<List<ArtworkModel>, String>((ref, slug) async {
+  if (slug.isEmpty) return const [];
+  final dio = ApiClient.instance.dio;
+  final works = <ArtworkModel>[];
+  String? nextUrl = '/api/v1/artworks/?page_size=100';
+  while (nextUrl != null) {
+    try {
+      final res = await dio.get(nextUrl);
+      final data = res.data;
+      final List<dynamic> raw;
+      if (data is Map) {
+        raw = (data['results'] as List?) ?? [];
+        final n = data['next']?.toString();
+        nextUrl = (n != null && n.isNotEmpty) ? n : null;
+      } else if (data is List) {
+        raw = data;
+        nextUrl = null;
+      } else {
+        break;
+      }
+      works.addAll(
+        raw
+            .whereType<Map<String, dynamic>>()
+            .map(ArtworkModel.fromJson)
+            .where((a) => a.artistaSlug == slug),
+      );
+    } on DioException {
+      break;
+    }
+  }
+  return works;
+});
+
 class ArtworkNotifier extends StateNotifier<ArtworkState> {
   ArtworkNotifier(this._repo) : super(const ArtworkState());
 

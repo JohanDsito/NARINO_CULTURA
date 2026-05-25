@@ -70,6 +70,7 @@ class EventsNotifier extends StateNotifier<EventsState> {
     String? descripcion,
     File? flyer,
     List<String>? artistas,
+    bool isPublished = false,
   }) async {
     try {
       final nuevo = await _repo.publishEvent(
@@ -80,6 +81,7 @@ class EventsNotifier extends StateNotifier<EventsState> {
         descripcion: descripcion,
         flyer: flyer,
         artistasRelacionados: artistas,
+        isPublished: isPublished,
       );
       state = state.copyWith(events: [nuevo, ...state.events]);
       return true;

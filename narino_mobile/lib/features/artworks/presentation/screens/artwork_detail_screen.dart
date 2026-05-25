@@ -25,12 +25,24 @@ const _kHeaderHeight = 340.0;
 // ─── Pantalla principal ───────────────────────────────────────────────────────
 
 class ArtworkDetailScreen extends ConsumerWidget {
-  const ArtworkDetailScreen({super.key, required this.artworkId});
+  const ArtworkDetailScreen({
+    super.key,
+    required this.artworkId,
+    this.initialArtwork,
+  });
 
   final String artworkId;
+  final ArtworkModel? initialArtwork;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (initialArtwork != null) {
+      return Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: _ArtworkDetailBody(artwork: initialArtwork!),
+      );
+    }
+
     final asyncArtwork = ref.watch(artworkDetailProvider(artworkId));
 
     return asyncArtwork.when(
@@ -803,7 +815,11 @@ class _ArtistCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(_kSectionRadius - 4),
-          onTap: () => context.push('/profile'),
+          onTap: () {
+            if (artwork.artistaSlug.isNotEmpty) {
+              context.push('/artistas/${artwork.artistaSlug}');
+            }
+          },
           child: Padding(
             padding: const EdgeInsets.all(4),
             child: Row(

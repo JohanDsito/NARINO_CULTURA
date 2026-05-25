@@ -1,3 +1,17 @@
+int _parseInt(dynamic v, [int fallback = 0]) {
+  if (v == null) return fallback;
+  if (v is int) return v;
+  if (v is num) return v.toInt();
+  return int.tryParse(v.toString()) ?? fallback;
+}
+
+int? _parseIntOrNull(dynamic v) {
+  if (v == null) return null;
+  if (v is int) return v;
+  if (v is num) return v.toInt();
+  return int.tryParse(v.toString());
+}
+
 class MusicGenreModel {
   final int id;
   final String name;
@@ -11,7 +25,7 @@ class MusicGenreModel {
 
   factory MusicGenreModel.fromJson(Map<String, dynamic> json) {
     return MusicGenreModel(
-      id: (json['id'] as num?)?.toInt() ?? 0,
+      id: _parseInt(json['id']),
       name: json['name']?.toString() ?? json['nombre']?.toString() ?? '',
       slug: json['slug']?.toString() ?? '',
     );
@@ -53,7 +67,7 @@ class MusicalWorkModel {
 
   factory MusicalWorkModel.fromJson(Map<String, dynamic> json) {
     return MusicalWorkModel(
-      id: (json['id'] as num?)?.toInt() ?? 0,
+      id: _parseInt(json['id']),
       title: json['title']?.toString() ?? json['titulo']?.toString() ?? '',
       description:
           json['description']?.toString() ?? json['descripcion']?.toString(),
@@ -61,7 +75,7 @@ class MusicalWorkModel {
       coverUrl: json['cover_url']?.toString() ??
           json['coverUrl']?.toString() ??
           json['image_url']?.toString(),
-      year: (json['year'] as num?)?.toInt() ?? (json['anio'] as num?)?.toInt(),
+      year: _parseIntOrNull(json['year']) ?? _parseIntOrNull(json['anio']),
       genre: json['genre']?.toString() ?? json['genero']?.toString(),
       createdAt: DateTime.tryParse(
               json['created_at']?.toString() ?? '') ??
@@ -71,7 +85,7 @@ class MusicalWorkModel {
       soundcloudEmbed: json['soundcloud_embed']?.toString(),
       spotifyTrackUrl: json['spotify_track_url']?.toString(),
       releaseDate: json['release_date']?.toString(),
-      durationSeconds: (json['duration_seconds'] as num?)?.toInt(),
+      durationSeconds: _parseIntOrNull(json['duration_seconds']),
     );
   }
 }
@@ -110,10 +124,10 @@ class MusicianReviewModel {
     }
 
     return MusicianReviewModel(
-      id: (json['id'] as num?)?.toInt() ?? 0,
+      id: _parseInt(json['id']),
       reviewerName: name,
       reviewerAvatar: avatar,
-      rating: (json['rating'] as num?)?.toInt() ?? 0,
+      rating: _parseInt(json['rating']),
       comment: json['comment']?.toString() ?? json['comentario']?.toString(),
       createdAt: DateTime.tryParse(
               json['created_at']?.toString() ?? '') ??
@@ -187,18 +201,12 @@ class MusicianModel {
       isFollowing: json['is_following'] as bool? ??
           json['isFollowing'] as bool? ??
           false,
-      followersCount:
-          (json['followers_count'] as num?)?.toInt() ??
-          (json['followersCount'] as num?)?.toInt() ??
-          0,
+      followersCount: _parseInt(json['followers_count'] ?? json['followersCount']),
       averageRating:
           double.tryParse(json['average_rating']?.toString() ?? '') ??
-          (json['rating'] as num?)?.toDouble() ??
+          double.tryParse(json['rating']?.toString() ?? '') ??
           0.0,
-      reviewsCount:
-          (json['reviews_count'] as num?)?.toInt() ??
-          (json['reviewsCount'] as num?)?.toInt() ??
-          0,
+      reviewsCount: _parseInt(json['reviews_count'] ?? json['reviewsCount']),
       isVerified: json['is_verified'] as bool? ??
           json['isVerified'] as bool? ??
           false,

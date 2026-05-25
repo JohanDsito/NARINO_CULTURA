@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../artworks/data/artwork_repository.dart';
 import '../../../artworks/domain/artwork_model.dart';
+import '../../../artworks/presentation/providers/artwork_provider.dart';
 import '../../../profile/presentation/providers/profile_provider.dart';
 import '../../data/auctions_repository.dart';
 import '../../domain/auction_model.dart';
@@ -9,8 +9,6 @@ import '../../domain/auction_model.dart';
 final auctionsRepositoryProvider =
     Provider<AuctionsRepository>((ref) => AuctionsRepository());
 
-final artworkRepositoryProviderForAuctions =
-    Provider<ArtworkRepository>((ref) => ArtworkRepository());
 
 final auctionsProvider =
     StateNotifierProvider<AuctionsNotifier, AsyncValue<List<AuctionModel>>>(
@@ -60,21 +58,16 @@ final myArtworksForAuctionProvider =
   final profileState = ref.read(profileProvider);
   final myProfile = profileState.profile ??
       await ref.read(profileRepositoryProvider).getMyProfile();
-  if (myProfile == null) {
-    throw 'No se pudo cargar tu perfil.';
-  }
-  final myId = myProfile.id;
+  if (myProfile == null) throw 'No se pudo cargar tu perfil.';
 
-  final result =
-      await ref.read(artworkRepositoryProviderForAuctions).getCatalog(
-            page: 1,
-          );
-  final list = result.artworks;
+  // myProfile.id is the artist slug (ProfileModel maps json['slug'] → id)
+  final slug = myProfile.id;
+  if (slug.isEmpty) throw 'No tienes perfil de artista configurado.';
 
-  var filtered = list.where((a) => a.isDisponible).toList();
-  filtered = filtered.where((a) => a.artistaId == myId).toList();
-
-  filtered.sort((a, b) => b.creadoEn.compareTo(a.creadoEn));
+  // Reutiliza artistArtworksProvider que pagina todos los resultados por slug
+  final all = await ref.read(artistArtworksProvider(slug).future);
+  final filtered = all.where((a) => a.isDisponible).toList()
+    ..sort((a, b) => b.creadoEn.compareTo(a.creadoEn));
   return filtered;
 });
 
