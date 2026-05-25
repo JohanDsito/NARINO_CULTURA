@@ -165,6 +165,16 @@ export function EventCalendar({ showCreateButton = false }: EventCalendarProps) 
                       key={event.id}
                       className="overflow-hidden transition-shadow hover:shadow-md"
                     >
+                      {event.image_url && (
+                        <div className="aspect-[16/9] w-full overflow-hidden">
+                          <img
+                            src={event.image_url}
+                            alt={event.title}
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                      )}
+
                       <CardHeader className="pb-3">
                         <div className="flex items-start justify-between gap-2">
                           <CardTitle className="text-base line-clamp-2">
