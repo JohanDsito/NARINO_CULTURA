@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { UserPlus, UserCheck, Globe, ArrowLeft, ExternalLink } from 'lucide-react'
+import { UserPlus, UserCheck, Globe, ArrowLeft, ExternalLink, Music2 } from 'lucide-react'
 import { FaSpotify, FaYoutube, FaSoundcloud, FaInstagram } from 'react-icons/fa'
 import { toast } from 'sonner'
 import { getMusicianBySlug, getMusicianWorks, followMusician } from '@/api/musicians.api'
@@ -33,8 +33,7 @@ export default function MusicianProfilePage() {
   const followMutation = useMutation({
     mutationFn: () => followMusician(slug!),
     onSuccess: (res) => {
-      const nowFollowing = !isFollowing
-      setIsFollowing(nowFollowing)
+      setIsFollowing((v) => !v)
       toast.success(res.detail)
       void queryClient.invalidateQueries({ queryKey: ['musician', slug] })
     },
@@ -56,59 +55,117 @@ export default function MusicianProfilePage() {
 
   const youtubeWorks = works.filter((w) => w.youtube_url && w.work_type === 'VIDEO')
   const audioWorks = works.filter((w) => w.work_type !== 'VIDEO')
+  const hasWorks = works.length > 0
+
+  const socialLinks = [
+    musician.spotify_url && {
+      href: musician.spotify_url,
+      label: 'Spotify',
+      icon: <FaSpotify size={15} />,
+      hover: 'hover:text-[#1DB954]',
+    },
+    musician.youtube_url && {
+      href: musician.youtube_url,
+      label: 'YouTube',
+      icon: <FaYoutube size={15} />,
+      hover: 'hover:text-[#FF0000]',
+    },
+    musician.soundcloud_url && {
+      href: musician.soundcloud_url,
+      label: 'SoundCloud',
+      icon: <FaSoundcloud size={15} />,
+      hover: 'hover:text-orange-400',
+    },
+    musician.instagram_handle && {
+      href: `https://instagram.com/${musician.instagram_handle.replace(/^@/, '')}`,
+      label: `@${musician.instagram_handle.replace(/^@/, '')}`,
+      icon: <FaInstagram size={15} />,
+      hover: 'hover:text-oro',
+    },
+    musician.website_url && {
+      href: musician.website_url,
+      label: 'Sitio web',
+      icon: <Globe size={15} />,
+      hover: 'hover:text-oro',
+      extra: <ExternalLink size={11} className="opacity-60" />,
+    },
+  ].filter(Boolean) as {
+    href: string
+    label: string
+    icon: React.ReactNode
+    hover: string
+    extra?: React.ReactNode
+  }[]
 
   return (
     <div className="min-h-screen bg-bg pt-16">
       {/* Breadcrumb */}
-      <div className="px-6 md:px-16 pt-6">
+      <div className="px-6 md:px-16 pt-6" style={{ background: '#2D1B00' }}>
         <Link
           to={ROUTES.MUSICIANS}
-          className="inline-flex items-center gap-1.5 text-text-muted hover:text-oro font-body text-sm no-underline transition-colors"
+          className="inline-flex items-center gap-1.5 text-oro/60 hover:text-oro font-body text-sm no-underline transition-colors pb-4"
         >
           <ArrowLeft size={14} /> Músicos
         </Link>
       </div>
 
-      {/* Header */}
-      <section className="relative overflow-hidden px-6 md:px-16 py-16" style={{ background: '#2D1B00' }}>
+      {/* Hero */}
+      <section className="relative overflow-hidden px-6 md:px-16 pb-14 pt-8" style={{ background: '#2D1B00' }}>
+        {/* Decorative glow */}
         <div
-          className="pointer-events-none absolute -top-20 -right-20 w-80 h-80 rounded-full"
-          style={{ background: 'radial-gradient(circle, rgba(201,146,26,0.15) 0%, transparent 70%)' }}
+          className="pointer-events-none absolute -top-20 -right-20 w-96 h-96 rounded-full opacity-60"
+          style={{ background: 'radial-gradient(circle, rgba(201,146,26,0.18) 0%, transparent 70%)' }}
         />
+        <div
+          className="pointer-events-none absolute bottom-0 left-0 right-0 h-20"
+          style={{ background: 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.25))' }}
+        />
+
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row gap-10 items-start relative z-10">
           {/* Avatar */}
-          <div className="w-32 h-32 rounded-full bg-oro/20 flex items-center justify-center flex-none">
-            {musician.profile_image ? (
-              <img src={musician.profile_image} alt="" className="w-32 h-32 rounded-full object-cover" />
-            ) : (
-              <span className="font-display font-bold text-oro text-5xl">
-                {musician.artistic_name.charAt(0)}
-              </span>
-            )}
+          <div className="flex-none">
+            <div className="w-28 h-28 md:w-36 md:h-36 rounded-full ring-2 ring-oro/30 overflow-hidden bg-oro/20 flex items-center justify-center shadow-xl">
+              {musician.profile_image ? (
+                <img src={musician.profile_image} alt={musician.artistic_name} className="w-full h-full object-cover" />
+              ) : (
+                <span className="font-display font-bold text-oro text-5xl">
+                  {musician.artistic_name.charAt(0)}
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Info */}
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
+            {/* Badges */}
             <div className="flex flex-wrap gap-2 mb-3">
               <Badge variant="indigo">
                 {AGGREGATION_TYPE_LABELS[musician.aggregation_type] ?? musician.aggregation_type}
               </Badge>
               {musician.is_verified && <Badge variant="selva">Verificado</Badge>}
             </div>
-            <h1 className="font-display font-black text-oro-light leading-tight mb-2" style={{ fontSize: 'clamp(28px,5vw,44px)' }}>
+
+            {/* Name */}
+            <h1
+              className="font-display font-black text-oro-light leading-tight mb-2"
+              style={{ fontSize: 'clamp(28px, 5vw, 44px)' }}
+            >
               {musician.artistic_name}
             </h1>
-            <p className="font-body text-text-muted text-sm mb-3">
+
+            {/* Location */}
+            <p className="font-body text-text-muted text-sm mb-4">
               📍 {musician.city}, {musician.region}
               {musician.founding_year && ` · Desde ${musician.founding_year}`}
             </p>
 
+            {/* Genres */}
             {musician.genres.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mb-4">
+              <div className="flex flex-wrap gap-1.5 mb-5">
                 {musician.genres.map((g) => (
                   <span
                     key={g.id}
-                    className="rounded-tag bg-white/10 text-oro-light font-body text-[12px] px-2.5 py-1"
+                    className="rounded-tag bg-white/10 text-oro-light font-body text-[12px] px-2.5 py-0.5"
                   >
                     {g.icon} {g.name}
                   </span>
@@ -116,46 +173,36 @@ export default function MusicianProfilePage() {
               </div>
             )}
 
+            {/* Bio */}
             {musician.bio && (
-              <p className="font-body text-[15px] leading-[1.65] mb-6" style={{ color: 'rgba(245,239,229,0.75)' }}>
+              <p
+                className="font-body text-[14px] leading-[1.7] mb-6 max-w-2xl"
+                style={{ color: 'rgba(245,239,229,0.78)' }}
+              >
                 {musician.bio}
               </p>
             )}
 
             {/* Social links */}
-            <div className="flex flex-wrap gap-4 mb-6">
-              {musician.spotify_url && (
-                <a href={musician.spotify_url} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 no-underline text-oro-light font-body text-[13px] hover:text-[#1DB954] transition-colors">
-                  <FaSpotify size={16} /> Spotify
-                </a>
-              )}
-              {musician.youtube_url && (
-                <a href={musician.youtube_url} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 no-underline text-oro-light font-body text-[13px] hover:text-[#FF0000] transition-colors">
-                  <FaYoutube size={16} /> YouTube
-                </a>
-              )}
-              {musician.soundcloud_url && (
-                <a href={musician.soundcloud_url} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 no-underline text-oro-light font-body text-[13px] hover:text-orange-400 transition-colors">
-                  <FaSoundcloud size={16} /> SoundCloud
-                </a>
-              )}
-              {musician.instagram_handle && (
-                <a href={`https://instagram.com/${musician.instagram_handle.replace(/^@/, '')}`} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 no-underline text-oro-light font-body text-[13px] hover:text-oro transition-colors">
-                  <FaInstagram size={16} /> @{musician.instagram_handle.replace(/^@/, '')}
-                </a>
-              )}
-              {musician.website_url && (
-                <a href={musician.website_url} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 no-underline text-oro-light font-body text-[13px] hover:text-oro transition-colors">
-                  <Globe size={16} /> Sitio web <ExternalLink size={12} />
-                </a>
-              )}
-            </div>
+            {socialLinks.length > 0 && (
+              <div className="flex flex-wrap gap-x-5 gap-y-2.5 mb-6">
+                {socialLinks.map((link) => (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`flex items-center gap-1.5 no-underline text-oro-light font-body text-[13px] transition-colors ${link.hover}`}
+                  >
+                    {link.icon}
+                    {link.label}
+                    {link.extra}
+                  </a>
+                ))}
+              </div>
+            )}
 
+            {/* Actions */}
             {isAuthenticated && (
               <Button
                 variant={isFollowing ? 'secondary' : 'primary'}
@@ -170,86 +217,153 @@ export default function MusicianProfilePage() {
             )}
           </div>
 
-          {/* Stat */}
-          <div className="text-center">
-            <p className="font-display font-bold text-oro text-[32px]">{musician.followers_count}</p>
-            <p className="font-body text-text-muted text-[12px]">Seguidores</p>
+          {/* Stats column */}
+          <div className="flex md:flex-col gap-6 md:gap-4 md:text-right text-center flex-none">
+            <div>
+              <p className="font-display font-bold text-oro leading-none" style={{ fontSize: '2rem' }}>
+                {musician.followers_count}
+              </p>
+              <p className="font-body text-text-muted text-[11px] mt-0.5 uppercase tracking-wide">
+                Seguidores
+              </p>
+            </div>
+            {hasWorks && (
+              <div>
+                <p className="font-display font-bold text-oro leading-none" style={{ fontSize: '2rem' }}>
+                  {works.length}
+                </p>
+                <p className="font-body text-text-muted text-[11px] mt-0.5 uppercase tracking-wide">
+                  Obras
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </section>
 
-      {/* Obras musicales */}
-      {youtubeWorks.length > 0 && (
-        <section className="px-6 md:px-16 py-12 max-w-5xl mx-auto">
-          <div className="flex items-center gap-4 mb-8">
-            <h2 className="font-display font-bold text-text-primary text-[24px] whitespace-nowrap">Videos</h2>
-            <div className="flex-1 h-[2px]" style={{ background: 'var(--oro)' }} />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {youtubeWorks.slice(0, 4).map((work) => {
-              const youtubeId = work.youtube_url.match(
-                /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))([^&?/]+)/,
-              )?.[1]
-              return (
-                <Card key={work.id} className="p-0 overflow-hidden">
-                  {youtubeId ? (
-                    <iframe
-                      src={`https://www.youtube-nocookie.com/embed/${youtubeId}`}
-                      title={work.title}
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                      className="w-full aspect-video"
-                    />
-                  ) : (
-                    <a href={work.youtube_url} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-2 p-4 text-oro hover:underline font-body text-sm">
-                      <FaYoutube size={18} /> {work.title}
-                    </a>
-                  )}
-                  <div className="p-3">
-                    <p className="font-body font-semibold text-text-primary text-sm">{work.title}</p>
-                    <p className="font-body text-text-muted text-[12px]">
-                      {MUSICAL_WORK_TYPE_LABELS[work.work_type] ?? work.work_type}
-                    </p>
-                  </div>
-                </Card>
-              )
-            })}
-          </div>
-        </section>
-      )}
+      {/* Gold separator */}
+      <div className="h-[3px] w-full" style={{ background: 'linear-gradient(90deg, #2D1B00 0%, var(--oro) 40%, var(--oro) 60%, #2D1B00 100%)' }} />
 
-      {/* Otras obras */}
-      {audioWorks.length > 0 && (
-        <section className="px-6 md:px-16 py-8 max-w-5xl mx-auto">
-          <div className="flex items-center gap-4 mb-6">
-            <h2 className="font-display font-bold text-text-primary text-[22px] whitespace-nowrap">Música</h2>
-            <div className="flex-1 h-[2px]" style={{ background: 'var(--oro)' }} />
+      {/* Content */}
+      <div className="max-w-5xl mx-auto px-6 md:px-16 py-12">
+        {!hasWorks ? (
+          /* Empty state */
+          <div className="flex flex-col items-center gap-5 py-16 text-center">
+            <div
+              className="w-20 h-20 rounded-full flex items-center justify-center"
+              style={{ background: 'rgba(201,146,26,0.08)' }}
+            >
+              <Music2 size={32} style={{ color: 'rgba(201,146,26,0.4)' }} />
+            </div>
+            <div className="space-y-1.5">
+              <p className="font-display font-semibold text-text-primary text-lg">
+                Aún no hay obras publicadas
+              </p>
+              <p className="font-body text-text-muted text-sm max-w-sm">
+                Cuando este músico suba canciones, videos o podcasts, aparecerán aquí.
+              </p>
+            </div>
+            <Link
+              to={ROUTES.MUSICIANS}
+              className="font-body text-sm text-oro hover:underline no-underline"
+            >
+              ← Explorar más músicos
+            </Link>
           </div>
-          <div className="space-y-3">
-            {audioWorks.map((work) => (
-              <div key={work.id} className="flex items-center gap-4 rounded-card border border-border bg-surface p-4">
-                <div className="w-10 h-10 rounded-md bg-oro/20 flex items-center justify-center flex-none">
-                  <FaSpotify size={18} className="text-oro" />
+        ) : (
+          <div className="space-y-14">
+            {/* Videos */}
+            {youtubeWorks.length > 0 && (
+              <section>
+                <div className="flex items-center gap-4 mb-8">
+                  <h2 className="font-display font-bold text-text-primary text-[22px] whitespace-nowrap">
+                    Videos
+                  </h2>
+                  <div className="flex-1 h-[2px]" style={{ background: 'var(--oro)' }} />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-body font-semibold text-text-primary text-sm line-clamp-1">{work.title}</p>
-                  <p className="font-body text-text-muted text-[12px]">
-                    {MUSICAL_WORK_TYPE_LABELS[work.work_type] ?? work.work_type}
-                    {work.release_date && ` · ${work.release_date.slice(0, 4)}`}
-                  </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {youtubeWorks.slice(0, 4).map((work) => {
+                    const youtubeId = work.youtube_url.match(
+                      /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))([^&?/]+)/,
+                    )?.[1]
+                    return (
+                      <Card key={work.id} className="p-0 overflow-hidden">
+                        {youtubeId ? (
+                          <iframe
+                            src={`https://www.youtube-nocookie.com/embed/${youtubeId}`}
+                            title={work.title}
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                            className="w-full aspect-video"
+                          />
+                        ) : (
+                          <a
+                            href={work.youtube_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 p-4 text-oro hover:underline font-body text-sm"
+                          >
+                            <FaYoutube size={18} /> {work.title}
+                          </a>
+                        )}
+                        <div className="p-3">
+                          <p className="font-body font-semibold text-text-primary text-sm">{work.title}</p>
+                          <p className="font-body text-text-muted text-[12px]">
+                            {MUSICAL_WORK_TYPE_LABELS[work.work_type] ?? work.work_type}
+                          </p>
+                        </div>
+                      </Card>
+                    )
+                  })}
                 </div>
-                {work.spotify_track_url && (
-                  <a href={work.spotify_track_url} target="_blank" rel="noopener noreferrer"
-                    className="text-text-muted hover:text-[#1DB954] transition-colors flex-none">
-                    <ExternalLink size={16} />
-                  </a>
-                )}
-              </div>
-            ))}
+              </section>
+            )}
+
+            {/* Audio / other works */}
+            {audioWorks.length > 0 && (
+              <section>
+                <div className="flex items-center gap-4 mb-6">
+                  <h2 className="font-display font-bold text-text-primary text-[22px] whitespace-nowrap">
+                    Música
+                  </h2>
+                  <div className="flex-1 h-[2px]" style={{ background: 'var(--oro)' }} />
+                </div>
+                <div className="space-y-3">
+                  {audioWorks.map((work) => (
+                    <div
+                      key={work.id}
+                      className="flex items-center gap-4 rounded-card border border-border bg-surface p-4"
+                    >
+                      <div className="w-10 h-10 rounded-md bg-oro/20 flex items-center justify-center flex-none">
+                        <FaSpotify size={18} className="text-oro" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-body font-semibold text-text-primary text-sm line-clamp-1">
+                          {work.title}
+                        </p>
+                        <p className="font-body text-text-muted text-[12px]">
+                          {MUSICAL_WORK_TYPE_LABELS[work.work_type] ?? work.work_type}
+                          {work.release_date && ` · ${work.release_date.slice(0, 4)}`}
+                        </p>
+                      </div>
+                      {work.spotify_track_url && (
+                        <a
+                          href={work.spotify_track_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-text-muted hover:text-[#1DB954] transition-colors flex-none"
+                        >
+                          <ExternalLink size={16} />
+                        </a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
-        </section>
-      )}
+        )}
+      </div>
     </div>
   )
 }
