@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import {
   createMusicianProfile,
   getMusicianFollowers,
+  getMusicGenres,
   getMyMusicianFollowing,
   getMyMusicianProfile,
   updateMusicianProfile,
@@ -46,6 +47,13 @@ export default function MusicianDashboardPage() {
 
   const profile = profileQuery.data ?? null
 
+  const genresQuery = useQuery({
+    queryKey: ['music-genres'],
+    queryFn: getMusicGenres,
+    staleTime: Infinity,
+  })
+  const availableGenres = genresQuery.data ?? []
+
   const initialForm = useMemo(() => {
     const defaultName = `${user?.first_name ?? ''} ${user?.last_name ?? ''}`.trim()
     return {
@@ -58,6 +66,7 @@ export default function MusicianDashboardPage() {
       youtube_url: profile?.youtube_url ?? '',
       soundcloud_url: profile?.soundcloud_url ?? '',
       instagram_handle: profile?.instagram_handle ?? '',
+      genre_ids: profile?.genres.map((g) => g.id) ?? [],
     }
   }, [profile, user])
 
@@ -82,6 +91,7 @@ export default function MusicianDashboardPage() {
         youtube_url: form.youtube_url.trim() || undefined,
         soundcloud_url: form.soundcloud_url.trim() || undefined,
         instagram_handle: form.instagram_handle.trim() || undefined,
+        genre_ids: form.genre_ids,
       }
       return profile
         ? updateMusicianProfile(profile.slug, payload)
@@ -98,6 +108,15 @@ export default function MusicianDashboardPage() {
 
   const updateField = <K extends keyof typeof form>(field: K, value: (typeof form)[K]) => {
     setForm((current) => ({ ...current, [field]: value }))
+  }
+
+  const toggleGenre = (id: number) => {
+    setForm((current) => ({
+      ...current,
+      genre_ids: current.genre_ids.includes(id)
+        ? current.genre_ids.filter((g) => g !== id)
+        : [...current.genre_ids, id],
+    }))
   }
 
   return (
@@ -226,6 +245,40 @@ export default function MusicianDashboardPage() {
                     value={form.instagram_handle}
                     onChange={(e) => updateField('instagram_handle', e.target.value)}
                   />
+                </div>
+
+                <div className="space-y-2 md:col-span-2">
+                  <Label>Géneros musicales</Label>
+                  {genresQuery.isLoading ? (
+                    <p className="text-xs text-muted-foreground">Cargando géneros…</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {availableGenres.map((genre) => {
+                        const selected = form.genre_ids.includes(genre.id)
+                        return (
+                          <button
+                            key={genre.id}
+                            type="button"
+                            onClick={() => toggleGenre(genre.id)}
+                            className={[
+                              'flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+                              selected
+                                ? 'border-primary bg-primary text-primary-foreground'
+                                : 'border-border bg-background text-foreground hover:border-primary/60 hover:bg-primary/5',
+                            ].join(' ')}
+                          >
+                            {genre.icon && <span>{genre.icon}</span>}
+                            {genre.name}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                  {form.genre_ids.length > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      {form.genre_ids.length} género{form.genre_ids.length !== 1 ? 's' : ''} seleccionado{form.genre_ids.length !== 1 ? 's' : ''}
+                    </p>
+                  )}
                 </div>
 
                 <div className="md:col-span-2">
