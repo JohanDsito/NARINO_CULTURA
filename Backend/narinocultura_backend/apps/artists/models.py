@@ -17,6 +17,7 @@ class ArtistProfile(TimeStampedUUIDModel):
     instagram_url = models.URLField(blank=True)
     facebook_url = models.URLField(blank=True)
     tiktok_url = models.URLField(blank=True)
+    profile_image = models.FileField(upload_to="artists/profiles/", blank=True)
     followers_count = models.PositiveIntegerField(default=0)
     is_public = models.BooleanField(default=True)
 
