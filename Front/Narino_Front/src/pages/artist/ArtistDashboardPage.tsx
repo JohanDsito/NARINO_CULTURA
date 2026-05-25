@@ -108,64 +108,111 @@ export default function ArtistDashboardPage() {
         </section>
 
         <section className="grid gap-5 lg:grid-cols-[1.4fr_0.8fr] lg:items-start">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <UserRound size={18} />
-                Crear o editar perfil
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-1">
-                  <Label htmlFor="artisticName">Nombre artístico</Label>
-                  <Input
-                    id="artisticName"
-                    value={form.artistic_name}
-                    onChange={(event) => updateField('artistic_name', event.target.value)}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="city">Ciudad</Label>
-                  <Input
-                    id="city"
-                    value={form.city}
-                    onChange={(event) => updateField('city', event.target.value)}
-                  />
-                </div>
-                <div className="space-y-1 md:col-span-2">
-                  <Label htmlFor="category">Disciplina</Label>
-                  <Input
-                    id="category"
-                    value={form.discipline}
-                    onChange={(event) => updateField('discipline', event.target.value)}
-                    placeholder="Música, pintura, artesanía..."
-                  />
-                </div>
-                <div className="space-y-1 md:col-span-2">
-                  <Label htmlFor="bio">Biografía</Label>
-                  <Textarea
-                    id="bio"
-                    rows={5}
-                    value={form.bio}
-                    onChange={(event) => updateField('bio', event.target.value)}
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <Button
-                    type="button"
-                    className="gap-2"
-                    disabled={saveMutation.isPending || profileQuery.isLoading}
-                    onClick={() => saveMutation.mutate()}
-                  >
-                    <Save size={16} />
-                    {saveMutation.isPending ? 'Guardando...' : 'Guardar perfil'}
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
+          {/* Left column: form + action cards */}
+          <div className="flex flex-col gap-5">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <UserRound size={18} />
+                  Crear o editar perfil
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label htmlFor="artisticName">Nombre artístico</Label>
+                    <Input
+                      id="artisticName"
+                      value={form.artistic_name}
+                      onChange={(event) => updateField('artistic_name', event.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="city">Ciudad</Label>
+                    <Input
+                      id="city"
+                      value={form.city}
+                      onChange={(event) => updateField('city', event.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1 md:col-span-2">
+                    <Label htmlFor="category">Disciplina</Label>
+                    <Input
+                      id="category"
+                      value={form.discipline}
+                      onChange={(event) => updateField('discipline', event.target.value)}
+                      placeholder="Música, pintura, artesanía..."
+                    />
+                  </div>
+                  <div className="space-y-1 md:col-span-2">
+                    <Label htmlFor="bio">Biografía</Label>
+                    <Textarea
+                      id="bio"
+                      rows={5}
+                      value={form.bio}
+                      onChange={(event) => updateField('bio', event.target.value)}
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <Button
+                      type="button"
+                      className="gap-2"
+                      disabled={saveMutation.isPending || profileQuery.isLoading}
+                      onClick={() => saveMutation.mutate()}
+                    >
+                      <Save size={16} />
+                      {saveMutation.isPending ? 'Guardando...' : 'Guardar perfil'}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
 
+            {/* Action cards */}
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Card className="flex flex-col">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Palette size={18} />
+                    Obras
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-1 flex-col justify-between gap-4">
+                  <p className="text-sm text-muted-foreground">
+                    Administra tus obras publicadas, crea una nueva pieza o edita las existentes.
+                  </p>
+                  <div className="grid gap-2">
+                    <Button asChild variant="outline">
+                      <Link to="/dashboard/artworks">Ver mis obras</Link>
+                    </Button>
+                    <Button asChild>
+                      <Link to="/dashboard/artworks/new">Añadir obra</Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="flex flex-col">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <CalendarPlus size={18} />
+                    Eventos
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-1 flex-col justify-between gap-4">
+                  <p className="text-sm text-muted-foreground">
+                    Publica exposiciones, talleres o presentaciones. Será revisado por el
+                    administrador antes de aparecer en el calendario.
+                  </p>
+                  <Button asChild className="w-full">
+                    <Link to="/dashboard/events/new">Crear evento</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </div>{/* end left column */}
+
+          {/* Right column */}
           <div className="flex flex-col gap-5">
             <ProfileImageUpload
               currentUrl={profile?.profile_image || undefined}
@@ -183,46 +230,6 @@ export default function ArtistDashboardPage() {
               fetchFollowing={getMyFollowing}
               enabled={Boolean(profile?.slug)}
             />
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Palette size={18} />
-                  Obras
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  Administra tus obras publicadas, crea una nueva pieza o edita las existentes.
-                </p>
-                <div className="grid gap-3">
-                  <Button asChild variant="outline">
-                    <Link to="/dashboard/artworks">Ver mis obras</Link>
-                  </Button>
-                  <Button asChild>
-                    <Link to="/dashboard/artworks/new">Añadir obra</Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <CalendarPlus size={18} />
-                  Eventos
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  Publica exposiciones, talleres o presentaciones. El evento será revisado por el
-                  administrador antes de aparecer en el calendario.
-                </p>
-                <Button asChild className="w-full">
-                  <Link to="/dashboard/events/new">Crear evento</Link>
-                </Button>
-              </CardContent>
-            </Card>
           </div>
         </section>
       </main>

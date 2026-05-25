@@ -159,7 +159,8 @@ export default function MusicianDashboardPage() {
         </section>
 
         <section className="grid gap-5 lg:grid-cols-[1.4fr_0.8fr]">
-          {/* Profile form */}
+          {/* Left column: form + action cards */}
+          <div className="flex flex-col gap-5">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
@@ -312,7 +313,51 @@ export default function MusicianDashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Right column cards */}
+          {/* Action cards below the form */}
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Card className="flex flex-col">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Music size={18} />
+                  Obras musicales
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-1 flex-col justify-between gap-4">
+                <p className="text-sm text-muted-foreground">
+                  Administra tus obras publicadas, añade canciones, videos o podcasts.
+                </p>
+                <div className="grid gap-2">
+                  <Button asChild variant="outline">
+                    <Link to={ROUTES.DASHBOARD.MUSICIAN.WORKS}>Ver mis obras</Link>
+                  </Button>
+                  <Button asChild>
+                    <Link to={ROUTES.DASHBOARD.MUSICIAN.WORKS_NEW}>Añadir obra</Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="flex flex-col">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <CalendarPlus size={18} />
+                  Eventos
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-1 flex-col justify-between gap-4">
+                <p className="text-sm text-muted-foreground">
+                  Publica conciertos o presentaciones. Será revisado por el administrador antes de
+                  aparecer en el calendario.
+                </p>
+                <Button asChild className="w-full">
+                  <Link to={ROUTES.DASHBOARD.EVENTS_NEW}>Crear evento</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+          </div>{/* end left column */}
+
+          {/* Right column */}
           <div className="flex flex-col gap-5">
             <ProfileImageUpload
               currentUrl={profile?.profile_image || undefined}
@@ -330,46 +375,6 @@ export default function MusicianDashboardPage() {
               fetchFollowing={getMyMusicianFollowing}
               enabled={Boolean(profile?.slug)}
             />
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Music size={18} />
-                  Obras musicales
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  Administra tus obras musicales publicadas, añade canciones, videos o podcasts.
-                </p>
-                <div className="grid gap-3">
-                  <Button asChild variant="outline">
-                    <Link to={ROUTES.DASHBOARD.MUSICIAN.WORKS}>Ver mis obras</Link>
-                  </Button>
-                  <Button asChild>
-                    <Link to={ROUTES.DASHBOARD.MUSICIAN.WORKS_NEW}>Añadir obra</Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <CalendarPlus size={18} />
-                  Eventos
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  Publica conciertos o presentaciones. El evento será revisado por el administrador
-                  antes de aparecer en el calendario.
-                </p>
-                <Button asChild className="w-full">
-                  <Link to={ROUTES.DASHBOARD.EVENTS_NEW}>Crear evento</Link>
-                </Button>
-              </CardContent>
-            </Card>
           </div>
         </section>
       </main>
