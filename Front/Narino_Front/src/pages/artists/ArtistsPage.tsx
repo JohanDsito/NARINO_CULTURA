@@ -61,17 +61,17 @@ export default function ArtistsPage() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
             {artists.map((artist) => (
               <Link
                 key={artist.id}
                 to={ROUTES.ARTIST_DETAIL(artist.slug)}
-                className="no-underline"
+                className="no-underline h-full"
               >
-                <Card className="p-0 overflow-hidden group cursor-pointer hover:shadow-card transition-shadow">
-                  {/* Avatar placeholder */}
+                <Card className="p-0 overflow-hidden group cursor-pointer hover:shadow-card transition-shadow h-full flex flex-col">
+                  {/* Avatar */}
                   <div
-                    className="h-40 flex items-center justify-center"
+                    className="h-44 flex-none flex items-center justify-center"
                     style={{ background: '#2D1B00' }}
                   >
                     <span className="font-display text-oro font-bold text-5xl">
@@ -79,24 +79,23 @@ export default function ArtistsPage() {
                     </span>
                   </div>
 
-                  <div className="p-5">
-                    <h2 className="font-display font-bold text-text-primary text-[17px] mb-1 group-hover:text-oro transition-colors">
-                      {artist.artistic_name}
-                    </h2>
-
-                    {artist.discipline && (
-                      <p className="font-body text-text-muted text-[13px] mb-2 line-clamp-1">
-                        {artist.discipline}
+                  {/* Contenido — flex-1 para que todas las cards estiren igual */}
+                  <div className="flex flex-1 flex-col justify-between p-5">
+                    <div className="space-y-1.5">
+                      <h2 className="font-display font-bold text-text-primary text-[17px] group-hover:text-oro transition-colors line-clamp-1">
+                        {artist.artistic_name}
+                      </h2>
+                      {/* Disciplina — siempre ocupa la misma línea */}
+                      <p className="font-body text-text-muted text-[13px] line-clamp-1 min-h-[18px]">
+                        {artist.discipline || ''}
                       </p>
-                    )}
-
-                    {artist.city && (
-                      <p className="font-body text-text-muted text-[12px] mb-3">
-                        📍 {artist.city}
+                      {/* Ciudad — siempre ocupa la misma línea */}
+                      <p className="font-body text-text-muted text-[12px] min-h-[18px]">
+                        {artist.city ? `📍 ${artist.city}` : ''}
                       </p>
-                    )}
+                    </div>
 
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between pt-3 mt-2 border-t border-border">
                       <span className="font-body text-[12px] text-text-muted">
                         {artist.followers_count}{' '}
                         {artist.followers_count === 1 ? 'seguidor' : 'seguidores'}
