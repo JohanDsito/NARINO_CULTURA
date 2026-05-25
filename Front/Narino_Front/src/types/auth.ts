@@ -84,7 +84,7 @@ export interface ArtistProfile {
   tiktok_url: string
   followers_count: number
   is_public: boolean
-  profile_image?: string
+  profile_image_url?: string
   created_at: string
   updated_at: string
   is_following?: boolean // annotated by backend or derived from follow endpoint
@@ -299,7 +299,7 @@ export interface MusicianProfile {
   contact_email: string
   booking_email: string
   phone: string
-  profile_image: string
+  profile_image_url: string
   is_verified: boolean
   is_active: boolean
   followers_count: number

@@ -137,8 +137,8 @@ export default function MusicDiscoveryPage() {
                   >
                     <Card className="p-5 hover:shadow-card transition-shadow cursor-pointer group">
                       <div className="w-12 h-12 rounded-full bg-oro/20 flex items-center justify-center mb-3">
-                        {musician.profile_image ? (
-                          <img src={musician.profile_image} alt="" className="w-12 h-12 rounded-full object-cover" />
+                        {musician.profile_image_url ? (
+                          <img src={musician.profile_image_url} alt="" className="w-12 h-12 rounded-full object-cover" />
                         ) : (
                           <span className="font-display font-bold text-oro text-xl">
                             {musician.artistic_name.charAt(0)}

@@ -125,8 +125,8 @@ export default function MusicianProfilePage() {
           {/* Avatar */}
           <div className="flex-none">
             <div className="w-28 h-28 md:w-36 md:h-36 rounded-full ring-2 ring-oro/30 overflow-hidden bg-oro/20 flex items-center justify-center shadow-xl">
-              {musician.profile_image ? (
-                <img src={musician.profile_image} alt={musician.artistic_name} className="w-full h-full object-cover" />
+              {musician.profile_image_url ? (
+                <img src={musician.profile_image_url} alt={musician.artistic_name} className="w-full h-full object-cover" />
               ) : (
                 <span className="font-display font-bold text-oro text-5xl">
                   {musician.artistic_name.charAt(0)}

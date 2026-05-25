@@ -360,7 +360,7 @@ export default function MusicianDashboardPage() {
           {/* Right column */}
           <div className="flex flex-col gap-5">
             <ProfileImageUpload
-              currentUrl={profile?.profile_image || undefined}
+              currentUrl={profile?.profile_image_url || undefined}
               name={form.artistic_name || (user?.first_name ?? '?')}
               onUpload={(file) => uploadImageMutation.mutateAsync(file)}
               isPending={uploadImageMutation.isPending}

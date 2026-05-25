@@ -115,8 +115,8 @@ export default function MusicianDirectoryPage() {
                 <Card className="p-5 hover:shadow-card transition-shadow cursor-pointer group">
                   {/* Avatar */}
                   <div className="w-14 h-14 rounded-full bg-oro/20 flex items-center justify-center mb-4">
-                    {musician.profile_image ? (
-                      <img src={musician.profile_image} alt="" className="w-14 h-14 rounded-full object-cover" />
+                    {musician.profile_image_url ? (
+                      <img src={musician.profile_image_url} alt="" className="w-14 h-14 rounded-full object-cover" />
                     ) : (
                       <span className="font-display font-bold text-oro text-2xl">
                         {musician.artistic_name.charAt(0)}
