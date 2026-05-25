@@ -6,9 +6,12 @@ import { toast } from 'sonner'
 
 import {
   createMusicianProfile,
+  getMusicianFollowers,
+  getMyMusicianFollowing,
   getMyMusicianProfile,
   updateMusicianProfile,
 } from '@/api/musicians.api'
+import { FollowStatsCard } from '@/components/profile/FollowStatsCard'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -242,6 +245,15 @@ export default function MusicianDashboardPage() {
 
           {/* Right column cards */}
           <div className="flex flex-col gap-5">
+            <FollowStatsCard
+              followersCount={profile?.followers_count ?? 0}
+              followersQueryKey={['musician-followers', profile?.slug]}
+              fetchFollowers={() => getMusicianFollowers(profile!.slug)}
+              followingQueryKey={['musician-following', user?.id]}
+              fetchFollowing={getMyMusicianFollowing}
+              enabled={Boolean(profile?.slug)}
+            />
+
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">

@@ -8,6 +8,7 @@ import type {
   PaginatedResponse,
   AggregationType,
 } from '@/types/auth'
+import type { FollowItem } from '@/api/artists.api'
 
 export interface GetMusiciansParams {
   aggregation_type?: AggregationType
@@ -85,6 +86,20 @@ export async function followMusician(slug: string): Promise<{ detail: string }> 
     `/api/v1/musicians/${slug}/follow/`,
   )
   return data
+}
+
+export async function getMusicianFollowers(slug: string): Promise<FollowItem[]> {
+  const { data } = await axiosInstance.get<FollowItem[] | { results?: FollowItem[] }>(
+    `/api/v1/musicians/${slug}/followers/`,
+  )
+  return Array.isArray(data) ? data : data.results ?? []
+}
+
+export async function getMyMusicianFollowing(): Promise<FollowItem[]> {
+  const { data } = await axiosInstance.get<FollowItem[] | { results?: FollowItem[] }>(
+    '/api/v1/musicians/following/',
+  )
+  return Array.isArray(data) ? data : data.results ?? []
 }
 
 export async function getMusicianWorks(
