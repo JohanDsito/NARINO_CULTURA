@@ -328,36 +328,110 @@ export default function MusicianProfilePage() {
                   </h2>
                   <div className="flex-1 h-[2px]" style={{ background: 'var(--oro)' }} />
                 </div>
-                <div className="space-y-3">
-                  {audioWorks.map((work) => (
-                    <div
-                      key={work.id}
-                      className="flex items-center gap-4 rounded-card border border-border bg-surface p-4"
-                    >
-                      <div className="w-10 h-10 rounded-md bg-oro/20 flex items-center justify-center flex-none">
-                        <FaSpotify size={18} className="text-oro" />
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {audioWorks.map((work) => {
+                    const soundcloudUrl = work.soundcloud_embed?.startsWith('http')
+                      ? work.soundcloud_embed
+                      : null
+                    const workLinks = [
+                      work.spotify_track_url && {
+                        href: work.spotify_track_url,
+                        icon: <FaSpotify size={13} />,
+                        label: 'Spotify',
+                        color: 'hover:text-[#1DB954]',
+                      },
+                      soundcloudUrl && {
+                        href: soundcloudUrl,
+                        icon: <FaSoundcloud size={13} />,
+                        label: 'SoundCloud',
+                        color: 'hover:text-orange-400',
+                      },
+                      work.youtube_url && {
+                        href: work.youtube_url,
+                        icon: <FaYoutube size={13} />,
+                        label: 'YouTube',
+                        color: 'hover:text-[#FF0000]',
+                      },
+                    ].filter(Boolean) as {
+                      href: string
+                      icon: React.ReactNode
+                      label: string
+                      color: string
+                    }[]
+
+                    const formatDuration = (secs: number) => {
+                      const m = Math.floor(secs / 60)
+                      const s = String(secs % 60).padStart(2, '0')
+                      return `${m}:${s}`
+                    }
+
+                    return (
+                      <div
+                        key={work.id}
+                        className="rounded-card border border-border bg-surface overflow-hidden"
+                      >
+                        <div className="flex gap-4 p-4">
+                          {/* Thumbnail o ícono */}
+                          <div className="w-16 h-16 flex-none rounded-lg overflow-hidden bg-oro/10 flex items-center justify-center">
+                            {work.thumbnail ? (
+                              <img
+                                src={work.thumbnail}
+                                alt={work.title}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <FaSpotify size={22} className="text-oro/40" />
+                            )}
+                          </div>
+
+                          {/* Contenido */}
+                          <div className="flex-1 min-w-0 space-y-1">
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="font-body font-semibold text-text-primary text-sm leading-tight line-clamp-2">
+                                {work.title}
+                              </p>
+                              {work.is_featured && (
+                                <span className="flex-none text-[10px] bg-oro/10 text-oro px-2 py-0.5 rounded-full font-medium">
+                                  Destacada
+                                </span>
+                              )}
+                            </div>
+
+                            <p className="font-body text-text-muted text-[11px]">
+                              {MUSICAL_WORK_TYPE_LABELS[work.work_type] ?? work.work_type}
+                              {work.release_date && ` · ${work.release_date.slice(0, 4)}`}
+                              {work.duration_seconds
+                                ? ` · ${formatDuration(work.duration_seconds)}`
+                                : null}
+                            </p>
+
+                            {work.description && (
+                              <p className="font-body text-text-muted text-[12px] leading-snug line-clamp-2 pt-0.5">
+                                {work.description}
+                              </p>
+                            )}
+
+                            {workLinks.length > 0 && (
+                              <div className="flex flex-wrap gap-3 pt-1">
+                                {workLinks.map((link) => (
+                                  <a
+                                    key={link.href}
+                                    href={link.href}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={`flex items-center gap-1 font-body text-[12px] text-text-muted no-underline transition-colors ${link.color}`}
+                                  >
+                                    {link.icon}
+                                    {link.label}
+                                  </a>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-body font-semibold text-text-primary text-sm line-clamp-1">
-                          {work.title}
-                        </p>
-                        <p className="font-body text-text-muted text-[12px]">
-                          {MUSICAL_WORK_TYPE_LABELS[work.work_type] ?? work.work_type}
-                          {work.release_date && ` · ${work.release_date.slice(0, 4)}`}
-                        </p>
-                      </div>
-                      {work.spotify_track_url && (
-                        <a
-                          href={work.spotify_track_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-text-muted hover:text-[#1DB954] transition-colors flex-none"
-                        >
-                          <ExternalLink size={16} />
-                        </a>
-                      )}
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </section>
             )}
