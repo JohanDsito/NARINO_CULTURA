@@ -94,7 +94,10 @@ export function useAuctionSocket(
 ) {
   const socketRef = useRef<AuctionSocket | null>(null)
   const onMessageRef = useRef(onMessage)
-  onMessageRef.current = onMessage
+
+  useEffect(() => {
+    onMessageRef.current = onMessage
+  }, [onMessage])
 
   useEffect(() => {
     if (!auctionId || !enabled) return
