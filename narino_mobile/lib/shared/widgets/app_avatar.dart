@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
-import '../theme/app_colors.dart';
-import '../theme/app_typography.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_typography.dart';
 
 /// Avatar circular con fallback ante errores de red o imagen indecodificable.
 /// Reemplaza CircleAvatar + NetworkImage para evitar FlutterJNI decode errors.

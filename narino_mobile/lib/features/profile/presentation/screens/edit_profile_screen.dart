@@ -8,7 +8,7 @@ import '../../../../core/constants/api_constants.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../core/widgets/app_avatar.dart';
+import '../../../../shared/widgets/app_avatar.dart';
 import '../../domain/profile_model.dart';
 import '../../domain/profile_state.dart';
 import '../providers/profile_provider.dart';
@@ -154,15 +154,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       return;
     }
     setState(() => _nuevaFoto = File(picked.path));
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-              'La foto se muestra localmente. La subida de imágenes estará disponible pronto.'),
-          duration: Duration(seconds: 3),
-        ),
-      );
-    }
   }
 
   Future<void> _save() async {

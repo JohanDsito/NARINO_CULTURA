@@ -177,8 +177,6 @@ class _PublishArtworkScreenState extends ConsumerState<PublishArtworkScreen> {
       if (_tecnica?.trim().isNotEmpty == true) 'technique': _tecnica!.trim(),
       if (_dimensionesCtrl.text.trim().isNotEmpty)
         'dimensions': _dimensionesCtrl.text.trim(),
-      // main_image: el serializer no lo expone aún, pero se envía para que
-      // funcione automáticamente cuando el back agregue el campo al serializer.
       if (_imagenesSeleccionadas.isNotEmpty)
         'main_image': await MultipartFile.fromFile(
           _imagenesSeleccionadas.first.path,
