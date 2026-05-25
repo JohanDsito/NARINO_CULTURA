@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { UserPlus, UserCheck, Globe, ArrowLeft, ExternalLink, Music2 } from 'lucide-react'
@@ -92,9 +92,9 @@ export default function MusicianProfilePage() {
   ].filter(Boolean) as {
     href: string
     label: string
-    icon: React.ReactNode
+    icon: ReactNode
     hover: string
-    extra?: React.ReactNode
+    extra?: ReactNode
   }[]
 
   return (
@@ -354,7 +354,7 @@ export default function MusicianProfilePage() {
                       },
                     ].filter(Boolean) as {
                       href: string
-                      icon: React.ReactNode
+                      icon: ReactNode
                       label: string
                       color: string
                     }[]
