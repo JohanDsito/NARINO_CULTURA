@@ -38,6 +38,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   final _igCtrl = TextEditingController();
   final _fbCtrl = TextEditingController();
   final _ttCtrl = TextEditingController();
+  final _webCtrl = TextEditingController();
 
   String? _disciplina;
   File? _nuevaFoto;
@@ -66,6 +67,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _igCtrl.text = p.redesSociales['instagram'] ?? '';
     _fbCtrl.text = p.redesSociales['facebook'] ?? '';
     _ttCtrl.text = p.redesSociales['tiktok'] ?? '';
+    _webCtrl.text = p.redesSociales['website'] ?? '';
     _disciplina = p.disciplina;
     _initialized = true;
   }
@@ -137,6 +139,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _igCtrl.dispose();
     _fbCtrl.dispose();
     _ttCtrl.dispose();
+    _webCtrl.dispose();
     super.dispose();
   }
 
@@ -171,6 +174,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       'instagram': _igCtrl.text.trim(),
       'facebook': _fbCtrl.text.trim(),
       'tiktok': _ttCtrl.text.trim(),
+      'website': _webCtrl.text.trim(),
     };
 
     final ok = await ref.read(myProfileProvider.notifier).updateProfile(
@@ -517,23 +521,36 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             _SectionDivider(label: 'Redes sociales', textMuted: textMuted),
             const SizedBox(height: 10),
             TextFormField(
+                controller: _webCtrl,
+                keyboardType: TextInputType.url,
+                style: AppTypography.bodyMedium(color: textPrimary),
+                decoration: const InputDecoration(
+                    labelText: 'Sitio web (URL)',
+                    prefixIcon: Icon(Icons.language_outlined))),
+            const SizedBox(height: 10),
+            TextFormField(
                 controller: _igCtrl,
+                keyboardType: TextInputType.url,
                 style: AppTypography.bodyMedium(color: textPrimary),
                 decoration: const InputDecoration(
                     labelText: 'Instagram (URL)',
-                    prefixIcon: Icon(Icons.link))),
+                    prefixIcon: Icon(Icons.camera_alt_outlined))),
             const SizedBox(height: 10),
             TextFormField(
                 controller: _fbCtrl,
+                keyboardType: TextInputType.url,
                 style: AppTypography.bodyMedium(color: textPrimary),
                 decoration: const InputDecoration(
-                    labelText: 'Facebook (URL)', prefixIcon: Icon(Icons.link))),
+                    labelText: 'Facebook (URL)',
+                    prefixIcon: Icon(Icons.facebook_outlined))),
             const SizedBox(height: 10),
             TextFormField(
                 controller: _ttCtrl,
+                keyboardType: TextInputType.url,
                 style: AppTypography.bodyMedium(color: textPrimary),
                 decoration: const InputDecoration(
-                    labelText: 'TikTok (URL)', prefixIcon: Icon(Icons.link))),
+                    labelText: 'TikTok (URL)',
+                    prefixIcon: Icon(Icons.music_note_outlined))),
             const SizedBox(height: 28),
 
             if (state.hasError) ...[

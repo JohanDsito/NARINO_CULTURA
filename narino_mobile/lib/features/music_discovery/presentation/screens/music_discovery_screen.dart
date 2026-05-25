@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
@@ -41,7 +42,18 @@ class _MusicDiscoveryScreenState extends ConsumerState<MusicDiscoveryScreen> {
         isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
     final cs = theme.colorScheme;
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          if (context.canPop()) {
+            context.pop();
+          } else {
+            context.go('/musicians');
+          }
+        }
+      },
+      child: Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: AppColors.obsidiana,
@@ -192,6 +204,7 @@ class _MusicDiscoveryScreenState extends ConsumerState<MusicDiscoveryScreen> {
               ),
             ),
         ],
+      ),
       ),
     );
   }

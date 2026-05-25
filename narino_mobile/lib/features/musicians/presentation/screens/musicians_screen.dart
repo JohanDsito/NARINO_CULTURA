@@ -32,7 +32,18 @@ class _MusiciansScreenState extends ConsumerState<MusiciansScreen> {
     final isDark = theme.brightness == Brightness.dark;
     final cs = theme.colorScheme;
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          if (context.canPop()) {
+            context.pop();
+          } else {
+            context.go('/home');
+          }
+        }
+      },
+      child: Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: AppColors.obsidiana,
@@ -75,6 +86,7 @@ class _MusiciansScreenState extends ConsumerState<MusiciansScreen> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

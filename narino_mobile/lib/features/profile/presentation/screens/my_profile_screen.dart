@@ -99,6 +99,12 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
               favCount: favState.favorites.length,
             ),
 
+            // ── Mi espacio web (solo si hay al menos un link con valor) ─
+            if (profile?.redesSociales.entries
+                    .any((e) => e.value.trim().isNotEmpty) ==
+                true)
+              _WebSpaceSection(links: profile!.redesSociales),
+
             // ── Mi contenido (según rol) ──────────────────────────────
             if (isArtistOrAdmin) ...[
               const _SectionLabel(label: 'Mi contenido'),
@@ -296,18 +302,35 @@ class _ProfilePreviewCard extends ConsumerWidget {
               // Encabezado oscuro (igual al perfil público)
               Container(
                 width: double.infinity,
-                color: AppColors.obsidiana,
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF3D2410), AppColors.obsidiana],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                ),
+                padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
                 child: Column(
                   children: [
-                    // key cambia con photoVersion → descarta la imagen cacheada
-                    AppAvatar(
-                      key: ValueKey('avatar-$photoVersion'),
-                      radius: 46,
-                      url: profile?.fotoUrl,
-                      initials: profile?.nombreArtistico.isNotEmpty == true
-                          ? profile!.nombreArtistico
-                          : '?',
+                    // Anillo dorado alrededor del avatar
+                    Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: [AppColors.oroClaro, AppColors.oroAndino],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                      ),
+                      child: AppAvatar(
+                        key: ValueKey('avatar-$photoVersion'),
+                        radius: 46,
+                        url: profile?.fotoUrl,
+                        initials: profile?.nombreArtistico.isNotEmpty == true
+                            ? profile!.nombreArtistico
+                            : '?',
+                      ),
                     ),
                     const SizedBox(height: 10),
                     Text(
@@ -403,24 +426,6 @@ class _ProfilePreviewCard extends ConsumerWidget {
                 ),
               ],
 
-              // Redes sociales
-              if (profile?.redesSociales.isNotEmpty == true) ...[
-                Divider(height: 1, color: border),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 14),
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: profile!.redesSociales.entries
-                        .take(4)
-                        .map((e) => _SocialChip(
-                              platform: e.key,
-                              url: e.value,
-                            ))
-                        .toList(),
-                  ),
-                ),
-              ],
             ],
           ),
         ),
@@ -473,56 +478,124 @@ class _StatDivider extends StatelessWidget {
   }
 }
 
-// ─── Chip de red social ───────────────────────────────────────────────────────
+// ─── Mi espacio web ───────────────────────────────────────────────────────────
 
-class _SocialChip extends StatelessWidget {
-  const _SocialChip({required this.platform, required this.url});
+class _WebSpaceSection extends StatelessWidget {
+  const _WebSpaceSection({required this.links});
+
+  final Map<String, String> links;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final bgCard = isDark ? AppColors.bgCardDark : AppColors.bgCardLight;
+    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
+
+    final entries = links.entries
+        .where((e) => e.value.trim().isNotEmpty)
+        .toList();
+    if (entries.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionLabel(label: 'Mi espacio web'),
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: bgCard,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: border),
+          ),
+          child: Column(
+            children: entries
+                .expand<Widget>((e) => [
+                      _LinkTile(platform: e.key, url: e.value),
+                      _SectionDivider(),
+                    ])
+                .toList()
+              ..removeLast(),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _LinkTile extends StatelessWidget {
+  const _LinkTile({required this.platform, required this.url});
 
   final String platform;
   final String url;
 
-  IconData get _icon {
-    switch (platform.toLowerCase()) {
-      case 'instagram':
-        return Icons.camera_alt_outlined;
-      case 'facebook':
-        return Icons.facebook_outlined;
-      case 'tiktok':
-        return Icons.music_note_outlined;
-      case 'website':
-        return Icons.language_outlined;
-      default:
-        return Icons.link_outlined;
-    }
-  }
+  static const _platforms = <String, (IconData, String, Color)>{
+    'instagram': (Icons.camera_alt_outlined, 'Instagram', Color(0xFFE1306C)),
+    'facebook': (Icons.facebook_outlined, 'Facebook', Color(0xFF1877F2)),
+    'tiktok': (Icons.music_note_outlined, 'TikTok', Color(0xFF69C9D0)),
+    'website': (Icons.language_outlined, 'Sitio web', AppColors.indigoClaro),
+  };
 
-  String get _label {
-    switch (platform.toLowerCase()) {
-      case 'instagram':
-        return 'Instagram';
-      case 'facebook':
-        return 'Facebook';
-      case 'tiktok':
-        return 'TikTok';
-      case 'website':
-        return 'Web';
-      default:
-        return platform;
-    }
+  (IconData, String, Color) get _info =>
+      _platforms[platform.toLowerCase()] ??
+      (Icons.link_outlined, platform, AppColors.indigoClaro);
+
+  String get _displayUrl {
+    var u = url;
+    if (u.startsWith('https://')) u = u.substring(8);
+    if (u.startsWith('http://')) u = u.substring(7);
+    if (u.startsWith('www.')) u = u.substring(4);
+    if (u.endsWith('/')) u = u.substring(0, u.length - 1);
+    return u.length > 36 ? '${u.substring(0, 33)}…' : u;
   }
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return ActionChip(
-      avatar: Icon(_icon, size: 14, color: cs.primary),
-      label: Text(_label, style: AppTypography.caption(color: cs.primary)),
-      onPressed: () async {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textPrimary =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+    final (icon, name, color) = _info;
+
+    return InkWell(
+      onTap: () async {
         final uri = Uri.tryParse(url);
         if (uri != null && await canLaunchUrl(uri)) {
           await launchUrl(uri, mode: LaunchMode.externalApplication);
         }
       },
+      borderRadius: BorderRadius.circular(14),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: color, size: 19),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(name,
+                      style: AppTypography.labelSemiBold(color: textPrimary)),
+                  Text(_displayUrl,
+                      style: AppTypography.caption(color: textMuted)),
+                ],
+              ),
+            ),
+            Icon(Icons.open_in_new_outlined, size: 16, color: textMuted),
+          ],
+        ),
+      ),
     );
   }
 }

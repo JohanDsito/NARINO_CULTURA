@@ -14,11 +14,18 @@ class EventsService {
   }) async {
     final params = <String, dynamic>{};
     if (tipo != null) params['event_type'] = tipo.toUpperCase();
-    // Incluir eventos pasados: el backend filtra al futuro por defecto con
-    // `upcoming=true`; pasar `upcoming=false` para traer todo el historial.
-    if (mostrarPasados) params['upcoming'] = false;
+    // El backend devuelve todos los eventos publicados; el filtrado de pasados
+    // se aplica en el cliente con EventModel.esPasado.
     final r = await _dio.get(ApiConstants.events, queryParameters: params);
-    return r.data is List ? r.data as List : (r.data['results'] as List? ?? []);
+    final raw = r.data is List ? r.data as List : (r.data['results'] as List? ?? []);
+    if (mostrarPasados) return raw;
+    final now = DateTime.now();
+    return raw.where((e) {
+      final fecha = DateTime.tryParse(
+        (e as Map<String, dynamic>)['start_date']?.toString() ?? '',
+      );
+      return fecha != null && !fecha.isBefore(now);
+    }).toList();
   }
 
   Future<Map<String, dynamic>> getEventDetail(String id) async {
@@ -35,6 +42,7 @@ class EventsService {
     String? descripcion,
     File? flyer,
     List<String>? artistasRelacionados,
+    bool isPublished = false,
   }) async {
     // Mapear parámetros mobile → campos exactos del backend
     final startDate = DateTime.tryParse(fecha) ?? DateTime.now();
@@ -57,7 +65,7 @@ class EventsService {
         'location': lugar,
         if (descripcion != null && descripcion.isNotEmpty)
           'description': descripcion,
-        'is_published': false,
+        'is_published': isPublished,
       },
     );
     return r.data as Map<String, dynamic>;

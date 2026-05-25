@@ -208,7 +208,7 @@ class _PublishArtworkScreenState extends ConsumerState<PublishArtworkScreen> {
           ),
         ),
       );
-      context.go('/artworks/${result.id}');
+      context.go('/artworks/${result.id}', extra: result);
     } else {
       final error = ref.read(artworkProvider).errorMessage;
       if (error != null && mounted) _showSnackBar(error);

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../../core/providers/user_role_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../providers/events_provider.dart';
@@ -102,6 +103,12 @@ class _PublishEventScreenState extends ConsumerState<PublishEventScreen> {
       return;
     }
 
+    final role = await ref.read(currentUserRoleProvider.future);
+    final isPublished = role == 'gestor' ||
+        role == 'gestor_cultural' ||
+        role == 'admin' ||
+        role == 'administrador';
+
     final ok = await ref.read(eventsProvider.notifier).publishEvent(
           nombre: _nombreCtrl.text.trim(),
           tipo: _tipo,
@@ -110,6 +117,7 @@ class _PublishEventScreenState extends ConsumerState<PublishEventScreen> {
           descripcion: _descCtrl.text.trim(),
           artistas: _parseArtistIds(),
           flyer: _flyer,
+          isPublished: isPublished,
         );
 
     if (!mounted) return;

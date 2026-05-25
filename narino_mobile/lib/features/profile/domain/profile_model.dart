@@ -1,3 +1,10 @@
+int _profileInt(dynamic v, [int fallback = 0]) {
+  if (v == null) return fallback;
+  if (v is int) return v;
+  if (v is num) return v.toInt();
+  return int.tryParse(v.toString()) ?? fallback;
+}
+
 /// Modelo de dominio que representa el perfil del usuario (artista/comprador/gestor).
 class ProfileModel {
   final String id;
@@ -58,12 +65,8 @@ class ProfileModel {
           json['bio']?.toString() ?? json['biografia']?.toString(),
       fotoUrl:
           json['avatar_url']?.toString() ?? json['foto_url']?.toString(),
-      seguidores: (json['followers_count'] as int?) ??
-          (json['seguidores'] as int?) ??
-          0,
-      siguiendo: (json['following_count'] as int?) ??
-          (json['siguiendo'] as int?) ??
-          0,
+      seguidores: _profileInt(json['followers_count'] ?? json['seguidores']),
+      siguiendo: _profileInt(json['following_count'] ?? json['siguiendo']),
       esSeguido: (json['is_following'] as bool?) ??
           (json['es_seguido'] as bool?) ??
           false,
@@ -72,12 +75,9 @@ class ProfileModel {
           (json['es_verificado'] as bool?) ??
           false,
       redesSociales: redes,
-      totalObras: (json['artworks_count'] as int?) ??
-          (json['total_obras'] as int?) ??
-          0,
-      obrasDisponibles: (json['available_artworks'] as int?) ??
-          (json['obras_disponibles'] as int?) ??
-          0,
+      totalObras: _profileInt(json['artworks_count'] ?? json['total_obras']),
+      obrasDisponibles: _profileInt(
+          json['available_artworks'] ?? json['obras_disponibles']),
     );
   }
 }

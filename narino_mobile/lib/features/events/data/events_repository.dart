@@ -40,6 +40,7 @@ class EventsRepository {
     String? descripcion,
     File? flyer,
     List<String>? artistasRelacionados,
+    bool isPublished = false,
   }) async {
     try {
       return EventModel.fromJson(await _service.publishEvent(
@@ -50,6 +51,7 @@ class EventsRepository {
         descripcion: descripcion,
         flyer: flyer,
         artistasRelacionados: artistasRelacionados,
+        isPublished: isPublished,
       ));
     } on DioException catch (e) {
       throw _parseError(e);

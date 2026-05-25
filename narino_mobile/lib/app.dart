@@ -41,6 +41,7 @@ import 'features/profile/presentation/screens/delete_account_screen.dart';
 import 'features/profile/presentation/screens/artist_stats_screen.dart';
 import 'features/profile/presentation/screens/privacy_policy_screen.dart';
 import 'features/artworks/presentation/screens/catalog_screen.dart';
+import 'features/artworks/domain/artwork_model.dart';
 import 'features/artworks/presentation/screens/artwork_detail_screen.dart';
 import 'features/artworks/presentation/screens/my_artworks_screen.dart';
 import 'features/artworks/presentation/screens/publish_artwork_screen.dart';
@@ -129,7 +130,12 @@ final _routerProvider = Provider<GoRouter>((ref) {
             path: '/artworks/:id',
             builder: (_, state) {
               final id = state.pathParameters['id']!;
-              return ArtworkDetailScreen(artworkId: id);
+              final artwork =
+                  state.extra is ArtworkModel ? state.extra as ArtworkModel : null;
+              return ArtworkDetailScreen(
+                artworkId: id,
+                initialArtwork: artwork,
+              );
             },
           ),
           GoRoute(

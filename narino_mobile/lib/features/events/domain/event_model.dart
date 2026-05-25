@@ -40,7 +40,8 @@ class EventModel {
         .toString()
         .toLowerCase();
 
-    final rawArtistas = json['artists'] ??
+    final rawArtistas = json['featured_musicians'] ??
+        json['artists'] ??
         json['artistas_relacionados'] ??
         json['artistas'] ??
         const <dynamic>[];
@@ -71,7 +72,9 @@ class EventModel {
           'Sin lugar',
       descripcion: json['description']?.toString() ??
           json['descripcion']?.toString(),
-      flyerUrl: json['flyer_url']?.toString() ?? json['flyer']?.toString(),
+      flyerUrl: json['flyer_url']?.toString() ??
+          json['image_url']?.toString() ??
+          json['flyer']?.toString(),
       artistasRelacionados: artistasList,
       esDestacado: json['es_destacado'] as bool? ??
           json['is_featured'] as bool? ??
@@ -93,6 +96,7 @@ class EventModel {
       'exposicion': '🎨 Exposición',
       'taller': '🖌️ Taller',
       'feria': '🏪 Feria',
+      'espectaculo': '🎭 Espectáculo',
       'convocatoria': '📢 Convocatoria',
       'otro': '📅 Evento',
     };
@@ -124,6 +128,7 @@ class EventTypes {
     'exposicion',
     'taller',
     'feria',
+    'espectaculo',
     'convocatoria',
     'otro',
   ];
@@ -133,6 +138,7 @@ class EventTypes {
     'exposicion': '🎨 Exposición',
     'taller': '🖌️ Taller',
     'feria': '🏪 Feria',
+    'espectaculo': '🎭 Espectáculo',
     'convocatoria': '📢 Convocatoria',
     'otro': '📅 Otro',
   };
