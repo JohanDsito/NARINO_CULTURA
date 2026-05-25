@@ -76,7 +76,7 @@ export interface ArtistProfile {
   artistic_name: string
   bio: string
   trajectory: string
-  discipline: string
+  discipline: string | null
   city: string
   website_url: string
   instagram_url: string

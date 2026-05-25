@@ -31,7 +31,12 @@ export default function ArtistsPage() {
   }, [musiciansData])
 
   const visualArtists = useMemo(
-    () => artists.filter((a) => !musicianUserIds.has(a.user_id)),
+    () =>
+      artists.filter(
+        (a) =>
+          Boolean(a.discipline?.trim()) &&
+          !musicianUserIds.has(a.user_id),
+      ),
     [artists, musicianUserIds],
   )
 
