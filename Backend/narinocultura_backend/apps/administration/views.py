@@ -109,6 +109,8 @@ class ModerateArtworkAPIView(APIView):
         artwork.save(update_fields=["status", "updated_at"])
         return Response({"detail": "Obra moderada correctamente."})
 
+    post = patch
+
     def delete(self, request, pk=None):
         artwork = Artwork.objects.filter(id=pk).first()
         if not artwork:
