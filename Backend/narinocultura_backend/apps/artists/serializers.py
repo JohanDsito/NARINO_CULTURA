@@ -7,6 +7,7 @@ class ArtistProfileSerializer(serializers.ModelSerializer):
     user_id = serializers.UUIDField(source="user.id", read_only=True)
     profile_image_url = serializers.SerializerMethodField(read_only=True)
     profile_image = serializers.FileField(write_only=True, required=False, allow_null=True)
+    following_count = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = ArtistProfile
@@ -26,6 +27,7 @@ class ArtistProfileSerializer(serializers.ModelSerializer):
             "profile_image",
             "profile_image_url",
             "followers_count",
+            "following_count",
             "is_public",
             "created_at",
             "updated_at",
@@ -37,6 +39,9 @@ class ArtistProfileSerializer(serializers.ModelSerializer):
             return ""
         request = self.context.get("request")
         return request.build_absolute_uri(obj.profile_image.url) if request else obj.profile_image.url
+
+    def get_following_count(self, obj):
+        return Follow.objects.filter(follower=obj.user).count()
 
     def validate(self, attrs):
         request = self.context.get("request")
