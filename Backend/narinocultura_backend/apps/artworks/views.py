@@ -18,6 +18,7 @@ from apps.artworks.serializers import (
     CategorySerializer,
 )
 from services.ai_service import AIService
+from utils.permissions import IsAdmin
 
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
@@ -65,6 +66,14 @@ class ArtworkViewSet(viewsets.ModelViewSet):
         Artwork.objects.filter(id=instance.id).update(views_count=F("views_count") + 1)
         instance.refresh_from_db()
         return super().retrieve(request, *args, **kwargs)
+
+    @action(detail=True, methods=["delete"], url_path="delete", permission_classes=[IsAdmin])
+    def admin_delete(self, request, pk=None):
+        artwork = Artwork.objects.filter(id=pk).first()
+        if not artwork:
+            return Response({"detail": "Obra no encontrada."}, status=404)
+        artwork.delete()
+        return Response(status=204)
 
     @action(detail=True, methods=["post"], url_path="ai-enhance")
     @transaction.atomic

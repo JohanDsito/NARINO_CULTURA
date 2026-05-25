@@ -26,7 +26,7 @@ class AdminCreateUserAPIView(APIView):
     permission_classes = [IsAdmin]
 
     def get(self, request):
-        users = User.objects.all().order_by("-date_joined")
+        users = User.objects.all().order_by("-created_at")
         serializer = AdminUserSerializer(users, many=True, context={"request": request})
         return Response(serializer.data)
 
