@@ -41,35 +41,34 @@ function StatCard({
   icon: Icon,
   label,
   value,
-  sub,
   color,
   href,
 }: {
   icon: typeof Users
   label: string
   value: number | string
-  sub?: string
   color: string
   href?: string
 }) {
   const content = (
-    <Card className="relative overflow-hidden transition-shadow hover:shadow-md">
-      <CardContent className="flex items-center gap-4 p-5">
-        <div
-          className={`flex h-12 w-12 flex-none items-center justify-center rounded-xl ${color}`}
-        >
-          <Icon size={22} className="text-white" />
+    <Card className="h-full transition-shadow hover:shadow-md">
+      <CardContent className="flex h-full flex-col justify-between gap-3 p-5">
+        <div className="flex items-center justify-between">
+          <div className={`flex h-11 w-11 flex-none items-center justify-center rounded-xl ${color}`}>
+            <Icon size={20} className="text-white" />
+          </div>
+          {href && <ArrowRight size={15} className="text-muted-foreground" />}
         </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-medium text-muted-foreground">{label}</p>
-          <p className="text-2xl font-bold leading-tight text-foreground">{value}</p>
-          {sub && <p className="text-[11px] text-muted-foreground">{sub}</p>}
+        <div>
+          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            {label}
+          </p>
+          <p className="mt-0.5 text-2xl font-bold text-foreground leading-none">{value}</p>
         </div>
-        {href && <ArrowRight size={16} className="flex-none text-muted-foreground" />}
       </CardContent>
     </Card>
   )
-  return href ? <Link to={href}>{content}</Link> : content
+  return href ? <Link to={href} className="block h-full">{content}</Link> : content
 }
 
 export default function AdminDashboardPage() {
@@ -148,7 +147,7 @@ export default function AdminDashboardPage() {
         </section>
 
         {/* Stats */}
-        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <section className="grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <StatCard
             icon={Users}
             label="Usuarios totales"
@@ -173,7 +172,11 @@ export default function AdminDashboardPage() {
           <StatCard
             icon={TrendingUp}
             label="Ingresos (30d)"
-            value={m ? formatCOP(m.revenue_last_30_days) : '—'}
+            value={
+              m?.revenue_last_30_days != null && !isNaN(Number(m.revenue_last_30_days))
+                ? formatCOP(Number(m.revenue_last_30_days))
+                : '—'
+            }
             color="bg-emerald-600"
           />
           <StatCard
