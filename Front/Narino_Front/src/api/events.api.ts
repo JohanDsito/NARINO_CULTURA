@@ -93,18 +93,33 @@ export const eventsApi = {
 
   // Crear un evento como artista/músico (pendiente de aprobación)
   createArtistEvent: (payload: CreateEventPayload) => {
-    const formData = new FormData()
-    formData.append('title', payload.title)
-    formData.append('description', payload.description)
-    formData.append('event_type', payload.event_type)
-    formData.append('start_date', payload.start_date)
-    formData.append('end_date', payload.end_date)
-    formData.append('location', payload.location)
-    formData.append('is_published', 'false')
-    if (payload.ticket_url) formData.append('ticket_url', payload.ticket_url)
-    if (payload.flyer) formData.append('image', payload.flyer)
-    return axiosInstance.post<Event>('/api/v1/events/', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+    // Si hay un archivo de flyer, usar multipart/form-data
+    if (payload.flyer) {
+      const formData = new FormData()
+      formData.append('title', payload.title)
+      formData.append('description', payload.description)
+      formData.append('event_type', payload.event_type)
+      formData.append('start_date', payload.start_date)
+      formData.append('end_date', payload.end_date)
+      formData.append('location', payload.location)
+      formData.append('is_published', 'false')
+      if (payload.ticket_url) formData.append('ticket_url', payload.ticket_url)
+      formData.append('flyer', payload.flyer)
+      return axiosInstance.post<Event>('/api/v1/events/', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+    }
+    // Sin archivo: enviar JSON con image_url
+    return axiosInstance.post<Event>('/api/v1/events/', {
+      title: payload.title,
+      description: payload.description,
+      event_type: payload.event_type,
+      start_date: payload.start_date,
+      end_date: payload.end_date,
+      location: payload.location,
+      is_published: false,
+      ...(payload.ticket_url && { ticket_url: payload.ticket_url }),
+      ...(payload.image_url && { image_url: payload.image_url }),
     })
   },
 

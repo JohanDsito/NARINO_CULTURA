@@ -4,7 +4,7 @@ import { useMutation } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ArrowLeft, CalendarPlus, ImagePlus, Save, X } from 'lucide-react'
+import { ArrowLeft, CalendarPlus, ImagePlus, Save, X, Link2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { eventsApi } from '@/api/events.api'
@@ -39,6 +39,8 @@ export default function ArtistEventCreatePage() {
 
   const [flyerFile, setFlyerFile] = useState<File | null>(null)
   const [flyerPreview, setFlyerPreview] = useState<string | null>(null)
+  const [flyerTab, setFlyerTab] = useState<'url' | 'file'>('url')
+  const [flyerUrl, setFlyerUrl] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const {
@@ -69,7 +71,8 @@ export default function ArtistEventCreatePage() {
         end_date: values.end_date || values.start_date,
         description: values.description?.trim() || '',
         ticket_url: values.ticket_url?.trim() || undefined,
-        flyer: flyerFile ?? undefined,
+        flyer: flyerTab === 'file' ? (flyerFile ?? undefined) : undefined,
+        image_url: flyerTab === 'url' && flyerUrl.trim() ? flyerUrl.trim() : undefined,
         is_published: false,
       }),
     onSuccess: () => {
@@ -210,37 +213,92 @@ export default function ArtistEventCreatePage() {
                   <span className="text-muted-foreground font-normal">(opcional)</span>
                 </Label>
 
-                {flyerPreview ? (
-                  <div className="relative w-full max-w-xs">
-                    <img
-                      src={flyerPreview}
-                      alt="Vista previa del flyer"
-                      className="w-full rounded-lg border border-border object-cover"
-                      style={{ maxHeight: '240px' }}
-                    />
-                    <button
-                      type="button"
-                      onClick={removeFlyerFile}
-                      className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-white hover:bg-destructive/80"
-                    >
-                      <X size={12} />
-                    </button>
-                    <p className="mt-1 text-xs text-muted-foreground truncate">{flyerFile?.name}</p>
-                  </div>
-                ) : (
+                {/* Pestañas URL / Archivo */}
+                <div className="flex gap-1 rounded-lg border border-border bg-muted/40 p-1 w-fit">
                   <button
                     type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="flex w-full cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed border-border px-6 py-8 text-center transition-colors hover:border-primary hover:bg-primary/5"
+                    onClick={() => setFlyerTab('url')}
+                    className={[
+                      'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                      flyerTab === 'url'
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground',
+                    ].join(' ')}
                   >
-                    <ImagePlus size={28} className="text-muted-foreground" />
-                    <span className="text-sm font-medium text-foreground">
-                      Subir flyer desde tu computador
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      PNG, JPG o WEBP · máx. 5 MB
-                    </span>
+                    <Link2 size={12} /> URL de imagen
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setFlyerTab('file')}
+                    className={[
+                      'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                      flyerTab === 'file'
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground',
+                    ].join(' ')}
+                  >
+                    <ImagePlus size={12} /> Subir archivo
+                  </button>
+                </div>
+
+                {flyerTab === 'url' ? (
+                  <div className="space-y-2">
+                    <Input
+                      type="url"
+                      placeholder="https://drive.google.com/... o enlace directo a la imagen"
+                      value={flyerUrl}
+                      onChange={(e) => setFlyerUrl(e.target.value)}
+                    />
+                    {flyerUrl && (
+                      <div className="relative w-full max-w-xs">
+                        <img
+                          src={flyerUrl}
+                          alt="Vista previa"
+                          className="w-full rounded-lg border border-border object-cover"
+                          style={{ maxHeight: '200px' }}
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    {flyerPreview ? (
+                      <div className="relative w-full max-w-xs">
+                        <img
+                          src={flyerPreview}
+                          alt="Vista previa del flyer"
+                          className="w-full rounded-lg border border-border object-cover"
+                          style={{ maxHeight: '240px' }}
+                        />
+                        <button
+                          type="button"
+                          onClick={removeFlyerFile}
+                          className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-white hover:bg-destructive/80"
+                        >
+                          <X size={12} />
+                        </button>
+                        <p className="mt-1 text-xs text-muted-foreground truncate">{flyerFile?.name}</p>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="flex w-full cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed border-border px-6 py-8 text-center transition-colors hover:border-primary hover:bg-primary/5"
+                      >
+                        <ImagePlus size={28} className="text-muted-foreground" />
+                        <span className="text-sm font-medium text-foreground">
+                          Subir flyer desde tu computador
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          PNG, JPG o WEBP · máx. 5 MB
+                        </span>
+                      </button>
+                    )}
+                    <p className="text-xs text-amber-600 dark:text-amber-400">
+                      ⚠ La subida de archivos requiere activación en el servidor. Usa la opción URL mientras tanto.
+                    </p>
+                  </>
                 )}
 
                 <input
