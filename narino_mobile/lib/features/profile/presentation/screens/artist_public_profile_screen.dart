@@ -5,7 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../core/widgets/app_avatar.dart';
+import '../../../../shared/widgets/app_avatar.dart';
 import '../../domain/profile_model.dart';
 import '../providers/profile_provider.dart';
 

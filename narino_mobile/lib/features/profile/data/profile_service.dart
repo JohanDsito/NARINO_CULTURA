@@ -137,13 +137,23 @@ class ProfileService {
     final userData = Map<String, dynamic>.from(userResponse.data as Map);
     final userId = userData['id']?.toString();
 
-    // ─── 2. PATCH usuario ─────────────────────────────────────────────────────
-    final userUpdates = <String, dynamic>{};
-    if (nombreArtistico != null && nombreArtistico.isNotEmpty) {
-      userUpdates['first_name'] = nombreArtistico;
-    }
-    if (userUpdates.isNotEmpty) {
-      await _dio.patch(ApiConstants.myProfile, data: userUpdates);
+    // ─── 2. PATCH usuario (texto + avatar en multipart si hay foto nueva) ────
+    if (foto != null) {
+      final formData = FormData.fromMap({
+        if (nombreArtistico != null && nombreArtistico.isNotEmpty)
+          'first_name': nombreArtistico,
+        'avatar': await MultipartFile.fromFile(
+          foto.path,
+          filename: foto.path.split(Platform.pathSeparator).last,
+        ),
+      });
+      await _dio.patch(
+        ApiConstants.myProfile,
+        data: formData,
+        options: Options(contentType: 'multipart/form-data'),
+      );
+    } else if (nombreArtistico != null && nombreArtistico.isNotEmpty) {
+      await _dio.patch(ApiConstants.myProfile, data: {'first_name': nombreArtistico});
     }
 
     // ─── 3. Actualizar perfil artístico (solo ARTISTAs) ───────────────────────
