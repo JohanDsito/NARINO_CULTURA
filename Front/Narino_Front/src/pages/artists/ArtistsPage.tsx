@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { Search, Users } from 'lucide-react'
 import { listArtistProfiles } from '@/api/artists.api'
+import { listMusicians } from '@/api/musicians.api'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { PageShell } from '@/components/layout/page-shell'
@@ -16,6 +17,23 @@ export default function ArtistsPage() {
     queryFn: () => listArtistProfiles({ search: search || undefined }),
     staleTime: 2 * 60 * 1000,
   })
+
+  const { data: musiciansData } = useQuery({
+    queryKey: ['musicians-user-ids'],
+    queryFn: () => listMusicians({ page_size: 500 }),
+    staleTime: 5 * 60 * 1000,
+  })
+
+  const musicianUserIds = useMemo(() => {
+    const ids = new Set<string>()
+    musiciansData?.results.forEach((m) => ids.add(m.user_id))
+    return ids
+  }, [musiciansData])
+
+  const visualArtists = useMemo(
+    () => artists.filter((a) => !musicianUserIds.has(a.user_id)),
+    [artists, musicianUserIds],
+  )
 
   return (
     <div className="min-h-screen bg-bg pt-16">
@@ -53,7 +71,7 @@ export default function ArtistsPage() {
               </div>
             ))}
           </div>
-        ) : artists.length === 0 ? (
+        ) : visualArtists.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-24 text-text-muted">
             <Users size={40} className="opacity-30" />
             <p className="font-body text-sm">
@@ -62,7 +80,7 @@ export default function ArtistsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
-            {artists.map((artist) => (
+            {visualArtists.map((artist) => (
               <Link
                 key={artist.id}
                 to={ROUTES.ARTIST_DETAIL(artist.slug)}
