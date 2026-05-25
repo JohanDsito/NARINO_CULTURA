@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Users, UserCheck, ChevronDown, ChevronUp } from 'lucide-react'
+import { Users, ChevronDown, ChevronUp } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import type { FollowItem } from '@/api/artists.api'
 
 interface FollowStatsCardProps {
@@ -123,14 +122,14 @@ export function FollowStatsCard({
         {/* Stats row */}
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-xl bg-primary/5 px-4 py-3 text-center">
-            <p className="text-2xl font-bold text-primary">{followersCount}</p>
-            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mt-0.5">
+            <p className="text-2xl font-bold leading-none text-primary">{followersCount}</p>
+            <p className="mt-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
               Seguidores
             </p>
           </div>
           <div className="rounded-xl bg-muted/60 px-4 py-3 text-center">
-            <UserCheck size={22} className="mx-auto mb-0.5 text-muted-foreground" />
-            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+            <p className="text-2xl font-bold leading-none text-muted-foreground">—</p>
+            <p className="mt-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
               Siguiendo
             </p>
           </div>
