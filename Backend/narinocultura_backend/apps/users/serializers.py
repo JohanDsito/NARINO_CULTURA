@@ -1,13 +1,8 @@
-import logging
 from django.contrib.auth import authenticate
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
-import jwt
-from django.conf import settings
 
 from apps.users.models import EmailVerification, PasswordReset, User
-
-logger = logging.getLogger(__name__)
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -53,10 +48,7 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError("Debe verificar su email antes de iniciar sesión.")
         refresh = RefreshToken.for_user(user)
         refresh['role'] = user.role
-        logger.info(f"LoginSerializer: Added role {user.role} to refresh token")
-        logger.info(f"LoginSerializer: Refresh payload has role: {'role' in refresh.payload}")
         access_token = refresh.access_token
-        logger.info(f"LoginSerializer: Access payload has role: {'role' in access_token.payload}")
         return {"user": user, "refresh": str(refresh), "access": str(access_token)}
 
 

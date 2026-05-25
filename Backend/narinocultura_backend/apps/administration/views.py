@@ -21,9 +21,14 @@ logger = logging.getLogger(__name__)
 
 
 class AdminCreateUserAPIView(APIView):
-    """Create a user account with any role (including GESTOR_CULTURAL). Admin only."""
+    """List all users (GET) or create a user with any role (POST). Admin only."""
 
     permission_classes = [IsAdmin]
+
+    def get(self, request):
+        users = User.objects.all().order_by("-date_joined")
+        serializer = AdminUserSerializer(users, many=True, context={"request": request})
+        return Response(serializer.data)
 
     def post(self, request):
         serializer = AdminCreateUserSerializer(data=request.data)
