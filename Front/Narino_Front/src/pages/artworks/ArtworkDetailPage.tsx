@@ -157,8 +157,8 @@ export default function ArtworkDetailPage() {
               <h1 className="font-display font-bold text-text-primary text-[32px] leading-tight mb-2">
                 {artwork.title}
               </h1>
-              {artwork.category && (
-                <p className="font-body text-text-muted text-sm mb-1">{artwork.category.name}</p>
+              {artwork.category_detail && (
+                <p className="font-body text-text-muted text-sm mb-1">{artwork.category_detail.name}</p>
               )}
             </div>
 

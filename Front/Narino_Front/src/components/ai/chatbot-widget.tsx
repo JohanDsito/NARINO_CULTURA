@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react'
-import { MessageCircle, X, Send } from 'lucide-react'
+import { MessageCircle, X, Send, Loader2 } from 'lucide-react'
 
 import { cn } from '@/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { sendChatMessage, type ChatHistoryItem } from '@/api/chat.api'
 
 type ChatMessage = { id: string; role: 'user' | 'bot'; text: string }
 
@@ -14,47 +15,69 @@ const QUICK_SUGGESTIONS = [
   'Explorar subastas activas',
 ] as const
 
+const INITIAL_MESSAGE: ChatMessage = {
+  id: 'init',
+  role: 'bot',
+  text: 'Hola, soy el asistente de Nariño Cultura. ¿Qué te gustaría descubrir hoy?',
+}
+
 export function ChatbotWidget() {
   const [open, setOpen] = useState(false)
   const [text, setText] = useState('')
-  const [messages, setMessages] = useState<ChatMessage[]>(() => [
-    {
-      id: crypto.randomUUID(),
-      role: 'bot',
-      text: 'Hola, soy el asistente de Nariño Cultura. ¿Qué te gustaría descubrir hoy?',
-    },
-  ])
+  const [isSending, setIsSending] = useState(false)
+  const [messages, setMessages] = useState<ChatMessage[]>([INITIAL_MESSAGE])
 
-  const canSend = text.trim().length > 0
-
+  const canSend = text.trim().length > 0 && !isSending
   const suggestions = useMemo(() => QUICK_SUGGESTIONS.slice(0, 4), [])
 
-  const send = (content: string) => {
+  const send = async (content: string) => {
     const value = content.trim()
-    if (!value) return
-    setMessages((prev) => [
-      ...prev,
-      { id: crypto.randomUUID(), role: 'user', text: value },
-      {
-        id: crypto.randomUUID(),
-        role: 'bot',
-        text: 'Aún estoy aprendiendo. En pasos posteriores me conectaré al servicio IA para recomendaciones y respuestas.',
-      },
-    ])
+    if (!value || isSending) return
+
+    const userMsg: ChatMessage = {
+      id: crypto.randomUUID(),
+      role: 'user',
+      text: value,
+    }
+    setMessages((prev) => [...prev, userMsg])
     setText('')
+    setIsSending(true)
+
+    const history: ChatHistoryItem[] = messages
+      .filter((m) => m.id !== 'init')
+      .map((m) => ({ role: m.role === 'bot' ? 'model' : 'user', text: m.text }))
+
+    try {
+      const res = await sendChatMessage(value, history)
+      setMessages((prev) => [
+        ...prev,
+        { id: crypto.randomUUID(), role: 'bot', text: res.reply },
+      ])
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          role: 'bot',
+          text: 'Lo siento, no pude responder en este momento. Intenta de nuevo.',
+        },
+      ])
+    } finally {
+      setIsSending(false)
+    }
   }
 
   return (
     <div className="fixed bottom-16 right-5 z-50 md:bottom-20 md:right-8">
       {open ? (
         <div
-          className="w-[92vw] max-w-sm overflow-hidden rounded-xl border border-border bg-slate-950 text-white shadow-lg"
+          className="flex w-[92vw] max-w-sm flex-col overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-xl"
           role="dialog"
           aria-label="Chat de ayuda"
         >
-          <div className="flex items-center justify-between border-b border-border bg-slate-900 px-4 py-3">
+          <div className="flex items-center justify-between border-b border-border bg-muted px-4 py-3">
             <div className="space-y-0.5">
-              <p className="font-medium text-white">Asistente</p>
+              <p className="font-medium text-foreground">Asistente</p>
               <p className="text-xs text-muted-foreground">Nariño Cultura</p>
             </div>
             <Button
@@ -74,30 +97,39 @@ export function ChatbotWidget() {
                 className={cn(
                   'max-w-[90%] rounded-lg px-3 py-2 text-sm',
                   m.role === 'user'
-                    ? 'ml-auto bg-tierra text-white'
-                    : 'bg-slate-800 text-white',
+                    ? 'ml-auto bg-primary text-primary-foreground'
+                    : 'bg-muted text-foreground',
                 )}
               >
                 {m.text}
               </div>
             ))}
 
-            <div className="flex flex-wrap gap-2 pt-2">
-              {suggestions.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  className="rounded-full border border-border bg-slate-800 px-3 py-1 text-xs text-white hover:bg-slate-700"
-                  onClick={() => send(s)}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
+            {isSending && (
+              <div className="flex items-center gap-2 rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Pensando…
+              </div>
+            )}
+
+            {messages.length <= 1 && !isSending && (
+              <div className="flex flex-wrap gap-2 pt-2">
+                {suggestions.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    className="rounded-full border border-border bg-background px-3 py-1 text-xs text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                    onClick={() => send(s)}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <form
-            className="flex items-center gap-2 border-t border-border bg-slate-950 p-3"
+            className="flex items-center gap-2 border-t border-border bg-background p-3"
             onSubmit={(e) => {
               e.preventDefault()
               send(text)
@@ -108,10 +140,10 @@ export function ChatbotWidget() {
               onChange={(e) => setText(e.target.value)}
               placeholder="Escribe tu pregunta…"
               aria-label="Mensaje"
-              className="bg-slate-800 text-white placeholder:text-slate-400"
+              disabled={isSending}
             />
             <Button type="submit" disabled={!canSend} aria-label="Enviar mensaje">
-              <Send className="h-4 w-4" />
+              {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </Button>
           </form>
         </div>

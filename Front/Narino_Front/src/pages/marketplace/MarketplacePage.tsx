@@ -107,8 +107,8 @@ export default function MarketplacePage() {
                       <h3 className="font-display font-bold text-text-primary text-[14px] line-clamp-1 group-hover:text-oro transition-colors">
                         {artwork.title}
                       </h3>
-                      {artwork.category && (
-                        <p className="font-body text-text-muted text-[12px] mt-0.5">{artwork.category.name}</p>
+                      {artwork.category_detail && (
+                        <p className="font-body text-text-muted text-[12px] mt-0.5">{artwork.category_detail.name}</p>
                       )}
                       <p className="font-display font-bold text-oro text-[16px] mt-2">
                         {formatPrice(parseFloat(artwork.price))}

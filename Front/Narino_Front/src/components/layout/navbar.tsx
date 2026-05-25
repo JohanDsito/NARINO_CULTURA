@@ -69,7 +69,7 @@ export function Navbar() {
     })
 
   return (
-    <nav className="fixed inset-x-0 top-0 z-50 border-b border-oro/20 bg-[#2D1B00] px-4 md:px-10">
+    <nav className="fixed inset-x-0 top-0 z-50 border-b border-oro/20 bg-[#2D1B00] dark:bg-bg-card px-4 md:px-10">
       <div className="flex h-16 items-center justify-between gap-4">
         <Link to="/" className="flex items-center gap-2 no-underline" onClick={closeMenu}>
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-oro">

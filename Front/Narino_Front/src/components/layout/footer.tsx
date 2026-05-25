@@ -21,13 +21,7 @@ const socialLinks = [
 
 export function Footer() {
   return (
-    <footer
-      className="mt-auto"
-      style={{
-        background: '#2D1B00',
-        borderTop: '1px solid rgba(201,146,26,0.2)',
-      }}
-    >
+    <footer className="mt-auto border-t border-oro/20 bg-[#2D1B00] dark:bg-bg-card">
       <div className="flex w-full flex-col gap-6 px-6 py-6 md:px-10">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">

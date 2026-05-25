@@ -137,9 +137,9 @@ export default function ArtworksCatalogPage() {
                       <h3 className="font-display font-bold text-text-primary text-[14px] mb-1 line-clamp-1 group-hover:text-oro transition-colors">
                         {artwork.title}
                       </h3>
-                      {artwork.category && (
+                      {artwork.category_detail && (
                         <p className="font-body text-text-muted text-[12px] mb-2">
-                          {artwork.category.name}
+                          {artwork.category_detail.name}
                         </p>
                       )}
                       <p className="font-body font-bold text-oro text-[15px]">
