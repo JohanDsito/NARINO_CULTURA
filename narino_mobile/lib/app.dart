@@ -42,6 +42,7 @@ import 'features/profile/presentation/screens/artist_stats_screen.dart';
 import 'features/profile/presentation/screens/privacy_policy_screen.dart';
 import 'features/artworks/presentation/screens/catalog_screen.dart';
 import 'features/artworks/presentation/screens/artwork_detail_screen.dart';
+import 'features/artworks/presentation/screens/my_artworks_screen.dart';
 import 'features/artworks/presentation/screens/publish_artwork_screen.dart';
 import 'features/ai/presentation/screens/chatbot_screen.dart';
 import 'features/musicians/presentation/screens/musicians_screen.dart';
@@ -119,6 +120,10 @@ final _routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/artworks/publish',
             builder: (_, __) => const PublishArtworkScreen(),
+          ),
+          GoRoute(
+            path: '/profile/my-artworks',
+            builder: (_, __) => const MyArtworksScreen(),
           ),
           GoRoute(
             path: '/artworks/:id',

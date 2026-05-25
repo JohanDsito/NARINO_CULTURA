@@ -6,16 +6,57 @@ import '../../../core/network/api_client.dart';
 class MarketplaceService {
   Dio get _dio => ApiClient.instance.dio;
 
+  // ── helpers ──────────────────────────────────────────────────────────────
+
+  Future<Map<String, dynamic>?> _artworkDetail(String artworkId) async {
+    try {
+      final r = await _dio.get(
+        ApiConstants.artworkDetail.replaceFirst('{id}', artworkId),
+      );
+      return r.data as Map<String, dynamic>?;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  String _nameFromSlug(String? slug) {
+    if (slug == null || slug.isEmpty) return '';
+    return slug
+        .split('-')
+        .map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
+        .join(' ');
+  }
+
+  // ── carrito ───────────────────────────────────────────────────────────────
+
   Future<List<dynamic>> getCart() async {
     final r = await _dio.get(ApiConstants.cart);
     final data = r.data;
-    if (data is List) return data;
-    if (data is Map) {
-      return (data['items'] as List?) ??
-          (data['results'] as List?) ??
-          [];
+    final List<dynamic> raw;
+    if (data is List) {
+      raw = data;
+    } else if (data is Map) {
+      raw = (data['items'] as List?) ?? (data['results'] as List?) ?? [];
+    } else {
+      return [];
     }
-    return [];
+
+    final enriched = <Map<String, dynamic>>[];
+    for (final item in raw) {
+      final base = Map<String, dynamic>.from(item as Map);
+      final artworkId = base['artwork']?.toString() ?? '';
+      if (artworkId.isNotEmpty) {
+        final artwork = await _artworkDetail(artworkId);
+        if (artwork != null) {
+          final slug = artwork['artist_slug']?.toString() ?? '';
+          base['artista_nombre'] =
+              artwork['artista_nombre']?.toString() ?? _nameFromSlug(slug);
+          base['imagen_url'] = artwork['main_image_url']?.toString() ?? '';
+        }
+      }
+      enriched.add(base);
+    }
+    return enriched;
   }
 
   Future<void> addToCart(String obraId) async {
@@ -43,20 +84,49 @@ class MarketplaceService {
 
   Future<List<dynamic>> getFavorites() async {
     final r = await _dio.get(ApiConstants.favorites);
-    return r.data is List
+    final List<dynamic> raw = r.data is List
         ? r.data as List
         : (r.data['results'] as List? ?? []);
+
+    final enriched = <Map<String, dynamic>>[];
+    for (final fav in raw) {
+      final base = Map<String, dynamic>.from(fav as Map);
+      final artworkId = base['artwork_id']?.toString() ?? '';
+      if (artworkId.isNotEmpty) {
+        final artwork = await _artworkDetail(artworkId);
+        if (artwork != null) {
+          final slug = artwork['artist_slug']?.toString() ?? '';
+          base['artista_nombre'] =
+              artwork['artista_nombre']?.toString() ?? _nameFromSlug(slug);
+          base['status'] = artwork['status'];
+          base['price'] = artwork['price'];
+          base['main_image_url'] = artwork['main_image_url'];
+          if ((base['title']?.toString() ?? '').isEmpty) {
+            base['title'] = artwork['title'];
+          }
+        }
+      }
+      enriched.add(base);
+    }
+    return enriched;
   }
 
   Future<void> addFavorite(String obraId) async {
-    await _dio.post(ApiConstants.favorites, data: {'artwork_id': obraId});
+    try {
+      await _dio.post(ApiConstants.favorites, data: {'artwork_id': obraId});
+    } on DioException catch (e) {
+      // 400 = restricción única: ya es favorito → idempotente, no lanzar
+      if (e.response?.statusCode != 400) rethrow;
+    }
   }
 
   Future<void> removeFavorite(String obraId) async {
-    await _dio.delete(
-      ApiConstants.favorites,
-      data: {'artwork_id': obraId},
-    );
+    try {
+      await _dio.delete(ApiConstants.favorites, data: {'artwork_id': obraId});
+    } on DioException catch (e) {
+      // 400 = no era favorito → idempotente, no lanzar
+      if (e.response?.statusCode != 400) rethrow;
+    }
   }
 
   Future<Map<String, dynamic>> createOrder() async {
@@ -105,7 +175,15 @@ class MarketplaceService {
       (o) => o['id']?.toString() == orderId,
       orElse: () => <String, dynamic>{},
     );
-    return {'status': (order as Map)['status']?.toString() ?? 'unknown'};
+    final rawStatus =
+        (order as Map)['status']?.toString().toUpperCase() ?? 'PENDIENTE';
+    final normalizedStatus = switch (rawStatus) {
+      'PAGADO' => 'completado',
+      'CANCELADO' => 'fallido',
+      'REEMBOLSADO' => 'reembolsado',
+      _ => 'pendiente',
+    };
+    return {'status': normalizedStatus};
   }
 
   Future<List<dynamic>> getPurchaseHistory() async {

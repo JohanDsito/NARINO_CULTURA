@@ -22,6 +22,39 @@ class ProfileService {
     return !uuid.hasMatch(s);
   }
 
+  /// Counts how many artworks belong to [slug] by paginating the artworks list.
+  /// The backend serializer does not expose artworks_count, so we compute it here.
+  Future<int> _countArtistArtworks(String slug) async {
+    var count = 0;
+    String? nextUrl = '${ApiConstants.artworks}?page_size=100';
+    while (nextUrl != null) {
+      try {
+        final res = await _dio.get(nextUrl);
+        final data = res.data;
+        if (data is Map) {
+          final items = (data['results'] as List? ?? []);
+          count += items
+              .whereType<Map>()
+              .where((e) => e['artist_slug'] == slug)
+              .length;
+          final next = data['next']?.toString();
+          nextUrl = (next != null && next.isNotEmpty) ? next : null;
+        } else if (data is List) {
+          count += data
+              .whereType<Map>()
+              .where((e) => e['artist_slug'] == slug)
+              .length;
+          nextUrl = null;
+        } else {
+          break;
+        }
+      } catch (_) {
+        break;
+      }
+    }
+    return count;
+  }
+
   /// Busca el perfil del artista en la lista paginada y devuelve su slug.
   Future<String?> _fetchArtistSlug(String? userId) async {
     if (userId == null || userId.isEmpty) return null;
@@ -52,36 +85,6 @@ class ProfileService {
     return null;
   }
 
-  /// Busca el mapa completo del artista en la lista paginada.
-  Future<Map<String, dynamic>?> _fetchArtistData(String? userId) async {
-    if (userId == null || userId.isEmpty) return null;
-    String? pageUrl = '${ApiConstants.artists}?page_size=100';
-    while (pageUrl != null) {
-      final res = await _dio.get(pageUrl);
-      final List<dynamic> items;
-      String? next;
-      if (res.data is Map) {
-        final data = res.data as Map;
-        final raw = data['results'];
-        items = raw is List ? raw : [];
-        final n = data['next']?.toString();
-        next = (n != null && n.isNotEmpty) ? n : null;
-      } else if (res.data is List) {
-        items = res.data as List;
-        next = null;
-      } else {
-        break;
-      }
-      for (final a in items) {
-        if (a is Map && a['user_id']?.toString() == userId) {
-          return Map<String, dynamic>.from(a);
-        }
-      }
-      pageUrl = next;
-    }
-    return null;
-  }
-
   // ─── API pública ──────────────────────────────────────────────────────────────
 
   Future<Map<String, dynamic>> getMyProfile() async {
@@ -91,10 +94,28 @@ class ProfileService {
     if ((userData['role'] as String?)?.toLowerCase() == 'artista') {
       try {
         final userId = userData['id']?.toString();
-        final artistData = await _fetchArtistData(userId);
-        if (artistData != null) {
+        // Buscar el slug del artista en la lista
+        final slug = await _fetchArtistSlug(userId);
+        if (slug != null && slug.isNotEmpty) {
+          // Run artist detail + artworks count concurrently
+          final detailFuture = _dio.get(
+            ApiConstants.artistDetail.replaceAll('{id}', slug),
+          );
+          final countFuture = _countArtistArtworks(slug);
+
+          final detailRes = await detailFuture;
+          final artistData =
+              Map<String, dynamic>.from(detailRes.data as Map);
+
+          // Inject the computed count — backend serializer omits artworks_count
+          try {
+            artistData['artworks_count'] = await countFuture;
+          } catch (_) {
+            artistData['artworks_count'] = 0;
+          }
+
           artistData['avatar_url'] ??= userData['avatar_url'];
-          artistData['is_verified'] = userData['is_verified'];
+          artistData['is_verified'] ??= userData['is_verified'];
           return artistData;
         }
       } catch (_) {}

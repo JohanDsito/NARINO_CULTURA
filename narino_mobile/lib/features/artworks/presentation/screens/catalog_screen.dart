@@ -9,6 +9,8 @@ import '../../../../core/theme/app_typography.dart';
 import '../../domain/artwork_model.dart';
 import '../../domain/artwork_state.dart';
 import '../providers/artwork_provider.dart';
+import '../../../marketplace/domain/marketplace_state.dart';
+import '../../../marketplace/presentation/providers/favorites_provider.dart';
 
 // ─── Pantalla principal ───────────────────────────────────────────────────────
 
@@ -27,6 +29,9 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(artworkProvider.notifier).loadCatalog();
+      if (ref.read(favoritesProvider).status == MarketplaceStatus.initial) {
+        ref.read(favoritesProvider.notifier).loadFavorites();
+      }
     });
   }
 
@@ -579,16 +584,16 @@ class _FavoriteButton extends ConsumerWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
-    // ✅ FIX: fondo del botón usando tokens correctos en lugar de bgCardDark/Light
     final bg = isDark
         ? AppColors.bgSubtleDark.withAlpha(230)
         : AppColors.bgSubtleLight.withAlpha(230);
-    final iconColor = artwork.esFavorito ? AppColors.error : cs.onSurface;
-    final icon = artwork.esFavorito ? Icons.favorite : Icons.favorite_outline;
+    final isFav = ref.watch(favoritesProvider).isFavorite(artwork.id);
+    final iconColor = isFav ? AppColors.error : cs.onSurface;
+    final icon = isFav ? Icons.favorite : Icons.favorite_outline;
 
     return GestureDetector(
       onTap: () =>
-          ref.read(artworkProvider.notifier).toggleFavorite(artwork.id),
+          ref.read(favoritesProvider.notifier).toggleFavorite(artwork.id),
       child: Container(
         width: 34,
         height: 34,

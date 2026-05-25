@@ -101,8 +101,24 @@ class MarketplaceRepository {
   Future<String> initiatePayment(String orderId) async {
     try {
       final data = await _service.initiatePayment(orderId);
-      return (data['payment_url'] ?? data['checkout_url'] ?? '')?.toString() ??
-          '';
+      // Backend returns Wompi payment initialization data, not a pre-built URL.
+      // Construct the Wompi checkout URL from the response fields.
+      final publicKey = data['public_key']?.toString() ?? '';
+      final reference = data['reference']?.toString() ?? '';
+      final amountInCents = data['amount_in_cents']?.toString() ?? '0';
+      final currency = data['currency']?.toString() ?? 'COP';
+      final integrity = data['integrity_signature']?.toString() ?? '';
+
+      if (publicKey.isEmpty || reference.isEmpty) return '';
+
+      // signature:integrity has a colon in the key — build manually to avoid
+      // percent-encoding the colon in the parameter name.
+      return 'https://checkout.wompi.co/p/'
+          '?public-key=${Uri.encodeComponent(publicKey)}'
+          '&currency=${Uri.encodeComponent(currency)}'
+          '&amount-in-cents=$amountInCents'
+          '&reference=${Uri.encodeComponent(reference)}'
+          '&signature:integrity=${Uri.encodeComponent(integrity)}';
     } on DioException catch (e) {
       throw _err(e);
     }

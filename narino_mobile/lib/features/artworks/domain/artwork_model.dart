@@ -31,6 +31,7 @@ class ArtworkModel {
   final String estado;
   final List<String> imagenes;
   final String artistaId;
+  final String artistaSlug;
   final String artistaNombre;
   final String? artistaFoto;
   final int cantidadFavoritos;
@@ -49,6 +50,7 @@ class ArtworkModel {
     required this.estado,
     required this.imagenes,
     required this.artistaId,
+    this.artistaSlug = '',
     required this.artistaNombre,
     this.artistaFoto,
     required this.cantidadFavoritos,
@@ -106,10 +108,23 @@ class ArtworkModel {
     final precio =
         priceRaw != null ? double.tryParse(priceRaw.toString()) : null;
 
-    // ── status (normalise to lowercase) ──────────────────────────────────────
-    final estado =
-        (json['status'] as String? ?? json['estado'] as String? ?? 'disponible')
-            .toLowerCase();
+    // ── status (normalise English → Spanish internal values) ─────────────────
+    // Solo subasta y vendida son estados explícitos; cualquier otro valor
+    // (available, for_sale, active, published, vacío, desconocido) → disponible.
+    final rawStatus =
+        (json['status'] as String? ?? json['estado'] as String? ?? '').toLowerCase();
+    final String estado;
+    switch (rawStatus) {
+      case 'in_auction':
+      case 'en_subasta':
+        estado = 'en_subasta';
+      case 'sold':
+      case 'vendida':
+      case 'vendido':
+        estado = 'vendida';
+      default:
+        estado = 'disponible';
+    }
 
     // ── category ─────────────────────────────────────────────────────────────
     final categoriaRaw = json['category'];
@@ -137,6 +152,7 @@ class ArtworkModel {
       artistaId: json['artist']?.toString() ??
           json['artista_id']?.toString() ??
           '',
+      artistaSlug: json['artist_slug'] as String? ?? '',
       artistaNombre: artistaNombre,
       artistaFoto: json['artista_foto'] as String?,
       cantidadFavoritos:
@@ -163,6 +179,7 @@ class ArtworkModel {
         estado: estado,
         imagenes: imagenes,
         artistaId: artistaId,
+        artistaSlug: artistaSlug,
         artistaNombre: artistaNombre,
         artistaFoto: artistaFoto,
         cantidadFavoritos: cantidadFavoritos ?? this.cantidadFavoritos,
