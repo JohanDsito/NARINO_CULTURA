@@ -57,3 +57,26 @@ export async function followArtist(slug: string): Promise<{ detail: string }> {
   )
   return data
 }
+
+export interface FollowItem {
+  id: string
+  slug?: string
+  artistic_name?: string
+  first_name?: string
+  last_name?: string
+  avatar_url?: string
+}
+
+export async function getArtistFollowers(slug: string): Promise<FollowItem[]> {
+  const { data } = await axiosInstance.get<FollowItem[] | { results?: FollowItem[] }>(
+    `/api/v1/artists/${slug}/followers/`,
+  )
+  return Array.isArray(data) ? data : data.results ?? []
+}
+
+export async function getMyFollowing(): Promise<FollowItem[]> {
+  const { data } = await axiosInstance.get<FollowItem[] | { results?: FollowItem[] }>(
+    '/api/v1/artists/following/',
+  )
+  return Array.isArray(data) ? data : data.results ?? []
+}

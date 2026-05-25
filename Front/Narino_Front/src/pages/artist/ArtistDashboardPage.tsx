@@ -4,7 +4,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { CalendarPlus, ImagePlus, Palette, Save, UserRound } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { createArtistProfile, listArtistProfiles, updateArtistProfile } from '@/api/artists.api'
+import { createArtistProfile, getArtistFollowers, getMyFollowing, listArtistProfiles, updateArtistProfile } from '@/api/artists.api'
+import { FollowStatsCard } from '@/components/profile/FollowStatsCard'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -151,6 +152,15 @@ export default function ArtistDashboardPage() {
           </Card>
 
           <div className="flex flex-col gap-5">
+            <FollowStatsCard
+              followersCount={profile?.followers_count ?? 0}
+              followersQueryKey={['artist-followers', profile?.slug]}
+              fetchFollowers={() => getArtistFollowers(profile!.slug)}
+              followingQueryKey={['artist-following', user?.id]}
+              fetchFollowing={getMyFollowing}
+              enabled={Boolean(profile?.slug)}
+            />
+
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
