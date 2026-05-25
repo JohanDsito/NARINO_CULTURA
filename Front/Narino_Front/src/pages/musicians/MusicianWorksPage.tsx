@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Music, Plus, Trash2 } from 'lucide-react'
+import { Music, Pencil, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { deleteMusicalWork, listMyMusicalWorks } from '@/api/musicians.api'
@@ -110,6 +110,15 @@ export default function MusicianWorksPage() {
                     <span className="text-xs text-muted-foreground">
                       {work.views_count} visitas
                     </span>
+                    <Button
+                      asChild
+                      variant="ghost"
+                      size="sm"
+                    >
+                      <Link to={ROUTES.DASHBOARD.MUSICIAN.WORK_EDIT(work.id)}>
+                        <Pencil size={15} />
+                      </Link>
+                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"

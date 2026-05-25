@@ -268,6 +268,14 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+      {
+        path: 'dashboard/musician/works/:id/edit',
+        element: (
+          <ProtectedRoute allowedRoles={[ROLE.artist]}>
+            {lazyPage(() => import('@/pages/musicians/MusicianWorkEditPage'), 'Cargando edición…')}
+          </ProtectedRoute>
+        ),
+      },
 
       // ── Admin ─────────────────────────────────────────────────────────────
       {
