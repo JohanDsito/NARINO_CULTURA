@@ -297,7 +297,7 @@ export default function AdminDashboardPage() {
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium text-foreground">{art.title}</p>
                           <p className="text-[11px] text-muted-foreground">
-                            {art.category?.name ?? 'Sin categoría'}
+                            {art.category_detail?.name ?? 'Sin categoría'}
                           </p>
                         </div>
                         <Badge variant="tierra" className="text-[10px] flex-none">

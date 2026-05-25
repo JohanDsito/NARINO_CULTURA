@@ -47,13 +47,28 @@ class ArtworkViewSet(viewsets.ModelViewSet):
             .prefetch_related("images")
         )
         user = self.request.user
-        if not user.is_authenticated:
-            return qs.filter(status__in=[Artwork.Status.DISPONIBLE, Artwork.Status.EN_SUBASTA, Artwork.Status.VENDIDA])
-        if getattr(user, "role", None) == "ARTISTA":
+        artist_slug = self.request.query_params.get("artist")
+        public_statuses = [
+            Artwork.Status.DISPONIBLE,
+            Artwork.Status.EN_SUBASTA,
+            Artwork.Status.VENDIDA,
+        ]
+
+        if artist_slug:
+            qs = qs.filter(artist__slug=artist_slug)
+            if user.is_authenticated and ArtistProfile.objects.filter(
+                user=user, slug=artist_slug
+            ).exists():
+                return qs
+            return qs.filter(status__in=public_statuses)
+
+        if self.request.query_params.get("mine") == "true" and user.is_authenticated:
             profile = ArtistProfile.objects.filter(user=user).first()
             if profile:
-                return qs.filter(artist=profile) | qs.filter(status__in=[Artwork.Status.DISPONIBLE, Artwork.Status.EN_SUBASTA, Artwork.Status.VENDIDA])
-        return qs.filter(status__in=[Artwork.Status.DISPONIBLE, Artwork.Status.EN_SUBASTA, Artwork.Status.VENDIDA])
+                return qs.filter(artist=profile)
+            return qs.none()
+
+        return qs.filter(status__in=public_statuses)
 
     @transaction.atomic
     def perform_create(self, serializer):

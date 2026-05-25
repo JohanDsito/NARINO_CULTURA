@@ -113,7 +113,8 @@ export interface Artwork {
   title: string
   description: string
   price: string                           // DecimalField serializes as string in DRF
-  category: Category | null
+  category: number | null                 // FK id (write + read)
+  category_detail?: Category | null       // nested object (read-only)
   technique: string
   dimensions: string
   material: string
@@ -124,6 +125,7 @@ export interface Artwork {
   views_count: number
   images: ArtworkImage[]
   artist: string                          // ArtistProfile UUID FK
+  artist_slug?: string
   created_at: string
   updated_at: string
 }

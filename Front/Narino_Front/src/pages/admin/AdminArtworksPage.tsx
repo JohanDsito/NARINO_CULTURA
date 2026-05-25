@@ -45,8 +45,8 @@ function ArtworkRow({
       )}
       <div className="flex-1 min-w-0">
         <p className="font-body font-semibold text-text-primary text-sm">{artwork.title}</p>
-        {artwork.category && (
-          <p className="font-body text-text-muted text-[12px]">{artwork.category.name}</p>
+        {artwork.category_detail && (
+          <p className="font-body text-text-muted text-[12px]">{artwork.category_detail.name}</p>
         )}
         <Badge
           variant={STATUS_BADGE[artwork.status] ?? 'secondary'}

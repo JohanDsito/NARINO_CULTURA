@@ -48,7 +48,7 @@ function ArtworkCard({
   isDeleting: boolean
 }) {
   const image = artwork.main_image_url || artwork.images?.[0]?.image_url || ''
-  const categoryName = artwork.category?.name ?? 'Sin categoría'
+  const categoryName = artwork.category_detail?.name ?? 'Sin categoría'
 
   return (
     <Card className="overflow-hidden">

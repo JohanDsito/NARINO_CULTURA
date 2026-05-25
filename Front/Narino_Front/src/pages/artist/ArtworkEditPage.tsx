@@ -57,7 +57,7 @@ export default function ArtworkEditPage() {
       reset({
         title: artwork.title,
         description: artwork.description,
-        category: artwork.category?.id ? String(artwork.category.id) : '',
+        category: artwork.category ? String(artwork.category) : '',
         price: parseFloat(artwork.price),
         technique: artwork.technique,
         dimensions: artwork.dimensions,
