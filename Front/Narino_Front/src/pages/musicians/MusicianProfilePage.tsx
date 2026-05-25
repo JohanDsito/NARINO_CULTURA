@@ -143,9 +143,9 @@ export default function MusicianProfilePage() {
                 </a>
               )}
               {musician.instagram_handle && (
-                <a href={`https://instagram.com/${musician.instagram_handle}`} target="_blank" rel="noopener noreferrer"
+                <a href={`https://instagram.com/${musician.instagram_handle.replace(/^@/, '')}`} target="_blank" rel="noopener noreferrer"
                   className="flex items-center gap-1.5 no-underline text-oro-light font-body text-[13px] hover:text-oro transition-colors">
-                  <FaInstagram size={16} /> @{musician.instagram_handle}
+                  <FaInstagram size={16} /> @{musician.instagram_handle.replace(/^@/, '')}
                 </a>
               )}
               {musician.website_url && (
