@@ -141,9 +141,10 @@ REST_FRAMEWORK = {
         "rest_framework.filters.OrderingFilter",
     ),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-    # TEMPORAL: Rate limiting desactivado mientras se agrega Redis a Railway
-    # TODO: Re-habilitar después de comprar espacio en Railway para Redis
-    "DEFAULT_THROTTLE_CLASSES": [],
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
     "DEFAULT_THROTTLE_RATES": {
         "anon": "200/hour",
         "user": "2000/hour",
