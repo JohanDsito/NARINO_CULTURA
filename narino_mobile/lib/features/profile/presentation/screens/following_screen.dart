@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/app_avatar.dart';
 import '../providers/profile_provider.dart';
 
 class FollowingScreen extends ConsumerWidget {
@@ -86,21 +87,14 @@ class FollowingScreen extends ConsumerWidget {
                       side: BorderSide(color: border),
                     ),
                     tileColor: bgCard,
-                    leading: CircleAvatar(
+                    leading: AppAvatar(
+                      radius: 20,
+                      url: artist.fotoUrl,
+                      initials: artist.nombreArtistico,
                       backgroundColor: isDark
                           ? AppColors.bgSubtleDark
                           : AppColors.tierraPalida,
-                      backgroundImage: artist.fotoUrl != null
-                          ? NetworkImage(artist.fotoUrl!)
-                          : null,
-                      child: artist.fotoUrl == null
-                          ? Text(
-                              artist.nombreArtistico[0].toUpperCase(),
-                              style: AppTypography.labelSemiBold(
-                                color: cs.primary,
-                              ),
-                            )
-                          : null,
+                      initialsColor: cs.primary,
                     ),
                     title: Text(
                       artist.nombreArtistico,

@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/app_avatar.dart';
 import '../../domain/profile_model.dart';
 import '../providers/profile_provider.dart';
 
@@ -73,22 +74,13 @@ class _ArtistPublicProfileScreenState
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      CircleAvatar(
+                      AppAvatar(
                         radius: 46,
+                        url: profile.fotoUrl,
+                        initials: profile.nombreArtistico,
                         backgroundColor: isDark
                             ? AppColors.bgSubtleDark
                             : AppColors.tierraPalida,
-                        backgroundImage: profile.fotoUrl != null
-                            ? NetworkImage(profile.fotoUrl!)
-                            : null,
-                        child: profile.fotoUrl == null
-                            ? Text(
-                                profile.nombreArtistico[0].toUpperCase(),
-                                style: AppTypography.displayBold(
-                                  color: AppColors.tierraProfunda,
-                                ),
-                              )
-                            : null,
                       ),
                       const SizedBox(height: 10),
                       Text(

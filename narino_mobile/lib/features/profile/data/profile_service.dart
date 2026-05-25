@@ -10,17 +10,93 @@ class ProfileService {
 
   final Dio _dio;
 
+  // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+  /// True si el string parece un slug (no un UUID).
+  bool _looksLikeSlug(String? s) {
+    if (s == null || s.isEmpty) return false;
+    final uuid = RegExp(
+      r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+      caseSensitive: false,
+    );
+    return !uuid.hasMatch(s);
+  }
+
+  /// Busca el perfil del artista en la lista paginada y devuelve su slug.
+  Future<String?> _fetchArtistSlug(String? userId) async {
+    if (userId == null || userId.isEmpty) return null;
+    String? pageUrl = '${ApiConstants.artists}?page_size=100';
+    while (pageUrl != null) {
+      final res = await _dio.get(pageUrl);
+      final List<dynamic> items;
+      String? next;
+      if (res.data is Map) {
+        final data = res.data as Map;
+        final raw = data['results'];
+        items = raw is List ? raw : [];
+        final n = data['next']?.toString();
+        next = (n != null && n.isNotEmpty) ? n : null;
+      } else if (res.data is List) {
+        items = res.data as List;
+        next = null;
+      } else {
+        break;
+      }
+      for (final a in items) {
+        if (a is Map && a['user_id']?.toString() == userId) {
+          return a['slug']?.toString();
+        }
+      }
+      pageUrl = next;
+    }
+    return null;
+  }
+
+  /// Busca el mapa completo del artista en la lista paginada.
+  Future<Map<String, dynamic>?> _fetchArtistData(String? userId) async {
+    if (userId == null || userId.isEmpty) return null;
+    String? pageUrl = '${ApiConstants.artists}?page_size=100';
+    while (pageUrl != null) {
+      final res = await _dio.get(pageUrl);
+      final List<dynamic> items;
+      String? next;
+      if (res.data is Map) {
+        final data = res.data as Map;
+        final raw = data['results'];
+        items = raw is List ? raw : [];
+        final n = data['next']?.toString();
+        next = (n != null && n.isNotEmpty) ? n : null;
+      } else if (res.data is List) {
+        items = res.data as List;
+        next = null;
+      } else {
+        break;
+      }
+      for (final a in items) {
+        if (a is Map && a['user_id']?.toString() == userId) {
+          return Map<String, dynamic>.from(a);
+        }
+      }
+      pageUrl = next;
+    }
+    return null;
+  }
+
+  // ─── API pública ──────────────────────────────────────────────────────────────
+
   Future<Map<String, dynamic>> getMyProfile() async {
     final userResponse = await _dio.get(ApiConstants.myProfile);
     final userData = Map<String, dynamic>.from(userResponse.data as Map);
 
     if ((userData['role'] as String?)?.toLowerCase() == 'artista') {
       try {
-        final artistResponse = await _dio.get(ApiConstants.artistMe);
-        final artistData = Map<String, dynamic>.from(artistResponse.data as Map);
-        artistData['avatar_url'] ??= userData['avatar_url'];
-        artistData['is_verified'] = userData['is_verified'];
-        return artistData;
+        final userId = userData['id']?.toString();
+        final artistData = await _fetchArtistData(userId);
+        if (artistData != null) {
+          artistData['avatar_url'] ??= userData['avatar_url'];
+          artistData['is_verified'] = userData['is_verified'];
+          return artistData;
+        }
       } catch (_) {}
     }
 
@@ -35,7 +111,12 @@ class ProfileService {
     Map<String, String>? redesSociales,
     String? artistId,
   }) async {
-    // ─── 1. PATCH usuario: nombre (avatar_url es URLField, sin subida de archivos) ──
+    // ─── 1. Obtener userId del usuario actual ─────────────────────────────────
+    final userResponse = await _dio.get(ApiConstants.myProfile);
+    final userData = Map<String, dynamic>.from(userResponse.data as Map);
+    final userId = userData['id']?.toString();
+
+    // ─── 2. PATCH usuario ─────────────────────────────────────────────────────
     final userUpdates = <String, dynamic>{};
     if (nombreArtistico != null && nombreArtistico.isNotEmpty) {
       userUpdates['first_name'] = nombreArtistico;
@@ -44,9 +125,8 @@ class ProfileService {
       await _dio.patch(ApiConstants.myProfile, data: userUpdates);
     }
 
-    // ─── 2. PATCH artista: usa slug-based URL (/api/v1/artists/{slug}/) ───
-    // /me/ solo soporta GET; PATCH requiere el slug real del perfil.
-    if (artistId != null && artistId.isNotEmpty) {
+    // ─── 3. Actualizar perfil artístico (solo ARTISTAs) ───────────────────────
+    if ((userData['role'] as String?)?.toLowerCase() == 'artista') {
       final artistUpdates = <String, dynamic>{};
       if (nombreArtistico != null) artistUpdates['artistic_name'] = nombreArtistico;
       if (disciplina != null) artistUpdates['discipline'] = disciplina;
@@ -61,17 +141,35 @@ class ProfileService {
       }
 
       if (artistUpdates.isNotEmpty) {
-        final artistPatchUrl =
-            ApiConstants.artistDetail.replaceAll('{id}', artistId);
-        await _dio.patch(
-          artistPatchUrl,
-          data: artistUpdates,
-          options: Options(contentType: 'application/json'),
-        );
+        // Resolver slug: usar el passado si es un slug real, sino buscar en lista
+        String? slug = _looksLikeSlug(artistId) ? artistId : null;
+        slug ??= await _fetchArtistSlug(userId);
+
+        if (slug != null && slug.isNotEmpty) {
+          await _dio.patch(
+            ApiConstants.artistDetail.replaceAll('{id}', slug),
+            data: artistUpdates,
+            options: Options(contentType: 'application/json'),
+          );
+        } else {
+          // El perfil de artista no existe: crear primero
+          final artistName = (nombreArtistico?.isNotEmpty == true)
+              ? nombreArtistico!
+              : userData['first_name']?.toString() ?? 'Artista';
+          final createData = <String, dynamic>{
+            'artistic_name': artistName,
+            ...artistUpdates,
+          };
+          await _dio.post(
+            ApiConstants.artists,
+            data: createData,
+            options: Options(contentType: 'application/json'),
+          );
+        }
       }
     }
 
-    // ─── 3. Refrescar desde /me/ para devolver datos actualizados ─────────
+    // ─── 4. Refrescar y devolver datos actualizados ───────────────────────────
     return getMyProfile();
   }
 
