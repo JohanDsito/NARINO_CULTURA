@@ -11,8 +11,10 @@ import {
   getMyMusicianFollowing,
   getMyMusicianProfile,
   updateMusicianProfile,
+  uploadMusicianProfileImage,
 } from '@/api/musicians.api'
 import { FollowStatsCard } from '@/components/profile/FollowStatsCard'
+import { ProfileImageUpload } from '@/components/profile/ProfileImageUpload'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -103,6 +105,20 @@ export default function MusicianDashboardPage() {
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : 'No fue posible guardar el perfil.')
+    },
+  })
+
+  const uploadImageMutation = useMutation({
+    mutationFn: (file: File) => {
+      if (!profile?.slug) throw new Error('Guarda el perfil antes de subir una foto.')
+      return uploadMusicianProfileImage(profile.slug, file)
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['musician-profile', 'me'] })
+      toast.success('Foto de perfil actualizada.')
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'No fue posible subir la foto.')
     },
   })
 
@@ -298,6 +314,14 @@ export default function MusicianDashboardPage() {
 
           {/* Right column cards */}
           <div className="flex flex-col gap-5">
+            <ProfileImageUpload
+              currentUrl={profile?.profile_image || undefined}
+              name={form.artistic_name || (user?.first_name ?? '?')}
+              onUpload={(file) => uploadImageMutation.mutateAsync(file)}
+              isPending={uploadImageMutation.isPending}
+              disabled={!profile?.slug}
+            />
+
             <FollowStatsCard
               followersCount={profile?.followers_count ?? 0}
               followersQueryKey={['musician-followers', profile?.slug]}

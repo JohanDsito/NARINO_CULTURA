@@ -84,6 +84,7 @@ export interface ArtistProfile {
   tiktok_url: string
   followers_count: number
   is_public: boolean
+  profile_image?: string
   created_at: string
   updated_at: string
   is_following?: boolean // annotated by backend or derived from follow endpoint

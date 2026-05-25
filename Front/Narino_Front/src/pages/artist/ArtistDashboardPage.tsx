@@ -4,8 +4,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { CalendarPlus, ImagePlus, Palette, Save, UserRound } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { createArtistProfile, getArtistFollowers, getMyFollowing, listArtistProfiles, updateArtistProfile } from '@/api/artists.api'
+import { createArtistProfile, getArtistFollowers, getMyFollowing, listArtistProfiles, updateArtistProfile, uploadArtistProfileImage } from '@/api/artists.api'
 import { FollowStatsCard } from '@/components/profile/FollowStatsCard'
+import { ProfileImageUpload } from '@/components/profile/ProfileImageUpload'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -67,6 +68,20 @@ export default function ArtistDashboardPage() {
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : 'No fue posible guardar el perfil.')
+    },
+  })
+
+  const uploadImageMutation = useMutation({
+    mutationFn: (file: File) => {
+      if (!profile?.slug) throw new Error('Guarda el perfil antes de subir una foto.')
+      return uploadArtistProfileImage(profile.slug, file)
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['artist-profile', 'me'] })
+      toast.success('Foto de perfil actualizada.')
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'No fue posible subir la foto.')
     },
   })
 
@@ -152,6 +167,14 @@ export default function ArtistDashboardPage() {
           </Card>
 
           <div className="flex flex-col gap-5">
+            <ProfileImageUpload
+              currentUrl={profile?.profile_image || undefined}
+              name={form.artistic_name || (user?.first_name ?? '?')}
+              onUpload={(file) => uploadImageMutation.mutateAsync(file)}
+              isPending={uploadImageMutation.isPending}
+              disabled={!profile?.slug}
+            />
+
             <FollowStatsCard
               followersCount={profile?.followers_count ?? 0}
               followersQueryKey={['artist-followers', profile?.slug]}

@@ -81,6 +81,13 @@ export async function updateMusicianProfile(
   return data
 }
 
+export async function uploadMusicianProfileImage(slug: string, file: File): Promise<MusicianProfile> {
+  const fd = new FormData()
+  fd.append('profile_image', file)
+  const { data } = await axiosInstance.patch<MusicianProfile>(`/api/v1/musicians/${slug}/`, fd)
+  return data
+}
+
 export async function followMusician(slug: string): Promise<{ detail: string }> {
   const { data } = await axiosInstance.post<{ detail: string }>(
     `/api/v1/musicians/${slug}/follow/`,
