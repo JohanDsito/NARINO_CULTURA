@@ -11,7 +11,8 @@ import '../providers/profile_provider.dart';
 final _artistStatsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
   ref,
 ) async {
-  return AiService().getArtistStats();
+  final slug = ref.watch(myProfileProvider).profile?.id ?? '';
+  return AiService().getArtistStats(artistSlug: slug.isNotEmpty ? slug : null);
 });
 
 class ArtistStatsScreen extends ConsumerWidget {

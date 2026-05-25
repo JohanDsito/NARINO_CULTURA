@@ -31,16 +31,25 @@ class EventModel {
   });
 
   factory EventModel.fromJson(Map<String, dynamic> json) {
+    // El backend devuelve nombres en inglés; se aceptan ambos como fallback.
+    final rawFecha = json['start_date'] ?? json['fecha'];
     final parsedFecha =
-        DateTime.tryParse(json['fecha']?.toString() ?? '') ?? DateTime.now();
+        DateTime.tryParse(rawFecha?.toString() ?? '') ?? DateTime.now();
 
-    final rawArtistas =
-        json['artistas_relacionados'] ?? json['artistas'] ?? const <dynamic>[];
+    final rawTipo = (json['event_type'] ?? json['tipo'] ?? 'otro')
+        .toString()
+        .toLowerCase();
+
+    final rawArtistas = json['artists'] ??
+        json['artistas_relacionados'] ??
+        json['artistas'] ??
+        const <dynamic>[];
     final artistasList = (rawArtistas is List ? rawArtistas : const <dynamic>[])
         .map((e) {
           if (e is Map) {
             final nombre =
-                e['nombre']?.toString() ?? e['nombre_artistico']?.toString();
+                e['nombre']?.toString() ?? e['nombre_artistico']?.toString() ??
+                e['artistic_name']?.toString() ?? e['name']?.toString();
             if (nombre != null && nombre.isNotEmpty) return nombre;
             final id = e['id']?.toString();
             if (id != null && id.isNotEmpty) return id;
@@ -52,18 +61,29 @@ class EventModel {
 
     return EventModel(
       id: json['id']?.toString() ?? '',
-      nombre: json['nombre'] as String,
-      tipo: json['tipo'] as String? ?? 'otro',
+      nombre: json['title']?.toString() ??
+          json['nombre']?.toString() ??
+          'Sin título',
+      tipo: rawTipo,
       fecha: parsedFecha,
-      lugar: json['lugar'] as String,
-      descripcion: json['descripcion'] as String?,
-      flyerUrl: json['flyer_url'] as String?,
+      lugar: json['location']?.toString() ??
+          json['lugar']?.toString() ??
+          'Sin lugar',
+      descripcion: json['description']?.toString() ??
+          json['descripcion']?.toString(),
+      flyerUrl: json['flyer_url']?.toString() ?? json['flyer']?.toString(),
       artistasRelacionados: artistasList,
-      esDestacado: json['es_destacado'] as bool? ?? false,
+      esDestacado: json['es_destacado'] as bool? ??
+          json['is_featured'] as bool? ??
+          false,
       esPasado: parsedFecha.isBefore(DateTime.now()),
-      estaSuscrito: json['esta_suscrito'] as bool? ?? false,
-      latitud: (json['latitud'] as num?)?.toDouble(),
-      longitud: (json['longitud'] as num?)?.toDouble(),
+      estaSuscrito: json['esta_suscrito'] as bool? ??
+          json['is_subscribed'] as bool? ??
+          false,
+      latitud: (json['latitud'] as num?)?.toDouble() ??
+          (json['latitude'] as num?)?.toDouble(),
+      longitud: (json['longitud'] as num?)?.toDouble() ??
+          (json['longitude'] as num?)?.toDouble(),
     );
   }
 

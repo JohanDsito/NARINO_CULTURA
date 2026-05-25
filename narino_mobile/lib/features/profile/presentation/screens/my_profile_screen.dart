@@ -108,7 +108,7 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                     icon: Icons.palette_outlined,
                     title: 'Mis obras',
                     subtitle: 'Ver y gestionar tus obras publicadas',
-                    onTap: () => context.go('/catalog'),
+                    onTap: () => context.push('/profile/my-artworks'),
                   ),
                 _MenuTile(
                   icon: Icons.collections_outlined,

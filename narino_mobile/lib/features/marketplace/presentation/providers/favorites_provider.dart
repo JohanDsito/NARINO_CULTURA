@@ -31,7 +31,10 @@ class FavoritesNotifier extends StateNotifier<FavoritesState> {
   }
 
   Future<void> toggleFavorite(String obraId) async {
-    final isFav = state.getFavoriteId(obraId) != null;
+    if (state.status == MarketplaceStatus.initial) {
+      await loadFavorites();
+    }
+    final isFav = state.isFavorite(obraId);
     if (isFav) {
       try {
         await _repo.removeFavorite(obraId);

@@ -5,7 +5,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../providers/cart_provider.dart';
 import '../providers/orders_provider.dart';
 
 // ─── Pantalla principal ───────────────────────────────────────────────────────
@@ -21,14 +20,6 @@ class CheckoutScreen extends ConsumerStatefulWidget {
 
 class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   bool _submitting = false;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => ref.read(cartProvider.notifier).loadCart(),
-    );
-  }
 
   // ─── Pago ─────────────────────────────────────────────────────────────────
 
@@ -87,7 +78,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cart = ref.watch(cartProvider);
+    final orderAsync = ref.watch(orderDetailProvider(widget.orderId));
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final textMuted =
+        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+    final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -99,54 +96,56 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           style: AppTypography.displaySemiBold(color: AppColors.oroClaro),
         ),
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Banner de seguridad ────────────────────────────────────────
-          const _SecurityBanner(),
+      body: orderAsync.when(
+        loading: () => Center(
+          child: CircularProgressIndicator(color: cs.primary, strokeWidth: 2),
+        ),
+        error: (e, _) => Center(
+          child: Text(e.toString(),
+              style: AppTypography.bodyMedium(color: textMuted)),
+        ),
+        data: (order) => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Banner de seguridad ──────────────────────────────────────
+            const _SecurityBanner(),
 
-          // ── Encabezado del resumen ─────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text(
-              'Resumen del pedido',
-              style: AppTypography.labelSemiBold(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? AppColors.textPrimaryDark
-                    : AppColors.textPrimaryLight,
+            // ── Encabezado del resumen ───────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Text(
+                'Resumen del pedido',
+                style: AppTypography.labelSemiBold(color: textPrimary),
               ),
             ),
-          ),
 
-          // ── Lista de ítems ─────────────────────────────────────────────
-          Expanded(
-            child: cart.items.isEmpty
-                ? Center(
-                    child: Text(
-                      'No hay items en el carrito.',
-                      style: AppTypography.bodyMedium(
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? AppColors.textMutedDark
-                              : AppColors.textMutedLight),
+            // ── Lista de ítems de la orden ───────────────────────────────
+            Expanded(
+              child: order.items.isEmpty
+                  ? Center(
+                      child: Text(
+                        'No hay ítems en esta orden.',
+                        style: AppTypography.bodyMedium(color: textMuted),
+                      ),
+                    )
+                  : ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      itemCount: order.items.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      itemBuilder: (context, i) =>
+                          _CheckoutItemRow(item: order.items[i]),
                     ),
-                  )
-                : ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                    itemCount: cart.items.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
-                    itemBuilder: (context, i) =>
-                        _CheckoutItemRow(item: cart.items[i]),
-                  ),
-          ),
+            ),
 
-          // ── Total y botón de pago ──────────────────────────────────────
-          _PaymentFooter(
-            totalFormateado: cart.totalFormateado,
-            itemCount: cart.itemCount,
-            submitting: _submitting,
-            onPay: _pay,
-          ),
-        ],
+            // ── Total y botón de pago ────────────────────────────────────
+            _PaymentFooter(
+              totalFormateado: order.totalFormateado,
+              itemCount: order.items.length,
+              submitting: _submitting,
+              onPay: _pay,
+            ),
+          ],
+        ),
       ),
     );
   }

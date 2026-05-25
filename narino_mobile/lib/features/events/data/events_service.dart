@@ -10,10 +10,13 @@ class EventsService {
 
   Future<List<dynamic>> getEvents({
     String? tipo,
-    bool mostrarPasados = false,
+    bool mostrarPasados = true,
   }) async {
     final params = <String, dynamic>{};
     if (tipo != null) params['event_type'] = tipo.toUpperCase();
+    // Incluir eventos pasados: el backend filtra al futuro por defecto con
+    // `upcoming=true`; pasar `upcoming=false` para traer todo el historial.
+    if (mostrarPasados) params['upcoming'] = false;
     final r = await _dio.get(ApiConstants.events, queryParameters: params);
     return r.data is List ? r.data as List : (r.data['results'] as List? ?? []);
   }

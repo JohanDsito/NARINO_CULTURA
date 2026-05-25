@@ -21,6 +21,7 @@ class _ChatbotScreenState extends State<ChatbotScreen>
   final _scrollCtrl = ScrollController();
 
   final _messages = <_ChatMessage>[];
+  final _history = <Map<String, String>>[];
   bool _sending = false;
 
   @override
@@ -57,8 +58,10 @@ class _ChatbotScreenState extends State<ChatbotScreen>
         ? _messages.indexWhere((m) => m.id == retryForMessageId)
         : _messages.length - 1;
 
+    final historySnapshot = List<Map<String, String>>.from(_history);
+
     try {
-      final reply = await _ai.chat(mensaje: text);
+      final reply = await _ai.chat(mensaje: text, history: historySnapshot);
       if (!mounted) return;
       setState(() {
         if (botIndex >= 0 && botIndex < _messages.length) {
@@ -68,6 +71,9 @@ class _ChatbotScreenState extends State<ChatbotScreen>
           );
         }
       });
+      _history
+        ..add({'role': 'user', 'text': text})
+        ..add({'role': 'assistant', 'text': reply});
     } catch (_) {
       if (!mounted) return;
       setState(() {

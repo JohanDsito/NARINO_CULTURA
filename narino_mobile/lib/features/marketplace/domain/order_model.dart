@@ -20,9 +20,15 @@ class OrderModel {
 
   factory OrderModel.fromJson(Map<String, dynamic> json) => OrderModel(
         id: json['id']?.toString() ?? json['order_id']?.toString() ?? '',
-        estado: json['status']?.toString() ??
-            json['estado']?.toString() ??
-            'pendiente',
+        estado: switch (
+            (json['status'] ?? json['estado'] ?? 'PENDIENTE')
+                .toString()
+                .toUpperCase()) {
+          'PAGADO' => 'completado',
+          'CANCELADO' => 'fallido',
+          'REEMBOLSADO' => 'reembolsado',
+          _ => 'pendiente',
+        },
         total: double.tryParse(
               (json['total_amount'] ?? json['total'] ?? 0).toString(),
             ) ??
@@ -66,6 +72,13 @@ class OrderItemModel {
   final String artistaNombre;
   final double precio;
   final String? imagenUrl;
+
+  String get precioFormateado {
+    final n = precio
+        .toStringAsFixed(0)
+        .replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+$)'), (m) => '${m[1]}.');
+    return '\$$n COP';
+  }
 
   factory OrderItemModel.fromJson(Map<String, dynamic> json) => OrderItemModel(
         obraId: json['artwork']?.toString() ??

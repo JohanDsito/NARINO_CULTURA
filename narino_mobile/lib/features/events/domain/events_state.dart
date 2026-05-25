@@ -16,7 +16,7 @@ class EventsState {
     this.errorMessage,
     this.tipoFiltro,
     this.filtroArtista,
-    this.mostrarPasados = false,
+    this.mostrarPasados = true,
   });
 
   EventsState copyWith({
