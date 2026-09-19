@@ -26,7 +26,7 @@ class AdminCreateUserAPIView(APIView):
     permission_classes = [IsAdmin]
 
     def get(self, request):
-        users = User.objects.all().order_by("-date_joined")
+        users = User.objects.all().order_by("-created_at")
         serializer = AdminUserSerializer(users, many=True, context={"request": request})
         return Response(serializer.data)
 
@@ -69,7 +69,7 @@ class AdminCreateUserAPIView(APIView):
         )
 
 
-class AdminUserDetailAPIView(generics.RetrieveUpdateAPIView):
+class AdminUserDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = AdminUserSerializer
     permission_classes = [IsAdmin]
     queryset = User.objects.all()
@@ -108,6 +108,15 @@ class ModerateArtworkAPIView(APIView):
         artwork.status = serializer.validated_data["status"]
         artwork.save(update_fields=["status", "updated_at"])
         return Response({"detail": "Obra moderada correctamente."})
+
+    post = patch
+
+    def delete(self, request, pk=None):
+        artwork = Artwork.objects.filter(id=pk).first()
+        if not artwork:
+            return Response({"detail": "Obra no encontrada."}, status=404)
+        artwork.delete()
+        return Response(status=204)
 
 
 class AdminTransactionsAPIView(generics.ListAPIView):
