@@ -123,7 +123,14 @@ class EventViewSet(viewsets.ModelViewSet):
             return Response({"detail": "Ya estás inscrito en este evento."}, status=400)
         NotificationService.send(
             "EVENT_REGISTRATION",
-            {"event_id": str(event.id), "user_id": str(request.user.id)},
+            {
+                "event_id": str(event.id),
+                "event_title": event.title,
+                "event_date": event.start_date.isoformat(),
+                "event_location": event.location or "",
+                "user_email": request.user.email,
+                "user_name": f"{request.user.first_name} {request.user.last_name}".strip() or request.user.email,
+            },
             user=request.user,
         )
         return Response({"detail": "Inscripción realizada."}, status=status.HTTP_201_CREATED)

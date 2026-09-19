@@ -34,7 +34,12 @@ class AuctionService:
             ends_at=ends_at,
             status=Auction.Status.PENDIENTE,
         )
-        NotificationService.send("AUCTION_PENDING", {"auction_id": str(auction.id), "artwork_id": str(artwork.id)}, user=seller)
+        NotificationService.send("AUCTION_PENDING", {
+            "auction_id": str(auction.id),
+            "artwork_title": artwork.title,
+            "seller_email": seller.email,
+            "seller_name": f"{seller.first_name} {seller.last_name}".strip() or seller.email,
+        }, user=seller)
         return auction
 
     @staticmethod
@@ -42,14 +47,20 @@ class AuctionService:
     def approve_auction(*, auction: Auction, actor) -> Auction:
         if getattr(actor, "role", None) != "ADMINISTRADOR":
             raise ValueError("Solo un administrador puede aprobar subastas.")
-        locked = Auction.objects.select_for_update().select_related("artwork").get(id=auction.id)
+        locked = Auction.objects.select_for_update().select_related("artwork", "seller").get(id=auction.id)
         if locked.status != Auction.Status.PENDIENTE:
             raise ValueError("Solo se pueden aprobar subastas en estado PENDIENTE.")
         locked.status = Auction.Status.ACTIVA
         locked.save(update_fields=["status", "updated_at"])
         locked.artwork.status = Artwork.Status.EN_SUBASTA
         locked.artwork.save(update_fields=["status", "updated_at"])
-        NotificationService.send("AUCTION_OPENED", {"auction_id": str(locked.id), "artwork_id": str(locked.artwork_id)}, user=actor)
+        NotificationService.send("AUCTION_OPENED", {
+            "auction_id": str(locked.id),
+            "artwork_title": locked.artwork.title,
+            "seller_email": locked.seller.email,
+            "seller_name": f"{locked.seller.first_name} {locked.seller.last_name}".strip() or locked.seller.email,
+            "ends_at": locked.ends_at.isoformat(),
+        }, user=actor)
         return locked
 
     @staticmethod
@@ -57,12 +68,17 @@ class AuctionService:
     def reject_auction(*, auction: Auction, actor) -> Auction:
         if getattr(actor, "role", None) != "ADMINISTRADOR":
             raise ValueError("Solo un administrador puede rechazar subastas.")
-        locked = Auction.objects.select_for_update().select_related("artwork").get(id=auction.id)
+        locked = Auction.objects.select_for_update().select_related("artwork", "seller").get(id=auction.id)
         if locked.status != Auction.Status.PENDIENTE:
             raise ValueError("Solo se pueden rechazar subastas en estado PENDIENTE.")
         locked.status = Auction.Status.CANCELADA
         locked.save(update_fields=["status", "updated_at"])
-        NotificationService.send("AUCTION_REJECTED", {"auction_id": str(locked.id)}, user=actor)
+        NotificationService.send("AUCTION_REJECTED", {
+            "auction_id": str(locked.id),
+            "artwork_title": locked.artwork.title,
+            "seller_email": locked.seller.email,
+            "seller_name": f"{locked.seller.first_name} {locked.seller.last_name}".strip() or locked.seller.email,
+        }, user=actor)
         return locked
 
     @staticmethod
@@ -131,7 +147,22 @@ class AuctionService:
             auction_id=str(locked.id),
             payload={"type": "closed", "auction_id": str(locked.id), "winner_id": str(locked.winner_id) if locked.winner_id else None},
         )
-        NotificationService.send("AUCTION_CLOSED", {"auction_id": str(locked.id), "winner_id": str(locked.winner_id) if locked.winner_id else None}, user=actor)
+        winner_email = ""
+        winner_name = ""
+        if locked.winner_id:
+            from apps.users.models import User as _User
+            w = _User.objects.filter(id=locked.winner_id).values("email", "first_name", "last_name").first()
+            if w:
+                winner_email = w["email"]
+                winner_name = f"{w['first_name']} {w['last_name']}".strip() or w["email"]
+        NotificationService.send("AUCTION_CLOSED", {
+            "auction_id": str(locked.id),
+            "artwork_title": locked.artwork.title,
+            "winner_id": str(locked.winner_id) if locked.winner_id else None,
+            "winner_email": winner_email,
+            "winner_name": winner_name,
+            "final_price": str(locked.current_price),
+        }, user=actor)
         return locked
 
     @staticmethod

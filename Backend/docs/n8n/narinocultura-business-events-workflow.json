@@ -1,0 +1,124 @@
+{
+  "name": "Narino Cultura - Business Events",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "narinocultura",
+        "responseMode": "responseNode",
+        "httpMethod": "POST",
+        "options": {}
+      },
+      "id": "1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "narinocultura-business"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body || $json;\nconst type = body.type;\nconst payload = body.payload || {};\n\nconst color = '#7c2d12';\n\nfunction btn(url, label) {\n  return '<p style=\"margin:24px 0;\"><a href=\"' + url + '\" style=\"display:inline-block;padding:12px 20px;background:' + color + ';color:#fff;text-decoration:none;border-radius:8px;font-weight:600;\">' + label + '</a></p>';\n}\n\nfunction wrap(title, content) {\n  return '<div style=\"font-family:Arial,sans-serif;max-width:640px;margin:0 auto;color:#1f2937;line-height:1.6;\"><h2 style=\"color:' + color + ';margin-bottom:16px;\">' + title + '</h2>' + content + '<p style=\"margin-top:32px;color:#6b7280;font-size:13px;border-top:1px solid #e5e7eb;padding-top:16px;\">Nariño Cultura &mdash; Plataforma cultural de la región Nariño, Colombia</p></div>';\n}\n\nfunction fmtDate(iso) {\n  if (!iso) return '';\n  try { return new Date(iso).toLocaleString('es-CO', {timeZone:'America/Bogota', dateStyle:'long', timeStyle:'short'}); }\n  catch(e) { return iso; }\n}\n\nfunction fmtPrice(val) {\n  if (!val) return '';\n  return '$' + Number(val).toLocaleString('es-CO') + ' COP';\n}\n\n// AUCTION_OPENED: artista recibe correo de aprobacion\nif (type === 'AUCTION_OPENED') {\n  const name = payload.seller_name || 'artista';\n  const title = payload.artwork_title || 'tu obra';\n  const ends = fmtDate(payload.ends_at);\n  return [{ json: {\n    to: payload.seller_email || '',\n    subject: '¡Tu subasta fue aprobada! — ' + title,\n    html: wrap('¡Subasta aprobada!',\n      '<p>Hola ' + name + ',</p>' +\n      '<p>Tu solicitud de subasta para <strong>' + title + '</strong> fue aprobada y ya está activa en la plataforma.</p>' +\n      (ends ? '<p>La subasta cierra el: <strong>' + ends + '</strong></p>' : '') +\n      '<p>Los compradores ya pueden ver y pujar por tu obra. ¡Mucho éxito!</p>'\n    )\n  }}];\n}\n\n// AUCTION_REJECTED: artista recibe correo de rechazo\nif (type === 'AUCTION_REJECTED') {\n  const name = payload.seller_name || 'artista';\n  const title = payload.artwork_title || 'tu obra';\n  return [{ json: {\n    to: payload.seller_email || '',\n    subject: 'Subasta no aprobada — ' + title,\n    html: wrap('Subasta no aprobada',\n      '<p>Hola ' + name + ',</p>' +\n      '<p>La solicitud de subasta para <strong>' + title + '</strong> no fue aprobada en esta ocasión.</p>' +\n      '<p>Si tienes preguntas sobre los motivos, puedes contactar al equipo de Nariño Cultura respondiendo este correo.</p>'\n    )\n  }}];\n}\n\n// AUCTION_CLOSED con ganador: ganador recibe correo de felicitacion\nif (type === 'AUCTION_CLOSED' && payload.winner_email) {\n  const name = payload.winner_name || 'usuario';\n  const title = payload.artwork_title || 'la obra';\n  const price = fmtPrice(payload.final_price);\n  return [{ json: {\n    to: payload.winner_email,\n    subject: '¡Ganaste la subasta! — ' + title,\n    html: wrap('¡Felicitaciones, ganaste!',\n      '<p>Hola ' + name + ',</p>' +\n      '<p>¡Eres el ganador de la subasta de <strong>' + title + '</strong>!</p>' +\n      (price ? '<p>Precio final: <strong>' + price + '</strong></p>' : '') +\n      '<p>Nuestro equipo se comunicará contigo pronto para coordinar el pago y la entrega de la obra.</p>'\n    )\n  }}];\n}\n\n// EVENT_REGISTRATION: usuario recibe confirmacion de inscripcion\nif (type === 'EVENT_REGISTRATION') {\n  const name = payload.user_name || 'usuario';\n  const title = payload.event_title || 'el evento';\n  const date = fmtDate(payload.event_date);\n  const loc = payload.event_location || '';\n  return [{ json: {\n    to: payload.user_email || '',\n    subject: 'Inscripción confirmada — ' + title,\n    html: wrap('Inscripción confirmada',\n      '<p>Hola ' + name + ',</p>' +\n      '<p>Tu inscripción al evento <strong>' + title + '</strong> fue confirmada exitosamente.</p>' +\n      (date ? '<p>Fecha: <strong>' + date + '</strong></p>' : '') +\n      (loc ? '<p>Lugar: <strong>' + loc + '</strong></p>' : '') +\n      '<p>¡Te esperamos!</p>'\n    )\n  }}];\n}\n\n// Tipos sin email: AUCTION_PENDING, AUCTION_BID, ORDER_CREATED, PAYMENT_*, EVENT_PUBLISHED\nreturn [{ json: { to: '', subject: '', html: '' } }];"
+      },
+      "id": "2",
+      "name": "Build Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [520, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-to",
+              "leftValue": "={{ $json.to }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true
+      },
+      "id": "3",
+      "name": "Has Email?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [800, 300]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": {}
+      },
+      "id": "4",
+      "name": "Send Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1080, 180],
+      "credentials": {
+        "smtp": {
+          "id": "",
+          "name": ""
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"ok\": true}",
+        "options": {}
+      },
+      "id": "5",
+      "name": "Respond OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1360, 180]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"ok\": true, \"skipped\": true}",
+        "options": {}
+      },
+      "id": "6",
+      "name": "Respond OK (sin email)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1080, 420]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{ "node": "Build Email", "type": "main", "index": 0 }]]
+    },
+    "Build Email": {
+      "main": [[{ "node": "Has Email?", "type": "main", "index": 0 }]]
+    },
+    "Has Email?": {
+      "main": [
+        [{ "node": "Send Email", "type": "main", "index": 0 }],
+        [{ "node": "Respond OK (sin email)", "type": "main", "index": 0 }]
+      ]
+    },
+    "Send Email": {
+      "main": [[{ "node": "Respond OK", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1"
+}

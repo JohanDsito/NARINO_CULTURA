@@ -138,7 +138,7 @@ class ChatAPIView(APIView):
     Rate Limit: 10 mensajes/minuto por usuario
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     ai_client = AIServiceClient()
 
     def post(self, request):
@@ -175,7 +175,11 @@ class ChatAPIView(APIView):
                 status=400
             )
 
-        session_id = f"user-{request.user.id}"
+        if request.user.is_authenticated:
+            session_id = f"user-{request.user.id}"
+        else:
+            ip = request.META.get("REMOTE_ADDR", "unknown")
+            session_id = f"anon-{ip}"
         history = request.data.get("history", [])
 
         try:
