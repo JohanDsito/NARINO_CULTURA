@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:dio/dio.dart';
 
 import '../domain/event_model.dart';
@@ -32,13 +30,29 @@ class EventsRepository {
     }
   }
 
+  Future<void> registerToEvent(String id) async {
+    try {
+      await _service.registerToEvent(id);
+    } on DioException catch (e) {
+      throw _parseError(e);
+    }
+  }
+
+  Future<void> unregisterFromEvent(String id) async {
+    try {
+      await _service.unregisterFromEvent(id);
+    } on DioException catch (e) {
+      throw _parseError(e);
+    }
+  }
+
   Future<EventModel> publishEvent({
     required String nombre,
     required String tipo,
     required String fecha,
     required String lugar,
     String? descripcion,
-    File? flyer,
+    String? imageUrl,
     List<String>? artistasRelacionados,
     bool isPublished = false,
   }) async {
@@ -49,7 +63,7 @@ class EventsRepository {
         fecha: fecha,
         lugar: lugar,
         descripcion: descripcion,
-        flyer: flyer,
+        imageUrl: imageUrl,
         artistasRelacionados: artistasRelacionados,
         isPublished: isPublished,
       ));
