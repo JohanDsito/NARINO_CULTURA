@@ -42,4 +42,18 @@ class NotificationsService {
       rethrow;
     }
   }
+
+  /// NOTA: el backend no expone actualmente ningún endpoint bajo
+  /// `/api/v1/notifications/` para leer o guardar estas preferencias (el app
+  /// `notifications` solo tiene un modelo, sin `views.py`/`urls.py`). Esta
+  /// llamada siempre fallará hasta que se implemente esa API.
+  Future<Map<String, dynamic>> getEventPreferences() async {
+    final res =
+        await _dio.get(ApiConstants.eventNotificationPreferences);
+    return (res.data as Map).cast<String, dynamic>();
+  }
+
+  Future<void> saveEventPreferences(Map<String, dynamic> data) async {
+    await _dio.patch(ApiConstants.eventNotificationPreferences, data: data);
+  }
 }
