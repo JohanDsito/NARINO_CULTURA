@@ -2,11 +2,48 @@ import 'package:dio/dio.dart';
 
 import '../../../core/constants/api_constants.dart';
 import '../../../core/network/api_client.dart';
+import '../../artworks/data/artwork_service.dart';
 import '../../artworks/domain/artwork_model.dart';
 import '../../events/domain/event_model.dart';
 
 class AiService {
+  AiService({ArtworkService? artworkService})
+      : _artworkService = artworkService ?? ArtworkService();
+
   Dio get _dio => ApiClient.instance.dio;
+  final ArtworkService _artworkService;
+
+  /// Sugiere una categoría para una obra a partir de su título (usada al
+  /// componer una obra nueva, antes de que exista un ID en el backend).
+  Future<String> suggestCategory(String titulo) async {
+    final response = await _dio.post(
+      '/ai/suggest-category/',
+      data: {'titulo': titulo},
+    );
+    final data = response.data;
+    final categoria = (data is Map ? data['categoria'] : null)?.toString();
+    if (categoria == null || categoria.isEmpty) {
+      throw const FormatException('Respuesta vacía del servidor.');
+    }
+    return categoria;
+  }
+
+  /// Genera una descripción para una obra a partir de su título y categoría.
+  Future<String> generateDescription({
+    required String titulo,
+    required int categoriaId,
+  }) async {
+    final response = await _dio.post(
+      '/ai/generate-description/',
+      data: {'titulo': titulo, 'categoria': categoriaId},
+    );
+    final data = response.data;
+    final descripcion = (data is Map ? data['descripcion'] : null)?.toString();
+    if (descripcion == null || descripcion.isEmpty) {
+      throw const FormatException('Respuesta vacía del servidor.');
+    }
+    return descripcion;
+  }
 
   /// Sends a message to the cultural AI assistant.
   /// [history] is a list of previous turns: `[{'role': 'user'/'assistant', 'text': '...'}]`
@@ -90,41 +127,15 @@ class AiService {
   /// [artistSlug] is the artist's profile slug used to filter artworks.
   Future<Map<String, dynamic>> getArtistStats({String? artistSlug}) async {
     try {
-      // Paginate all artworks and filter client-side by artist slug
       final myWorks = <ArtworkModel>[];
       if (artistSlug != null && artistSlug.isNotEmpty) {
-        String? nextUrl = '${ApiConstants.artworks}?page_size=100';
-        while (nextUrl != null) {
-          final response = await _dio.get(nextUrl);
-          final data = response.data;
-          if (data is Map) {
-            final raw = (data['results'] as List? ?? []);
-            myWorks.addAll(
-              raw
-                  .whereType<Map>()
-                  .map((e) => ArtworkModel.fromJson(
-                      Map<String, dynamic>.from(e)))
-                  .where((a) => a.artistaSlug == artistSlug),
-            );
-            nextUrl = data['next'] as String?;
-          } else if (data is List) {
-            myWorks.addAll(
-              data
-                  .whereType<Map>()
-                  .map((e) => ArtworkModel.fromJson(
-                      Map<String, dynamic>.from(e)))
-                  .where((a) => a.artistaSlug == artistSlug),
-            );
-            nextUrl = null;
-          } else {
-            nextUrl = null;
-          }
-        }
+        final raw = await _artworkService.getByArtist(artistSlug);
+        myWorks.addAll(raw.map(ArtworkModel.fromJson));
       }
 
       // Compute total views from artworks (views_count field)
       final visitasTotal =
-          myWorks.fold<int>(0, (sum, a) => sum + a.cantidadFavoritos);
+          myWorks.fold<int>(0, (sum, a) => sum + a.viewsCount);
 
       // Get income from sales history for the current month
       double ingresosMes = 0;
@@ -150,14 +161,13 @@ class AiService {
       } catch (_) {}
 
       // Top artworks sorted by views_count
-      myWorks.sort(
-          (a, b) => b.cantidadFavoritos.compareTo(a.cantidadFavoritos));
+      myWorks.sort((a, b) => b.viewsCount.compareTo(a.viewsCount));
       final topWorks = myWorks.take(5).map((a) => {
             'id': a.id,
             'title': a.titulo,
             'image_url':
                 a.imagenes.isNotEmpty ? a.imagenes.first : null,
-            'views': a.cantidadFavoritos,
+            'views': a.viewsCount,
           }).toList();
 
       return {

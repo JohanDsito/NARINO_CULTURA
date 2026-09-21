@@ -6,6 +6,10 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../data/ai_service.dart';
+import 'chatbot_screen/bot_status.dart';
+import 'chatbot_screen/chat_bubble.dart';
+import 'chatbot_screen/chat_message.dart';
+import 'chatbot_screen/empty_chat.dart';
 
 class ChatbotScreen extends StatefulWidget {
   const ChatbotScreen({super.key});
@@ -20,7 +24,7 @@ class _ChatbotScreenState extends State<ChatbotScreen>
   final _ctrl = TextEditingController();
   final _scrollCtrl = ScrollController();
 
-  final _messages = <_ChatMessage>[];
+  final _messages = <ChatMessage>[];
   final _history = <Map<String, String>>[];
   bool _sending = false;
 
@@ -43,11 +47,11 @@ class _ChatbotScreenState extends State<ChatbotScreen>
       if (retryForMessageId != null) {
         final idx = _messages.indexWhere((m) => m.id == retryForMessageId);
         if (idx >= 0) {
-          _messages[idx] = _messages[idx].copyWith(status: _BotStatus.typing);
+          _messages[idx] = _messages[idx].copyWith(status: BotStatus.typing);
         }
       } else {
-        _messages.add(_ChatMessage.user(text: text));
-        _messages.add(_ChatMessage.botTyping(requestText: text));
+        _messages.add(ChatMessage.user(text: text));
+        _messages.add(ChatMessage.botTyping(requestText: text));
         _ctrl.clear();
       }
     });
@@ -67,7 +71,7 @@ class _ChatbotScreenState extends State<ChatbotScreen>
         if (botIndex >= 0 && botIndex < _messages.length) {
           _messages[botIndex] = _messages[botIndex].copyWith(
             text: reply,
-            status: _BotStatus.done,
+            status: BotStatus.done,
           );
         }
       });
@@ -80,7 +84,7 @@ class _ChatbotScreenState extends State<ChatbotScreen>
         if (botIndex >= 0 && botIndex < _messages.length) {
           _messages[botIndex] = _messages[botIndex].copyWith(
             text: 'No se pudo conectar. Toca para reintentar.',
-            status: _BotStatus.error,
+            status: BotStatus.error,
           );
         }
       });
@@ -128,12 +132,12 @@ class _ChatbotScreenState extends State<ChatbotScreen>
         children: [
           Expanded(
             child: _messages.isEmpty
-                ? _EmptyChat(onExampleTap: (t) => _send(forcedText: t))
+                ? EmptyChat(onExampleTap: (t) => _send(forcedText: t))
                 : ListView.builder(
                     controller: _scrollCtrl,
                     padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
                     itemCount: _messages.length,
-                    itemBuilder: (_, i) => _ChatBubble(
+                    itemBuilder: (_, i) => ChatBubble(
                       message: _messages[i],
                       onRetry: _messages[i].isBotError
                           ? () => _send(
@@ -203,281 +207,3 @@ class _ChatbotScreenState extends State<ChatbotScreen>
     );
   }
 }
-
-class _EmptyChat extends StatelessWidget {
-  const _EmptyChat({required this.onExampleTap});
-
-  final void Function(String text) onExampleTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final textSecondary =
-        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
-    final textMuted =
-        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.chat_bubble_outline, color: textMuted, size: 72),
-            const SizedBox(height: 16),
-            Text(
-              'Pregúntame sobre arte y cultura de Nariño',
-              style: AppTypography.displaySemiBold(
-                color: textSecondary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Ejemplos: “¿Qué obras hay en Barniz de Pasto?” o “¿Qué eventos hay esta semana?”',
-              style: AppTypography.bodySmall(color: textMuted),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              alignment: WrapAlignment.center,
-              children: [
-                _ExampleChip(
-                  label: 'Carnaval',
-                  onTap: () => onExampleTap(
-                    'Cuéntame sobre el Carnaval de Negros y Blancos.',
-                  ),
-                ),
-                _ExampleChip(
-                  label: 'Artistas',
-                  onTap: () => onExampleTap(
-                    '¿Qué artistas destacados hay en la plataforma?',
-                  ),
-                ),
-                _ExampleChip(
-                  label: 'Eventos',
-                  onTap: () => onExampleTap(
-                    'Recomiéndame eventos culturales en Nariño.',
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ExampleChip extends StatelessWidget {
-  const _ExampleChip({required this.label, required this.onTap});
-
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    final bgCard = theme.cardTheme.color ?? cs.surface;
-    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
-    final textSecondary =
-        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(999),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: bgCard,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: border),
-        ),
-        child: Text(
-          label,
-          style: AppTypography.labelSemiBold(color: textSecondary),
-        ),
-      ),
-    );
-  }
-}
-
-class _ChatBubble extends StatelessWidget {
-  const _ChatBubble({required this.message, required this.onRetry});
-
-  final _ChatMessage message;
-  final VoidCallback? onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    final bgCard = theme.cardTheme.color ?? cs.surface;
-    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
-    final textPrimary =
-        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-    final isUser = message.isUser;
-    final bubbleColor = isUser ? cs.primary : bgCard;
-    final textColor = isUser ? cs.onPrimary : textPrimary;
-    final alignment = isUser ? Alignment.centerRight : Alignment.centerLeft;
-
-    return Align(
-      alignment: alignment,
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: InkWell(
-          onTap: onRetry,
-          borderRadius: BorderRadius.circular(14),
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 320),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: bubbleColor,
-              borderRadius: BorderRadius.circular(14),
-              border: isUser ? null : Border.all(color: border),
-            ),
-            child: message.isTyping
-                ? const _TypingDots()
-                : Text(
-                    message.text,
-                    style: AppTypography.bodyMedium(color: textColor),
-                  ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _TypingDots extends StatefulWidget {
-  const _TypingDots();
-
-  @override
-  State<_TypingDots> createState() => _TypingDotsState();
-}
-
-class _TypingDotsState extends State<_TypingDots>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _c;
-  late final Animation<double> _a;
-
-  @override
-  void initState() {
-    super.initState();
-    _c = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    )..repeat();
-    _a = CurvedAnimation(parent: _c, curve: Curves.easeInOut);
-  }
-
-  @override
-  void dispose() {
-    _c.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _a,
-      builder: (_, __) {
-        double o(int i) {
-          final t = (_a.value + i * 0.18) % 1.0;
-          final v = (t < 0.5) ? (t * 2) : ((1 - t) * 2);
-          return 0.25 + v * 0.75;
-        }
-
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _Dot(opacity: o(0)),
-            const SizedBox(width: 5),
-            _Dot(opacity: o(1)),
-            const SizedBox(width: 5),
-            _Dot(opacity: o(2)),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _Dot extends StatelessWidget {
-  const _Dot({required this.opacity});
-
-  final double opacity;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textMuted =
-        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
-    return Opacity(
-      opacity: opacity,
-      child: Container(
-        width: 6,
-        height: 6,
-        decoration: BoxDecoration(
-          color: textMuted,
-          borderRadius: BorderRadius.circular(999),
-        ),
-      ),
-    );
-  }
-}
-
-enum _BotStatus { typing, done, error }
-
-class _ChatMessage {
-  _ChatMessage._({
-    required this.id,
-    required this.role,
-    required this.text,
-    required this.status,
-    required this.requestText,
-  });
-
-  final int id;
-  final _Role role;
-  final String text;
-  final _BotStatus? status;
-  final String? requestText;
-
-  bool get isUser => role == _Role.user;
-  bool get isTyping => role == _Role.bot && status == _BotStatus.typing;
-  bool get isBotError => role == _Role.bot && status == _BotStatus.error;
-
-  static int _idSeed = 0;
-
-  factory _ChatMessage.user({required String text}) => _ChatMessage._(
-        id: ++_idSeed,
-        role: _Role.user,
-        text: text,
-        status: null,
-        requestText: null,
-      );
-
-  factory _ChatMessage.botTyping({required String requestText}) =>
-      _ChatMessage._(
-        id: ++_idSeed,
-        role: _Role.bot,
-        text: '',
-        status: _BotStatus.typing,
-        requestText: requestText,
-      );
-
-  _ChatMessage copyWith({String? text, _BotStatus? status}) => _ChatMessage._(
-        id: id,
-        role: role,
-        text: text ?? this.text,
-        status: status ?? this.status,
-        requestText: requestText,
-      );
-}
-
-enum _Role { user, bot }
