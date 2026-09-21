@@ -4,8 +4,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../musicians/presentation/screens/musicians_screen.dart';
 import '../providers/music_discovery_provider.dart';
+import 'music_discovery_screen/results_body.dart';
+import 'music_discovery_screen/suggestions_panel.dart';
 
 class MusicDiscoveryScreen extends ConsumerStatefulWidget {
   const MusicDiscoveryScreen({super.key});
@@ -183,7 +184,7 @@ class _MusicDiscoveryScreenState extends ConsumerState<MusicDiscoveryScreen> {
 
           // ── Suggestions ───────────────────────────────────────────────────
           if (!state.hasSearched)
-            _SuggestionsPanel(
+            SuggestionsPanel(
               textPrimary: textPrimary,
               textMuted: textMuted,
               onSuggestion: (s) {
@@ -196,7 +197,7 @@ class _MusicDiscoveryScreenState extends ConsumerState<MusicDiscoveryScreen> {
           // ── Results ───────────────────────────────────────────────────────
           if (state.hasSearched)
             Expanded(
-              child: _ResultsBody(
+              child: ResultsBody(
                 state: state,
                 textPrimary: textPrimary,
                 textMuted: textMuted,
@@ -206,221 +207,6 @@ class _MusicDiscoveryScreenState extends ConsumerState<MusicDiscoveryScreen> {
         ],
       ),
       ),
-    );
-  }
-}
-
-// ─── Suggestion chips ─────────────────────────────────────────────────────────
-
-const _kSuggestions = [
-  'Música andina de Nariño',
-  'Chirimía del Pacífico',
-  'Cumbia nariñense',
-  'Trova pastusa',
-  'Rock alternativo Pasto',
-  'Jazz fusión andino',
-];
-
-class _SuggestionsPanel extends StatelessWidget {
-  const _SuggestionsPanel({
-    required this.textPrimary,
-    required this.textMuted,
-    required this.onSuggestion,
-  });
-
-  final Color textPrimary;
-  final Color textMuted;
-  final ValueChanged<String> onSuggestion;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 8),
-            Text(
-              'Búsquedas sugeridas',
-              style: AppTypography.labelSemiBold(color: textPrimary),
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _kSuggestions.map((s) {
-                return ActionChip(
-                  label: Text(s,
-                      style: AppTypography.caption(
-                          color: AppColors.indigoClaro)),
-                  onPressed: () => onSuggestion(s),
-                  backgroundColor:
-                      AppColors.indigoClaro.withValues(alpha: 0.1),
-                  side: BorderSide(
-                      color: AppColors.indigoClaro.withValues(alpha: 0.3)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(99),
-                  ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 28),
-            Row(
-              children: [
-                const Icon(Icons.tips_and_updates_outlined,
-                    size: 16, color: AppColors.indigoClaro),
-                const SizedBox(width: 6),
-                Text('Consejos', style: AppTypography.labelSemiBold(color: textPrimary)),
-              ],
-            ),
-            const SizedBox(height: 10),
-            _Tip(
-              icon: Icons.music_note_outlined,
-              text:
-                  'Describe el género, ritmo o estado de ánimo que buscas.',
-              textMuted: textMuted,
-            ),
-            const SizedBox(height: 8),
-            _Tip(
-              icon: Icons.place_outlined,
-              text:
-                  'Menciona una ciudad o región de Nariño para resultados locales.',
-              textMuted: textMuted,
-            ),
-            const SizedBox(height: 8),
-            _Tip(
-              icon: Icons.people_outline,
-              text:
-                  'Indica si buscas solistas, dúos o agrupaciones musicales.',
-              textMuted: textMuted,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Tip extends StatelessWidget {
-  const _Tip({
-    required this.icon,
-    required this.text,
-    required this.textMuted,
-  });
-
-  final IconData icon;
-  final String text;
-  final Color textMuted;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 15, color: textMuted),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(text,
-              style: AppTypography.bodySmall(color: textMuted)),
-        ),
-      ],
-    );
-  }
-}
-
-// ─── Results body ─────────────────────────────────────────────────────────────
-
-class _ResultsBody extends ConsumerWidget {
-  const _ResultsBody({
-    required this.state,
-    required this.textPrimary,
-    required this.textMuted,
-    required this.cs,
-  });
-
-  final MusicDiscoveryState state;
-  final Color textPrimary;
-  final Color textMuted;
-  final ColorScheme cs;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    if (state.isLoading) {
-      return const Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(color: AppColors.indigoClaro),
-            SizedBox(height: 16),
-            Text('Buscando artistas...'),
-          ],
-        ),
-      );
-    }
-
-    if (state.hasError) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.cloud_off_outlined,
-                  size: 48, color: AppColors.indigoClaro),
-              const SizedBox(height: 12),
-              Text(
-                state.errorMessage ?? 'Error al buscar',
-                style: AppTypography.bodyMedium(color: AppColors.error),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    if (state.results.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.search_off_outlined, size: 48, color: textMuted),
-              const SizedBox(height: 12),
-              Text(
-                'No se encontraron músicos para\n"${state.lastQuery}"',
-                style: AppTypography.bodyMedium(color: textMuted),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-          child: Text(
-            '${state.results.length} músico${state.results.length == 1 ? '' : 's'} encontrado${state.results.length == 1 ? '' : 's'}',
-            style: AppTypography.caption(color: textMuted),
-          ),
-        ),
-        Expanded(
-          child: ListView.separated(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-            itemCount: state.results.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (_, i) =>
-                MusicianCard(musician: state.results[i]),
-          ),
-        ),
-      ],
     );
   }
 }
