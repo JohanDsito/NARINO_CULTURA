@@ -1,14 +1,14 @@
-import 'dart:io';
-
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/providers/user_role_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../providers/events_provider.dart';
+import 'publish_event_screen/date_time_tile.dart';
+import 'publish_event_screen/error_banner.dart';
+import 'publish_event_screen/flyer_picker.dart';
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
@@ -38,13 +38,13 @@ class _PublishEventScreenState extends ConsumerState<PublishEventScreen> {
   final _lugarCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
   final _artistasCtrl = TextEditingController();
+  final _flyerUrlCtrl = TextEditingController();
 
   final _lugarFocus = FocusNode();
   final _descFocus = FocusNode();
 
   DateTime? _fecha;
   String _tipo = 'concierto';
-  File? _flyer;
 
   @override
   void dispose() {
@@ -52,18 +52,13 @@ class _PublishEventScreenState extends ConsumerState<PublishEventScreen> {
     _lugarCtrl.dispose();
     _descCtrl.dispose();
     _artistasCtrl.dispose();
+    _flyerUrlCtrl.dispose();
     _lugarFocus.dispose();
     _descFocus.dispose();
     super.dispose();
   }
 
   // ─── Acciones ─────────────────────────────────────────────────────────────
-
-  Future<void> _pickFlyer() async {
-    final xfile = await ImagePicker()
-        .pickImage(source: ImageSource.gallery, imageQuality: 92);
-    if (xfile != null) setState(() => _flyer = File(xfile.path));
-  }
 
   Future<void> _pickDateTime() async {
     final now = DateTime.now();
@@ -116,7 +111,7 @@ class _PublishEventScreenState extends ConsumerState<PublishEventScreen> {
           lugar: _lugarCtrl.text.trim(),
           descripcion: _descCtrl.text.trim(),
           artistas: _parseArtistIds(),
-          flyer: _flyer,
+          imageUrl: _flyerUrlCtrl.text.trim(),
           isPublished: isPublished,
         );
 
@@ -217,7 +212,7 @@ class _PublishEventScreenState extends ConsumerState<PublishEventScreen> {
               const SizedBox(height: 14),
 
               // ── Fecha y hora ──────────────────────────────────────────
-              _DateTimeTile(
+              DateTimeTile(
                 fecha: _fecha,
                 onTap: isLoading ? null : _pickDateTime,
               ),
@@ -256,17 +251,15 @@ class _PublishEventScreenState extends ConsumerState<PublishEventScreen> {
               const SizedBox(height: 16),
 
               // ── Flyer ─────────────────────────────────────────────────
-              _FlyerPicker(
-                file: _flyer,
+              FlyerPicker(
+                controller: _flyerUrlCtrl,
                 disabled: isLoading,
-                onPick: _pickFlyer,
-                onRemove: () => setState(() => _flyer = null),
               ),
 
               // ── Error ─────────────────────────────────────────────────
               if (state.hasError) ...[
                 const SizedBox(height: 12),
-                _ErrorBanner(message: state.errorMessage!),
+                ErrorBanner(message: state.errorMessage!),
               ],
 
               const SizedBox(height: 24),
@@ -294,186 +287,6 @@ class _PublishEventScreenState extends ConsumerState<PublishEventScreen> {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-// ─── Selector de fecha/hora ───────────────────────────────────────────────────
-
-class _DateTimeTile extends StatelessWidget {
-  const _DateTimeTile({required this.fecha, required this.onTap});
-
-  final DateTime? fecha;
-  final VoidCallback? onTap;
-
-  String get _label {
-    if (fecha == null) return 'Fecha y hora *';
-    final dd = fecha!.day.toString().padLeft(2, '0');
-    final mm = fecha!.month.toString().padLeft(2, '0');
-    final hh = fecha!.hour.toString().padLeft(2, '0');
-    final mi = fecha!.minute.toString().padLeft(2, '0');
-    return '$dd/$mm/${fecha!.year}  ·  $hh:$mi';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    final bgSubtle = isDark ? AppColors.bgSubtleDark : AppColors.bgSubtleLight;
-    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
-    final textPrimary =
-        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-    final textMuted =
-        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
-    final hasValue = fecha != null;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: bgSubtle,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: hasValue ? cs.primary : border,
-            width: hasValue ? 1.5 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              Icons.calendar_today_outlined,
-              size: 20,
-              color: hasValue ? cs.primary : textMuted,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                _label,
-                style: AppTypography.bodyMedium(
-                  color: hasValue ? textPrimary : textMuted,
-                ),
-              ),
-            ),
-            Icon(Icons.chevron_right, size: 18, color: textMuted),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Selector de flyer ────────────────────────────────────────────────────────
-
-class _FlyerPicker extends StatelessWidget {
-  const _FlyerPicker({
-    required this.file,
-    required this.disabled,
-    required this.onPick,
-    required this.onRemove,
-  });
-
-  final File? file;
-  final bool disabled;
-  final VoidCallback onPick;
-  final VoidCallback onRemove;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    final textMuted = isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
-    final textSecondary =
-        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(Icons.image_outlined, size: 16, color: textMuted),
-            const SizedBox(width: 6),
-            Text(
-              'Flyer / imagen',
-              style: AppTypography.labelSemiBold(color: textSecondary),
-            ),
-            const Spacer(),
-            TextButton.icon(
-              onPressed: disabled ? null : onPick,
-              icon: const Icon(Icons.upload_outlined, size: 16),
-              label: Text(file == null ? 'Seleccionar' : 'Cambiar imagen'),
-              style: TextButton.styleFrom(
-                foregroundColor: cs.primary,
-              ),
-            ),
-          ],
-        ),
-        if (file != null) ...[
-          const SizedBox(height: 8),
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.file(
-                  file!,
-                  height: 160,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                ),
-              ),
-              Positioned(
-                top: 8,
-                right: 8,
-                child: GestureDetector(
-                  onTap: disabled ? null : onRemove,
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: Colors.black54,
-                      borderRadius: BorderRadius.circular(99),
-                    ),
-                    child:
-                        const Icon(Icons.close, color: Colors.white, size: 16),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ],
-    );
-  }
-}
-
-// ─── Banner de error ──────────────────────────────────────────────────────────
-
-class _ErrorBanner extends StatelessWidget {
-  const _ErrorBanner({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.error.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.error.withValues(alpha: 0.30)),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.error_outline, color: AppColors.error, size: 18),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              message,
-              style: AppTypography.bodySmall(color: AppColors.error),
-            ),
-          ),
-        ],
       ),
     );
   }

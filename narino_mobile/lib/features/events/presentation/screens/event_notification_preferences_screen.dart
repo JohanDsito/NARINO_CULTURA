@@ -5,10 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/constants/api_constants.dart';
-import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../notifications/data/notifications_service.dart';
 
 class EventNotificationPreferencesScreen extends ConsumerStatefulWidget {
   const EventNotificationPreferencesScreen({super.key});
@@ -21,6 +20,7 @@ class EventNotificationPreferencesScreen extends ConsumerStatefulWidget {
 class _EventNotificationPreferencesScreenState
     extends ConsumerState<EventNotificationPreferencesScreen> {
   final _storage = const FlutterSecureStorage();
+  final _notificationsService = NotificationsService();
   bool _isLoading = true;
   bool _isSaving = false;
 
@@ -61,14 +61,10 @@ class _EventNotificationPreferencesScreenState
       }
 
       // Luego cargar de backend para estar al día
-      final response = await ApiClient.instance.dio
-          .get(ApiConstants.eventNotificationPreferences);
-      if (response.statusCode == 200) {
-        _updateLocalState(response.data);
-        await _storage.write(
-            key: 'event_notification_preferences',
-            value: jsonEncode(response.data));
-      }
+      final data = await _notificationsService.getEventPreferences();
+      _updateLocalState(data);
+      await _storage.write(
+          key: 'event_notification_preferences', value: jsonEncode(data));
     } catch (e) {
       debugPrint('Error cargando preferencias: $e');
     } finally {
@@ -100,23 +96,18 @@ class _EventNotificationPreferencesScreenState
     };
 
     try {
-      final response = await ApiClient.instance.dio.patch(
-        ApiConstants.eventNotificationPreferences,
-        data: data,
-      );
+      await _notificationsService.saveEventPreferences(data);
 
-      if (response.statusCode == 200) {
-        await _storage.write(
-            key: 'event_notification_preferences', value: jsonEncode(data));
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Preferencias guardadas'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          context.pop();
-        }
+      await _storage.write(
+          key: 'event_notification_preferences', value: jsonEncode(data));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Preferencias guardadas'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        context.pop();
       }
     } catch (e) {
       if (mounted) {

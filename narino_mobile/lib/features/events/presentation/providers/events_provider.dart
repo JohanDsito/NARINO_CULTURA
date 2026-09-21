@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'dart:io';
 
 import '../../data/events_repository.dart';
 import '../../domain/event_model.dart';
@@ -68,7 +67,7 @@ class EventsNotifier extends StateNotifier<EventsState> {
     required String fecha,
     required String lugar,
     String? descripcion,
-    File? flyer,
+    String? imageUrl,
     List<String>? artistas,
     bool isPublished = false,
   }) async {
@@ -79,7 +78,7 @@ class EventsNotifier extends StateNotifier<EventsState> {
         fecha: fecha,
         lugar: lugar,
         descripcion: descripcion,
-        flyer: flyer,
+        imageUrl: imageUrl,
         artistasRelacionados: artistas,
         isPublished: isPublished,
       );

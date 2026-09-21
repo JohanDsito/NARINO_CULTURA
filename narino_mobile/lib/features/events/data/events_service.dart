@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:dio/dio.dart';
 
 import '../../../core/constants/api_constants.dart';
@@ -34,13 +32,24 @@ class EventsService {
     return r.data as Map<String, dynamic>;
   }
 
+  Future<void> registerToEvent(String id) async {
+    await _dio.post(ApiConstants.eventRegister.replaceFirst('{id}', id));
+  }
+
+  /// NOTA: el backend actualmente no expone un endpoint para cancelar la
+  /// inscripción a un evento (la acción `register` solo acepta POST), así
+  /// que esta llamada devolverá un error hasta que se agregue soporte allá.
+  Future<void> unregisterFromEvent(String id) async {
+    await _dio.delete(ApiConstants.eventRegister.replaceFirst('{id}', id));
+  }
+
   Future<Map<String, dynamic>> publishEvent({
     required String nombre,
     required String tipo,
     required String fecha,
     required String lugar,
     String? descripcion,
-    File? flyer,
+    String? imageUrl,
     List<String>? artistasRelacionados,
     bool isPublished = false,
   }) async {
@@ -65,6 +74,9 @@ class EventsService {
         'location': lugar,
         if (descripcion != null && descripcion.isNotEmpty)
           'description': descripcion,
+        // El backend solo acepta una URL de imagen ya alojada (Event.image_url
+        // es un URLField, no hay endpoint para subir archivos de eventos).
+        if (imageUrl != null && imageUrl.isNotEmpty) 'image_url': imageUrl,
         'is_published': isPublished,
       },
     );
