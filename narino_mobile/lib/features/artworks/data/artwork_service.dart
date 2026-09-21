@@ -40,6 +40,43 @@ class ArtworkService {
     return response.data as Map<String, dynamic>;
   }
 
+  Future<List<dynamic>> getCategories() async {
+    final response = await _dio.get(ApiConstants.artworkCategories);
+    final data = response.data;
+    if (data is Map && data['results'] is List) return data['results'] as List;
+    if (data is List) return data;
+    return const [];
+  }
+
+  /// Todas las obras publicadas por el artista [slug] (filtrado en el
+  /// servidor, siguiendo la paginación si el backend la aplica).
+  Future<List<Map<String, dynamic>>> getByArtist(String slug) async {
+    final results = <Map<String, dynamic>>[];
+    String? nextUrl = ApiConstants.artworks;
+    Map<String, dynamic>? queryParameters = {
+      'artist': slug,
+      'page_size': 100,
+    };
+    while (nextUrl != null) {
+      final res = await _dio.get(nextUrl, queryParameters: queryParameters);
+      queryParameters = null; // ya va codificado en la URL `next` del backend
+      final data = res.data;
+      if (data is Map) {
+        results.addAll((data['results'] as List? ?? const [])
+            .whereType<Map>()
+            .map((e) => e.cast<String, dynamic>()));
+        final next = data['next']?.toString();
+        nextUrl = (next != null && next.isNotEmpty) ? next : null;
+      } else if (data is List) {
+        results.addAll(data.whereType<Map>().map((e) => e.cast<String, dynamic>()));
+        nextUrl = null;
+      } else {
+        break;
+      }
+    }
+    return results;
+  }
+
   Future<Map<String, dynamic>> publishArtwork(FormData formData) async {
     final response = await _dio.post(
       ApiConstants.artworks,

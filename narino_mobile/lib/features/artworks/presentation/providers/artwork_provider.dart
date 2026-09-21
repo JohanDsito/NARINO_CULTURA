@@ -1,30 +1,17 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/network/api_client.dart';
 import '../../data/artwork_repository.dart';
 import '../../domain/artwork_model.dart';
 import '../../domain/artwork_state.dart';
 
-final categoriesProvider =
-    FutureProvider.autoDispose<List<CategoryModel>>((ref) async {
-  final response = await ApiClient.instance.dio.get('/api/v1/artworks/categories/');
-  final data = response.data;
-  final List<dynamic> list;
-  if (data is Map && data.containsKey('results')) {
-    list = data['results'] as List<dynamic>;
-  } else if (data is List) {
-    list = data;
-  } else {
-    return const [];
-  }
-  return list
-      .map((e) => CategoryModel.fromJson(e as Map<String, dynamic>))
-      .toList();
-});
-
 final artworkRepositoryProvider = Provider<ArtworkRepository>((ref) {
   return ArtworkRepository();
+});
+
+final categoriesProvider =
+    FutureProvider.autoDispose<List<CategoryModel>>((ref) async {
+  return ref.read(artworkRepositoryProvider).getCategories();
 });
 
 final artworkProvider = StateNotifierProvider<ArtworkNotifier, ArtworkState>(
@@ -36,39 +23,14 @@ final artworkDetailProvider =
   return ref.read(artworkRepositoryProvider).getDetail(id);
 });
 
-/// Fetches all published artworks for a specific artist slug.
+/// Todas las obras publicadas de un artista, filtradas en el servidor.
 final artistArtworksProvider =
     FutureProvider.family<List<ArtworkModel>, String>((ref, slug) async {
-  if (slug.isEmpty) return const [];
-  final dio = ApiClient.instance.dio;
-  final works = <ArtworkModel>[];
-  String? nextUrl = '/api/v1/artworks/?page_size=100';
-  while (nextUrl != null) {
-    try {
-      final res = await dio.get(nextUrl);
-      final data = res.data;
-      final List<dynamic> raw;
-      if (data is Map) {
-        raw = (data['results'] as List?) ?? [];
-        final n = data['next']?.toString();
-        nextUrl = (n != null && n.isNotEmpty) ? n : null;
-      } else if (data is List) {
-        raw = data;
-        nextUrl = null;
-      } else {
-        break;
-      }
-      works.addAll(
-        raw
-            .whereType<Map<String, dynamic>>()
-            .map(ArtworkModel.fromJson)
-            .where((a) => a.artistaSlug == slug),
-      );
-    } on DioException {
-      break;
-    }
+  try {
+    return await ref.read(artworkRepositoryProvider).getByArtist(slug);
+  } catch (_) {
+    return const [];
   }
-  return works;
 });
 
 class ArtworkNotifier extends StateNotifier<ArtworkState> {
@@ -157,12 +119,7 @@ class ArtworkNotifier extends StateNotifier<ArtworkState> {
     if (idx == -1) return;
 
     final before = state.artworks[idx];
-    final optimistic = before.copyWith(
-      esFavorito: !before.esFavorito,
-      cantidadFavoritos: before.esFavorito
-          ? (before.cantidadFavoritos - 1).clamp(0, 1 << 30)
-          : before.cantidadFavoritos + 1,
-    );
+    final optimistic = before.copyWith(esFavorito: !before.esFavorito);
 
     final updated = [...state.artworks];
     updated[idx] = optimistic;
@@ -170,10 +127,7 @@ class ArtworkNotifier extends StateNotifier<ArtworkState> {
 
     try {
       final result = await _repo.toggleFavorite(artworkId);
-      final synced = before.copyWith(
-        esFavorito: result.esFavorito,
-        cantidadFavoritos: optimistic.cantidadFavoritos,
-      );
+      final synced = before.copyWith(esFavorito: result.esFavorito);
 
       final latest = [...state.artworks];
       final currentIdx = latest.indexWhere((a) => a.id == artworkId);

@@ -52,6 +52,29 @@ class ArtworkRepository {
     }
   }
 
+  Future<List<CategoryModel>> getCategories() async {
+    try {
+      final list = await _service.getCategories();
+      return list
+          .whereType<Map>()
+          .map((e) => CategoryModel.fromJson(e.cast<String, dynamic>()))
+          .toList();
+    } on DioException catch (e) {
+      throw _parseDioError(e);
+    }
+  }
+
+  /// Todas las obras publicadas por el artista [slug].
+  Future<List<ArtworkModel>> getByArtist(String slug) async {
+    if (slug.isEmpty) return const [];
+    try {
+      final list = await _service.getByArtist(slug);
+      return list.map(ArtworkModel.fromJson).toList();
+    } on DioException catch (e) {
+      throw _parseDioError(e);
+    }
+  }
+
   Future<ArtworkModel> publish(FormData formData) async {
     try {
       final data = await _service.publishArtwork(formData);
