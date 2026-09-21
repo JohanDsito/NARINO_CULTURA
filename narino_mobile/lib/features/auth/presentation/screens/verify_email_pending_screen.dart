@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../providers/auth_provider.dart';
+import 'verify_email_pending_screen/resent_banner.dart';
+import 'verify_email_pending_screen/step.dart';
 
 class VerifyEmailPendingScreen extends ConsumerStatefulWidget {
   const VerifyEmailPendingScreen({super.key, required this.email});
@@ -205,7 +207,7 @@ class _VerifyEmailPendingScreenState
                           ),
                           child: Column(
                             children: [
-                              _Step(
+                              VerifyStep(
                                 number: '1',
                                 text:
                                     'Abre tu aplicación de correo electrónico.',
@@ -213,7 +215,7 @@ class _VerifyEmailPendingScreenState
                                 mutedColor: textMuted,
                               ),
                               const SizedBox(height: 10),
-                              _Step(
+                              VerifyStep(
                                 number: '2',
                                 text:
                                     'Busca el correo de Nariño Cultura y haz clic en "Verificar mi cuenta".',
@@ -221,7 +223,7 @@ class _VerifyEmailPendingScreenState
                                 mutedColor: textMuted,
                               ),
                               const SizedBox(height: 10),
-                              _Step(
+                              VerifyStep(
                                 number: '3',
                                 text:
                                     'Regresa aquí e inicia sesión con tu correo y contraseña.',
@@ -247,7 +249,7 @@ class _VerifyEmailPendingScreenState
 
                         // Reenviar correo
                         if (_resent)
-                          _ResentBanner(textPrimary: textPrimary)
+                          ResentBanner(textPrimary: textPrimary)
                         else
                           TextButton.icon(
                             onPressed: _resending ? null : _resend,
@@ -275,87 +277,6 @@ class _VerifyEmailPendingScreenState
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-// ─── Paso numerado ────────────────────────────────────────────────────────────
-
-class _Step extends StatelessWidget {
-  const _Step({
-    required this.number,
-    required this.text,
-    required this.textColor,
-    required this.mutedColor,
-  });
-
-  final String number;
-  final String text;
-  final Color textColor;
-  final Color mutedColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 24,
-          height: 24,
-          decoration: BoxDecoration(
-            color: AppColors.oroAndino.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: Center(
-            child: Text(
-              number,
-              style: AppTypography.labelSemiBold(color: AppColors.oroAndino)
-                  .copyWith(fontSize: 12),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            text,
-            style: AppTypography.bodySmall(color: textColor),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ─── Banner de reenvío exitoso ────────────────────────────────────────────────
-
-class _ResentBanner extends StatelessWidget {
-  const _ResentBanner({required this.textPrimary});
-
-  final Color textPrimary;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppColors.success.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.success.withValues(alpha: 0.35)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.check_circle_outline,
-              size: 18, color: AppColors.success),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Text(
-              'Correo reenviado. Revisa tu bandeja de entrada.',
-              style: AppTypography.bodySmall(color: textPrimary),
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -65,6 +65,15 @@ class AuthRepository {
 
   Future<bool> hasToken() => StorageUtils.hasToken();
 
+  Future<UserModel> getMe() async {
+    try {
+      final response = await _dio.get(ApiConstants.profile);
+      return UserModel.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw FormatException(_parseDioError(e));
+    }
+  }
+
   Future<void> forgotPassword(String email) async {
     try {
       await _dio.post(ApiConstants.forgotPassword, data: {'email': email});

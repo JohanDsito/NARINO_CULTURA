@@ -6,6 +6,10 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../domain/auth_state.dart';
 import '../providers/auth_provider.dart';
+import 'login_screen/auth_link.dart';
+import 'login_screen/error_banner.dart';
+import 'login_screen/login_hero.dart';
+import 'login_screen/submit_button.dart';
 
 // ─── Pantalla principal ───────────────────────────────────────────────────────
 
@@ -92,7 +96,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             // ── Hero ──────────────────────────────────────────────────────
             const Expanded(
               flex: 2,
-              child: _LoginHero(),
+              child: LoginHero(),
             ),
 
             // ── Formulario ────────────────────────────────────────────────
@@ -187,7 +191,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             const SizedBox(height: 4),
 
                             // Botón
-                            _SubmitButton(
+                            SubmitButton(
                               label: 'Iniciar sesión',
                               isLoading: authState.isLoading,
                               onPressed: _submit,
@@ -196,13 +200,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             // Error
                             if (authState.hasError) ...[
                               const SizedBox(height: 12),
-                              _ErrorBanner(message: authState.errorMessage!),
+                              ErrorBanner(message: authState.errorMessage!),
                             ],
 
                             const SizedBox(height: 20),
 
                             // Enlace a registro
-                            _AuthLink(
+                            AuthLink(
                               question: '¿No tienes cuenta? ',
                               actionLabel: 'Regístrate',
                               enabled: !authState.isLoading,
@@ -223,166 +227,3 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 }
 
-// ─── Hero del login ───────────────────────────────────────────────────────────
-
-class _LoginHero extends StatelessWidget {
-  const _LoginHero();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      color: AppColors.obsidiana,
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                color: AppColors.oroAndino,
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: const Icon(
-                Icons.landscape_outlined,
-                size: 40,
-                color: AppColors.obsidiana,
-              ),
-            ),
-            const SizedBox(height: 14),
-            Text(
-              'Nariño Cultura',
-              style: AppTypography.displayBold(color: AppColors.oroClaro),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Arte que nace desde Nariño',
-              style: AppTypography.quoteItalic(
-                color: AppColors.oroClaro.withValues(alpha: 0.70),
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Widgets compartidos de auth ──────────────────────────────────────────────
-
-class _SubmitButton extends StatelessWidget {
-  const _SubmitButton({
-    required this.label,
-    required this.isLoading,
-    required this.onPressed,
-  });
-
-  final String label;
-  final bool isLoading;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return SizedBox(
-      width: double.infinity,
-      height: 50,
-      child: ElevatedButton(
-        onPressed: isLoading ? null : onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: cs.primary,
-          foregroundColor: cs.onPrimary,
-        ),
-        child: isLoading
-            ? SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation(cs.onPrimary),
-                ),
-              )
-            : Text(label),
-      ),
-    );
-  }
-}
-
-class _ErrorBanner extends StatelessWidget {
-  const _ErrorBanner({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final textPrimary =
-        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.error.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.error.withValues(alpha: 0.40)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.error_outline, color: AppColors.error, size: 20),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              message,
-              style: AppTypography.bodySmall(color: textPrimary),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AuthLink extends StatelessWidget {
-  const _AuthLink({
-    required this.question,
-    required this.actionLabel,
-    required this.enabled,
-    required this.onTap,
-  });
-
-  final String question;
-  final String actionLabel;
-  final bool enabled;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    final textMuted =
-        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          question,
-          style: AppTypography.bodySmall(color: textMuted),
-        ),
-        GestureDetector(
-          onTap: enabled ? onTap : null,
-          child: Text(
-            actionLabel,
-            style: AppTypography.bodySmall(color: cs.primary)
-                .copyWith(fontWeight: FontWeight.w600),
-          ),
-        ),
-      ],
-    );
-  }
-}
