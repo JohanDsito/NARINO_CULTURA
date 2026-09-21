@@ -6,6 +6,9 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../providers/orders_provider.dart';
+import 'checkout_screen/checkout_item_row.dart';
+import 'checkout_screen/payment_footer.dart';
+import 'checkout_screen/security_banner.dart';
 
 // ─── Pantalla principal ───────────────────────────────────────────────────────
 
@@ -108,7 +111,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // ── Banner de seguridad ──────────────────────────────────────
-            const _SecurityBanner(),
+            const SecurityBanner(),
 
             // ── Encabezado del resumen ───────────────────────────────────
             Padding(
@@ -133,197 +136,16 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       itemCount: order.items.length,
                       separatorBuilder: (_, __) => const SizedBox(height: 10),
                       itemBuilder: (context, i) =>
-                          _CheckoutItemRow(item: order.items[i]),
+                          CheckoutItemRow(item: order.items[i]),
                     ),
             ),
 
             // ── Total y botón de pago ────────────────────────────────────
-            _PaymentFooter(
+            PaymentFooter(
               totalFormateado: order.totalFormateado,
               itemCount: order.items.length,
               submitting: _submitting,
               onPay: _pay,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Banner de seguridad ──────────────────────────────────────────────────────
-
-class _SecurityBanner extends StatelessWidget {
-  const _SecurityBanner();
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textMuted =
-        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.indigoNoche.withAlpha(6),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.indigoNoche.withAlpha(18)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: AppColors.indigoNoche.withAlpha(10),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(Icons.verified_user_outlined,
-                color: AppColors.indigoNoche, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              'Pago 100% seguro con Wompi. Tus datos de tarjeta nunca se almacenan en nuestros servidores.',
-              style: AppTypography.bodySmall(color: textMuted),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Fila de ítem en el resumen ───────────────────────────────────────────────
-
-class _CheckoutItemRow extends StatelessWidget {
-  const _CheckoutItemRow({required this.item});
-
-  final dynamic item; // CartItemModel
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    final bgCard = theme.cardTheme.color ?? cs.surface;
-    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
-    final textPrimary =
-        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-    final textMuted =
-        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
-    final priceColor = isDark ? AppColors.indigoDark : AppColors.indigoNoche;
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: bgCard,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: border),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.obraTitulo,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.labelSemiBold(color: textPrimary),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  item.artistaNombre,
-                  style: AppTypography.caption(color: textMuted),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            item.precioFormateado,
-            style: AppTypography.labelSemiBold(color: priceColor),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Footer de pago ───────────────────────────────────────────────────────────
-
-class _PaymentFooter extends StatelessWidget {
-  const _PaymentFooter({
-    required this.totalFormateado,
-    required this.itemCount,
-    required this.submitting,
-    required this.onPay,
-  });
-
-  final String totalFormateado;
-  final int itemCount;
-  final bool submitting;
-  final VoidCallback onPay;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    final bgCard = theme.cardTheme.color ?? cs.surface;
-    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
-    final textPrimary =
-        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-    final textMuted =
-        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
-      decoration: BoxDecoration(
-        color: bgCard,
-        border: Border(top: BorderSide(color: border)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '$itemCount ${itemCount == 1 ? 'obra' : 'obras'}',
-                    style: AppTypography.caption(color: textMuted),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    totalFormateado,
-                    style: AppTypography.labelSemiBold(color: textPrimary),
-                  ),
-                ],
-              ),
-            ),
-            FilledButton.icon(
-              onPressed: (itemCount == 0 || submitting) ? null : onPay,
-              style: FilledButton.styleFrom(
-                backgroundColor: cs.primary,
-                foregroundColor: cs.onPrimary,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-              ),
-              icon: submitting
-                  ? SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: cs.onPrimary),
-                    )
-                  : const Icon(Icons.credit_card_outlined),
-              label: Text(
-                submitting ? 'Redirigiendo...' : 'Pagar con Wompi',
-                style: AppTypography.labelSemiBold(color: cs.onPrimary),
-              ),
             ),
           ],
         ),
