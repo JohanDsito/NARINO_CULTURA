@@ -34,7 +34,7 @@ class ArtworkModel {
   final String artistaSlug;
   final String artistaNombre;
   final String? artistaFoto;
-  final int cantidadFavoritos;
+  final int viewsCount;
   final bool esFavorito;
   final DateTime creadoEn;
 
@@ -53,7 +53,7 @@ class ArtworkModel {
     this.artistaSlug = '',
     required this.artistaNombre,
     this.artistaFoto,
-    required this.cantidadFavoritos,
+    required this.viewsCount,
     required this.esFavorito,
     required this.creadoEn,
   });
@@ -155,8 +155,7 @@ class ArtworkModel {
       artistaSlug: json['artist_slug'] as String? ?? '',
       artistaNombre: artistaNombre,
       artistaFoto: json['artista_foto'] as String?,
-      cantidadFavoritos:
-          json['views_count'] as int? ?? json['cantidad_favoritos'] as int? ?? 0,
+      viewsCount: json['views_count'] as int? ?? 0,
       esFavorito: json['es_favorito'] as bool? ?? false,
       creadoEn: DateTime.tryParse(
               json['created_at'] as String? ??
@@ -166,8 +165,7 @@ class ArtworkModel {
     );
   }
 
-  ArtworkModel copyWith({bool? esFavorito, int? cantidadFavoritos}) =>
-      ArtworkModel(
+  ArtworkModel copyWith({bool? esFavorito}) => ArtworkModel(
         id: id,
         titulo: titulo,
         descripcion: descripcion,
@@ -182,7 +180,7 @@ class ArtworkModel {
         artistaSlug: artistaSlug,
         artistaNombre: artistaNombre,
         artistaFoto: artistaFoto,
-        cantidadFavoritos: cantidadFavoritos ?? this.cantidadFavoritos,
+        viewsCount: viewsCount,
         esFavorito: esFavorito ?? this.esFavorito,
         creadoEn: creadoEn,
       );
