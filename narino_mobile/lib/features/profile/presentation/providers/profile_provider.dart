@@ -208,4 +208,10 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
       return null;
     }
   }
+
+  /// Limpia el perfil cacheado. Debe llamarse al cerrar sesión para que la
+  /// próxima cuenta que inicie sesión no vea datos de la cuenta anterior.
+  void reset() {
+    state = const ProfileState();
+  }
 }

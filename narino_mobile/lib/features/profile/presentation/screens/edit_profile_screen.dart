@@ -1,18 +1,18 @@
 import 'dart:io';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../../../core/constants/api_constants.dart';
-import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/widgets/app_avatar.dart';
+import '../../../musicians/data/musician_repository.dart';
+import '../../../musicians/domain/musician_model.dart';
 import '../../domain/profile_model.dart';
 import '../../domain/profile_state.dart';
 import '../providers/profile_provider.dart';
 import '../../../../core/providers/user_role_provider.dart';
+import 'edit_profile_screen/section_divider.dart';
 
 /// Clave: valor que espera el backend. Valor: etiqueta visible al usuario.
 const _kAggregationTypes = <String, String>{
@@ -32,6 +32,8 @@ class EditProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
+  final _musicianRepo = MusicianRepository();
+
   final _formKey = GlobalKey<FormState>();
   final _nombreCtrl = TextEditingController();
   final _bioCtrl = TextEditingController();
@@ -48,7 +50,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   // Campos exclusivos de músico
   String? _aggregationType;
   final Set<int> _selectedGenreIds = {};
-  List<Map<String, dynamic>> _genres = [];
+  List<MusicGenreModel> _genres = [];
   bool _loadingGenres = false;
   String? _musicianSlug;
 
@@ -82,48 +84,28 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     if (_loadingGenres) return;
     setState(() => _loadingGenres = true);
     try {
-      final dio = ApiClient.instance.dio;
+      // Cargar géneros disponibles y el perfil de músico existente (si hay)
+      // para pre-rellenar los campos, en paralelo.
+      final results = await Future.wait([
+        _musicianRepo.getGenres(),
+        _musicianRepo.getMyProfile(),
+      ]);
+      final genres = results[0] as List<MusicGenreModel>;
+      final existing = results[1] as MusicianModel?;
 
-      // Cargar géneros disponibles
-      final genresRes = await dio.get(ApiConstants.musicianGenres);
-      final genresData = genresRes.data;
-      List<dynamic> rawGenres = [];
-      if (genresData is List) rawGenres = genresData;
-      if (genresData is Map && genresData['results'] is List) {
-        rawGenres = genresData['results'] as List;
-      }
-
-      // Cargar perfil de músico existente para pre-rellenar campos
-      try {
-        final meRes = await dio.get(ApiConstants.musicianMe);
-        final meData = meRes.data as Map?;
-        if (meData != null) {
-          _musicianSlug = meData['slug']?.toString();
-          _aggregationType = meData['aggregation_type']?.toString();
-          final genres = meData['genres'];
-          if (genres is List) {
-            for (final g in genres) {
-              if (g is Map) {
-                final id = (g['id'] as num?)?.toInt();
-                if (id != null) _selectedGenreIds.add(id);
-              }
-            }
-          }
+      if (existing != null) {
+        _musicianSlug = existing.slug;
+        _aggregationType = existing.aggregationType;
+        // El modelo del músico solo trae los nombres de sus géneros; se
+        // cruzan contra la lista completa para recuperar sus IDs.
+        for (final g in genres) {
+          if (existing.genres.contains(g.name)) _selectedGenreIds.add(g.id);
         }
-      } on DioException catch (e) {
-        if (e.response?.statusCode != 404) rethrow;
       }
 
       if (mounted) {
         setState(() {
-          _genres = rawGenres
-              .whereType<Map>()
-              .map((g) => {
-                    'id': g['id'],
-                    'name': g['name']?.toString() ?? '',
-                  })
-              .toList()
-              .cast<Map<String, dynamic>>();
+          _genres = genres;
           _loadingGenres = false;
         });
       }
@@ -213,34 +195,16 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   Future<void> _saveMusicianData() async {
     try {
-      final dio = ApiClient.instance.dio;
-
       // Resolver slug si no lo tenemos aún
-      if (_musicianSlug == null) {
-        try {
-          final meRes = await dio.get(ApiConstants.musicianMe);
-          _musicianSlug = (meRes.data as Map?)?['slug']?.toString();
-        } on DioException catch (e) {
-          if (e.response?.statusCode != 404) rethrow;
-        }
-      }
+      _musicianSlug ??= (await _musicianRepo.getMyProfile())?.slug;
 
-      final payload = <String, dynamic>{
-        'artistic_name': _nombreCtrl.text.trim(),
-        if (_aggregationType != null) 'aggregation_type': _aggregationType,
-        if (_selectedGenreIds.isNotEmpty)
-          'genre_ids': _selectedGenreIds.toList(),
-      };
-
-      if (_musicianSlug != null && _musicianSlug!.isNotEmpty) {
-        await dio.patch(
-          ApiConstants.musicianDetail.replaceAll('{slug}', _musicianSlug!),
-          data: payload,
-        );
-      } else {
-        final res = await dio.post(ApiConstants.musicians, data: payload);
-        _musicianSlug = (res.data as Map?)?['slug']?.toString();
-      }
+      final saved = await _musicianRepo.saveMyProfile(
+        artisticName: _nombreCtrl.text.trim(),
+        aggregationType: _aggregationType,
+        genreIds: _selectedGenreIds.toList(),
+        existingSlug: _musicianSlug,
+      );
+      _musicianSlug = saved.slug;
     } catch (_) {
       // Silencioso: el perfil artístico ya se guardó; el musical es best-effort
     }
@@ -275,7 +239,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     );
   }
 
-  Widget _buildPreview(profile) {
+  Widget _buildPreview(ProfileModel? profile) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
@@ -459,7 +423,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             // ── Campos exclusivos de músico ──────────────────────────────────
             if (isMusico) ...[
               const SizedBox(height: 10),
-              _SectionDivider(label: 'Perfil musical', textMuted: textMuted),
+              SectionDivider(label: 'Perfil musical', textMuted: textMuted),
               const SizedBox(height: 14),
 
               DropdownButtonFormField<String>(
@@ -493,17 +457,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   spacing: 8,
                   runSpacing: 8,
                   children: _genres.map((g) {
-                    final id = (g['id'] as num?)?.toInt() ?? 0;
-                    final name = g['name'] as String;
-                    final selected = _selectedGenreIds.contains(id);
+                    final selected = _selectedGenreIds.contains(g.id);
                     return FilterChip(
-                      label: Text(name),
+                      label: Text(g.name),
                       selected: selected,
                       onSelected: (_) => setState(() {
                         if (selected) {
-                          _selectedGenreIds.remove(id);
+                          _selectedGenreIds.remove(g.id);
                         } else {
-                          _selectedGenreIds.add(id);
+                          _selectedGenreIds.add(g.id);
                         }
                       }),
                       selectedColor: cs.primary.withValues(alpha: 0.15),
@@ -518,7 +480,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             ],
 
             // ── Redes sociales ───────────────────────────────────────────────
-            _SectionDivider(label: 'Redes sociales', textMuted: textMuted),
+            SectionDivider(label: 'Redes sociales', textMuted: textMuted),
             const SizedBox(height: 10),
             TextFormField(
                 controller: _webCtrl,
@@ -587,35 +549,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _SectionDivider extends StatelessWidget {
-  const _SectionDivider({required this.label, required this.textMuted});
-
-  final String label;
-  final Color textMuted;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Row(
-      children: [
-        Text(label,
-            style: AppTypography.labelSemiBold(
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondaryLight,
-            )),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Divider(
-            color: isDark ? AppColors.borderDark : AppColors.borderLight,
-            height: 1,
-          ),
-        ),
-      ],
     );
   }
 }
