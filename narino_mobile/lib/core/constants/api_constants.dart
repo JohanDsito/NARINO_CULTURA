@@ -35,6 +35,7 @@ class ApiConstants {
   // Obras
   static const String artworks = '/api/v1/artworks/';
   static const String artworkDetail = '/api/v1/artworks/{id}/';
+  static const String artworkCategories = '/api/v1/artworks/categories/';
 
   // Marketplace
   static const String marketplace = '/api/v1/marketplace/';
@@ -58,6 +59,7 @@ class ApiConstants {
   // Eventos
   static const String events = '/api/v1/events/';
   static const String eventDetail = '/api/v1/events/{id}/';
+  static const String eventRegister = '/api/v1/events/{id}/register/';
 
   // Músicos
   static const String musicians = '/api/v1/musicians/';
@@ -66,6 +68,7 @@ class ApiConstants {
   static const String musicianDetail = '/api/v1/musicians/{slug}/';
   static const String musicianFollow = '/api/v1/musicians/{slug}/follow/';
   static const String musicianWorks = '/api/v1/musicians/{slug}/works/';
+  static const String musicianAddWork = '/api/v1/musicians/{slug}/works/add/';
   static const String musicianReviews = '/api/v1/musicians/{slug}/reviews/';
 
   // Descubrimiento musical
