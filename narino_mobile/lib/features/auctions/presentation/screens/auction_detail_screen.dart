@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -12,6 +11,15 @@ import '../../data/auction_ws_client.dart';
 import '../../domain/auction_bid_model.dart';
 import '../../domain/auction_model.dart';
 import '../providers/auctions_provider.dart';
+import 'auction_detail_screen/auction_image.dart';
+import 'auction_detail_screen/bid_button.dart';
+import 'auction_detail_screen/bid_field.dart';
+import 'auction_detail_screen/bids_list.dart';
+import 'auction_detail_screen/closed_banner.dart';
+import 'auction_detail_screen/error_scaffold.dart';
+import 'auction_detail_screen/owner_auction_notice.dart';
+import 'auction_detail_screen/stat_card.dart';
+import 'auction_detail_screen/winner_actions.dart';
 
 // ─── Pantalla principal ───────────────────────────────────────────────────────
 
@@ -281,7 +289,7 @@ class _AuctionDetailScreenState extends ConsumerState<AuctionDetailScreen> {
     }
 
     if (_error != null || _auction == null) {
-      return _ErrorScaffold(error: _error, onRetry: _load);
+      return ErrorScaffold(error: _error, onRetry: _load);
     }
 
     final auction = _auction!;
@@ -309,10 +317,10 @@ class _AuctionDetailScreenState extends ConsumerState<AuctionDetailScreen> {
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
           children: [
             if (auction.estado != 'activa') ...[
-              _ClosedBanner(auction: auction),
+              ClosedBanner(auction: auction),
               const SizedBox(height: 12),
             ],
-            _AuctionImage(imageUrl: auction.imagenUrl),
+            AuctionImage(imageUrl: auction.imagenUrl),
             const SizedBox(height: 14),
             Text(
               auction.obraTitulo,
@@ -324,7 +332,7 @@ class _AuctionDetailScreenState extends ConsumerState<AuctionDetailScreen> {
               style: AppTypography.bodySmall(color: textMuted),
             ),
             const SizedBox(height: 16),
-            _StatCard(
+            StatCard(
               precioActual: auction.precioActual,
               totalPujas: auction.totalPujas,
               remaining: _remaining,
@@ -336,23 +344,23 @@ class _AuctionDetailScreenState extends ConsumerState<AuctionDetailScreen> {
               style: AppTypography.labelSemiBold(color: textPrimary),
             ),
             const SizedBox(height: 10),
-            _BidsList(bids: auction.ultimasPujas.take(5).toList()),
+            BidsList(bids: auction.ultimasPujas.take(5).toList()),
             const SizedBox(height: 18),
             if (auction.estado == 'activa') ...[
               if (_isOwner)
-                _OwnerAuctionNotice()
+                const OwnerAuctionNotice()
               else ...[
-                _BidField(
+                BidField(
                   controller: _bidCtrl,
                   isBidding: _isBidding,
                   minPrice: auction.precioActual * 1.05,
                 ),
                 const SizedBox(height: 12),
-                _BidButton(isBidding: _isBidding, onPressed: _placeBid),
+                BidButton(isBidding: _isBidding, onPressed: _placeBid),
               ],
               const SizedBox(height: 18),
             ],
-            _WinnerActions(
+            WinnerActions(
               auction: auction,
               isWinnerFn: _isWinner,
               isArtistFn: _isArtistOwner,
@@ -360,566 +368,6 @@ class _AuctionDetailScreenState extends ConsumerState<AuctionDetailScreen> {
           ],
         ),
       ),
-    );
-  }
-}
-
-// ─── Vistas de estado ─────────────────────────────────────────────────────────
-
-class _ErrorScaffold extends StatelessWidget {
-  const _ErrorScaffold({required this.error, required this.onRetry});
-
-  final String? error;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textMuted =
-        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: AppColors.obsidiana,
-        foregroundColor: AppColors.oroClaro,
-        title: Text(
-          'Subasta',
-          style: AppTypography.displaySemiBold(color: AppColors.oroClaro),
-        ),
-      ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.cloud_off_outlined, size: 48, color: textMuted),
-              const SizedBox(height: 14),
-              Text(
-                error ?? 'No se pudo cargar la subasta.',
-                style: AppTypography.bodySmall(color: AppColors.error),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: onRetry,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Reintentar'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Imagen de la subasta ─────────────────────────────────────────────────────
-
-class _AuctionImage extends StatelessWidget {
-  const _AuctionImage({required this.imageUrl});
-
-  final String? imageUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: imageUrl != null
-          ? CachedNetworkImage(
-              imageUrl: imageUrl!,
-              height: 220,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              placeholder: (_, __) => const _ImagePlaceholder(height: 220),
-              errorWidget: (_, __, ___) => const _ImageError(height: 220),
-            )
-          : const _ImageError(height: 220),
-    );
-  }
-}
-
-class _ImagePlaceholder extends StatelessWidget {
-  const _ImagePlaceholder({required this.height});
-
-  final double height;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgSubtle = isDark ? AppColors.bgSubtleDark : AppColors.bgSubtleLight;
-    return Container(
-      height: height,
-      color: bgSubtle,
-      child: const Center(
-        child: SizedBox(
-          width: 22,
-          height: 22,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-      ),
-    );
-  }
-}
-
-class _ImageError extends StatelessWidget {
-  const _ImageError({required this.height});
-
-  final double height;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    final bgCard = theme.cardTheme.color ?? cs.surface;
-    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
-    final textMuted =
-        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
-    return Container(
-      height: height,
-      decoration: BoxDecoration(
-        color: bgCard,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: border),
-      ),
-      child: Center(
-        child: Icon(Icons.image_outlined, size: 52, color: textMuted),
-      ),
-    );
-  }
-}
-
-// ─── Card de estadísticas ─────────────────────────────────────────────────────
-
-class _StatCard extends StatelessWidget {
-  const _StatCard({
-    required this.precioActual,
-    required this.totalPujas,
-    required this.remaining,
-    required this.estado,
-  });
-
-  final double precioActual;
-  final int totalPujas;
-  final Duration remaining;
-  final String estado;
-
-  static String _formatRemaining(Duration d) {
-    final h = (d.inSeconds ~/ 3600).toString().padLeft(2, '0');
-    final m = ((d.inSeconds % 3600) ~/ 60).toString().padLeft(2, '0');
-    final s = (d.inSeconds % 60).toString().padLeft(2, '0');
-    return '$h:$m:$s';
-  }
-
-  bool get _isUrgent => estado == 'activa' && remaining.inMinutes < 60;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    final bgCard = theme.cardTheme.color ?? cs.surface;
-    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
-    final textPrimary =
-        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-    final textSecondary =
-        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
-    final textMuted =
-        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: bgCard,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: border),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _StatColumn(
-              label: 'Precio actual',
-              labelColor: textMuted,
-              value: '\$${precioActual.toStringAsFixed(0)}',
-              valueStyle: AppTypography.displaySemiBold(color: textPrimary),
-            ),
-          ),
-          Container(width: 1, height: 56, color: border),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _StatColumn(
-                  label: 'Pujas',
-                  labelColor: textMuted,
-                  value: '$totalPujas',
-                  valueStyle: AppTypography.labelSemiBold(color: textPrimary),
-                ),
-                const SizedBox(height: 12),
-                _StatColumn(
-                  label: 'Tiempo restante',
-                  labelColor: textMuted,
-                  value: estado == 'activa'
-                      ? _formatRemaining(remaining)
-                      : '--:--:--',
-                  valueStyle: AppTypography.bodyMedium(
-                    color: _isUrgent ? AppColors.error : textSecondary,
-                  ),
-                  icon: _isUrgent
-                      ? const Icon(Icons.timer_outlined,
-                          size: 14, color: AppColors.error)
-                      : null,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatColumn extends StatelessWidget {
-  const _StatColumn({
-    required this.label,
-    required this.labelColor,
-    required this.value,
-    required this.valueStyle,
-    this.icon,
-  });
-
-  final String label;
-  final Color labelColor;
-  final String value;
-  final TextStyle valueStyle;
-  final Widget? icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: AppTypography.caption(color: labelColor)),
-        const SizedBox(height: 4),
-        Row(
-          children: [
-            if (icon != null) ...[icon!, const SizedBox(width: 4)],
-            Text(value, style: valueStyle),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-// ─── Lista de pujas ───────────────────────────────────────────────────────────
-
-class _BidsList extends StatelessWidget {
-  const _BidsList({required this.bids});
-
-  final List<AuctionBidModel> bids;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    final bgCard = theme.cardTheme.color ?? cs.surface;
-    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
-    final textPrimary =
-        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-    final textMuted =
-        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
-
-    if (bids.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: bgCard,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: border),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.gavel_outlined, size: 18, color: textMuted),
-            const SizedBox(width: 8),
-            Text(
-              'Aún no hay pujas. ¡Sé el primero!',
-              style: AppTypography.bodySmall(color: textMuted),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Container(
-      decoration: BoxDecoration(
-        color: bgCard,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: border),
-      ),
-      child: Column(
-        children: bids.asMap().entries.map((entry) {
-          final i = entry.key;
-          final bid = entry.value;
-          final isLast = i == bids.length - 1;
-          final isTop = i == 0;
-
-          return Container(
-            decoration: BoxDecoration(
-              border: isLast
-                  ? null
-                  : Border(bottom: BorderSide(color: border)),
-            ),
-            child: ListTile(
-              dense: true,
-              leading: isTop
-                  ? const Icon(Icons.emoji_events_outlined,
-                      size: 18, color: AppColors.oroAndino)
-                  : Padding(
-                      padding: const EdgeInsets.only(left: 2),
-                      child: Text(
-                        '${i + 1}',
-                        style: AppTypography.caption(color: textMuted),
-                      ),
-                    ),
-              title: Text(
-                bid.bidderName,
-                style: AppTypography.bodySmall(color: textPrimary),
-              ),
-              trailing: Text(
-                '\$${bid.amount.toStringAsFixed(0)}',
-                style: AppTypography.labelSemiBold(
-                    color: isTop ? AppColors.oroAndino : cs.primary),
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-}
-
-// ─── Campo y botón de puja ────────────────────────────────────────────────────
-
-class _BidField extends StatelessWidget {
-  const _BidField({
-    required this.controller,
-    required this.isBidding,
-    required this.minPrice,
-  });
-
-  final TextEditingController controller;
-  final bool isBidding;
-  final double minPrice;
-
-  @override
-  Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      enabled: !isBidding,
-      decoration: InputDecoration(
-        prefixIcon: const Icon(Icons.payments_outlined),
-        labelText: 'Nueva puja',
-        hintText: 'Mín. \$${minPrice.toStringAsFixed(0)}',
-      ),
-    );
-  }
-}
-
-class _BidButton extends StatelessWidget {
-  const _BidButton({required this.isBidding, required this.onPressed});
-
-  final bool isBidding;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 52,
-      width: double.infinity,
-      child: ElevatedButton.icon(
-        onPressed: isBidding ? null : onPressed,
-        icon: isBidding
-            ? const SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(
-                    color: Colors.white, strokeWidth: 2),
-              )
-            : const Icon(Icons.gavel_outlined),
-        label: Text(
-          isBidding ? 'Enviando...' : 'Pujar',
-          style: AppTypography.buttonText(color: Colors.white),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Aviso propietario de subasta ────────────────────────────────────────────
-
-class _OwnerAuctionNotice extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textMuted =
-        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
-    final bgCard = isDark ? AppColors.bgCardDark : AppColors.bgCardLight;
-    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: bgCard,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: border),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.info_outline, size: 16, color: textMuted),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'Eres el propietario de esta subasta',
-              style: AppTypography.caption(color: textMuted),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Banner de subasta cerrada ────────────────────────────────────────────────
-
-class _ClosedBanner extends StatelessWidget {
-  const _ClosedBanner({required this.auction});
-
-  final AuctionModel auction;
-
-  @override
-  Widget build(BuildContext context) {
-    final winner = auction.ganadorNombre?.trim() ?? '';
-    final hasWinner = winner.isNotEmpty;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: AppColors.oroAndino,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.emoji_events_outlined,
-              color: AppColors.obsidiana, size: 20),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              hasWinner
-                  ? 'Ganador: $winner · Final \$${auction.precioActual.toStringAsFixed(0)}'
-                  : 'Sin pujas — subasta cerrada',
-              style: AppTypography.bodyMedium(color: AppColors.obsidiana),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Acciones del ganador / artista ──────────────────────────────────────────
-
-class _WinnerActions extends ConsumerWidget {
-  const _WinnerActions({
-    required this.auction,
-    required this.isWinnerFn,
-    required this.isArtistFn,
-  });
-
-  final AuctionModel auction;
-  final bool Function(AuctionModel, {required String? myId}) isWinnerFn;
-  final bool Function(AuctionModel,
-      {required String myName, required String? myId}) isArtistFn;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    if (auction.estado == 'activa') return const SizedBox.shrink();
-
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    final bgCard = theme.cardTheme.color ?? cs.surface;
-    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
-    final textMuted =
-        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
-    final textSecondary =
-        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
-
-    return FutureBuilder(
-      future: ref.read(profileRepositoryProvider).getMyProfile(),
-      builder: (context, snapshot) {
-        final me = snapshot.data;
-        final myId = me?.id;
-        final myName = me?.nombreArtistico ?? '';
-
-        final isWinner = isWinnerFn(auction, myId: myId);
-        final isArtist = me == null
-            ? false
-            : isArtistFn(auction, myName: myName, myId: myId);
-
-        if (isWinner) {
-          return SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                final orderId = auction.orderId;
-                if (orderId == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('No se encontró la orden para pago.')),
-                  );
-                  return;
-                }
-                context.push('/marketplace/checkout?orderId=$orderId');
-              },
-              icon: const Icon(Icons.shopping_bag_outlined),
-              label: Text(
-                'Completar pago',
-                style: AppTypography.buttonText(color: Colors.white),
-              ),
-            ),
-          );
-        }
-
-        if (isArtist) {
-          return Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: bgCard,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: border),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.info_outline, size: 18, color: textMuted),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Tu subasta cerró. Revisa el resultado en tu historial.',
-                    style: AppTypography.bodyMedium(color: textSecondary),
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-
-        return const SizedBox.shrink();
-      },
     );
   }
 }

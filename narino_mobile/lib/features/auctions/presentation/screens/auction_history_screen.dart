@@ -1,21 +1,11 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../domain/auction_model.dart';
 import '../providers/auctions_provider.dart';
-
-// ─── Constantes ───────────────────────────────────────────────────────────────
-
-const _kEstados = <String?, String>{
-  null: 'Todos',
-  'activa': 'Activa',
-  'cerrada': 'Cerrada',
-  'cancelada': 'Cancelada',
-};
+import 'auction_history_screen/estado_filter.dart';
+import 'auction_history_screen/history_list.dart';
 
 // ─── Pantalla principal ───────────────────────────────────────────────────────
 
@@ -55,18 +45,18 @@ class _AuctionHistoryScreenState extends ConsumerState<AuctionHistoryScreen> {
         ),
         body: Column(
           children: [
-            _EstadoFilter(
+            EstadoFilter(
               value: _estado,
               onChanged: (v) => setState(() => _estado = v),
             ),
             Expanded(
               child: TabBarView(
                 children: [
-                  _HistoryList(
+                  HistoryList(
                     params: AuctionHistoryParams(
                         mode: 'participante', estado: _estado),
                   ),
-                  _HistoryList(
+                  HistoryList(
                     params:
                         AuctionHistoryParams(mode: 'artista', estado: _estado),
                   ),
@@ -76,323 +66,6 @@ class _AuctionHistoryScreenState extends ConsumerState<AuctionHistoryScreen> {
           ],
         ),
       ),
-    );
-  }
-}
-
-// ─── Filtro de estado ─────────────────────────────────────────────────────────
-
-class _EstadoFilter extends StatelessWidget {
-  const _EstadoFilter({required this.value, required this.onChanged});
-
-  final String? value;
-  final ValueChanged<String?> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    final textMuted =
-        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
-    final bgSubtle = isDark ? AppColors.bgSubtleDark : AppColors.bgSubtleLight;
-    final selectedBg =
-        isDark ? AppColors.bgSubtleDark : AppColors.tierraPalida;
-    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-      child: Row(
-        children: [
-          Icon(Icons.filter_list_outlined, size: 18, color: textMuted),
-          const SizedBox(width: 8),
-          Expanded(
-            child: SizedBox(
-              height: 40,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: _kEstados.entries.map((entry) {
-                  final isSelected = value == entry.key;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: FilterChip(
-                      label: Text(
-                        entry.value,
-                        style: AppTypography.caption(
-                          color: isSelected ? cs.primary : textMuted,
-                        ),
-                      ),
-                      selected: isSelected,
-                      onSelected: (_) => onChanged(entry.key),
-                      backgroundColor: bgSubtle,
-                      selectedColor: selectedBg,
-                      checkmarkColor: Colors.transparent,
-                      side: BorderSide(
-                        color: isSelected ? cs.primary : border,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(99),
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Lista del historial ──────────────────────────────────────────────────────
-
-class _HistoryList extends ConsumerWidget {
-  const _HistoryList({required this.params});
-
-  final AuctionHistoryParams params;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final asyncList = ref.watch(auctionHistoryProvider(params));
-    final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textMuted =
-        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
-
-    return asyncList.when(
-      loading: () => Center(
-        child: CircularProgressIndicator(color: cs.primary, strokeWidth: 2),
-      ),
-      error: (e, _) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.cloud_off_outlined, size: 44, color: textMuted),
-              const SizedBox(height: 12),
-              Text(
-                e.toString(),
-                style: AppTypography.bodySmall(color: AppColors.error),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 14),
-              ElevatedButton.icon(
-                onPressed: () => ref.invalidate(auctionHistoryProvider(params)),
-                icon: const Icon(Icons.refresh),
-                label: const Text('Reintentar'),
-              ),
-            ],
-          ),
-        ),
-      ),
-      data: (list) {
-        if (list.isEmpty) {
-          return _EmptyHistory(params: params);
-        }
-
-        return RefreshIndicator(
-          color: cs.primary,
-          onRefresh: () async {
-            ref.invalidate(auctionHistoryProvider(params));
-            await ref.read(auctionHistoryProvider(params).future);
-          },
-          child: ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
-            itemCount: list.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 10),
-            itemBuilder: (_, i) => _AuctionTile(auction: list[i]),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _EmptyHistory extends StatelessWidget {
-  const _EmptyHistory({required this.params});
-
-  final AuctionHistoryParams params;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final iconColor = isDark ? AppColors.borderDark : AppColors.borderLight;
-    final textMuted =
-        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
-    final isPujas = params.mode == 'participante';
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.gavel_outlined, size: 52, color: iconColor),
-            const SizedBox(height: 14),
-            Text(
-              isPujas
-                  ? 'Aún no has participado en subastas.'
-                  : 'Aún no has creado subastas.',
-              style: AppTypography.bodyMedium(color: textMuted),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Tile de subasta ──────────────────────────────────────────────────────────
-
-class _AuctionTile extends StatelessWidget {
-  const _AuctionTile({required this.auction});
-
-  final AuctionModel auction;
-
-  Color _estadoBg(String estado, bool isDark) => switch (estado) {
-        'activa' => isDark
-            ? AppColors.indigoNoche.withValues(alpha: 0.25)
-            : AppColors.indigoPalido,
-        'cerrada' =>
-          isDark ? AppColors.bgSubtleDark : AppColors.tierraPalida,
-        _ => isDark ? AppColors.bgSubtleDark : AppColors.bgSubtleLight,
-      };
-
-  Color _estadoFg(String estado, bool isDark) => switch (estado) {
-        'activa' => isDark ? AppColors.indigoDark : AppColors.indigoNoche,
-        'cerrada' => isDark ? AppColors.tierraDark : AppColors.tierraProfunda,
-        _ => isDark ? AppColors.textMutedDark : AppColors.textMutedLight,
-      };
-
-  String _estadoLabel(String estado) => switch (estado) {
-        'activa' => 'Activa',
-        'cerrada' => 'Cerrada',
-        'cancelada' => 'Cancelada',
-        _ => estado,
-      };
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    final bgCard = theme.cardTheme.color ?? cs.surface;
-    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
-    final textPrimary =
-        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-    final textMuted =
-        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
-
-    final estado = auction.estado;
-
-    return InkWell(
-      onTap: () => context.push('/auctions/${auction.id}'),
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        decoration: BoxDecoration(
-          color: bgCard,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: border),
-        ),
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            // Imagen
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: _TileImage(imageUrl: auction.imagenUrl),
-            ),
-            const SizedBox(width: 12),
-
-            // Info
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    auction.obraTitulo,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.labelSemiBold(color: textPrimary),
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: _estadoBg(estado, isDark),
-                          borderRadius: BorderRadius.circular(99),
-                        ),
-                        child: Text(
-                          _estadoLabel(estado),
-                          style: AppTypography.caption(
-                              color: _estadoFg(estado, isDark)),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '${auction.totalPujas} pujas',
-                        style: AppTypography.caption(color: textMuted),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    '\$${auction.precioActual.toStringAsFixed(0)}',
-                    style:
-                        AppTypography.labelSemiBold(color: AppColors.oroAndino),
-                  ),
-                ],
-              ),
-            ),
-
-            Icon(Icons.chevron_right, color: textMuted, size: 20),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _TileImage extends StatelessWidget {
-  const _TileImage({required this.imageUrl});
-
-  final String? imageUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    if (imageUrl == null) {
-      return const _PlaceholderBox();
-    }
-    return CachedNetworkImage(
-      imageUrl: imageUrl!,
-      width: 56,
-      height: 56,
-      fit: BoxFit.cover,
-      placeholder: (_, __) => const _PlaceholderBox(),
-      errorWidget: (_, __, ___) => const _PlaceholderBox(),
-    );
-  }
-}
-
-class _PlaceholderBox extends StatelessWidget {
-  const _PlaceholderBox();
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgSubtle = isDark ? AppColors.bgSubtleDark : AppColors.bgSubtleLight;
-    final textMuted =
-        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
-    return Container(
-      width: 56,
-      height: 56,
-      color: bgSubtle,
-      child: Icon(Icons.image_outlined, color: textMuted, size: 24),
     );
   }
 }
