@@ -1,53 +1,43 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../musicians/data/musician_repository.dart';
+import '../../../musicians/domain/musician_model.dart';
+import '../../../profile/data/profile_repository.dart';
+import 'artistic_profile_screen/discipline.dart';
+import 'artistic_profile_screen/discipline_card.dart';
+import 'artistic_profile_screen/error_banner.dart';
 
 // ─── Disciplinas disponibles ─────────────────────────────────────────────────
 
-class _Discipline {
-  const _Discipline({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.description,
-  });
-
-  final String label;
-  final String value;
-  final IconData icon;
-  final String description;
-}
-
-const _kDisciplines = <_Discipline>[
-  _Discipline(
+const _kDisciplines = <Discipline>[
+  Discipline(
     label: 'Artesano',
     value: 'Artesano',
     icon: Icons.content_cut_outlined,
     description: 'Objetos únicos con técnicas tradicionales',
   ),
-  _Discipline(
+  Discipline(
     label: 'Fotógrafo',
     value: 'Fotógrafo',
     icon: Icons.camera_alt_outlined,
     description: 'Captura momentos y paisajes del territorio',
   ),
-  _Discipline(
+  Discipline(
     label: 'Escultor',
     value: 'Escultor',
     icon: Icons.architecture_outlined,
     description: 'Formas tridimensionales en diferentes materiales',
   ),
-  _Discipline(
+  Discipline(
     label: 'Pintor',
     value: 'Pintor',
     icon: Icons.brush_outlined,
     description: 'Expresión visual sobre lienzo u otras superficies',
   ),
-  _Discipline(
+  Discipline(
     label: 'Músico',
     value: 'Música',
     icon: Icons.music_note_outlined,
@@ -75,19 +65,20 @@ class ArtisticProfileScreen extends StatefulWidget {
 }
 
 class _ArtisticProfileScreenState extends State<ArtisticProfileScreen> {
+  final _profileRepo = ProfileRepository();
+  final _musicianRepo = MusicianRepository();
+
   // Step 0 state
   String? _selected;
   bool _isLoading = false;
   String? _error;
-  String _userId = '';
   String _firstName = 'Artista';
-  String? _existingSlug;
 
   // Step 1 (músico) state
   int _step = 0;
   final _artisticNameCtrl = TextEditingController();
   String? _aggregationType;
-  List<Map<String, dynamic>> _genres = [];
+  List<MusicGenreModel> _genres = [];
   final Set<int> _selectedGenreIds = {};
   bool _loadingGenres = false;
 
@@ -103,64 +94,27 @@ class _ArtisticProfileScreenState extends State<ArtisticProfileScreen> {
     super.dispose();
   }
 
-  Future<Map<String, dynamic>?> _findMyArtist(dynamic dio, String userId) async {
-    String? pageUrl = '/api/v1/artists/?page_size=100';
-    while (pageUrl != null) {
-      final res = await dio.get(pageUrl);
-      final List<dynamic> artists;
-      String? nextPage;
-      if (res.data is Map) {
-        final data = res.data as Map;
-        final raw = data['results'];
-        artists = raw is List ? raw : [];
-        final next = data['next']?.toString();
-        nextPage = (next != null && next.isNotEmpty) ? next : null;
-      } else if (res.data is List) {
-        artists = res.data as List;
-        nextPage = null;
-      } else {
-        break;
-      }
-      for (final a in artists) {
-        if (a is Map && a['user_id']?.toString() == userId) {
-          return Map<String, dynamic>.from(a);
-        }
-      }
-      pageUrl = nextPage;
-    }
-    return null;
-  }
-
   Future<void> _loadExisting() async {
     if (!mounted) return;
     setState(() { _isLoading = true; _error = null; });
     try {
-      final dio = ApiClient.instance.dio;
-
-      final userRes = await dio.get('/api/v1/users/me/');
-      final userData = userRes.data as Map<String, dynamic>;
-      _userId = userData['id']?.toString() ?? '';
-      _firstName = userData['first_name']?.toString() ??
-          userData['nombre']?.toString() ??
-          'Artista';
-
-      final found = await _findMyArtist(dio, _userId);
-      if (found != null) {
-        _existingSlug = found['slug']?.toString();
-        final discipline = found['discipline']?.toString() ?? '';
+      final profile = await _profileRepo.getMyProfile();
+      if (profile != null) {
+        _firstName =
+            profile.nombreArtistico.isNotEmpty ? profile.nombreArtistico : 'Artista';
+        final discipline = profile.disciplina;
         if (discipline.isNotEmpty && mounted) {
           if (discipline == 'Música') {
-            try {
-              await dio.get('/api/v1/musicians/me/');
+            final musician = await _musicianRepo.getMyProfile();
+            if (musician != null) {
               if (!mounted) return;
               context.go('/home');
               return;
-            } catch (_) {
-              _artisticNameCtrl.text = _firstName;
-              if (mounted) setState(() { _step = 1; _isLoading = false; });
-              _fetchGenres();
-              return;
             }
+            _artisticNameCtrl.text = _firstName;
+            if (mounted) setState(() { _step = 1; _isLoading = false; });
+            _fetchGenres();
+            return;
           }
           if (mounted) context.go('/home');
           return;
@@ -176,18 +130,10 @@ class _ArtisticProfileScreenState extends State<ArtisticProfileScreen> {
   Future<void> _fetchGenres() async {
     setState(() => _loadingGenres = true);
     try {
-      final res = await ApiClient.instance.dio.get('/api/v1/musicians/genres/');
-      final data = res.data;
-      List<dynamic> raw = [];
-      if (data is List) raw = data;
-      if (data is Map && data['results'] is List) raw = data['results'] as List;
+      final genres = await _musicianRepo.getGenres();
       if (mounted) {
         setState(() {
-          _genres = raw
-              .whereType<Map>()
-              .map((g) => {'id': g['id'], 'name': g['name']?.toString() ?? ''})
-              .toList()
-              .cast<Map<String, dynamic>>();
+          _genres = genres;
           _loadingGenres = false;
         });
       }
@@ -200,25 +146,7 @@ class _ArtisticProfileScreenState extends State<ArtisticProfileScreen> {
     if (_selected == null) return;
     setState(() { _isLoading = true; _error = null; });
     try {
-      final dio = ApiClient.instance.dio;
-
-      if (_existingSlug == null || _existingSlug!.isEmpty) {
-        final found = await _findMyArtist(dio, _userId);
-        _existingSlug = found?['slug']?.toString();
-      }
-
-      if (_existingSlug != null && _existingSlug!.isNotEmpty) {
-        await dio.patch(
-          '/api/v1/artists/$_existingSlug/',
-          data: {'discipline': _selected},
-        );
-      } else {
-        final res = await dio.post(
-          '/api/v1/artists/',
-          data: {'artistic_name': _firstName, 'discipline': _selected},
-        );
-        _existingSlug = (res.data as Map?)?['slug']?.toString();
-      }
+      await _profileRepo.updateMyProfile(disciplina: _selected);
 
       if (!mounted) return;
 
@@ -244,50 +172,24 @@ class _ArtisticProfileScreenState extends State<ArtisticProfileScreen> {
     if (name.isEmpty) return;
     setState(() { _isLoading = true; _error = null; });
     try {
-      final dio = ApiClient.instance.dio;
-
       // Verificar si ya existe un perfil de músico (para hacer PATCH en vez de POST)
-      String? musicianSlug;
-      try {
-        final meRes = await dio.get('/api/v1/musicians/me/');
-        musicianSlug = (meRes.data as Map?)?['slug']?.toString();
-      } on DioException catch (e) {
-        if (e.response?.statusCode != 404) rethrow;
-        // 404 = no existe aún, se creará con POST
-      }
+      final existing = await _musicianRepo.getMyProfile();
 
-      final payload = <String, dynamic>{
-        'artistic_name': name,
-        if (_aggregationType != null) 'aggregation_type': _aggregationType,
-        if (_selectedGenreIds.isNotEmpty) 'genre_ids': _selectedGenreIds.toList(),
-      };
-
-      if (musicianSlug != null && musicianSlug.isNotEmpty) {
-        await dio.patch('/api/v1/musicians/$musicianSlug/', data: payload);
-      } else {
-        await dio.post('/api/v1/musicians/', data: payload);
-      }
+      await _musicianRepo.saveMyProfile(
+        artisticName: name,
+        aggregationType: _aggregationType,
+        genreIds: _selectedGenreIds.toList(),
+        existingSlug: existing?.slug,
+      );
 
       if (mounted) context.go('/home');
-    } on DioException catch (e) {
-      final body = e.response?.data;
-      String msg = 'No se pudo guardar el perfil musical. Intenta de nuevo.';
-      if (body is Map) {
-        final detail = body['detail']?.toString() ?? '';
-        if (detail.isNotEmpty) {
-          msg = detail;
-        } else {
-          for (final v in body.values) {
-            if (v is List && v.isNotEmpty) { msg = v.first.toString(); break; }
-            if (v is String && v.isNotEmpty) { msg = v; break; }
-          }
-        }
-      } else if (body is String && body.isNotEmpty) {
-        msg = body;
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _error = e.toString();
+        });
       }
-      if (mounted) setState(() { _isLoading = false; _error = msg; });
-    } catch (_) {
-      if (mounted) setState(() { _isLoading = false; _error = 'Error inesperado. Intenta de nuevo.'; });
     }
   }
 
@@ -320,7 +222,7 @@ class _ArtisticProfileScreenState extends State<ArtisticProfileScreen> {
                       child: Column(
                         children: [
                           for (final d in _kDisciplines) ...[
-                            _DisciplineCard(
+                            DisciplineCard(
                               discipline: d,
                               isSelected: _selected == d.value,
                               disabled: _isLoading,
@@ -330,7 +232,7 @@ class _ArtisticProfileScreenState extends State<ArtisticProfileScreen> {
                           ],
                           if (_error != null) ...[
                             const SizedBox(height: 4),
-                            _ErrorBanner(message: _error!),
+                            ErrorBanner(message: _error!),
                             const SizedBox(height: 12),
                           ],
                           const SizedBox(height: 8),
@@ -456,19 +358,17 @@ class _ArtisticProfileScreenState extends State<ArtisticProfileScreen> {
                                 spacing: 8,
                                 runSpacing: 8,
                                 children: _genres.map((g) {
-                                  final id = (g['id'] as num?)?.toInt() ?? 0;
-                                  final name = g['name'] as String;
-                                  final selected = _selectedGenreIds.contains(id);
+                                  final selected = _selectedGenreIds.contains(g.id);
                                   return FilterChip(
-                                    label: Text(name),
+                                    label: Text(g.name),
                                     selected: selected,
                                     onSelected: _isLoading
                                         ? null
                                         : (_) => setState(() {
                                               if (selected) {
-                                                _selectedGenreIds.remove(id);
+                                                _selectedGenreIds.remove(g.id);
                                               } else {
-                                                _selectedGenreIds.add(id);
+                                                _selectedGenreIds.add(g.id);
                                               }
                                             }),
                                     selectedColor: cs.primary.withValues(alpha: 0.15),
@@ -482,7 +382,7 @@ class _ArtisticProfileScreenState extends State<ArtisticProfileScreen> {
 
                     if (_error != null) ...[
                       const SizedBox(height: 16),
-                      _ErrorBanner(message: _error!),
+                      ErrorBanner(message: _error!),
                     ],
                     const SizedBox(height: 24),
 
@@ -569,124 +469,3 @@ class _ArtisticProfileScreenState extends State<ArtisticProfileScreen> {
   }
 }
 
-// ─── Tarjeta de disciplina ────────────────────────────────────────────────────
-
-class _DisciplineCard extends StatelessWidget {
-  const _DisciplineCard({
-    required this.discipline,
-    required this.isSelected,
-    required this.disabled,
-    required this.onTap,
-  });
-
-  final _Discipline discipline;
-  final bool isSelected;
-  final bool disabled;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    final bgCard = theme.cardTheme.color ?? cs.surface;
-    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
-    final selectedBg = isDark ? AppColors.bgSubtleDark : AppColors.tierraPalida;
-    final textPrimary = isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-    final textMuted = isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
-
-    return GestureDetector(
-      onTap: disabled ? null : onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: isSelected ? selectedBg : bgCard,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isSelected ? cs.primary : border,
-            width: isSelected ? 1.5 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? cs.primary.withValues(alpha: 0.12)
-                    : (isDark ? AppColors.bgSubtleDark : AppColors.bgSubtleLight),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                discipline.icon,
-                size: 24,
-                color: isSelected ? cs.primary : textMuted,
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    discipline.label,
-                    style: AppTypography.labelSemiBold(
-                      color: isSelected ? cs.primary : textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    discipline.description,
-                    style: AppTypography.caption(color: textMuted),
-                  ),
-                ],
-              ),
-            ),
-            AnimatedOpacity(
-              opacity: isSelected ? 1 : 0,
-              duration: const Duration(milliseconds: 180),
-              child: Icon(Icons.check_circle, color: cs.primary, size: 22),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Banner de error ──────────────────────────────────────────────────────────
-
-class _ErrorBanner extends StatelessWidget {
-  const _ErrorBanner({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.error.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.error.withValues(alpha: 0.40)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.error_outline, color: AppColors.error, size: 20),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              message,
-              style: AppTypography.bodySmall(color: textPrimary),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
