@@ -1,8 +1,5 @@
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/constants/api_constants.dart';
-import '../../../../core/network/api_client.dart';
 import '../../data/musician_repository.dart';
 import '../../domain/musician_model.dart';
 
@@ -161,11 +158,6 @@ final musicianReviewsProvider = FutureProvider.autoDispose
 /// Devuelve el slug del perfil de músico del usuario autenticado, o null si
 /// todavía no ha creado su perfil musical.
 final myMusicianSlugProvider = FutureProvider.autoDispose<String?>((ref) async {
-  try {
-    final res = await ApiClient.instance.dio.get(ApiConstants.musicianMe);
-    return (res.data as Map?)?['slug']?.toString();
-  } on DioException catch (e) {
-    if (e.response?.statusCode == 404) return null;
-    rethrow;
-  }
+  final profile = await ref.read(musicianRepositoryProvider).getMyProfile();
+  return profile?.slug;
 });

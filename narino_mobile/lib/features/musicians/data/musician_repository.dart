@@ -54,6 +54,18 @@ class MusicianRepository {
     }
   }
 
+  Future<MusicalWorkModel> addWork(
+    String slug,
+    Map<String, dynamic> payload,
+  ) async {
+    try {
+      final data = await _service.addWork(slug, payload);
+      return MusicalWorkModel.fromJson(data);
+    } on DioException catch (e) {
+      throw _parseDioError(e);
+    }
+  }
+
   Future<List<MusicalWorkModel>> getMusicianWorks(String slug) async {
     try {
       final list = await _service.getMusicianWorks(slug);
@@ -90,6 +102,36 @@ class MusicianRepository {
     }
   }
 
+  /// Perfil de músico del usuario autenticado, o `null` si aún no tiene uno.
+  Future<MusicianModel?> getMyProfile() async {
+    try {
+      final data = await _service.getMyProfile();
+      return data == null ? null : MusicianModel.fromJson(data);
+    } on DioException catch (e) {
+      throw _parseDioError(e);
+    }
+  }
+
+  /// Crea o actualiza el perfil de músico del usuario autenticado.
+  Future<MusicianModel> saveMyProfile({
+    required String artisticName,
+    String? aggregationType,
+    List<int>? genreIds,
+    String? existingSlug,
+  }) async {
+    try {
+      final data = await _service.saveMyProfile(
+        artisticName: artisticName,
+        aggregationType: aggregationType,
+        genreIds: genreIds,
+        existingSlug: existingSlug,
+      );
+      return MusicianModel.fromJson(data);
+    } on DioException catch (e) {
+      throw _parseDioError(e);
+    }
+  }
+
   String _parseDioError(DioException e) {
     if (e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.receiveTimeout ||
@@ -100,11 +142,25 @@ class MusicianRepository {
     if (code == 401) return 'Tu sesión expiró. Inicia sesión nuevamente.';
     if (code == 403) return 'No tienes permiso para realizar esta acción.';
     if (code == 404) return 'Músico no encontrado.';
-    final body = e.response?.data;
-    if (body is Map) {
-      final msg = body['detail']?.toString();
-      if (msg != null && msg.isNotEmpty) return msg;
-    }
+    final extracted = _extractMessage(e.response?.data);
+    if (extracted != null && extracted.isNotEmpty) return extracted;
     return 'Error inesperado. Intenta de nuevo.';
+  }
+
+  String? _extractMessage(Object? data) {
+    if (data is Map) {
+      final detail = data['detail']?.toString();
+      if (detail != null && detail.isNotEmpty) return detail;
+      for (final entry in data.entries) {
+        final value = entry.value;
+        if (value is List && value.isNotEmpty) {
+          final msg = value.first?.toString();
+          if (msg != null && msg.isNotEmpty) return msg;
+        }
+        if (value is String && value.isNotEmpty) return value;
+      }
+    }
+    if (data is String && data.isNotEmpty) return data;
+    return null;
   }
 }

@@ -1,13 +1,13 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../data/musician_repository.dart';
 import '../providers/musician_provider.dart';
+import 'publish_musical_work_screen/field_label.dart';
 
 const _kWorkTypes = <String, String>{
   'VIDEO': 'Video musical',
@@ -27,6 +27,8 @@ class PublishMusicalWorkScreen extends ConsumerStatefulWidget {
 
 class _PublishMusicalWorkScreenState
     extends ConsumerState<PublishMusicalWorkScreen> {
+  final _musicianRepo = MusicianRepository();
+
   final _formKey = GlobalKey<FormState>();
   final _titleCtrl = TextEditingController();
   final _descriptionCtrl = TextEditingController();
@@ -66,11 +68,8 @@ class _PublishMusicalWorkScreenState
     setState(() { _isSaving = true; _error = null; });
 
     try {
-      final dio = ApiClient.instance.dio;
-
       // Obtener slug del músico autenticado
-      final meRes = await dio.get('/api/v1/musicians/me/');
-      final slug = (meRes.data as Map?)?['slug']?.toString();
+      final slug = (await _musicianRepo.getMyProfile())?.slug;
       if (slug == null || slug.isEmpty) {
         setState(() {
           _isSaving = false;
@@ -99,7 +98,7 @@ class _PublishMusicalWorkScreenState
           'duration_seconds': int.tryParse(_durationCtrl.text.trim()),
       };
 
-      await dio.post('/api/v1/musicians/$slug/works/add/', data: payload);
+      await _musicianRepo.addWork(slug, payload);
 
       if (mounted) {
         ref.invalidate(musicianWorksProvider(slug));
@@ -108,25 +107,8 @@ class _PublishMusicalWorkScreenState
         );
         context.pop();
       }
-    } on DioException catch (e) {
-      String msg = 'Error al publicar la obra.';
-      final data = e.response?.data;
-      if (data is Map) {
-        final msgs = <String>[];
-        data.forEach((k, v) {
-          if (v is List) {
-            msgs.addAll(v.map((x) => x.toString()));
-          } else {
-            msgs.add(v.toString());
-          }
-        });
-        if (msgs.isNotEmpty) msg = msgs.join(' ');
-      } else if (data is String && data.isNotEmpty) {
-        msg = data;
-      }
-      if (mounted) setState(() { _isSaving = false; _error = msg; });
-    } catch (_) {
-      if (mounted) setState(() { _isSaving = false; _error = 'Error inesperado.'; });
+    } catch (e) {
+      if (mounted) setState(() { _isSaving = false; _error = e.toString(); });
     }
   }
 
@@ -159,7 +141,7 @@ class _PublishMusicalWorkScreenState
           padding: const EdgeInsets.all(20),
           children: [
             // Título
-            _FieldLabel(label: 'Título *', textMuted: textMuted),
+            FieldLabel(label: 'Título *', textMuted: textMuted),
             const SizedBox(height: 6),
             TextFormField(
               controller: _titleCtrl,
@@ -171,7 +153,7 @@ class _PublishMusicalWorkScreenState
             const SizedBox(height: 18),
 
             // Tipo de obra
-            _FieldLabel(label: 'Tipo de obra', textMuted: textMuted),
+            FieldLabel(label: 'Tipo de obra', textMuted: textMuted),
             const SizedBox(height: 6),
             DropdownButtonFormField<String>(
               initialValue: _workType,
@@ -190,7 +172,7 @@ class _PublishMusicalWorkScreenState
             const SizedBox(height: 18),
 
             // Descripción
-            _FieldLabel(label: 'Descripción', textMuted: textMuted),
+            FieldLabel(label: 'Descripción', textMuted: textMuted),
             const SizedBox(height: 6),
             TextFormField(
               controller: _descriptionCtrl,
@@ -202,7 +184,7 @@ class _PublishMusicalWorkScreenState
             const SizedBox(height: 18),
 
             // Enlace YouTube
-            _FieldLabel(label: 'Enlace de YouTube', textMuted: textMuted),
+            FieldLabel(label: 'Enlace de YouTube', textMuted: textMuted),
             const SizedBox(height: 6),
             TextFormField(
               controller: _youtubeCtrl,
@@ -214,7 +196,7 @@ class _PublishMusicalWorkScreenState
             const SizedBox(height: 18),
 
             // SoundCloud
-            _FieldLabel(label: 'Embed de SoundCloud', textMuted: textMuted),
+            FieldLabel(label: 'Embed de SoundCloud', textMuted: textMuted),
             const SizedBox(height: 6),
             TextFormField(
               controller: _soundcloudCtrl,
@@ -226,7 +208,7 @@ class _PublishMusicalWorkScreenState
             const SizedBox(height: 18),
 
             // Spotify
-            _FieldLabel(label: 'Enlace de Spotify', textMuted: textMuted),
+            FieldLabel(label: 'Enlace de Spotify', textMuted: textMuted),
             const SizedBox(height: 6),
             TextFormField(
               controller: _spotifyCtrl,
@@ -238,7 +220,7 @@ class _PublishMusicalWorkScreenState
             const SizedBox(height: 18),
 
             // Fecha de lanzamiento
-            _FieldLabel(label: 'Fecha de lanzamiento', textMuted: textMuted),
+            FieldLabel(label: 'Fecha de lanzamiento', textMuted: textMuted),
             const SizedBox(height: 6),
             GestureDetector(
               onTap: _pickDate,
@@ -264,7 +246,7 @@ class _PublishMusicalWorkScreenState
             const SizedBox(height: 18),
 
             // Duración
-            _FieldLabel(label: 'Duración (segundos)', textMuted: textMuted),
+            FieldLabel(label: 'Duración (segundos)', textMuted: textMuted),
             const SizedBox(height: 6),
             TextFormField(
               controller: _durationCtrl,
@@ -356,18 +338,5 @@ class _PublishMusicalWorkScreenState
         borderSide: const BorderSide(color: AppColors.error),
       ),
     );
-  }
-}
-
-class _FieldLabel extends StatelessWidget {
-  const _FieldLabel({required this.label, required this.textMuted});
-  final String label;
-  final Color textMuted;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(label,
-        style: AppTypography.labelSemiBold(color: textMuted)
-            .copyWith(fontSize: 13));
   }
 }
