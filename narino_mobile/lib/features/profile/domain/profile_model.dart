@@ -5,6 +5,13 @@ int _profileInt(dynamic v, [int fallback = 0]) {
   return int.tryParse(v.toString()) ?? fallback;
 }
 
+/// El backend devuelve "" (string vacío) para URLs de imagen ausentes en vez
+/// de null; esto lo normaliza para que la UI muestre el placeholder.
+String? _nonEmpty(dynamic v) {
+  final s = v?.toString();
+  return (s == null || s.isEmpty) ? null : s;
+}
+
 /// Modelo de dominio que representa el perfil del usuario (artista/comprador/gestor).
 class ProfileModel {
   final String id;
@@ -63,8 +70,9 @@ class ProfileModel {
           '',
       biografia:
           json['bio']?.toString() ?? json['biografia']?.toString(),
-      fotoUrl:
-          json['avatar_url']?.toString() ?? json['foto_url']?.toString(),
+      fotoUrl: _nonEmpty(json['avatar_url']) ??
+          _nonEmpty(json['profile_image_url']) ??
+          _nonEmpty(json['foto_url']),
       seguidores: _profileInt(json['followers_count'] ?? json['seguidores']),
       siguiendo: _profileInt(json['following_count'] ?? json['siguiendo']),
       esSeguido: (json['is_following'] as bool?) ??
