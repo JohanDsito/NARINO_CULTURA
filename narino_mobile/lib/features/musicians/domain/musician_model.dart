@@ -71,10 +71,8 @@ class MusicalWorkModel {
       title: json['title']?.toString() ?? json['titulo']?.toString() ?? '',
       description:
           json['description']?.toString() ?? json['descripcion']?.toString(),
-      audioUrl: json['audio_url']?.toString() ?? json['audioUrl']?.toString(),
-      coverUrl: json['cover_url']?.toString() ??
-          json['coverUrl']?.toString() ??
-          json['image_url']?.toString(),
+      audioUrl: json['audio_file']?.toString() ?? json['audio_url']?.toString(),
+      coverUrl: json['thumbnail']?.toString() ?? json['cover_url']?.toString(),
       year: _parseIntOrNull(json['year']) ?? _parseIntOrNull(json['anio']),
       genre: json['genre']?.toString() ?? json['genero']?.toString(),
       createdAt: DateTime.tryParse(
@@ -183,15 +181,14 @@ class MusicianModel {
 
     return MusicianModel(
       slug: json['slug']?.toString() ?? '',
-      name: json['name']?.toString() ??
-          json['nombre']?.toString() ??
-          json['user']?.toString() ??
+      name: json['artistic_name']?.toString() ??
+          json['name']?.toString() ??
           '',
       bio: json['bio']?.toString() ?? json['biography']?.toString(),
       city: json['city']?.toString() ?? json['ciudad']?.toString(),
-      photoUrl: json['photo_url']?.toString() ??
-          json['photoUrl']?.toString() ??
-          json['avatar_url']?.toString(),
+      photoUrl: json['profile_image_url']?.toString().isNotEmpty == true
+          ? json['profile_image_url']?.toString()
+          : null,
       coverUrl: json['cover_url']?.toString() ??
           json['coverUrl']?.toString() ??
           json['banner_url']?.toString(),

@@ -46,6 +46,15 @@ class MusicianService {
     return false;
   }
 
+  Future<Map<String, dynamic>> addWork(
+    String slug,
+    Map<String, dynamic> payload,
+  ) async {
+    final path = ApiConstants.musicianAddWork.replaceAll('{slug}', slug);
+    final res = await _dio.post(path, data: payload);
+    return (res.data as Map).cast<String, dynamic>();
+  }
+
   Future<List<dynamic>> getMusicianWorks(String slug) async {
     final path = ApiConstants.musicianWorks.replaceAll('{slug}', slug);
     final res = await _dio.get(path);
@@ -70,5 +79,42 @@ class MusicianService {
     if (data is List) return data;
     if (data is Map && data['results'] is List) return data['results'] as List;
     return const [];
+  }
+
+  /// Perfil de músico del usuario autenticado, o `null` si aún no tiene uno.
+  Future<Map<String, dynamic>?> getMyProfile() async {
+    try {
+      final res = await _dio.get(ApiConstants.musicianMe);
+      return (res.data as Map).cast<String, dynamic>();
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return null;
+      rethrow;
+    }
+  }
+
+  /// Crea (si [existingSlug] es nulo) o actualiza el perfil de músico del
+  /// usuario autenticado.
+  Future<Map<String, dynamic>> saveMyProfile({
+    required String artisticName,
+    String? aggregationType,
+    List<int>? genreIds,
+    String? existingSlug,
+  }) async {
+    final payload = <String, dynamic>{
+      'artistic_name': artisticName,
+      if (aggregationType != null) 'aggregation_type': aggregationType,
+      if (genreIds != null && genreIds.isNotEmpty) 'genre_ids': genreIds,
+    };
+
+    final Response res;
+    if (existingSlug != null && existingSlug.isNotEmpty) {
+      res = await _dio.patch(
+        ApiConstants.musicianDetail.replaceAll('{slug}', existingSlug),
+        data: payload,
+      );
+    } else {
+      res = await _dio.post(ApiConstants.musicians, data: payload);
+    }
+    return (res.data as Map).cast<String, dynamic>();
   }
 }
