@@ -3,6 +3,7 @@ from django.db.models import F
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -147,14 +148,10 @@ class MusicalWorkViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """Asigna automáticamente el músico del usuario actual."""
-        try:
-            musician = MusicianProfile.objects.get(user=self.request.user)
-            serializer.save(musician=musician)
-        except MusicianProfile.DoesNotExist:
-            return Response(
-                {"detail": "Necesitas crear un perfil de músico primero."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        musician = MusicianProfile.objects.filter(user=self.request.user).first()
+        if not musician:
+            raise ValidationError({"detail": "Necesitas crear un perfil de músico primero."})
+        serializer.save(musician=musician)
 
     @action(detail=True, methods=["post"], url_path="view")
     def register_view(self, request, pk=None):

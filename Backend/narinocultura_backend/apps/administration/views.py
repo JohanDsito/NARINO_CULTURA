@@ -1,7 +1,9 @@
 import logging
 import secrets
+from datetime import timedelta
 
-from django.db.models import Count
+from django.db.models import Count, Sum
+from django.utils import timezone
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -133,6 +135,9 @@ class AdminTransactionsAPIView(generics.ListAPIView):
                 "amount": str(t.amount),
                 "currency": t.currency,
                 "status": t.status,
+                "total_amount": str(t.order.total_amount),
+                "order_type": t.order.order_type,
+                "order_status": t.order.status,
                 "created_at": t.created_at,
             }
             for t in qs
@@ -162,14 +167,30 @@ class AdminMetricsAPIView(APIView):
     permission_classes = [IsAdmin]
 
     def get(self, request):
+        since = timezone.now() - timedelta(days=30)
+        users_total = User.objects.count()
+        artworks_total = Artwork.objects.count()
+        transactions_total = Transaction.objects.count()
+        revenue_last_30_days = (
+            Transaction.objects.filter(status=Transaction.Status.APROBADO, created_at__gte=since)
+            .aggregate(total=Sum("amount"))["total"]
+            or 0
+        )
         return Response(
             {
-                "users": User.objects.count(),
+                # Campos que consume el dashboard del frontend
+                "total_users": users_total,
+                "total_artworks": artworks_total,
+                "total_transactions": transactions_total,
+                "new_users_last_30_days": User.objects.filter(created_at__gte=since).count(),
+                "revenue_last_30_days": str(revenue_last_30_days),
+                # Campos originales (se mantienen por compatibilidad con Postman/clientes existentes)
+                "users": users_total,
                 "artists": User.objects.filter(role=User.Role.ARTISTA).count(),
-                "artworks_total": Artwork.objects.count(),
+                "artworks_total": artworks_total,
                 "artworks_pending": Artwork.objects.filter(status=Artwork.Status.INACTIVA).count(),
                 "orders_total": Order.objects.count(),
-                "transactions_total": Transaction.objects.count(),
+                "transactions_total": transactions_total,
                 "auctions_active": Auction.objects.filter(status=Auction.Status.ACTIVA).count(),
                 "events_total": Event.objects.count(),
                 "events_published": Event.objects.filter(is_published=True).count(),

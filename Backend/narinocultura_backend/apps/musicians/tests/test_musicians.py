@@ -315,3 +315,16 @@ class MusicDiscoveryTests(TestCase):
         self.client.force_authenticate(user=user)
         response = self.client.get("/api/v1/musicians/me/")
         self.assertEqual(response.status_code, 404)
+
+
+class MusicalWorkCreateWithoutProfileTests(TestCase):
+    def test_create_work_without_musician_profile_fails(self):
+        client = APIClient()
+        client.force_authenticate(user=UserFactory())
+        response = client.post(
+            "/api/v1/musicians/works/",
+            {"title": "Sin perfil", "work_type": "VIDEO", "youtube_url": "https://youtube.com/watch?v=x"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(MusicalWork.objects.filter(title="Sin perfil").exists())

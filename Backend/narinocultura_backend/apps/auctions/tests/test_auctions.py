@@ -9,7 +9,7 @@ from rest_framework_simplejwt.tokens import AccessToken
 from apps.auctions.models import Auction, Bid
 from apps.artworks.models import Artwork
 from services.auction_service import AuctionService
-from tests.factories import ArtistProfileFactory, ArtistUserFactory, ArtworkFactory, UserFactory
+from tests.factories import AdminUserFactory, ArtistProfileFactory, ArtistUserFactory, ArtworkFactory, UserFactory
 
 
 def auth_header(user):
@@ -117,3 +117,54 @@ class AuctionExpiredTaskTests(APITestCase):
         AuctionService._close_if_ended(auction_id=auction.id)
         auction.refresh_from_db()
         self.assertEqual(auction.status, Auction.Status.ACTIVA)
+
+
+class AuctionVisibilityTests(APITestCase):
+    def setUp(self):
+        self.seller = ArtistUserFactory()
+        profile = ArtistProfileFactory(user=self.seller)
+        now = timezone.now()
+        self.pending = Auction.objects.create(
+            artwork=ArtworkFactory(artist=profile),
+            seller=self.seller,
+            base_price=Decimal("100000.00"),
+            current_price=Decimal("100000.00"),
+            starts_at=now,
+            ends_at=now + timedelta(days=1),
+            status=Auction.Status.PENDIENTE,
+        )
+        self.active = Auction.objects.create(
+            artwork=ArtworkFactory(artist=profile, status="EN_SUBASTA"),
+            seller=self.seller,
+            base_price=Decimal("100000.00"),
+            current_price=Decimal("100000.00"),
+            starts_at=now,
+            ends_at=now + timedelta(days=1),
+            status=Auction.Status.ACTIVA,
+        )
+
+    def _ids(self, response):
+        data = response.data["results"] if isinstance(response.data, dict) else response.data
+        return {a["id"] for a in data}
+
+    def test_public_does_not_see_pending_auctions(self):
+        r = self.client.get("/api/v1/auctions/")
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(self._ids(r), {str(self.active.id)})
+        self.assertEqual(self.client.get(f"/api/v1/auctions/{self.pending.id}/").status_code, 404)
+
+    def test_seller_sees_own_pending_auction(self):
+        self.client.force_authenticate(user=self.seller)
+        r = self.client.get("/api/v1/auctions/")
+        self.assertEqual(self._ids(r), {str(self.active.id), str(self.pending.id)})
+
+    def test_admin_sees_pending_auctions(self):
+        self.client.force_authenticate(user=AdminUserFactory())
+        r = self.client.get("/api/v1/auctions/", {"status": "PENDIENTE"})
+        self.assertEqual(self._ids(r), {str(self.pending.id)})
+
+    def test_filter_by_status(self):
+        r = self.client.get("/api/v1/auctions/", {"status": "ACTIVA"})
+        self.assertEqual(self._ids(r), {str(self.active.id)})
+        r = self.client.get("/api/v1/auctions/", {"status": "CERRADA"})
+        self.assertEqual(self._ids(r), set())
