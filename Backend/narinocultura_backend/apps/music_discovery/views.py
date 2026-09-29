@@ -3,6 +3,7 @@ import httpx
 from django.conf import settings
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from apps.musicians.models import MusicianProfile
@@ -134,11 +135,13 @@ class ChatAPIView(APIView):
     Mantiene historial de conversación y proporciona recomendaciones
     personalizadas de artistas, obras y eventos culturales.
 
-    Autenticación: Requerida
-    Rate Limit: 10 mensajes/minuto por usuario
+    Autenticación: Opcional (el widget se muestra también a visitantes anónimos)
+    Rate Limit: 10 mensajes/minuto por usuario (o por IP si es anónimo)
     """
 
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "chat"
     ai_client = AIServiceClient()
 
     def post(self, request):

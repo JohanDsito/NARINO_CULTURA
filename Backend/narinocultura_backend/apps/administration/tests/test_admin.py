@@ -1,12 +1,11 @@
 from datetime import timedelta
 from decimal import Decimal
 
-from django.utils import timezone
-from rest_framework.test import APITestCase
-
 from apps.marketplace.models import Order
 from apps.payments.models import Transaction
 from apps.users.models import User
+from django.utils import timezone
+from rest_framework.test import APITestCase
 from tests.factories import AdminUserFactory, ArtworkFactory, UserFactory
 
 

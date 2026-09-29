@@ -28,19 +28,52 @@ class AuctionServiceTests(APITestCase):
         self.buyer = UserFactory(role="COMPRADOR")
         self.buyer.is_verified = True
         self.buyer.save()
+        self.admin = AdminUserFactory()
 
-        self.auction = AuctionService.create_auction(
+        # Flujo real: el artista crea la subasta (PENDIENTE) y un administrador la aprueba
+        pending = self._create_auction(self.artwork)
+        self.auction = AuctionService.approve_auction(auction=pending, actor=self.admin)
+
+    def _create_auction(self, artwork):
+        return AuctionService.create_auction(
             seller=self.artist_user,
-            artwork=self.artwork,
+            artwork=artwork,
             base_price=Decimal("100000.00"),
             starts_at=timezone.now() - timedelta(hours=1),
             ends_at=timezone.now() + timedelta(hours=24),
         )
 
-    def test_create_auction_sets_artwork_en_subasta(self):
+    def test_create_auction_starts_pending(self):
+        artwork = ArtworkFactory(artist=self.profile, status="DISPONIBLE")
+        auction = self._create_auction(artwork)
+        artwork.refresh_from_db()
+        self.assertEqual(auction.status, Auction.Status.PENDIENTE)
+        self.assertEqual(artwork.status, Artwork.Status.DISPONIBLE)
+
+    def test_approve_auction_activates_and_sets_artwork_en_subasta(self):
         self.artwork.refresh_from_db()
-        self.assertEqual(self.artwork.status, Artwork.Status.EN_SUBASTA)
         self.assertEqual(self.auction.status, Auction.Status.ACTIVA)
+        self.assertEqual(self.artwork.status, Artwork.Status.EN_SUBASTA)
+
+    def test_reject_pending_auction_cancels_it(self):
+        artwork = ArtworkFactory(artist=self.profile, status="DISPONIBLE")
+        auction = self._create_auction(artwork)
+        rejected = AuctionService.reject_auction(auction=auction, actor=self.admin)
+        artwork.refresh_from_db()
+        self.assertEqual(rejected.status, Auction.Status.CANCELADA)
+        self.assertEqual(artwork.status, Artwork.Status.DISPONIBLE)
+
+    def test_only_admin_can_approve(self):
+        artwork = ArtworkFactory(artist=self.profile, status="DISPONIBLE")
+        auction = self._create_auction(artwork)
+        with self.assertRaises(ValueError):
+            AuctionService.approve_auction(auction=auction, actor=self.artist_user)
+
+    def test_cannot_bid_on_pending_auction(self):
+        artwork = ArtworkFactory(artist=self.profile, status="DISPONIBLE")
+        auction = self._create_auction(artwork)
+        with self.assertRaises(ValueError):
+            AuctionService.place_bid(auction=auction, bidder=self.buyer, amount=Decimal("200000.00"))
 
     def test_place_bid_updates_current_price(self):
         bid = AuctionService.place_bid(
