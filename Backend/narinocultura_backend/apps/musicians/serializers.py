@@ -166,6 +166,23 @@ class MusicianProfileListSerializer(serializers.ModelSerializer):
         return request.build_absolute_uri(obj.profile_image.url) if request else obj.profile_image.url
 
 
+class MusicianProfileSummarySerializer(serializers.ModelSerializer):
+    """Versión compacta del perfil para listas (p. ej. músicos que sigo)."""
+
+    avatar_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MusicianProfile
+        fields = ("id", "slug", "artistic_name", "avatar_url")
+        read_only_fields = fields
+
+    def get_avatar_url(self, obj):
+        if not obj.profile_image:
+            return ""
+        request = self.context.get("request")
+        return request.build_absolute_uri(obj.profile_image.url) if request else obj.profile_image.url
+
+
 class MusicianReviewSerializer(serializers.ModelSerializer):
     reviewer_name = serializers.SerializerMethodField()
 

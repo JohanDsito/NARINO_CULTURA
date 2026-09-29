@@ -13,9 +13,11 @@ from apps.musicians.serializers import (
     MusicGenreSerializer,
     MusicianProfileListSerializer,
     MusicianProfileSerializer,
+    MusicianProfileSummarySerializer,
     MusicianReviewSerializer,
     MusicalWorkSerializer,
 )
+from apps.users.serializers import PublicUserSummarySerializer
 
 
 class MusicGenreViewSet(viewsets.ReadOnlyModelViewSet):
@@ -83,6 +85,29 @@ class MusicianProfileViewSet(viewsets.ModelViewSet):
             {"detail": "Ahora sigues a este músico.", "following": True},
             status=status.HTTP_201_CREATED,
         )
+
+    @action(detail=True, methods=["get"], url_path="followers", permission_classes=[IsAuthenticated])
+    def followers(self, request, slug=None):
+        """Usuarios que siguen al músico. Solo visible para el dueño del perfil."""
+        profile = self.get_object()
+        follows = (
+            MusicianFollower.objects.filter(musician=profile)
+            .select_related("user")
+            .order_by("-followed_at")
+        )
+        users = [f.user for f in follows]
+        return Response(PublicUserSummarySerializer(users, many=True, context={"request": request}).data)
+
+    @action(detail=False, methods=["get"], url_path="following", permission_classes=[IsAuthenticated])
+    def following(self, request):
+        """Perfiles de músico que sigue el usuario autenticado."""
+        follows = (
+            MusicianFollower.objects.filter(user=request.user, musician__is_active=True)
+            .select_related("musician")
+            .order_by("-followed_at")
+        )
+        profiles = [f.musician for f in follows]
+        return Response(MusicianProfileSummarySerializer(profiles, many=True, context={"request": request}).data)
 
     @action(detail=True, methods=["get"], url_path="works", permission_classes=[AllowAny])
     def works(self, request, slug=None):
