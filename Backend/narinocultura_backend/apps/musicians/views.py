@@ -3,6 +3,7 @@ from django.db.models import F
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -12,9 +13,11 @@ from apps.musicians.serializers import (
     MusicGenreSerializer,
     MusicianProfileListSerializer,
     MusicianProfileSerializer,
+    MusicianProfileSummarySerializer,
     MusicianReviewSerializer,
     MusicalWorkSerializer,
 )
+from apps.users.serializers import PublicUserSummarySerializer
 
 
 class MusicGenreViewSet(viewsets.ReadOnlyModelViewSet):
@@ -83,6 +86,29 @@ class MusicianProfileViewSet(viewsets.ModelViewSet):
             status=status.HTTP_201_CREATED,
         )
 
+    @action(detail=True, methods=["get"], url_path="followers", permission_classes=[IsAuthenticated])
+    def followers(self, request, slug=None):
+        """Usuarios que siguen al músico. Solo visible para el dueño del perfil."""
+        profile = self.get_object()
+        follows = (
+            MusicianFollower.objects.filter(musician=profile)
+            .select_related("user")
+            .order_by("-followed_at")
+        )
+        users = [f.user for f in follows]
+        return Response(PublicUserSummarySerializer(users, many=True, context={"request": request}).data)
+
+    @action(detail=False, methods=["get"], url_path="following", permission_classes=[IsAuthenticated])
+    def following(self, request):
+        """Perfiles de músico que sigue el usuario autenticado."""
+        follows = (
+            MusicianFollower.objects.filter(user=request.user, musician__is_active=True)
+            .select_related("musician")
+            .order_by("-followed_at")
+        )
+        profiles = [f.musician for f in follows]
+        return Response(MusicianProfileSummarySerializer(profiles, many=True, context={"request": request}).data)
+
     @action(detail=True, methods=["get"], url_path="works", permission_classes=[AllowAny])
     def works(self, request, slug=None):
         profile = self.get_object()
@@ -147,14 +173,10 @@ class MusicalWorkViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """Asigna automáticamente el músico del usuario actual."""
-        try:
-            musician = MusicianProfile.objects.get(user=self.request.user)
-            serializer.save(musician=musician)
-        except MusicianProfile.DoesNotExist:
-            return Response(
-                {"detail": "Necesitas crear un perfil de músico primero."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        musician = MusicianProfile.objects.filter(user=self.request.user).first()
+        if not musician:
+            raise ValidationError({"detail": "Necesitas crear un perfil de músico primero."})
+        serializer.save(musician=musician)
 
     @action(detail=True, methods=["post"], url_path="view")
     def register_view(self, request, pk=None):

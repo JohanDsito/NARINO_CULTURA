@@ -1,3 +1,4 @@
+from django.db.models import Q
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
@@ -11,6 +12,7 @@ from utils.permissions import IsAdmin
 
 class AuctionViewSet(viewsets.ModelViewSet):
     serializer_class = AuctionSerializer
+    filterset_fields = ("status",)
 
     def get_permissions(self):
         if self.action in {"list", "retrieve"}:
@@ -18,10 +20,18 @@ class AuctionViewSet(viewsets.ModelViewSet):
         return super().get_permissions()
 
     def get_queryset(self):
-        return (
+        qs = (
             Auction.objects.select_related("artwork", "seller", "highest_bidder", "winner")
             .prefetch_related("bids")
         )
+        user = self.request.user
+        if user.is_authenticated and user.role == "ADMINISTRADOR":
+            return qs
+        # Las subastas pendientes de aprobación solo las ve su vendedor (y el admin)
+        visible = ~Q(status=Auction.Status.PENDIENTE)
+        if user.is_authenticated:
+            visible |= Q(seller=user)
+        return qs.filter(visible)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)

@@ -177,6 +177,58 @@ class FollowMusicianTests(TestCase):
         self.assertEqual(response.status_code, 401)
 
 
+class MusicianFollowersListTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.profile = MusicianProfileFactory(is_active=True)
+        self.fan = UserFactory(first_name="Ana", last_name="Pérez")
+        MusicianFollower.objects.create(user=self.fan, musician=self.profile)
+
+    def test_owner_sees_followers(self):
+        self.client.force_authenticate(user=self.profile.user)
+        response = self.client.get(f"/api/v1/musicians/{self.profile.slug}/followers/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["id"], str(self.fan.id))
+        self.assertEqual(response.data[0]["first_name"], "Ana")
+        self.assertNotIn("email", response.data[0])
+
+    def test_other_user_cannot_see_followers(self):
+        self.client.force_authenticate(user=self.fan)
+        response = self.client.get(f"/api/v1/musicians/{self.profile.slug}/followers/")
+        self.assertEqual(response.status_code, 404)
+
+    def test_followers_requires_authentication(self):
+        response = self.client.get(f"/api/v1/musicians/{self.profile.slug}/followers/")
+        self.assertEqual(response.status_code, 401)
+
+
+class MusicianFollowingListTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.fan = UserFactory()
+        self.followed = MusicianProfileFactory(is_active=True)
+        MusicianProfileFactory(is_active=True)  # no seguido
+        MusicianFollower.objects.create(user=self.fan, musician=self.followed)
+
+    def test_lists_followed_musicians(self):
+        self.client.force_authenticate(user=self.fan)
+        response = self.client.get("/api/v1/musicians/following/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([m["slug"] for m in response.data], [self.followed.slug])
+        self.assertEqual(response.data[0]["artistic_name"], self.followed.artistic_name)
+
+    def test_hides_inactive_musicians(self):
+        MusicianProfile.objects.filter(pk=self.followed.pk).update(is_active=False)
+        self.client.force_authenticate(user=self.fan)
+        response = self.client.get("/api/v1/musicians/following/")
+        self.assertEqual(response.data, [])
+
+    def test_following_requires_authentication(self):
+        response = self.client.get("/api/v1/musicians/following/")
+        self.assertEqual(response.status_code, 401)
+
+
 class MusicalWorkTests(TestCase):
     def setUp(self):
         self.client = APIClient()
@@ -315,3 +367,16 @@ class MusicDiscoveryTests(TestCase):
         self.client.force_authenticate(user=user)
         response = self.client.get("/api/v1/musicians/me/")
         self.assertEqual(response.status_code, 404)
+
+
+class MusicalWorkCreateWithoutProfileTests(TestCase):
+    def test_create_work_without_musician_profile_fails(self):
+        client = APIClient()
+        client.force_authenticate(user=UserFactory())
+        response = client.post(
+            "/api/v1/musicians/works/",
+            {"title": "Sin perfil", "work_type": "VIDEO", "youtube_url": "https://youtube.com/watch?v=x"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(MusicalWork.objects.filter(title="Sin perfil").exists())
