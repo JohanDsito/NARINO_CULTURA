@@ -1,8 +1,9 @@
-import os
 from datetime import timedelta
 from pathlib import Path
-from dotenv import load_dotenv
+
 from decouple import Csv, config
+from dotenv import load_dotenv
+
 load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -273,7 +274,14 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.auctions.tasks.close_expired_auctions",
         "schedule": 60.0,
     },
+    "expire-unpaid-auction-orders": {
+        "task": "apps.auctions.tasks.expire_unpaid_auction_orders",
+        "schedule": 900.0,
+    },
 }
+
+# Horas que tiene el ganador de una subasta para pagar antes de que la obra se libere
+AUCTION_PAYMENT_HOURS = config("AUCTION_PAYMENT_HOURS", default=48, cast=int)
 
 # Cache - Usa Redis si está disponible, sino usa memoria local
 if REDIS_URL_CONFIGURED:

@@ -1,14 +1,17 @@
 from __future__ import annotations
 
+from datetime import timedelta
 from decimal import Decimal
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
 from apps.artworks.models import Artwork
 from apps.auctions.models import Auction, Bid
+from apps.marketplace.models import Order, OrderItem
 from services.notification_service import NotificationService
 
 
@@ -160,9 +163,12 @@ class AuctionService:
         avisa a los clientes conectados y notifica. Lo usan el cierre manual y el automático."""
         locked.status = Auction.Status.CERRADA
         locked.winner_id = locked.highest_bidder_id
-        locked.save(update_fields=["status", "winner", "updated_at"])
-
         artwork = locked.artwork
+        order = AuctionService._create_winner_order(locked) if locked.winner_id else None
+        locked.payment_order = order
+        locked.save(update_fields=["status", "winner", "payment_order", "updated_at"])
+
+        # Con ganador, la obra queda reservada (INACTIVA) hasta que pague o venza el plazo
         artwork.status = Artwork.Status.INACTIVA if locked.winner_id else Artwork.Status.DISPONIBLE
         artwork.save(update_fields=["status", "updated_at"])
 
@@ -186,7 +192,57 @@ class AuctionService:
             "winner_email": winner.email if winner else "",
             "winner_name": (f"{winner.first_name} {winner.last_name}".strip() or winner.email) if winner else "",
             "final_price": str(locked.current_price),
+            "order_id": str(order.id) if order else None,
+            "payment_due_at": order.payment_due_at.isoformat() if order else None,
         }, user=actor)
+
+    @staticmethod
+    def _create_winner_order(locked: Auction) -> Order:
+        due = timezone.now() + timedelta(hours=settings.AUCTION_PAYMENT_HOURS)
+        order = Order.objects.create(
+            buyer_id=locked.winner_id,
+            total_amount=locked.current_price,
+            status=Order.Status.PENDIENTE,
+            order_type=Order.Type.SUBASTA,
+            payment_due_at=due,
+        )
+        OrderItem.objects.create(order=order, artwork=locked.artwork, price=locked.current_price)
+        return order
+
+    @staticmethod
+    def expire_unpaid_orders() -> int:
+        """Cancela las órdenes de subasta cuyo plazo de pago venció y libera sus obras."""
+        expired_ids = list(
+            Order.objects.filter(
+                order_type=Order.Type.SUBASTA,
+                status=Order.Status.PENDIENTE,
+                payment_due_at__lte=timezone.now(),
+            ).values_list("id", flat=True)
+        )
+        expired = 0
+        for order_id in expired_ids:
+            with transaction.atomic():
+                # Se vuelve a leer con bloqueo: el webhook de pago pudo confirmarla mientras tanto
+                order = Order.objects.select_for_update().filter(id=order_id, status=Order.Status.PENDIENTE).first()
+                if not order:
+                    continue
+                order.status = Order.Status.CANCELADO
+                order.save(update_fields=["status", "updated_at"])
+                for item in order.items.select_related("artwork"):
+                    if item.artwork.status == Artwork.Status.INACTIVA:
+                        item.artwork.status = Artwork.Status.DISPONIBLE
+                        item.artwork.save(update_fields=["status", "updated_at"])
+                NotificationService.send(
+                    "AUCTION_PAYMENT_EXPIRED",
+                    {
+                        "order_id": str(order.id),
+                        "buyer_email": order.buyer.email,
+                        "total_amount": str(order.total_amount),
+                    },
+                    user=order.buyer,
+                )
+                expired += 1
+        return expired
 
     @staticmethod
     def _public_name(user) -> str:

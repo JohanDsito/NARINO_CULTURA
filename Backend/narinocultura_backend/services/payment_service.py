@@ -5,6 +5,7 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.db import transaction
+from django.utils import timezone
 
 from apps.artworks.models import Artwork
 from apps.marketplace.models import Order
@@ -23,6 +24,8 @@ class PaymentService:
             raise ValueError("No tienes permisos para pagar esta orden.")
         if order.status != Order.Status.PENDIENTE:
             raise ValueError("La orden no está en estado PENDIENTE.")
+        if order.payment_due_at and order.payment_due_at <= timezone.now():
+            raise ValueError("El plazo para pagar esta orden venció.")
 
         tx = Transaction.objects.create(order=order, amount=order.total_amount, currency="COP", status=Transaction.Status.PENDIENTE)
         reference = str(order.id)
@@ -47,7 +50,7 @@ class PaymentService:
     @staticmethod
     def _integrity_signature(*, reference: str, amount_in_cents: int, currency: str) -> str:
         key = getattr(settings, "WOMPI_INTEGRITY_KEY", "")
-        raw = f"{reference}{amount_in_cents}{currency}{key}".encode("utf-8")
+        raw = f"{reference}{amount_in_cents}{currency}{key}".encode()
         return hashlib.sha256(raw).hexdigest()
 
     @staticmethod

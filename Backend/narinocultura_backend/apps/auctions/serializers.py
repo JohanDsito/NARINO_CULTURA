@@ -5,6 +5,7 @@ from apps.auctions.models import Auction, Bid
 
 class AuctionSerializer(serializers.ModelSerializer):
     artwork_id = serializers.UUIDField(source="artwork.id", read_only=True)
+    payment_order_id = serializers.SerializerMethodField()
 
     class Meta:
         model = Auction
@@ -20,10 +21,19 @@ class AuctionSerializer(serializers.ModelSerializer):
             "starts_at",
             "ends_at",
             "winner",
+            "payment_order_id",
             "created_at",
             "updated_at",
         )
         read_only_fields = ("id", "seller", "current_price", "highest_bidder", "status", "winner", "created_at", "updated_at")
+
+    def get_payment_order_id(self, obj):
+        # Solo el ganador ve la orden que debe pagar
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        if obj.payment_order_id and user and user.is_authenticated and user.id == obj.winner_id:
+            return str(obj.payment_order_id)
+        return None
 
     def validate(self, attrs):
         # En una edición parcial, las fechas que no se envían se toman de la subasta guardada
