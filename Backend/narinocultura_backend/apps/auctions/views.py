@@ -1,12 +1,15 @@
 from django.db.models import Q
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny
+from rest_framework.exceptions import ValidationError
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from apps.auctions.models import Auction
+from apps.auctions.permissions import IsAuctionSellerOrAdmin
 from apps.auctions.serializers import AuctionSerializer, BidCreateSerializer
 from services.auction_service import AuctionService
+from utils.exceptions import BusinessLogicError
 from utils.permissions import IsAdmin
 
 
@@ -17,6 +20,8 @@ class AuctionViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in {"list", "retrieve"}:
             return [AllowAny()]
+        if self.action in {"update", "partial_update", "destroy"}:
+            return [IsAuthenticated(), IsAuctionSellerOrAdmin()]
         return super().get_permissions()
 
     def get_queryset(self):
@@ -54,6 +59,27 @@ class AuctionViewSet(viewsets.ModelViewSet):
             ends_at=serializer.validated_data["ends_at"],
         )
         serializer.instance = auction
+
+    def _ensure_pending(self, auction):
+        # Una subasta activa ya tiene postores y la obra EN_SUBASTA: se gestiona con close o reject.
+        if auction.status != Auction.Status.PENDIENTE:
+            raise BusinessLogicError("Solo se pueden modificar o eliminar subastas en estado PENDIENTE.")
+
+    def perform_update(self, serializer):
+        auction = serializer.instance
+        self._ensure_pending(auction)
+        artwork = serializer.validated_data.get("artwork")
+        if artwork is not None and artwork.id != auction.artwork_id:
+            raise ValidationError({"artwork": "La obra de una subasta no se puede cambiar."})
+        extra = {}
+        if "base_price" in serializer.validated_data:
+            # Sin pujas todavía, el precio actual sigue al precio base
+            extra["current_price"] = serializer.validated_data["base_price"]
+        serializer.save(**extra)
+
+    def perform_destroy(self, instance):
+        self._ensure_pending(instance)
+        instance.delete()
 
     @action(detail=True, methods=["post"], url_path="bid")
     def bid(self, request, pk=None):
