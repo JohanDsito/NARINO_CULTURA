@@ -7,8 +7,8 @@ from channels.layers import get_channel_layer
 from django.db import transaction
 from django.utils import timezone
 
-from apps.auctions.models import Auction, Bid
 from apps.artworks.models import Artwork
+from apps.auctions.models import Auction, Bid
 from services.notification_service import NotificationService
 
 
@@ -82,46 +82,56 @@ class AuctionService:
         return locked
 
     @staticmethod
-    @transaction.atomic
     def place_bid(*, auction: Auction, bidder, amount: Decimal) -> Bid:
         if not bidder.is_authenticated:
             raise ValueError("Autenticación requerida.")
-        if auction.status != Auction.Status.ACTIVA:
-            raise ValueError("La subasta no está activa.")
 
-        now = timezone.now()
-        if now < auction.starts_at:
-            raise ValueError("La subasta aún no ha iniciado.")
-        if now >= auction.ends_at:
-            AuctionService._close_if_ended(auction_id=auction.id)
-            raise ValueError("La subasta ya finalizó.")
+        with transaction.atomic():
+            # Todas las validaciones se hacen sobre la fila bloqueada, para que dos pujas
+            # simultáneas no vean un estado o un precio desactualizado.
+            locked = Auction.objects.select_for_update().get(id=auction.id)
+            if locked.seller_id == bidder.id:
+                raise ValueError("No puedes pujar en tu propia subasta.")
+            if locked.status != Auction.Status.ACTIVA:
+                raise ValueError("La subasta no está activa.")
 
-        locked = Auction.objects.select_for_update().get(id=auction.id)
-        if amount <= locked.current_price:
-            raise ValueError("La puja debe ser mayor al precio actual.")
+            now = timezone.now()
+            if now < locked.starts_at:
+                raise ValueError("La subasta aún no ha iniciado.")
+            expired = now >= locked.ends_at
+            if not expired:
+                if amount <= locked.current_price:
+                    raise ValueError("La puja debe ser mayor al precio actual.")
 
-        bid = Bid.objects.create(auction=locked, bidder=bidder, amount=amount)
-        locked.current_price = amount
-        locked.highest_bidder = bidder
-        locked.save(update_fields=["current_price", "highest_bidder", "updated_at"])
+                bid = Bid.objects.create(auction=locked, bidder=bidder, amount=amount)
+                locked.current_price = amount
+                locked.highest_bidder = bidder
+                locked.save(update_fields=["current_price", "highest_bidder", "updated_at"])
 
-        AuctionService._broadcast(
-            auction_id=str(locked.id),
-            payload={
-                "type": "bid",
-                "auction_id": str(locked.id),
-                "amount": str(amount),
-                "bidder_id": str(bidder.id),
-                "current_price": str(locked.current_price),
-                "ends_at": locked.ends_at.isoformat(),
-            },
-        )
-        NotificationService.send(
-            "AUCTION_BID",
-            {"auction_id": str(locked.id), "amount": str(amount), "bidder_id": str(bidder.id)},
-            user=bidder,
-        )
-        return bid
+                AuctionService._broadcast_on_commit(
+                    auction_id=str(locked.id),
+                    payload={
+                        "type": "bid_placed",
+                        "auction_id": str(locked.id),
+                        "amount": str(amount),
+                        "current_price": str(locked.current_price),
+                        "highest_bidder_id": str(bidder.id),
+                        "bidder_id": str(bidder.id),
+                        "bidder_name": AuctionService._public_name(bidder),
+                        "ends_at": locked.ends_at.isoformat(),
+                    },
+                )
+                NotificationService.send(
+                    "AUCTION_BID",
+                    {"auction_id": str(locked.id), "amount": str(amount), "bidder_id": str(bidder.id)},
+                    user=bidder,
+                )
+                return bid
+
+        # El cierre se hace fuera de la transacción de la puja: si se hiciera dentro,
+        # el ValueError lo revertiría.
+        AuctionService._close_if_ended(auction_id=auction.id)
+        raise ValueError("La subasta ya finalizó.")
 
     @staticmethod
     @transaction.atomic
@@ -131,47 +141,8 @@ class AuctionService:
             raise ValueError("La subasta ya fue cerrada o cancelada.")
         if actor.id != locked.seller_id and getattr(actor, "role", None) != "ADMINISTRADOR":
             raise ValueError("No tienes permisos para cerrar esta subasta.")
-
-        locked.status = Auction.Status.CERRADA
-        locked.winner_id = locked.highest_bidder_id
-        locked.save(update_fields=["status", "winner", "updated_at"])
-
-        artwork = locked.artwork
-        if locked.winner_id:
-            artwork.status = Artwork.Status.INACTIVA
-        else:
-            artwork.status = Artwork.Status.DISPONIBLE
-        artwork.save(update_fields=["status", "updated_at"])
-
-        AuctionService._broadcast(
-            auction_id=str(locked.id),
-            payload={"type": "closed", "auction_id": str(locked.id), "winner_id": str(locked.winner_id) if locked.winner_id else None},
-        )
-        winner_email = ""
-        winner_name = ""
-        if locked.winner_id:
-            from apps.users.models import User as _User
-            w = _User.objects.filter(id=locked.winner_id).values("email", "first_name", "last_name").first()
-            if w:
-                winner_email = w["email"]
-                winner_name = f"{w['first_name']} {w['last_name']}".strip() or w["email"]
-        NotificationService.send("AUCTION_CLOSED", {
-            "auction_id": str(locked.id),
-            "artwork_title": locked.artwork.title,
-            "winner_id": str(locked.winner_id) if locked.winner_id else None,
-            "winner_email": winner_email,
-            "winner_name": winner_name,
-            "final_price": str(locked.current_price),
-        }, user=actor)
+        AuctionService._finalize(locked, actor=actor)
         return locked
-
-    @staticmethod
-    def _broadcast(*, auction_id: str, payload: dict) -> None:
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(
-            f"auction_{auction_id}",
-            {"type": "auction_event", "payload": payload},
-        )
 
     @staticmethod
     @transaction.atomic
@@ -181,9 +152,57 @@ class AuctionService:
             return
         if timezone.now() < locked.ends_at:
             return
+        AuctionService._finalize(locked, actor=None)
+
+    @staticmethod
+    def _finalize(locked: Auction, *, actor) -> None:
+        """Cierra una subasta ACTIVA ya bloqueada: fija el ganador, libera o reserva la obra,
+        avisa a los clientes conectados y notifica. Lo usan el cierre manual y el automático."""
         locked.status = Auction.Status.CERRADA
         locked.winner_id = locked.highest_bidder_id
         locked.save(update_fields=["status", "winner", "updated_at"])
-        locked.artwork.status = Artwork.Status.INACTIVA if locked.winner_id else Artwork.Status.DISPONIBLE
-        locked.artwork.save(update_fields=["status", "updated_at"])
 
+        artwork = locked.artwork
+        artwork.status = Artwork.Status.INACTIVA if locked.winner_id else Artwork.Status.DISPONIBLE
+        artwork.save(update_fields=["status", "updated_at"])
+
+        winner_id = str(locked.winner_id) if locked.winner_id else None
+        AuctionService._broadcast_on_commit(
+            auction_id=str(locked.id),
+            payload={
+                "type": "auction_closed",
+                "auction_id": str(locked.id),
+                "winner_id": winner_id,
+                "current_price": str(locked.current_price),
+                "ends_at": locked.ends_at.isoformat(),
+            },
+        )
+
+        winner = locked.winner if locked.winner_id else None
+        NotificationService.send("AUCTION_CLOSED", {
+            "auction_id": str(locked.id),
+            "artwork_title": artwork.title,
+            "winner_id": winner_id,
+            "winner_email": winner.email if winner else "",
+            "winner_name": (f"{winner.first_name} {winner.last_name}".strip() or winner.email) if winner else "",
+            "final_price": str(locked.current_price),
+        }, user=actor)
+
+    @staticmethod
+    def _public_name(user) -> str:
+        # Nombre visible para los demás postores: nombre y la inicial del apellido
+        initial = f" {user.last_name[:1]}." if user.last_name else ""
+        return f"{user.first_name}{initial}".strip() or "Postor"
+
+    @staticmethod
+    def _broadcast_on_commit(*, auction_id: str, payload: dict) -> None:
+        # Se emite solo si la transacción se confirma: los clientes nunca ven un precio revertido
+        transaction.on_commit(lambda: AuctionService._broadcast(auction_id=auction_id, payload=payload))
+
+    @staticmethod
+    def _broadcast(*, auction_id: str, payload: dict) -> None:
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f"auction_{auction_id}",
+            {"type": "auction_event", "payload": payload},
+        )
