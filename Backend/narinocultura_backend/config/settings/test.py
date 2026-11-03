@@ -20,7 +20,7 @@ def _patch_django_context_copy():
 
 _patch_django_context_copy()
 
-from .base import *  # noqa: F401, F403
+from .base import *  # noqa: E402, F401, F403
 
 DATABASES = {
     "default": {
@@ -51,6 +51,9 @@ EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 
 # Disable channel layers (no Redis needed)
 CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
+
+# Secreto fijo para firmar los webhooks de Wompi en las pruebas
+WOMPI_EVENTS_SECRET = "test_events_secret"
 
 # No Celery tasks during tests
 CELERY_TASK_ALWAYS_EAGER = True

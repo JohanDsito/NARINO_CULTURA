@@ -1,8 +1,9 @@
-import os
 from datetime import timedelta
 from pathlib import Path
-from dotenv import load_dotenv
+
 from decouple import Csv, config
+from dotenv import load_dotenv
+
 load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -252,6 +253,9 @@ WOMPI_BASE_URL = config("WOMPI_BASE_URL", default="https://sandbox.wompi.co/v1")
 WOMPI_PUBLIC_KEY = config("WOMPI_PUBLIC_KEY", default="")
 WOMPI_PRIVATE_KEY = config("WOMPI_PRIVATE_KEY", default="")
 WOMPI_INTEGRITY_KEY = config("WOMPI_INTEGRITY_KEY", default="")
+# Secreto de eventos (Dashboard de Wompi > Mi cuenta > Secretos para integración técnica).
+# Firma los webhooks; es distinto de la llave de integridad usada por el widget.
+WOMPI_EVENTS_SECRET = config("WOMPI_EVENTS_SECRET", default="")
 
 # Celery - Usa Redis si está disponible, sino ejecuta tareas sincronamente
 if REDIS_URL_CONFIGURED:
