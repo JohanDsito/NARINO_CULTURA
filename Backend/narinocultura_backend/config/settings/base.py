@@ -232,6 +232,8 @@ EMAIL_PORT = config("EMAIL_PORT", default=587, cast=int)
 EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True, cast=bool)
 EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
+# Railway (plan Hobby) bloquea los puertos SMTP: sin timeout, el respaldo SMTP colgaría al worker
+EMAIL_TIMEOUT = config("EMAIL_TIMEOUT", default=10, cast=int)
 DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="noreply@narinocultura.uk")
 
 # Resend Configuration
@@ -243,8 +245,6 @@ BREVO_API_KEY = config("BREVO_API_KEY", default="")
 BREVO_FROM_EMAIL = config("BREVO_FROM_EMAIL", default="noreply@narinocultura.uk")
 
 AI_SERVICE_URL = config("AI_SERVICE_URL", default="")
-# Webhook de n8n que recibe los eventos de negocio (subastas, pagos, eventos). Vacío = no se envían.
-N8N_WEBHOOK_URL = config("N8N_WEBHOOK_URL", default="")
 FRONTEND_URL = config(
     "FRONTEND_URL",
     default=config("FRONTEND_BASE_URL", default="http://localhost:5173"),

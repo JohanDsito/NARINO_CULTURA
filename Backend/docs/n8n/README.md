@@ -1,3 +1,10 @@
+> **Obsoleto desde noviembre de 2026 (HU-B08, #149).** El backend ya no usa n8n: las
+> notificaciones de negocio se envían por correo directamente desde Django, con una tarea de
+> Celery y Resend (`services/notification_service.py`, `services/notification_emails.py` y
+> `templates/emails/notifications/`). Railway bloquea SMTP en el plan Hobby y n8n solo reenviaba
+> correos, así que se eliminó para no mantener ni pagar un servicio adicional. Los flujos se
+> conservan como referencia histórica del proyecto. La variable `N8N_WEBHOOK_URL` ya no se usa.
+
 # Integracion de n8n para Narino Cultura
 
 Tu backend envia eventos a `n8n` usando la variable `N8N_WEBHOOK_URL`.

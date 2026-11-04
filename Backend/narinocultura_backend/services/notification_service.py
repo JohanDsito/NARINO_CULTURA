@@ -2,23 +2,23 @@ from __future__ import annotations
 
 import logging
 
-import requests
-from django.conf import settings
 from django.db import transaction
 
 from apps.notifications.models import NotificationLog
+from services.email_service import EmailService
+from services.notification_emails import build_notification_email
 
 logger = logging.getLogger("services.notifications")
 
 
 class NotificationDeliveryError(Exception):
-    """Fallo temporal al entregar a n8n (red o error 5xx): la tarea lo reintenta."""
+    """El proveedor de correo no aceptó el envío: la tarea lo reintenta."""
 
 
 class NotificationService:
     @staticmethod
     def send(notification_type: str, payload: dict, user=None) -> NotificationLog:
-        """Registra la notificación y encola su entrega a n8n cuando la transacción se confirma.
+        """Registra la notificación y encola su envío por correo cuando la transacción se confirma.
 
         Nunca hace llamadas HTTP dentro de la transacción del llamador (pujas, pagos): si la
         operación se revierte, el registro también se revierte y no se envía nada."""
@@ -45,39 +45,23 @@ class NotificationService:
 
     @staticmethod
     def deliver(log_id: str) -> None:
-        """Un intento de entrega. Lanza NotificationDeliveryError si vale la pena reintentar."""
+        """Un intento de envío. Lanza NotificationDeliveryError si vale la pena reintentar."""
         log = NotificationLog.objects.select_related("user").filter(id=log_id).first()
         if not log or log.status != NotificationLog.Status.PENDIENTE:
             return
 
-        webhook_url = getattr(settings, "N8N_WEBHOOK_URL", "")
-        if not webhook_url:
-            logger.warning("N8N_WEBHOOK_URL no está configurada; %s no se envió", log.notification_type)
-            NotificationService._set_status(log, NotificationLog.Status.FALLIDO)
+        email = build_notification_email(log)
+        if email is None:
+            # Tipo sin correo (p. ej. AUCTION_BID): solo queda en el historial de la plataforma
+            NotificationService._set_status(log, NotificationLog.Status.SIN_CORREO)
             return
 
-        body = {"type": log.notification_type, "payload": log.payload}
-        if log.user:
-            body["user"] = {
-                "id": str(log.user.id),
-                "email": log.user.email,
-                "first_name": log.user.first_name,
-                "last_name": log.user.last_name,
-            }
-
-        try:
-            response = requests.post(webhook_url, json=body, timeout=10)
-        except requests.RequestException as exc:
-            raise NotificationDeliveryError(str(exc)) from exc
-
-        if response.status_code >= 500:
-            raise NotificationDeliveryError(f"n8n respondió {response.status_code}")
-        if 200 <= response.status_code < 300:
-            NotificationService._set_status(log, NotificationLog.Status.ENVIADO)
-        else:
-            # 4xx: el flujo de n8n rechaza el mensaje; reintentar no lo arregla
-            logger.warning("n8n rechazó %s con %s", log.notification_type, response.status_code)
-            NotificationService._set_status(log, NotificationLog.Status.FALLIDO)
+        result = EmailService.send_template(
+            to=email.to, subject=email.subject, template=email.template, context=email.context
+        )
+        if not result.ok:
+            raise NotificationDeliveryError(result.error_message or "envío fallido")
+        NotificationService._set_status(log, NotificationLog.Status.ENVIADO)
 
     @staticmethod
     def mark_failed(log_id: str) -> None:
