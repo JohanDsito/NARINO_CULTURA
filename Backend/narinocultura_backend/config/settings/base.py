@@ -232,6 +232,8 @@ EMAIL_PORT = config("EMAIL_PORT", default=587, cast=int)
 EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True, cast=bool)
 EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
+# Railway (plan Hobby) bloquea los puertos SMTP: sin timeout, el respaldo SMTP colgaría al worker
+EMAIL_TIMEOUT = config("EMAIL_TIMEOUT", default=10, cast=int)
 DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="noreply@narinocultura.uk")
 
 # Resend Configuration
@@ -259,11 +261,12 @@ if REDIS_URL_CONFIGURED:
     CELERY_BROKER_URL = REDIS_URL_CONFIGURED
     CELERY_RESULT_BACKEND = REDIS_URL_CONFIGURED
 else:
-    # TEMPORAL: Celery sin broker (tareas ejecutan sincronamente)
-    CELERY_ALWAYS_EAGER = True
-    CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
+    # Sin broker las tareas se ejecutan en el mismo proceso (con namespace="CELERY",
+    # los nombres antiguos CELERY_ALWAYS_EAGER se ignoraban y las tareas nunca corrían)
+    CELERY_TASK_ALWAYS_EAGER = True
+    CELERY_TASK_EAGER_PROPAGATES = True
     CELERY_BROKER_URL = "memory://"
-    CELERY_RESULT_BACKEND = "cache"
+    CELERY_RESULT_BACKEND = "cache+memory://"
 
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"

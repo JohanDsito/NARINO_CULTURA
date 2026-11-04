@@ -6,8 +6,10 @@ from utils.models import TimeStampedUUIDModel
 
 class NotificationLog(TimeStampedUUIDModel):
     class Status(models.TextChoices):
+        PENDIENTE = "PENDIENTE", "Pendiente"
         ENVIADO = "ENVIADO", "Enviado"
         FALLIDO = "FALLIDO", "Fallido"
+        SIN_CORREO = "SIN_CORREO", "Sin correo"
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL
