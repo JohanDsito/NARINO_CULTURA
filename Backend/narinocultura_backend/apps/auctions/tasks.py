@@ -33,3 +33,13 @@ def close_expired_auctions(self):
                 self.retry(exc=exc)
             except self.MaxRetriesExceededError:
                 logger.error("Max retries exceeded for auction %s", auction_id)
+
+
+@shared_task(ignore_result=True)
+def expire_unpaid_auction_orders():
+    """Cancela las órdenes de subasta no pagadas dentro del plazo. Se ejecuta cada 15 min vía Celery Beat."""
+    from services.auction_service import AuctionService
+
+    expired = AuctionService.expire_unpaid_orders()
+    if expired:
+        logger.info("Expired %d unpaid auction order(s)", expired)
