@@ -52,6 +52,9 @@ EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 # Disable channel layers (no Redis needed)
 CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
 
+# Secreto fijo para firmar los webhooks de Wompi en las pruebas
+WOMPI_EVENTS_SECRET = "test_events_secret"
+
 # No Celery tasks during tests
 CELERY_TASK_ALWAYS_EAGER = True
 CELERY_TASK_EAGER_PROPAGATES = True
