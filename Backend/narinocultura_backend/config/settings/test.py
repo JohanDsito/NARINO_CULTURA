@@ -52,6 +52,10 @@ EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 # Disable channel layers (no Redis needed)
 CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
 
+# No Celery tasks during tests
+CELERY_TASK_ALWAYS_EAGER = True
+CELERY_TASK_EAGER_PROPAGATES = True
+
 # Las pruebas no dependen del .env local ni llaman a servicios externos reales
 N8N_WEBHOOK_URL = ""
 AI_SERVICE_URL = ""
@@ -61,7 +65,3 @@ WOMPI_PUBLIC_KEY = ""
 WOMPI_PRIVATE_KEY = ""
 WOMPI_INTEGRITY_KEY = ""
 STORAGES = {**STORAGES, "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}}  # noqa: F405
-
-# No Celery tasks during tests
-CELERY_TASK_ALWAYS_EAGER = True
-CELERY_TASK_EAGER_PROPAGATES = True
