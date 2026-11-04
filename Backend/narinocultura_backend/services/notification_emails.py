@@ -24,7 +24,7 @@ def _frontend(path: str) -> str:
     return f"{settings.FRONTEND_URL.rstrip('/')}{path}"
 
 
-def _price(value) -> str:
+def format_price(value) -> str:
     try:
         amount = Decimal(str(value))
     except (InvalidOperation, TypeError):
@@ -32,7 +32,7 @@ def _price(value) -> str:
     return "$" + f"{amount:,.0f}".replace(",", ".") + " COP"
 
 
-def _date(value):
+def parse_date_value(value):
     return parse_datetime(value) if isinstance(value, str) else value
 
 
@@ -44,7 +44,7 @@ def _auction_opened(payload, log):
         context={
             "name": payload.get("seller_name"),
             "artwork_title": payload.get("artwork_title"),
-            "ends_at": _date(payload.get("ends_at")),
+            "ends_at": parse_date_value(payload.get("ends_at")),
             "auction_url": _frontend(f"/auctions/{payload.get('auction_id', '')}"),
         },
     )
@@ -69,8 +69,8 @@ def _auction_closed(payload, log):
         context={
             "name": payload.get("winner_name"),
             "artwork_title": payload.get("artwork_title"),
-            "final_price": _price(payload.get("final_price")),
-            "payment_due_at": _date(payload.get("payment_due_at")),
+            "final_price": format_price(payload.get("final_price")),
+            "payment_due_at": parse_date_value(payload.get("payment_due_at")),
             "orders_url": _frontend("/orders"),
         },
     )
@@ -82,7 +82,7 @@ def _auction_payment_expired(payload, log):
         to=payload.get("buyer_email", ""),
         subject="Venció el plazo de pago de tu subasta",
         template="emails/notifications/auction_payment_expired.html",
-        context={"name": user.first_name if user else "", "total_amount": _price(payload.get("total_amount"))},
+        context={"name": user.first_name if user else "", "total_amount": format_price(payload.get("total_amount"))},
     )
 
 
@@ -100,7 +100,7 @@ def _payment_webhook(payload, log):
         template="emails/notifications/payment_approved.html",
         context={
             "name": order.buyer.first_name,
-            "amount": _price(order.total_amount),
+            "amount": format_price(order.total_amount),
             "order_id": str(order.id),
             "orders_url": _frontend("/orders"),
         },
@@ -115,7 +115,7 @@ def _event_registration(payload, log):
         context={
             "name": payload.get("user_name"),
             "event_title": payload.get("event_title"),
-            "event_date": _date(payload.get("event_date")),
+            "event_date": parse_date_value(payload.get("event_date")),
             "event_location": payload.get("event_location"),
             "event_url": _frontend(f"/events/{payload.get('event_id', '')}"),
         },
