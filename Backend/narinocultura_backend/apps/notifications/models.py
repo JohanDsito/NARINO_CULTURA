@@ -29,3 +29,30 @@ class NotificationLog(TimeStampedUUIDModel):
     def __str__(self):
         return f"{self.notification_type} - {self.status}"
 
+
+
+class Notification(TimeStampedUUIDModel):
+    """Notificación de la bandeja de un usuario (campana de la web y pantalla de la app).
+
+    A diferencia de NotificationLog, que registra el envío de cada evento de negocio, aquí hay
+    una fila por destinatario con un texto pensado para mostrarse en la plataforma."""
+
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications"
+    )
+    notification_type = models.CharField(max_length=100)
+    title = models.CharField(max_length=200)
+    body = models.TextField(blank=True)
+    # Identificadores para navegar (auction_id, order_id, event_id) y la ruta del frontend
+    data = models.JSONField(default=dict, blank=True)
+    read_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["recipient", "-created_at"]),
+            models.Index(fields=["recipient", "read_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.recipient_id} - {self.title}"

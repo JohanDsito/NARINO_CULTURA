@@ -106,6 +106,7 @@ class AuctionService:
                 if amount <= locked.current_price:
                     raise ValueError("La puja debe ser mayor al precio actual.")
 
+                previous_bidder_id = locked.highest_bidder_id
                 bid = Bid.objects.create(auction=locked, bidder=bidder, amount=amount)
                 locked.current_price = amount
                 locked.highest_bidder = bidder
@@ -126,7 +127,12 @@ class AuctionService:
                 )
                 NotificationService.send(
                     "AUCTION_BID",
-                    {"auction_id": str(locked.id), "amount": str(amount), "bidder_id": str(bidder.id)},
+                    {
+                        "auction_id": str(locked.id),
+                        "amount": str(amount),
+                        "bidder_id": str(bidder.id),
+                        "previous_bidder_id": str(previous_bidder_id) if previous_bidder_id else None,
+                    },
                     user=bidder,
                 )
                 return bid
