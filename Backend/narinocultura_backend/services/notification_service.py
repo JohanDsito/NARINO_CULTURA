@@ -4,9 +4,10 @@ import logging
 
 from django.db import transaction
 
-from apps.notifications.models import NotificationLog
+from apps.notifications.models import Notification, NotificationLog
 from services.email_service import EmailService
 from services.notification_emails import build_notification_email
+from services.notification_inbox import build_inbox_items
 
 logger = logging.getLogger("services.notifications")
 
@@ -18,7 +19,8 @@ class NotificationDeliveryError(Exception):
 class NotificationService:
     @staticmethod
     def send(notification_type: str, payload: dict, user=None) -> NotificationLog:
-        """Registra la notificación y encola su envío por correo cuando la transacción se confirma.
+        """Registra la notificación, la deja en la bandeja de sus destinatarios y encola su envío
+        por correo cuando la transacción se confirma.
 
         Nunca hace llamadas HTTP dentro de la transacción del llamador (pujas, pagos): si la
         operación se revierte, el registro también se revierte y no se envía nada."""
@@ -29,6 +31,17 @@ class NotificationService:
             notification_type=notification_type,
             payload=payload,
             status=NotificationLog.Status.PENDIENTE,
+        )
+        # La bandeja se escribe en la misma transacción: si la operación se revierte, desaparece
+        Notification.objects.bulk_create(
+            Notification(
+                recipient_id=item.recipient_id,
+                notification_type=notification_type,
+                title=item.title,
+                body=item.body,
+                data=item.data,
+            )
+            for item in build_inbox_items(notification_type, payload)
         )
         log_id = str(log.id)
         transaction.on_commit(lambda: NotificationService._enqueue(deliver_notification, log_id))
