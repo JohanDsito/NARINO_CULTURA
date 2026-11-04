@@ -6,6 +6,7 @@ from utils.models import TimeStampedUUIDModel
 
 class NotificationLog(TimeStampedUUIDModel):
     class Status(models.TextChoices):
+        PENDIENTE = "PENDIENTE", "Pendiente"
         ENVIADO = "ENVIADO", "Enviado"
         FALLIDO = "FALLIDO", "Fallido"
 

@@ -20,7 +20,7 @@ def _patch_django_context_copy():
 
 _patch_django_context_copy()
 
-from .base import *  # noqa: F401, F403
+from .base import *  # noqa: E402, F401, F403
 
 DATABASES = {
     "default": {
@@ -51,6 +51,16 @@ EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 
 # Disable channel layers (no Redis needed)
 CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
+
+# Las pruebas no dependen del .env local ni llaman a servicios externos reales
+N8N_WEBHOOK_URL = ""
+AI_SERVICE_URL = ""
+RESEND_API_KEY = ""
+BREVO_API_KEY = ""
+WOMPI_PUBLIC_KEY = ""
+WOMPI_PRIVATE_KEY = ""
+WOMPI_INTEGRITY_KEY = ""
+STORAGES = {**STORAGES, "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}}  # noqa: F405
 
 # No Celery tasks during tests
 CELERY_TASK_ALWAYS_EAGER = True

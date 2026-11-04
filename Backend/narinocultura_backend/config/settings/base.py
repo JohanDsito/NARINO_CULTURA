@@ -1,8 +1,9 @@
-import os
 from datetime import timedelta
 from pathlib import Path
-from dotenv import load_dotenv
+
 from decouple import Csv, config
+from dotenv import load_dotenv
+
 load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -242,6 +243,8 @@ BREVO_API_KEY = config("BREVO_API_KEY", default="")
 BREVO_FROM_EMAIL = config("BREVO_FROM_EMAIL", default="noreply@narinocultura.uk")
 
 AI_SERVICE_URL = config("AI_SERVICE_URL", default="")
+# Webhook de n8n que recibe los eventos de negocio (subastas, pagos, eventos). Vacío = no se envían.
+N8N_WEBHOOK_URL = config("N8N_WEBHOOK_URL", default="")
 FRONTEND_URL = config(
     "FRONTEND_URL",
     default=config("FRONTEND_BASE_URL", default="http://localhost:5173"),
@@ -258,9 +261,10 @@ if REDIS_URL_CONFIGURED:
     CELERY_BROKER_URL = REDIS_URL_CONFIGURED
     CELERY_RESULT_BACKEND = REDIS_URL_CONFIGURED
 else:
-    # TEMPORAL: Celery sin broker (tareas ejecutan sincronamente)
-    CELERY_ALWAYS_EAGER = True
-    CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
+    # Sin broker las tareas se ejecutan en el mismo proceso (con namespace="CELERY",
+    # los nombres antiguos CELERY_ALWAYS_EAGER se ignoraban y las tareas nunca corrían)
+    CELERY_TASK_ALWAYS_EAGER = True
+    CELERY_TASK_EAGER_PROPAGATES = True
     CELERY_BROKER_URL = "memory://"
     CELERY_RESULT_BACKEND = "cache"
 
