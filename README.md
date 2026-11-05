@@ -71,7 +71,8 @@ NARINO_CULTURA/
 │   │   └── tests/               # Factories y utilidades de prueba
 │   ├── ai_service/              # Microservicio de IA (FastAPI)
 │   ├── Dockerfile · Procfile    # Despliegue en Railway
-│   └── requirements.txt
+│   ├── requirements.txt         # Dependencias de producción
+│   └── requirements-dev.txt     # Producción + herramientas de prueba (CI y local)
 ├── Front/Narino_Front/          # Aplicación web (React + Vite)
 ├── docs/                        # Documentación (ver docs/README.md)
 └── .github/workflows/           # Integración continua del backend
@@ -85,7 +86,7 @@ Requisitos: Python 3.12. PostgreSQL y Redis son opcionales en desarrollo.
 cd Backend/narinocultura_backend
 python -m venv venv
 venv\Scripts\activate          # Windows  (Linux/macOS: source venv/bin/activate)
-pip install -r requirements.txt
+pip install -r ../requirements-dev.txt
 cp ../.env.example ../.env     # y completa las variables
 python manage.py migrate
 python manage.py runserver
@@ -102,7 +103,11 @@ cd Backend/narinocultura_backend
 DJANGO_SETTINGS_MODULE=config.settings.test python manage.py test apps
 ```
 
-Las pruebas usan SQLite en memoria y no llaman a servicios externos. El CI (`.github/workflows/backend-ci.yml`) las ejecuta en cada pull request, exige **80 % de cobertura** y pasa `ruff` sobre los archivos modificados.
+Las pruebas usan SQLite en memoria y no llaman a servicios externos. El CI (`.github/workflows/backend-ci.yml`) las ejecuta en cada pull request, exige **80 % de cobertura** y que `ruff` no reporte ninguna advertencia en el backend. Para revisarlo en local:
+
+```bash
+ruff check --config ../pyproject.toml .
+```
 
 ## Variables de entorno principales
 
