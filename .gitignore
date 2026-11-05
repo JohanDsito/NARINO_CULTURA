@@ -15,3 +15,6 @@ __pycache__/
 .DS_Store
 Thumbs.db
 .idea/
+
+# Informes y documentos de trabajo locales (no se versionan)
+/docs/informes/
