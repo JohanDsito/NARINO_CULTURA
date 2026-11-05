@@ -1,126 +1,15 @@
-<!DOCTYPE html>
-<html dir="ltr" lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        .container {
-            background-color: #ffffff;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #ffffff;
-            padding: 30px;
-            text-align: center;
-        }
-        .header h1 {
-            margin: 0;
-            font-size: 24px;
-        }
-        .content {
-            padding: 30px;
-        }
-        .button {
-            display: inline-block;
-            background-color: #667eea;
-            color: #ffffff;
-            padding: 12px 30px;
-            text-decoration: none;
-            border-radius: 4px;
-            margin: 20px 0;
-            font-weight: 600;
-        }
-        .button:hover {
-            background-color: #5568d3;
-        }
-        .footer {
-            background-color: #f5f5f5;
-            padding: 20px;
-            text-align: center;
-            font-size: 12px;
-            color: #666;
-        }
-        .footer a {
-            color: #667eea;
-            text-decoration: none;
-        }
-        .features {
-            background-color: #f8f9fa;
-            padding: 20px;
-            border-radius: 4px;
-            margin: 20px 0;
-        }
-        .features ul {
-            list-style: none;
-            padding: 0;
-        }
-        .features li {
-            padding: 10px 0;
-            border-bottom: 1px solid #e0e0e0;
-        }
-        .features li:last-child {
-            border-bottom: none;
-        }
-        .features li:before {
-            content: "✓ ";
-            color: #667eea;
-            font-weight: bold;
-            margin-right: 10px;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>Nariño Cultura</h1>
-            <p>¡Bienvenido a nuestra comunidad!</p>
-        </div>
-        
-        <div class="content">
-            {% if user_name %}
-                <h2>¡Hola {{ user_name }}!</h2>
-            {% else %}
-                <h2>¡Hola!</h2>
-            {% endif %}
-            
-            <p>Te damos la bienvenida a <strong>Nariño Cultura</strong>, tu plataforma para conectar con artistas, eventos y obras de arte de nuestra región.</p>
-            
-            <p>Tu cuenta ha sido creada exitosamente. Estamos emocionados de tenerte en nuestra comunidad.</p>
-            
-            <div class="features">
-                <p style="margin-top: 0;"><strong>Qué puedes hacer ahora:</strong></p>
-                <ul>
-                    <li>Explorar artistas y sus obras</li>
-                    <li>Participar en eventos y subastas</li>
-                    <li>Crear tu perfil personalizado</li>
-                    <li>Conectar con otros miembros de la comunidad</li>
-                    <li>Realizar compras y transacciones seguras</li>
-                </ul>
-            </div>
-            
-            <p style="text-align: center;">
-                <a href="{{ frontend_url }}" class="button">Explorar Nariño Cultura</a>
-            </p>
-            
-            <p style="margin-top: 30px; font-size: 14px; color: #666;">
-                Si tienes preguntas o necesitas ayuda, no dudes en contactarnos. ¡Estamos aquí para ayudarte!
-            </p>
-        </div>
-        
-        <div class="footer">
-            <p>© 2024 Nariño Cultura. Todos los derechos reservados.</p>
-            <p><a href="{{ frontend_url }}">Visitar nuestro sitio web</a></p>
-        </div>
-    </div>
-</body>
-</html>
+{% extends "emails/layout.html" %}
+{% block title %}Bienvenido a Nariño Cultura{% endblock %}
+{% block preheader %}Tu cuenta está activa: descubre artistas, obras, subastas y eventos de Nariño.{% endblock %}
+{% block heading %}¡Bienvenido a Nariño Cultura!{% endblock %}
+{% block content %}
+<p style="margin:0 0 16px;">Tu cuenta está activa. Nariño Cultura reúne en un solo lugar el arte, la música y la agenda cultural de nuestra región.</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:8px 0 8px;">
+  {% for item in features %}<tr>
+    <td width="28" valign="top" style="padding:6px 0; font-family:Arial, Helvetica, sans-serif; font-size:16px; line-height:24px; color:#C9921A; font-weight:700;">✦</td>
+    <td valign="top" style="padding:6px 0; font-family:Arial, Helvetica, sans-serif; font-size:15px; line-height:24px; color:#5C4F3A;">{{ item }}</td>
+  </tr>{% endfor %}
+</table>
+{% include "emails/partials/button.html" with url=frontend_url label="Explorar la plataforma" %}
+<p style="margin:24px 0 0; font-size:13px; line-height:20px; color:#9C8E78;">¿Tienes preguntas? Responde este correo y te ayudaremos.</p>
+{% endblock %}

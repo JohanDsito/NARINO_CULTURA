@@ -41,7 +41,7 @@ class NotificationEmailTests(TestCase):
         self.assertEqual(email.to, ["artista@test.com"])
         self.assertIn("aprobada", email.subject)
         html = email.alternatives[0][0]
-        self.assertIn("Artista Uno", html)
+        self.assertIn("Hola Artista,", html)
         self.assertIn("15 de diciembre de 2030", html)
         self.assertIn(f"{FRONTEND}/auctions/abc", html)
 

@@ -3,7 +3,7 @@ import logging
 from django.db import transaction
 from django.http import HttpResponse
 from rest_framework import generics, status
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -19,7 +19,6 @@ from apps.users.serializers import (
     RegisterSerializer,
     UserMeSerializer,
 )
-from rest_framework.permissions import IsAuthenticated
 from services.email_service import EmailService
 from utils.throttling import AuthAnonThrottle, PasswordResetThrottle
 
@@ -159,7 +158,7 @@ class PasswordResetRequestAPIView(APIView):
         user = User.objects.filter(email=email).first()
         if user:
             reset = PasswordReset.issue_for_user(user)
-            EmailService.send_password_reset_email(user.email, reset.token)
+            EmailService.send_password_reset_email(user.email, reset.token, user.first_name)
         return Response(
             {
                 "detail": (
