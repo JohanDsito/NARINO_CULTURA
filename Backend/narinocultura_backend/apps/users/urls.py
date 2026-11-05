@@ -2,7 +2,6 @@ from django.urls import path
 
 from apps.users import views
 
-
 urlpatterns = [
     path("auth/register/", views.RegisterAPIView.as_view()),
     path("auth/verify-email/", views.VerifyEmailAPIView.as_view()),

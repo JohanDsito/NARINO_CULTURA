@@ -3,15 +3,14 @@ Tests for the musicians module.
 Run with: DJANGO_SETTINGS_MODULE=config.settings.test python manage.py test apps.musicians --verbosity=2
 """
 from django.test import TestCase
-from django.urls import reverse
 from rest_framework.test import APIClient
 
-from apps.musicians.models import MusicGenre, MusicianFollower, MusicianProfile, MusicianReview, MusicalWork
+from apps.musicians.models import MusicalWork, MusicianFollower, MusicianProfile, MusicianReview
 from tests.factories import (
+    MusicalWorkFactory,
     MusicGenreFactory,
     MusicianProfileFactory,
     MusicianUserFactory,
-    MusicalWorkFactory,
     UserFactory,
 )
 

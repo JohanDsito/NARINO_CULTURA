@@ -1,14 +1,15 @@
 import logging
+
 import httpx
 from django.conf import settings
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from apps.musicians.models import MusicianProfile
 from apps.musicians.serializers import MusicianProfileListSerializer
-from services.ai_client import AIServiceClient, AIServiceException
+from services.ai_client import AIServiceClient, AIServiceError
 
 logger = logging.getLogger(__name__)
 
@@ -188,7 +189,7 @@ class ChatAPIView(APIView):
         try:
             response = self.ai_client.chat(message, session_id, history)
             return Response(response, status=200)
-        except AIServiceException as e:
+        except AIServiceError as e:
             logger.warning(f"AI Service error: {str(e)}")
             return Response(
                 {
