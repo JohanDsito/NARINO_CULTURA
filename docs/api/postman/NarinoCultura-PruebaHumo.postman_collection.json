@@ -1,0 +1,1877 @@
+{
+  "info": {
+    "_postman_id": "01ce4f13-fc68-43f4-b361-b0001f89d593",
+    "name": "Nariño Cultura — Prueba de humo (HU-B13)",
+    "description": "Flujo de punta a punta contra el backend desplegado, sin frontend.\n\n1. En las variables de la colección completa los correos (pueden ser alias de Gmail: tu_correo+artista@gmail.com), una contraseña para las cuentas nuevas y las credenciales del administrador.\n2. Ejecuta las carpetas en orden, de arriba hacia abajo.\n3. El pago se hace en el Web Checkout de Wompi (sandbox): la petición 'Iniciar pago' arma el enlace.\n4. La subasta cierra sola: espera auction_minutes y ejecuta las peticiones '[Tras el cierre]'.\n\nWebSocket (opcional): en Postman, New → WebSocket → wss://narinocultura-production.up.railway.app/ws/auctions/{{auction_id}}/ para ver llegar bid_placed y auction_closed en vivo.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "0. Salud",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/health/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "health",
+                ""
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1. Cuentas",
+      "description": "Registra el artista y dos compradores con correos reales (llega el enlace de verificación). Copia el token del enlace en verify_token y ejecuta 'Verificar correo' una vez por cuenta.",
+      "item": [
+        {
+          "name": "Registrar artista",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/register/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register",
+                ""
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{artist_email}}\",\n  \"password\": \"{{password}}\",\n  \"first_name\": \"Artista\",\n  \"last_name\": \"Prueba\",\n  \"role\": \"ARTISTA\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Registrar comprador 1",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/register/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register",
+                ""
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{buyer1_email}}\",\n  \"password\": \"{{password}}\",\n  \"first_name\": \"Ana\",\n  \"last_name\": \"Compradora\",\n  \"role\": \"COMPRADOR\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Registrar comprador 2",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/register/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register",
+                ""
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{buyer2_email}}\",\n  \"password\": \"{{password}}\",\n  \"first_name\": \"Luis\",\n  \"last_name\": \"Comprador\",\n  \"role\": \"COMPRADOR\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verificar correo (repetir por cuenta)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/verify-email/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "verify-email",
+                ""
+              ]
+            },
+            "description": "El token está al final del enlace del correo de verificación: ...?token=ESTE_VALOR",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{verify_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/login/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login",
+                ""
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "if (pm.response.code < 300) { pm.collectionVariables.set(\"admin_token\", pm.response.json().access); console.log(\"admin_token =\", pm.response.json().access); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login artista",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/login/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login",
+                ""
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{artist_email}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "if (pm.response.code < 300) { pm.collectionVariables.set(\"artist_token\", pm.response.json().access); console.log(\"artist_token =\", pm.response.json().access); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login comprador 1",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/login/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login",
+                ""
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{buyer1_email}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "if (pm.response.code < 300) { pm.collectionVariables.set(\"buyer1_token\", pm.response.json().access); console.log(\"buyer1_token =\", pm.response.json().access); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login comprador 2",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/login/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login",
+                ""
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{buyer2_email}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "if (pm.response.code < 300) { pm.collectionVariables.set(\"buyer2_token\", pm.response.json().access); console.log(\"buyer2_token =\", pm.response.json().access); }"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Obras",
+      "item": [
+        {
+          "name": "Crear perfil de artista",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{artist_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/artists/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "artists",
+                ""
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"artistic_name\": \"Artista Prueba Humo\",\n  \"discipline\": \"Pintura\",\n  \"city\": \"Pasto\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear obra para venta directa",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{artist_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/artworks/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "artworks",
+                ""
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Obra venta directa (prueba)\",\n  \"description\": \"Obra de la prueba de humo\",\n  \"technique\": \"Óleo\",\n  \"price\": \"50000.00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "if (pm.response.code < 300) { pm.collectionVariables.set(\"artwork_sale_id\", pm.response.json().id); console.log(\"artwork_sale_id =\", pm.response.json().id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear obra para subasta",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{artist_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/artworks/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "artworks",
+                ""
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Obra subasta (prueba)\",\n  \"description\": \"Obra de la prueba de humo\",\n  \"technique\": \"Acuarela\",\n  \"price\": \"100000.00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "if (pm.response.code < 300) { pm.collectionVariables.set(\"artwork_auction_id\", pm.response.json().id); console.log(\"artwork_auction_id =\", pm.response.json().id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin aprueba obra de venta",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/artworks/{{artwork_sale_id}}/moderate/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "artworks",
+                "{{artwork_sale_id}}",
+                "moderate",
+                ""
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"DISPONIBLE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin aprueba obra de subasta",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/artworks/{{artwork_auction_id}}/moderate/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "artworks",
+                "{{artwork_auction_id}}",
+                "moderate",
+                ""
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"DISPONIBLE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Compra directa + Wompi",
+      "item": [
+        {
+          "name": "Comprador 1 agrega al carrito",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{buyer1_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/marketplace/cart/items/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "marketplace",
+                "cart",
+                "items",
+                ""
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"artwork_id\": \"{{artwork_sale_id}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Checkout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{buyer1_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/marketplace/checkout/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "marketplace",
+                "checkout",
+                ""
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order_type\": \"COMPRA_DIRECTA\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "if (pm.response.code < 300) { pm.collectionVariables.set(\"order_id\", pm.response.json().order_id); console.log(\"order_id =\", pm.response.json().order_id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Iniciar pago (genera enlace de Wompi)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{buyer1_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/payments/initiate/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "payments",
+                "initiate",
+                ""
+              ]
+            },
+            "description": "Abre la pestaña 'Visualize' de la respuesta (o la consola) y paga en el enlace con la tarjeta 4242 4242 4242 4242. Espera unos segundos y sigue con la verificación.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order_id\": \"{{order_id}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "const d = pm.response.json();",
+                  "const params = new URLSearchParams({",
+                  "  \"public-key\": d.public_key, \"currency\": d.currency,",
+                  "  \"amount-in-cents\": String(d.amount_in_cents), \"reference\": d.reference,",
+                  "  \"signature:integrity\": d.integrity_signature,",
+                  "});",
+                  "const url = \"https://checkout.wompi.co/p/?\" + params.toString();",
+                  "pm.collectionVariables.set(\"checkout_url\", url);",
+                  "pm.test(\"La llave es de pruebas (sandbox)\", () => pm.expect(d.public_key).to.include(\"_test_\"));",
+                  "console.log(\"Abre este enlace para pagar:\", url);",
+                  "pm.visualizer.set(`<h3>Pagar en Wompi (sandbox)</h3>",
+                  "<p><a href=\"{{url}}\" target=\"_blank\">Abrir el Web Checkout de Wompi</a></p>",
+                  "<p>Tarjeta de prueba aprobada: <b>4242 4242 4242 4242</b>, cualquier fecha futura y CVC.</p>",
+                  "<p>Monto: {{amount}} COP · Referencia (orden): {{ref}}</p>`,",
+                  "  { url, amount: d.amount_in_cents / 100, ref: d.reference });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verificar orden PAGADO",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{buyer1_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/marketplace/orders/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "marketplace",
+                "orders",
+                ""
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json(); const items = Array.isArray(body) ? body : (body.results || []);",
+                  "const o = items.find(x => x.id === pm.collectionVariables.get(\"order_id\"));",
+                  "pm.test(\"La orden existe\", () => pm.expect(o).to.exist);",
+                  "pm.test(\"La orden quedó PAGADO (webhook de Wompi recibido)\", () => pm.expect(o.status).to.eql(\"PAGADO\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ver transacción",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{buyer1_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/payments/transactions/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "payments",
+                "transactions",
+                ""
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Bandeja comprador 1: Pago confirmado",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{buyer1_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notifications/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                ""
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const items = Array.isArray(body) ? body : (body.results || []);",
+                  "pm.test(\"La bandeja contiene: Pago confirmado\", () => pm.expect(items.map(n => n.title)).to.include(\"Pago confirmado\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Bandeja artista: Vendiste una obra",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{artist_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notifications/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                ""
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const items = Array.isArray(body) ? body : (body.results || []);",
+                  "pm.test(\"La bandeja contiene: ¡Vendiste una obra!\", () => pm.expect(items.map(n => n.title)).to.include(\"¡Vendiste una obra!\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Subasta",
+      "item": [
+        {
+          "name": "Artista crea subasta",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{artist_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auctions/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auctions",
+                ""
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"artwork\": \"{{artwork_auction_id}}\",\n  \"base_price\": \"100000.00\",\n  \"starts_at\": \"{{auction_starts_at}}\",\n  \"ends_at\": \"{{auction_ends_at}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const now = new Date();",
+                  "const minutes = parseInt(pm.collectionVariables.get(\"auction_minutes\") || \"10\", 10);",
+                  "pm.collectionVariables.set(\"auction_starts_at\", now.toISOString());",
+                  "pm.collectionVariables.set(\"auction_ends_at\", new Date(now.getTime() + minutes * 60000).toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "if (pm.response.code < 300) { pm.collectionVariables.set(\"auction_id\", pm.response.json().id); console.log(\"auction_id =\", pm.response.json().id); }",
+                  "pm.test(\"Queda PENDIENTE de aprobación\", () => pm.expect(pm.response.json().status).to.eql(\"PENDIENTE\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Bandeja admin: subasta pendiente",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notifications/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                ""
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const items = Array.isArray(body) ? body : (body.results || []);",
+                  "pm.test(\"La bandeja contiene: Subasta pendiente de aprobación\", () => pm.expect(items.map(n => n.title)).to.include(\"Subasta pendiente de aprobación\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin aprueba subasta",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auctions/{{auction_id}}/approve/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auctions",
+                "{{auction_id}}",
+                "approve",
+                ""
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Comprador 1 puja 110.000",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{buyer1_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auctions/{{auction_id}}/bid/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auctions",
+                "{{auction_id}}",
+                "bid",
+                ""
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": \"110000.00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Comprador 2 puja 120.000",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{buyer2_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auctions/{{auction_id}}/bid/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auctions",
+                "{{auction_id}}",
+                "bid",
+                ""
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": \"120000.00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Seguridad: puja menor rechazada",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{buyer1_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auctions/{{auction_id}}/bid/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auctions",
+                "{{auction_id}}",
+                "bid",
+                ""
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": \"115000.00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Seguridad: el vendedor no puede pujar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{artist_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auctions/{{auction_id}}/bid/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auctions",
+                "{{auction_id}}",
+                "bid",
+                ""
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": \"200000.00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Seguridad: comprador no puede editar la subasta",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{buyer1_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auctions/{{auction_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auctions",
+                "{{auction_id}}",
+                ""
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"base_price\": \"1.00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 403\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Bandeja comprador 1: te superaron",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{buyer1_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notifications/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                ""
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const items = Array.isArray(body) ? body : (body.results || []);",
+                  "pm.test(\"La bandeja contiene: Te superaron en una subasta\", () => pm.expect(items.map(n => n.title)).to.include(\"Te superaron en una subasta\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Bandeja artista: nueva puja",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{artist_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notifications/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                ""
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const items = Array.isArray(body) ? body : (body.results || []);",
+                  "pm.test(\"La bandeja contiene: Nueva puja en tu subasta\", () => pm.expect(items.map(n => n.title)).to.include(\"Nueva puja en tu subasta\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[Tras el cierre] Ver subasta como ganador",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{buyer2_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auctions/{{auction_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auctions",
+                "{{auction_id}}",
+                ""
+              ]
+            },
+            "description": "Ejecútalo cuando haya pasado auction_minutes: el worker cierra la subasta menos de un minuto después de vencer."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const a = pm.response.json();",
+                  "pm.test(\"Cerró sola (Celery Beat)\", () => pm.expect(a.status).to.eql(\"CERRADA\"));",
+                  "pm.test(\"El ganador ve su orden de pago\", () => pm.expect(a.payment_order_id).to.be.a(\"string\"));",
+                  "if (a.payment_order_id) pm.collectionVariables.set(\"winner_order_id\", a.payment_order_id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[Tras el cierre] Bandeja ganador: ¡Ganaste!",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{buyer2_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notifications/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                ""
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const items = Array.isArray(body) ? body : (body.results || []);",
+                  "pm.test(\"La bandeja contiene: ¡Ganaste la subasta!\", () => pm.expect(items.map(n => n.title)).to.include(\"¡Ganaste la subasta!\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[Tras el cierre] Ganador inicia pago",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{buyer2_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/payments/initiate/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "payments",
+                "initiate",
+                ""
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order_id\": \"{{winner_order_id}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "const d = pm.response.json();",
+                  "const params = new URLSearchParams({",
+                  "  \"public-key\": d.public_key, \"currency\": d.currency,",
+                  "  \"amount-in-cents\": String(d.amount_in_cents), \"reference\": d.reference,",
+                  "  \"signature:integrity\": d.integrity_signature,",
+                  "});",
+                  "const url = \"https://checkout.wompi.co/p/?\" + params.toString();",
+                  "pm.collectionVariables.set(\"checkout_url\", url);",
+                  "pm.test(\"La llave es de pruebas (sandbox)\", () => pm.expect(d.public_key).to.include(\"_test_\"));",
+                  "console.log(\"Abre este enlace para pagar:\", url);",
+                  "pm.visualizer.set(`<h3>Pagar en Wompi (sandbox)</h3>",
+                  "<p><a href=\"{{url}}\" target=\"_blank\">Abrir el Web Checkout de Wompi</a></p>",
+                  "<p>Tarjeta de prueba aprobada: <b>4242 4242 4242 4242</b>, cualquier fecha futura y CVC.</p>",
+                  "<p>Monto: {{amount}} COP · Referencia (orden): {{ref}}</p>`,",
+                  "  { url, amount: d.amount_in_cents / 100, ref: d.reference });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Revisión (admin)",
+      "item": [
+        {
+          "name": "Registro de notificaciones (estado de los correos)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/notifications/log/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "notifications",
+                "log",
+                ""
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Transacciones",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/transactions/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "transactions",
+                ""
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://narinocultura-production.up.railway.app",
+      "type": "string"
+    },
+    {
+      "key": "admin_email",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "admin_password",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "artist_email",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "buyer1_email",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "buyer2_email",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "password",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "verify_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "auction_minutes",
+      "value": "10",
+      "type": "string"
+    },
+    {
+      "key": "admin_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "artist_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "buyer1_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "buyer2_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "artwork_sale_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "artwork_auction_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "order_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "checkout_url",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "auction_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "auction_starts_at",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "auction_ends_at",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "winner_order_id",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

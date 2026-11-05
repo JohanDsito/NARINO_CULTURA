@@ -1,0 +1,20 @@
+# Archivos que genera Postman al abrir esta carpeta ("Work with Git")
+/.postman/
+/postman/
+
+# Volcados de código generados por herramientas
+repomix-output.xml
+
+# Cachés y reportes
+.coverage
+coverage/
+.ruff_cache/
+__pycache__/
+
+# Sistema operativo y editores
+.DS_Store
+Thumbs.db
+.idea/
+
+# Informes y documentos de trabajo locales (no se versionan)
+/docs/informes/
