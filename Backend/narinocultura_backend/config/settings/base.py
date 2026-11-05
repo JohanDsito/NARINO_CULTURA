@@ -235,6 +235,8 @@ EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
 # Railway (plan Hobby) bloquea los puertos SMTP: sin timeout, el respaldo SMTP colgaría al worker
 EMAIL_TIMEOUT = config("EMAIL_TIMEOUT", default=10, cast=int)
 DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="noreply@narinocultura.uk")
+# Nombre visible del remitente: "Nariño Cultura <noreply@...>"
+EMAIL_FROM_NAME = config("EMAIL_FROM_NAME", default="Nariño Cultura")
 
 # Resend Configuration
 RESEND_API_KEY = config("RESEND_API_KEY", default="")

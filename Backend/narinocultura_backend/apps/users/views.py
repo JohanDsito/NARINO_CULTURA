@@ -159,7 +159,7 @@ class PasswordResetRequestAPIView(APIView):
         user = User.objects.filter(email=email).first()
         if user:
             reset = PasswordReset.issue_for_user(user)
-            EmailService.send_password_reset_email(user.email, reset.token)
+            EmailService.send_password_reset_email(user.email, reset.token, user.first_name)
         return Response(
             {
                 "detail": (

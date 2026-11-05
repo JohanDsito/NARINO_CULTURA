@@ -1,10 +1,10 @@
-{% extends "emails/notifications/base.html" %}
+{% extends "emails/layout.html" %}
+{% block title %}Pago confirmado{% endblock %}
+{% block preheader %}Recibimos tu pago de {{ amount }}. ¡Gracias por apoyar el arte de Nariño!{% endblock %}
 {% block heading %}Pago confirmado{% endblock %}
 {% block content %}
-<p>Recibimos tu pago. ¡Gracias por apoyar el arte de Nariño!</p>
-<div class="details">
-    <p>Valor pagado: <strong>{{ amount }}</strong></p>
-    <p>Referencia de la orden: <strong>{{ order_id }}</strong></p>
-</div>
-<p style="text-align: center;"><a href="{{ orders_url }}" class="button">Ver mis órdenes</a></p>
+<p style="margin:0 0 16px;">Recibimos tu pago correctamente. ¡Gracias por apoyar el arte de Nariño!</p>
+{% include "emails/partials/details.html" with rows=details %}
+<p style="margin:0 0 16px;">El artista ya fue notificado de tu compra. Puedes consultar el detalle y el comprobante en tus órdenes.</p>
+{% include "emails/partials/button.html" with url=orders_url label="Ver mis órdenes" %}
 {% endblock %}
