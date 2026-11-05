@@ -2,7 +2,6 @@ from django.urls import path
 
 from apps.marketplace import views
 
-
 urlpatterns = [
     path("marketplace/cart/", views.CartAPIView.as_view()),
     path("marketplace/cart/items/", views.CartItemsAPIView.as_view()),

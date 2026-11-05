@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from apps.musicians.models import MusicGenre, MusicianFollower, MusicianProfile, MusicianReview, MusicalWork
+from apps.musicians.models import MusicalWork, MusicGenre, MusicianProfile, MusicianReview
 
 
 @admin.register(MusicGenre)

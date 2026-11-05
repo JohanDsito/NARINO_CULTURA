@@ -3,15 +3,16 @@ Tests para music_discovery app - Chat conversacional e IA.
 """
 from unittest.mock import patch
 
+import requests
 from django.core.cache import cache
-from django.test import TestCase, Client, override_settings
+from django.test import TestCase, override_settings
 from django.urls import reverse
-from rest_framework.test import APIClient, APITestCase
 from rest_framework import status
+from rest_framework.test import APIClient, APITestCase
 
 from apps.music_discovery.views import ChatAPIView
 from apps.users.models import User
-from services.ai_client import AIServiceClient, AIServiceException
+from services.ai_client import AIServiceClient
 
 
 class AIServiceClientTests(TestCase):
@@ -20,13 +21,16 @@ class AIServiceClientTests(TestCase):
     def setUp(self):
         self.client_ai = AIServiceClient()
 
-    def test_health_check_success(self):
-        """Verifica que health_check devuelve True cuando servicio está disponible."""
-        # Nota: Esto asume que AI Service está corriendo
-        # En CI/CD, mock este comportamiento
-        is_healthy = self.client_ai.health_check()
-        # Si el servicio está corriendo, debería ser True
-        # En tests, puedes mockear con @patch
+    @patch("services.ai_client.requests.get")
+    def test_health_check_success(self, get):
+        """health_check devuelve True cuando el servicio responde {"status": "ok"}."""
+        get.return_value.json.return_value = {"status": "ok"}
+        get.return_value.raise_for_status.return_value = None
+        self.assertTrue(self.client_ai.health_check())
+
+    @patch("services.ai_client.requests.get", side_effect=requests.exceptions.ConnectionError)
+    def test_health_check_returns_false_when_service_is_down(self, _get):
+        self.assertFalse(self.client_ai.health_check())
 
     def test_chat_with_empty_message_raises_error(self):
         """Chat con mensaje vacío debe raise ValueError."""

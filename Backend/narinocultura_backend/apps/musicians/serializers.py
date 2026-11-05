@@ -1,7 +1,7 @@
 from django.db import transaction
 from rest_framework import serializers
 
-from apps.musicians.models import MusicGenre, MusicianFollower, MusicianProfile, MusicianReview, MusicalWork
+from apps.musicians.models import MusicalWork, MusicGenre, MusicianProfile, MusicianReview
 
 
 class MusicGenreSerializer(serializers.ModelSerializer):

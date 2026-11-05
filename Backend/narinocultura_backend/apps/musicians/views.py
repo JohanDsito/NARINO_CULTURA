@@ -6,16 +6,15 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
-from apps.musicians.models import MusicGenre, MusicianFollower, MusicianProfile, MusicianReview, MusicalWork
+from apps.musicians.models import MusicalWork, MusicGenre, MusicianFollower, MusicianProfile
 from apps.musicians.serializers import (
+    MusicalWorkSerializer,
     MusicGenreSerializer,
     MusicianProfileListSerializer,
     MusicianProfileSerializer,
     MusicianProfileSummarySerializer,
     MusicianReviewSerializer,
-    MusicalWorkSerializer,
 )
 from apps.users.serializers import PublicUserSummarySerializer
 

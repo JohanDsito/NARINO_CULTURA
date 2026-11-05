@@ -1,6 +1,6 @@
 from django.core.cache import cache
 from django.db import transaction
-from django.db.models import F
+from django.db.models import F, ProtectedError
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from rest_framework import status, viewsets
@@ -8,8 +8,6 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-
-from django.db.models import ProtectedError
 
 from apps.artists.models import ArtistProfile
 from apps.artworks.models import Artwork, Category

@@ -2,7 +2,7 @@ from django.contrib.auth import authenticate
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from apps.users.models import EmailVerification, PasswordReset, User
+from apps.users.models import User
 
 
 class RegisterSerializer(serializers.ModelSerializer):

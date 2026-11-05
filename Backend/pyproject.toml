@@ -15,6 +15,10 @@ ignore = [
     "N806",   # variable in function should be lowercase (conflicts with Django patterns)
 ]
 
+[tool.ruff.lint.per-file-ignores]
+# Django debe inicializarse (django.setup) antes de importar las rutas de WebSocket
+"config/asgi.py" = ["E402"]
+
 [tool.coverage.run]
 source = ["narinocultura_backend"]
 omit = [

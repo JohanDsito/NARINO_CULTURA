@@ -6,8 +6,8 @@ from django.utils import timezone
 from rest_framework.test import APITestCase
 from rest_framework_simplejwt.tokens import AccessToken
 
-from apps.auctions.models import Auction, Bid
 from apps.artworks.models import Artwork
+from apps.auctions.models import Auction, Bid
 from services.auction_service import AuctionService
 from tests.factories import AdminUserFactory, ArtistProfileFactory, ArtistUserFactory, ArtworkFactory, UserFactory
 
