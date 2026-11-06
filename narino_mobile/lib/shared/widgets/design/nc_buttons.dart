@@ -85,7 +85,10 @@ class NcSecondaryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final button = OutlinedButton(
       onPressed: onPressed,
-      style: OutlinedButton.styleFrom(minimumSize: const Size(64, 50)),
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size(64, 50),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

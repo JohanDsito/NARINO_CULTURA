@@ -102,6 +102,10 @@ Novedades del backend que impactan la app:
 | 55 | Músicos | Las obras mostraban ícono de audio pero no se podían escuchar; enlaces de YouTube/Spotify/SoundCloud sin usar | ✅ botones para abrirlos |
 | 56 | Músicos | No había forma de escribir reseñas (el backend sí lo permite) | ✅ hoja con estrellas y comentario |
 | 57 | Subir obra | Duración en segundos sueltos | ✅ formato min:seg (3:45) |
+| 58 | Perfil | Todos los artistas públicos salían como verificados (se leía `is_public` como verificado) | ✅ solo `is_verified` |
+| 59 | Perfil público | El botón siempre decía "Seguir" aunque ya la siguieras (`ArtistProfileSerializer` no trae `is_following`) | ✅ se deduce de `artists/following/`, conteo optimista |
+| 60 | Perfil público | Podías seguir tu propio perfil | ✅ en tu perfil aparece "Editar perfil" |
+| 61 | Tema | Si el llavero del teléfono fallaba, leer el tema lanzaba una excepción | ✅ se usa el tema por defecto |
 | 40 | Ventas | Una orden con obras de varios artistas suma el total completo; `OrderItemSerializer` no dice de quién es cada ítem | 🚫 pedir `artist_slug` en el ítem |
 
 ---

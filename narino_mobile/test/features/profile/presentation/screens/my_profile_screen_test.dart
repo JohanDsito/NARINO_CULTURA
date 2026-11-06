@@ -28,7 +28,9 @@ void main() {
     // "Mis obras" y "Mi portafolio" solo se muestran para artista/admin.
     expect(find.text('Mis obras'), findsOneWidget);
     expect(find.text('Mi portafolio'), findsOneWidget);
-    expect(find.text('Artistas que sigo'), findsOneWidget);
+    // La lista se construye de forma perezosa: se desplaza hasta la opción.
+    await tester.scrollUntilVisible(find.text('Siguiendo'), 200);
+    expect(find.text('Siguiendo'), findsOneWidget);
   });
 
   // MO-WT-10
