@@ -1,5 +1,7 @@
 import logging
 
+from utils.http import client_ip
+
 logger = logging.getLogger("apps.system")
 
 
@@ -52,7 +54,4 @@ class ActivityLogMiddleware:
         return response
 
     def _get_ip(self, request):
-        xff = request.META.get("HTTP_X_FORWARDED_FOR")
-        if xff:
-            return xff.split(",")[0].strip()
-        return request.META.get("REMOTE_ADDR")
+        return client_ip(request) or None

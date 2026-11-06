@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.cache import cache
 from django.db import transaction
 from django.db.models import F, ProtectedError
@@ -10,7 +11,8 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from apps.artists.models import ArtistProfile
-from apps.artworks.models import Artwork, Category
+from apps.artworks.filters import ArtworkFilter
+from apps.artworks.models import PUBLIC_ARTWORK_STATUSES, Artwork, Category
 from apps.artworks.permissions import IsArtworkOwnerOrReadOnly
 from apps.artworks.serializers import (
     ArtworkAIEnhanceSerializer,
@@ -18,6 +20,7 @@ from apps.artworks.serializers import (
     CategorySerializer,
 )
 from services.ai_service import AIService
+from utils.http import client_ip
 from utils.permissions import IsAdmin
 
 
@@ -35,7 +38,7 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
 class ArtworkViewSet(viewsets.ModelViewSet):
     serializer_class = ArtworkSerializer
     permission_classes = [IsArtworkOwnerOrReadOnly]
-    filterset_fields = ("status", "category")
+    filterset_class = ArtworkFilter
     search_fields = ("title", "description", "technique", "material")
     ordering_fields = ("created_at", "price", "views_count")
 
@@ -46,11 +49,7 @@ class ArtworkViewSet(viewsets.ModelViewSet):
         )
         user = self.request.user
         artist_slug = self.request.query_params.get("artist")
-        public_statuses = [
-            Artwork.Status.DISPONIBLE,
-            Artwork.Status.EN_SUBASTA,
-            Artwork.Status.VENDIDA,
-        ]
+        public_statuses = PUBLIC_ARTWORK_STATUSES
 
         if artist_slug:
             qs = qs.filter(artist__slug=artist_slug)
@@ -78,9 +77,13 @@ class ArtworkViewSet(viewsets.ModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
-        Artwork.objects.filter(id=instance.id).update(views_count=F("views_count") + 1)
-        instance.refresh_from_db()
-        return super().retrieve(request, *args, **kwargs)
+        # Una vista por usuario (o por IP si es anónimo) cada ARTWORK_VIEW_WINDOW_SECONDS:
+        # recargar la página no infla views_count. cache.add solo escribe si la clave no existe.
+        viewer = f"u{request.user.id}" if request.user.is_authenticated else f"ip{client_ip(request)}"
+        if cache.add(f"artwork-view:{instance.id}:{viewer}", 1, timeout=settings.ARTWORK_VIEW_WINDOW_SECONDS):
+            Artwork.objects.filter(id=instance.id).update(views_count=F("views_count") + 1)
+            instance.views_count += 1
+        return Response(self.get_serializer(instance).data)
 
     @action(detail=True, methods=["delete"], url_path="delete", permission_classes=[IsAdmin])
     def admin_delete(self, request, pk=None):
