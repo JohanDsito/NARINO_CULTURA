@@ -7,6 +7,7 @@ class CartItemModel {
     required this.artistaNombre,
     required this.precio,
     this.imagenUrl,
+    this.estadoObra = 'DISPONIBLE',
   });
 
   final String id;
@@ -15,6 +16,12 @@ class CartItemModel {
   final String artistaNombre;
   final double precio;
   final String? imagenUrl;
+
+  /// Estado de la obra en el backend (`artwork_status`).
+  final String estadoObra;
+
+  /// `false` si la obra se vendió o entró a subasta mientras estaba en el carrito.
+  bool get disponible => estadoObra.toUpperCase() == 'DISPONIBLE';
 
   factory CartItemModel.fromJson(Map<String, dynamic> json) => CartItemModel(
         id: json['id']?.toString() ?? '',
@@ -30,6 +37,7 @@ class CartItemModel {
             ) ??
             0,
         imagenUrl: json['imagen_url']?.toString(),
+        estadoObra: json['artwork_status']?.toString() ?? 'DISPONIBLE',
       );
 
   String get precioFormateado {

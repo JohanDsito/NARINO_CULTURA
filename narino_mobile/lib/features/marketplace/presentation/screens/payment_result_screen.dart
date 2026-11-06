@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/nc_theme.dart';
+import '../../../../shared/widgets/design/design.dart';
+import '../widgets/tienda_ui.dart';
 
-// ─── Pantalla principal ───────────────────────────────────────────────────────
-
+/// Resultado del pago en Wompi: celebración si salió bien, salida clara si no.
 class PaymentResultScreen extends StatelessWidget {
   const PaymentResultScreen({
     super.key,
@@ -18,195 +19,96 @@ class PaymentResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final nc = context.nc;
+    final accent = success ? nc.successA : nc.tomateA;
+
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        // Sin botón de back — estado terminal del flujo de pago
-        automaticallyImplyLeading: false,
-        title: Text(
-          'Resultado de pago',
-          style: AppTypography.displaySemiBold(),
-        ),
+      backgroundColor: nc.bg,
+      body: Stack(
+        children: [
+          const Positioned.fill(child: CarnavalBackground()),
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 460),
+                  child: NcCard(
+                    padding: const EdgeInsets.fromLTRB(22, 28, 22, 22),
+                    child: Column(
+                      children: [
+                        NcAccentIcon(
+                          icon: success
+                              ? Icons.celebration_outlined
+                              : Icons.error_outline_rounded,
+                          accent: accent,
+                          size: 88,
+                          glow: true,
+                        ),
+                        const SizedBox(height: 18),
+                        if (success) ...[
+                          const NcSerpentina(width: 80),
+                          const SizedBox(height: 18),
+                        ],
+                        Semantics(
+                          header: true,
+                          liveRegion: true,
+                          child: Text(
+                            success ? '¡Pago confirmado!' : 'El pago no se completó',
+                            textAlign: TextAlign.center,
+                            style: AppTypography.displayBold(
+                                color: nc.textPrimary),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          success
+                              ? 'Tu orden ${codigoOrden(orderId)} quedó pagada. '
+                                  'Te enviamos el comprobante al correo y el '
+                                  'artista ya fue notificado.'
+                              : 'No pudimos confirmar el pago de la orden '
+                                  '${codigoOrden(orderId)}. No se hizo ningún '
+                                  'cobro; puedes intentarlo de nuevo.',
+                          textAlign: TextAlign.center,
+                          style:
+                              AppTypography.bodyMedium(color: nc.textSecondary),
+                        ),
+                        const SizedBox(height: 26),
+                        if (success) ...[
+                          NcPrimaryButton(
+                            label: 'Ver mis compras',
+                            icon: Icons.receipt_long_outlined,
+                            onPressed: () =>
+                                context.go('/marketplace/purchases'),
+                          ),
+                          const SizedBox(height: 10),
+                          NcSecondaryButton(
+                            label: 'Seguir explorando',
+                            onPressed: () => context.go('/marketplace'),
+                          ),
+                        ] else ...[
+                          NcPrimaryButton(
+                            label: 'Intentar de nuevo',
+                            icon: Icons.refresh_rounded,
+                            // Antes volvía al carrito, que ya está vacío.
+                            onPressed: () => context.go(
+                                '/marketplace/checkout?orderId=$orderId'),
+                          ),
+                          const SizedBox(height: 10),
+                          NcSecondaryButton(
+                            label: 'Volver a la tienda',
+                            onPressed: () => context.go('/marketplace'),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 28),
-          child: success
-              ? _SuccessContent(orderId: orderId)
-              : _FailureContent(orderId: orderId),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Estado de éxito ──────────────────────────────────────────────────────────
-
-class _SuccessContent extends StatelessWidget {
-  const _SuccessContent({required this.orderId});
-
-  final String orderId;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    final textPrimary =
-        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-    final textSecondary =
-        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
-    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const _ResultIcon(
-          icon: Icons.check_circle_outline,
-          color: AppColors.selvaAndina,
-          background: AppColors.selvaPalida,
-        ),
-        const SizedBox(height: 20),
-        Text(
-          '¡Pago confirmado!',
-          style: AppTypography.displaySemiBold(color: textPrimary),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'La orden #$orderId fue procesada correctamente. Recibirás un comprobante por correo.',
-          style: AppTypography.bodyMedium(color: textSecondary),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 32),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () => context.go('/home'),
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: border),
-                  foregroundColor: textPrimary,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-                child: const Text('Ir al inicio'),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: FilledButton.icon(
-                onPressed: () => context.go('/marketplace/purchases'),
-                style: FilledButton.styleFrom(
-                  backgroundColor: cs.primary,
-                  foregroundColor: cs.onPrimary,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-                icon: const Icon(Icons.receipt_long_outlined, size: 18),
-                label: const Text('Mis compras'),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-// ─── Estado de error ──────────────────────────────────────────────────────────
-
-class _FailureContent extends StatelessWidget {
-  const _FailureContent({required this.orderId});
-
-  final String orderId;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    final textPrimary =
-        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-    final textSecondary =
-        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
-    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _ResultIcon(
-          icon: Icons.error_outline,
-          color: AppColors.error,
-          background: AppColors.error.withAlpha(10),
-        ),
-        const SizedBox(height: 20),
-        Text(
-          'Pago no completado',
-          style: AppTypography.displaySemiBold(color: textPrimary),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'No se pudo confirmar el pago de la orden #$orderId. Puedes reintentar o revisar tu método de pago.',
-          style: AppTypography.bodyMedium(color: textSecondary),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 32),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () => context.go('/home'),
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: border),
-                  foregroundColor: textPrimary,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-                child: const Text('Ir al inicio'),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: FilledButton.icon(
-                onPressed: () => context.go('/marketplace/cart'),
-                style: FilledButton.styleFrom(
-                  backgroundColor: cs.primary,
-                  foregroundColor: cs.onPrimary,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-                icon: const Icon(Icons.refresh_outlined, size: 18),
-                label: const Text('Reintentar'),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-// ─── Ícono de resultado ───────────────────────────────────────────────────────
-
-class _ResultIcon extends StatelessWidget {
-  const _ResultIcon({
-    required this.icon,
-    required this.color,
-    required this.background,
-  });
-
-  final IconData icon;
-  final Color color;
-  final Color background;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 80,
-      height: 80,
-      decoration: BoxDecoration(
-        color: background,
-        shape: BoxShape.circle,
-      ),
-      child: Icon(icon, color: color, size: 44),
     );
   }
 }

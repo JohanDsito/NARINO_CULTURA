@@ -43,6 +43,21 @@ class ArtworkRepository {
     }
   }
 
+  /// Obras a la venta para la Tienda (no toca los filtros del catálogo).
+  Future<List<ArtworkModel>> getDisponibles() async {
+    try {
+      final data = await _service.getDisponibles();
+      final raw = data['results'];
+      return (raw is List ? raw : const <dynamic>[])
+          .whereType<Map>()
+          .map((e) => ArtworkModel.fromJson(e.cast<String, dynamic>()))
+          .where((a) => a.precio != null)
+          .toList();
+    } on DioException catch (e) {
+      throw _parseDioError(e);
+    }
+  }
+
   Future<ArtworkModel> getDetail(String id) async {
     try {
       final data = await _service.getArtworkDetail(id);
