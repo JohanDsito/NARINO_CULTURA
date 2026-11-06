@@ -12,6 +12,7 @@ class UserBasicSerializer(serializers.Serializer):
 
 class EventSerializer(serializers.ModelSerializer):
     organizer = UserBasicSerializer(read_only=True)
+    is_registered = serializers.SerializerMethodField()
 
     class Meta:
         model = Event
@@ -28,10 +29,20 @@ class EventSerializer(serializers.ModelSerializer):
             "longitude",
             "image_url",
             "is_published",
+            "is_registered",
             "created_at",
             "updated_at",
         )
         read_only_fields = ("id", "organizer", "created_at", "updated_at")
+
+    def get_is_registered(self, obj) -> bool:
+        # Anotado en EventViewSet.get_queryset; si el evento no viene anotado se consulta aquí
+        if hasattr(obj, "user_registered"):
+            return bool(obj.user_registered)
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return False
+        return EventRegistration.objects.filter(event=obj, user=request.user).exists()
 
     def validate(self, attrs):
         request = self.context.get("request")
