@@ -55,6 +55,7 @@ class EventsRepository {
     String? imageUrl,
     List<String>? artistasRelacionados,
     bool isPublished = false,
+    Duration duracion = const Duration(hours: 2),
   }) async {
     try {
       return EventModel.fromJson(await _service.publishEvent(
@@ -66,6 +67,7 @@ class EventsRepository {
         imageUrl: imageUrl,
         artistasRelacionados: artistasRelacionados,
         isPublished: isPublished,
+        duracion: duracion,
       ));
     } on DioException catch (e) {
       throw _parseError(e);

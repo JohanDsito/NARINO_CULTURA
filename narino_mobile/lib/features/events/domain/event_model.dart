@@ -4,6 +4,9 @@ class EventModel {
   final String nombre;
   final String tipo;
   final DateTime fecha;
+
+  /// Fin del evento (`end_date`); si no llega, se asume 2 horas.
+  final DateTime? fechaFin;
   final String lugar;
   final String? descripcion;
   final String? flyerUrl;
@@ -14,11 +17,15 @@ class EventModel {
   final double? latitud;
   final double? longitud;
 
+  /// `false` = borrador (solo lo ven quien lo creó, gestores y admin).
+  final bool publicado;
+
   const EventModel({
     required this.id,
     required this.nombre,
     required this.tipo,
     required this.fecha,
+    this.fechaFin,
     required this.lugar,
     this.descripcion,
     this.flyerUrl,
@@ -28,6 +35,7 @@ class EventModel {
     required this.estaSuscrito,
     this.latitud,
     this.longitud,
+    this.publicado = true,
   });
 
   factory EventModel.fromJson(Map<String, dynamic> json) {
@@ -79,7 +87,12 @@ class EventModel {
       esDestacado: json['es_destacado'] as bool? ??
           json['is_featured'] as bool? ??
           false,
-      esPasado: parsedFecha.isBefore(DateTime.now()),
+      fechaFin: DateTime.tryParse(json['end_date']?.toString() ?? '')?.toLocal(),
+      // Un evento en curso no es "pasado": se compara con la fecha de fin.
+      esPasado: (DateTime.tryParse(json['end_date']?.toString() ?? '') ??
+              parsedFecha.add(const Duration(hours: 2)))
+          .isBefore(DateTime.now()),
+      publicado: json['is_published'] as bool? ?? true,
       estaSuscrito: json['esta_suscrito'] as bool? ??
           json['is_subscribed'] as bool? ??
           false,
@@ -97,7 +110,6 @@ class EventModel {
       'taller': '🖌️ Taller',
       'feria': '🏪 Feria',
       'espectaculo': '🎭 Espectáculo',
-      'convocatoria': '📢 Convocatoria',
       'otro': '📅 Evento',
     };
     return map[tipo] ?? '📅 Evento';
@@ -129,7 +141,6 @@ class EventTypes {
     'taller',
     'feria',
     'espectaculo',
-    'convocatoria',
     'otro',
   ];
 
@@ -139,7 +150,6 @@ class EventTypes {
     'taller': '🖌️ Taller',
     'feria': '🏪 Feria',
     'espectaculo': '🎭 Espectáculo',
-    'convocatoria': '📢 Convocatoria',
     'otro': '📅 Otro',
   };
 }
