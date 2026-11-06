@@ -14,10 +14,11 @@ final notificationsProvider = StateNotifierProvider<NotificationsNotifier,
 });
 
 final unreadNotificationsCountProvider = FutureProvider<int>((ref) async {
+  // Se recalcula cada vez que cambia la bandeja cargada.
+  ref.watch(notificationsProvider);
   final service = ref.read(notificationsServiceProvider);
   try {
-    final list = await service.list(onlyUnread: true);
-    return list.length;
+    return await service.unreadCount();
   } catch (_) {
     return 0;
   }
@@ -47,29 +48,29 @@ class NotificationsNotifier
     }
   }
 
-  Future<void> markRead(int id) async {
+  /// Marca una notificación como leída de forma optimista; si el servidor
+  /// falla se recarga la bandeja para no dejar un estado falso.
+  Future<void> markRead(String id) async {
     final current = state.valueOrNull ?? const <NotificationModel>[];
-    state = AsyncValue.data(current);
+    final target = current.where((n) => n.id == id).firstOrNull;
+    if (id.isEmpty || target == null || target.leida) return;
+    state = AsyncValue.data([
+      for (final n in current) n.id == id ? n.copyWith(leida: true) : n,
+    ]);
     try {
       await _service.markRead(id);
+    } catch (_) {
       await load();
-    } on DioException catch (e, st) {
-      state = AsyncValue.error(_parseDioError(e), st);
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
     }
   }
 
   Future<void> readAll() async {
     final current = state.valueOrNull ?? const <NotificationModel>[];
-    state = AsyncValue.data(current);
+    state = AsyncValue.data([for (final n in current) n.copyWith(leida: true)]);
     try {
       await _service.readAll();
+    } catch (_) {
       await load();
-    } on DioException catch (e, st) {
-      state = AsyncValue.error(_parseDioError(e), st);
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
     }
   }
 

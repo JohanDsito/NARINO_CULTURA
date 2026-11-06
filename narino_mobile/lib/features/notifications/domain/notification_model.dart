@@ -1,12 +1,17 @@
-/// Modelo de dominio que representa una notificación generada por el sistema (n8n).
+/// Modelo de dominio de una notificación de la bandeja (HU-B09).
+///
+/// Contrato del backend (`NotificationSerializer`):
+/// `{id: uuid, type, title, body, data: {...}, read, read_at, created_at}`.
+/// `data` trae los ids del recurso relacionado (`auction_id`, `event_id`,
+/// `order_id`, ...) y una `url` pensada para la web.
 class NotificationModel {
-  final int id;
+  final String id;
   final String tipo;
   final String titulo;
   final String descripcion;
   final DateTime creadoEn;
   final bool leida;
-  final int? referenciaId;
+  final Map<String, dynamic> data;
 
   const NotificationModel({
     required this.id,
@@ -15,62 +20,68 @@ class NotificationModel {
     required this.descripcion,
     required this.creadoEn,
     required this.leida,
-    required this.referenciaId,
+    this.data = const {},
   });
 
+  /// Id del recurso relacionado (subasta, evento, orden u obra), si existe.
+  String? get referenciaId {
+    for (final key in const [
+      'auction_id',
+      'event_id',
+      'artwork_id',
+      'order_id',
+    ]) {
+      final v = _nonEmpty(data[key]);
+      if (v != null) return v;
+    }
+    return null;
+  }
+
+  /// Ruta de la app móvil a la que lleva la notificación, o `null`.
+  String? get ruta {
+    final auction = _nonEmpty(data['auction_id']);
+    if (auction != null) return '/auctions/$auction';
+    final event = _nonEmpty(data['event_id']);
+    if (event != null) return '/events/$event';
+    final artwork = _nonEmpty(data['artwork_id']);
+    if (artwork != null) return '/artworks/$artwork';
+    final order = _nonEmpty(data['order_id']);
+    if (order != null) return '/marketplace/order/$order';
+    return null;
+  }
+
+  NotificationModel copyWith({bool? leida}) => NotificationModel(
+        id: id,
+        tipo: tipo,
+        titulo: titulo,
+        descripcion: descripcion,
+        creadoEn: creadoEn,
+        leida: leida ?? this.leida,
+        data: data,
+      );
+
   factory NotificationModel.fromJson(Map<String, dynamic> json) {
-    final created =
-        json['creado_en'] ??
-        json['created_at'] ??
-        json['fecha'] ??
-        json['timestamp'];
-
-    DateTime parseDate(Object? v) {
-      if (v is String) return DateTime.tryParse(v) ?? DateTime.now();
-      return DateTime.now();
-    }
-
-    int? parseId(Object? v) {
-      if (v == null) return null;
-      if (v is int) return v;
-      return int.tryParse(v.toString());
-    }
-
-    final payload = json['data'] is Map
-        ? Map<String, dynamic>.from(json['data'] as Map)
-        : (json['payload'] is Map
-              ? Map<String, dynamic>.from(json['payload'] as Map)
-              : null);
-
-    final refId =
-        parseId(
-          json['referencia_id'] ??
-              json['objeto_id'] ??
-              json['target_id'] ??
-              json['resource_id'],
-        ) ??
-        parseId(
-          payload?['id'] ??
-              payload?['obra_id'] ??
-              payload?['artwork_id'] ??
-              payload?['auction_id'] ??
-              payload?['subasta_id'] ??
-              payload?['event_id'] ??
-              payload?['evento_id'] ??
-              payload?['order_id'] ??
-              payload?['compra_id'],
-        );
+    final created = json['created_at'] ?? json['creado_en'];
+    final rawData = json['data'] ?? json['payload'];
+    final readAt = json['read_at'];
 
     return NotificationModel(
-      id: parseId(json['id']) ?? 0,
-      tipo: (json['tipo'] ?? json['type'] ?? '').toString(),
-      titulo: (json['titulo'] ?? json['title'] ?? 'Notificación').toString(),
-      descripcion:
-          (json['descripcion'] ?? json['body'] ?? json['message'] ?? '')
-              .toString(),
-      creadoEn: parseDate(created),
-      leida: (json['leida'] ?? json['read'] ?? false) == true,
-      referenciaId: refId,
+      id: json['id']?.toString() ?? '',
+      tipo: (json['type'] ?? json['tipo'] ?? '').toString(),
+      titulo: (json['title'] ?? json['titulo'] ?? 'Notificación').toString(),
+      descripcion: (json['body'] ?? json['descripcion'] ?? json['message'] ?? '')
+          .toString(),
+      creadoEn: DateTime.tryParse(created?.toString() ?? '')?.toLocal() ??
+          DateTime.now(),
+      leida: json['read'] == true ||
+          json['leida'] == true ||
+          (readAt != null && readAt.toString().isNotEmpty),
+      data: rawData is Map ? Map<String, dynamic>.from(rawData) : const {},
     );
+  }
+
+  static String? _nonEmpty(Object? v) {
+    final s = v?.toString().trim();
+    return (s == null || s.isEmpty || s == 'null') ? null : s;
   }
 }

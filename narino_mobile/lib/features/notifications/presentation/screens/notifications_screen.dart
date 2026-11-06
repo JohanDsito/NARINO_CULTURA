@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../domain/notification_model.dart';
 import '../providers/notifications_provider.dart';
 import 'notifications_screen/empty_state.dart';
 import 'notifications_screen/error_banner.dart';
@@ -20,18 +18,16 @@ class NotificationsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.obsidiana,
-        foregroundColor: AppColors.oroClaro,
         title: Text(
           'Notificaciones',
-          style: AppTypography.displaySemiBold(color: AppColors.oroClaro),
+          style: AppTypography.displaySemiBold(),
         ),
         actions: [
           TextButton(
             onPressed: () => ref.read(notificationsProvider.notifier).readAll(),
             child: Text(
               'Marcar todas como leídas',
-              style: AppTypography.labelSemiBold(color: AppColors.oroClaro),
+              style: AppTypography.labelSemiBold(),
             ),
           ),
         ],
@@ -79,7 +75,7 @@ class NotificationsScreen extends ConsumerWidget {
                 onTap: () async {
                   final n = items[i];
                   ref.read(notificationsProvider.notifier).markRead(n.id);
-                  final route = _routeFor(n);
+                  final route = n.ruta;
                   if (route != null) context.push(route);
                 },
               ),
@@ -88,20 +84,6 @@ class NotificationsScreen extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  String? _routeFor(NotificationModel n) {
-    final t = n.tipo.toLowerCase().trim();
-    final id = n.referenciaId;
-    if (id == null) return null;
-
-    if (t.contains('obra') || t.contains('artwork')) return '/artworks/$id';
-    if (t.contains('subasta') || t.contains('auction')) return '/auctions/$id';
-    if (t.contains('compra') || t.contains('order')) {
-      return '/marketplace/order/$id';
-    }
-    if (t.contains('evento') || t.contains('event')) return '/events/$id';
-    return null;
   }
 }
 
