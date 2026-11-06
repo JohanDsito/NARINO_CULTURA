@@ -44,8 +44,8 @@ class SalesHistoryScreen extends ConsumerWidget {
           final mes = pagadas
               .where((o) =>
                   o.creadoEn.year == now.year && o.creadoEn.month == now.month)
-              .fold<double>(0, (s, o) => s + o.total);
-          final total = pagadas.fold<double>(0, (s, o) => s + o.total);
+              .fold<double>(0, (s, o) => s + o.montoVenta);
+          final total = pagadas.fold<double>(0, (s, o) => s + o.montoVenta);
           final obras =
               pagadas.fold<int>(0, (s, o) => s + o.items.length);
 
