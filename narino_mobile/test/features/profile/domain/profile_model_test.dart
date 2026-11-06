@@ -244,13 +244,13 @@ void main() {
       expect(model.esVerificado, isTrue);
     });
 
-    test('cae a is_public si no viene is_verified', () {
+    test('is_public NO cuenta como verificado (es solo visibilidad)', () {
       final model = ProfileModel.fromJson({'is_public': true});
 
-      expect(model.esVerificado, isTrue);
+      expect(model.esVerificado, isFalse);
     });
 
-    test('cae a es_verificado si no vienen is_verified ni is_public', () {
+    test('cae a es_verificado si no viene is_verified', () {
       final model = ProfileModel.fromJson({'es_verificado': true});
 
       expect(model.esVerificado, isTrue);

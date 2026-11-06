@@ -31,6 +31,8 @@ class ProfileModel {
   /// `true` cuando el perfil es de un músico (se navega a `/musicians/:slug`).
   final bool esMusico;
 
+  final String? ciudad;
+
   const ProfileModel({
     required this.id,
     required this.userId,
@@ -46,6 +48,7 @@ class ProfileModel {
     required this.totalObras,
     required this.obrasDisponibles,
     this.esMusico = false,
+    this.ciudad,
   });
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
@@ -82,10 +85,13 @@ class ProfileModel {
       esSeguido: (json['is_following'] as bool?) ??
           (json['es_seguido'] as bool?) ??
           false,
+      // `is_verified` es la verificación del correo del usuario. Antes se
+      // usaba `is_public` como respaldo y TODO perfil público salía
+      // "verificado".
       esVerificado: (json['is_verified'] as bool?) ??
-          (json['is_public'] as bool?) ??
           (json['es_verificado'] as bool?) ??
           false,
+      ciudad: _nonEmpty(json['city']) ?? _nonEmpty(json['ciudad']),
       redesSociales: redes,
       totalObras: _profileInt(json['artworks_count'] ?? json['total_obras']),
       obrasDisponibles: _profileInt(
