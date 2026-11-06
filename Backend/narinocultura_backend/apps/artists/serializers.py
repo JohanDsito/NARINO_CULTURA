@@ -58,6 +58,23 @@ class ArtistProfileSerializer(serializers.ModelSerializer):
         return ArtistProfile.objects.create(user=request.user, slug=slug, **validated_data)
 
 
+class ArtistProfileSummarySerializer(serializers.ModelSerializer):
+    """Versión compacta del perfil para listas (p. ej. artistas que sigo)."""
+
+    avatar_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ArtistProfile
+        fields = ("id", "slug", "artistic_name", "avatar_url")
+        read_only_fields = fields
+
+    def get_avatar_url(self, obj):
+        if not obj.profile_image:
+            return ""
+        request = self.context.get("request")
+        return request.build_absolute_uri(obj.profile_image.url) if request else obj.profile_image.url
+
+
 class FollowSerializer(serializers.ModelSerializer):
     class Meta:
         model = Follow

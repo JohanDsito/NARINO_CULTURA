@@ -1,11 +1,15 @@
 """
 Tests para music_discovery app - Chat conversacional e IA.
 """
-from django.test import TestCase, Client
+from unittest.mock import patch
+
+from django.core.cache import cache
+from django.test import TestCase, Client, override_settings
 from django.urls import reverse
 from rest_framework.test import APIClient, APITestCase
 from rest_framework import status
 
+from apps.music_discovery.views import ChatAPIView
 from apps.users.models import User
 from services.ai_client import AIServiceClient, AIServiceException
 
@@ -51,14 +55,19 @@ class ChatAPIViewTests(APITestCase):
         self.client = APIClient()
         self.chat_url = reverse("chat")
 
-    def test_chat_requires_authentication(self):
-        """Chat endpoint debe requerir autenticación."""
+    def test_chat_allows_anonymous_users(self):
+        """El chat es público: el widget se muestra también a visitantes sin sesión."""
         response = self.client.post(
             self.chat_url,
             {"message": "Hola"},
             format="json"
         )
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertNotEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertIn(
+            response.status_code,
+            [status.HTTP_200_OK, status.HTTP_503_SERVICE_UNAVAILABLE]
+        )
+        self.assertIn("reply", response.data)
 
     def test_chat_with_authenticated_user_success(self):
         """Chat con usuario autenticado debe devolver 200/503 (depende AI Service)."""
@@ -184,6 +193,26 @@ class ChatAPIViewTests(APITestCase):
                 response1.data["session_id"],
                 response2.data["session_id"]
             )
+
+
+@override_settings(CACHES={"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}})
+class ChatThrottleTests(APITestCase):
+    """El chat limita a 10 mensajes por minuto (protege la cuota de la IA)."""
+
+    def setUp(self):
+        cache.clear()
+
+    def tearDown(self):
+        cache.clear()
+
+    @patch.object(ChatAPIView.ai_client, "chat", return_value={"reply": "ok", "session_id": "anon", "model_used": "test"})
+    def test_eleventh_message_in_a_minute_is_throttled(self, _mock_chat):
+        url = reverse("chat")
+        for _ in range(10):
+            r = self.client.post(url, {"message": "Hola"}, format="json")
+            self.assertEqual(r.status_code, status.HTTP_200_OK)
+        r = self.client.post(url, {"message": "Hola"}, format="json")
+        self.assertEqual(r.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
 
 
 class MusicRecommendationViewTests(APITestCase):

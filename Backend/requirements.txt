@@ -14,7 +14,8 @@ daphne==4.1.2
 requests==2.33.1
 whitenoise==6.12.0
 celery==5.4.0
-redis==5.0.4
+redis==7.4.0
+kombu==5.6.2
 django-celery-beat==2.7.0
 drf-spectacular==0.29.0
 django-redis==5.4.0

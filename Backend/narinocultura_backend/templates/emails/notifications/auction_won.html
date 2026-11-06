@@ -1,0 +1,16 @@
+{% extends "emails/notifications/base.html" %}
+{% block heading %}¡Felicitaciones, ganaste la subasta!{% endblock %}
+{% block content %}
+<p>Eres el ganador de la subasta de <strong>{{ artwork_title }}</strong>.</p>
+<div class="details">
+    <p>Precio final: <strong>{{ final_price }}</strong></p>
+    {% if payment_due_at %}<p>Paga antes del: <strong>{{ payment_due_at|date:"j \d\e F \d\e Y, g:i a"|lower }}</strong></p>{% endif %}
+</div>
+{% if payment_due_at %}
+<p>Si no realizas el pago dentro del plazo, la obra quedará disponible de nuevo para otros compradores.</p>
+<p style="text-align: center;"><a href="{{ orders_url }}" class="button">Pagar mi obra</a></p>
+{% else %}
+<p>Ingresa a la plataforma para completar el pago de tu obra.</p>
+<p style="text-align: center;"><a href="{{ orders_url }}" class="button">Ver mis órdenes</a></p>
+{% endif %}
+{% endblock %}

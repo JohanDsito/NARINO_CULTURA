@@ -1,11 +1,12 @@
+import logging
+from dataclasses import dataclass
+from urllib.parse import urlencode
+
+import requests
+from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
-from django.conf import settings
 from django.utils.html import strip_tags
-from dataclasses import dataclass
-import logging
-import requests
-from urllib.parse import urlencode
 
 logger = logging.getLogger(__name__)
 
@@ -100,6 +101,12 @@ class EmailService:
         else:
             logger.error(f"Error SMTP: {result.error_message}")
         return result
+
+    @staticmethod
+    def send_template(*, to: str, subject: str, template: str, context: dict) -> EmailResult:
+        """Renderiza una plantilla de correo y la envía (Resend y, como respaldo, SMTP)."""
+        html_message = render_to_string(template, {"frontend_url": settings.FRONTEND_URL, **context})
+        return EmailService._send_email(subject, to, html_message, strip_tags(html_message))
 
     @staticmethod
     def send_verification_email(user_email: str, verification_token: str, user_name: str = "") -> EmailResult:

@@ -2,7 +2,10 @@
 Shared test factories using factory_boy.
 Import these in any test module instead of manually building objects.
 """
+from datetime import timedelta
+
 import factory
+from django.utils import timezone
 from factory.django import DjangoModelFactory
 
 from apps.users.models import User
@@ -104,3 +107,17 @@ class MusicalWorkFactory(DjangoModelFactory):
     title = factory.Sequence(lambda n: f"Obra Musical {n}")
     work_type = "VIDEO"
     youtube_url = "https://youtube.com/watch?v=test"
+
+
+class EventFactory(DjangoModelFactory):
+    class Meta:
+        model = "events.Event"
+
+    organizer = factory.SubFactory(CulturalManagerFactory)
+    title = factory.Sequence(lambda n: f"Evento {n}")
+    description = "Evento de prueba"
+    event_type = "CONCIERTO"
+    start_date = factory.LazyFunction(lambda: timezone.now() + timedelta(days=7))
+    end_date = factory.LazyAttribute(lambda o: o.start_date + timedelta(hours=2))
+    location = "Teatro Imperial, Pasto"
+    is_published = True

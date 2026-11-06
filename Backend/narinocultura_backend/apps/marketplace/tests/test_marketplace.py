@@ -79,7 +79,9 @@ class FavoriteTests(APITestCase):
         Favorite.objects.create(user=self.user, artwork=self.artwork)
         r = self.client.get("/api/v1/marketplace/favorites/", **auth_header(self.user))
         self.assertEqual(r.status_code, 200)
-        self.assertGreaterEqual(len(r.data.get("results", r.data)), 1)
+        # El endpoint devuelve una lista plana (sin paginación)
+        self.assertEqual(len(r.data), 1)
+        self.assertEqual(r.data[0]["artwork_id"], str(self.artwork.id))
 
     def test_remove_favorite(self):
         Favorite.objects.create(user=self.user, artwork=self.artwork)

@@ -7,6 +7,7 @@ from apps.artworks.models import Artwork
 from apps.marketplace.models import Order
 from apps.payments.models import Transaction
 from apps.users.models import User
+from tests.wompi import signed_wompi_event
 
 
 class PaymentWebhookTests(APITestCase):
@@ -50,19 +51,15 @@ class PaymentWebhookTests(APITestCase):
         self.assertEqual(r.status_code, 201)
 
         self.client.force_authenticate(user=None)
-        wompi_payload = {
-            "data": {
-                "transaction": {
-                    "id": "wompi_tx_123",
-                    "status": "APPROVED",
-                    "reference": order_id,
-                    "amount_in_cents": 5000000,
-                    "currency": "COP",
-                    "payment_method_type": "CARD",
-                    "receipt_url": "https://example.com/receipt.pdf",
-                }
-            }
-        }
+        wompi_payload = signed_wompi_event({
+            "id": "wompi_tx_123",
+            "status": "APPROVED",
+            "reference": order_id,
+            "amount_in_cents": 5000000,
+            "currency": "COP",
+            "payment_method_type": "CARD",
+            "receipt_url": "https://example.com/receipt.pdf",
+        })
         r = self.client.post("/api/v1/payments/wompi-webhook/", wompi_payload, format="json")
         self.assertEqual(r.status_code, 200)
 

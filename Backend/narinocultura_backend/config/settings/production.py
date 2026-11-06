@@ -1,4 +1,5 @@
 from .base import *  # noqa: F401,F403
+from .base import ALLOWED_HOSTS, SECRET_KEY, WOMPI_EVENTS_SECRET
 
 DEBUG = False
 
@@ -7,6 +8,9 @@ if SECRET_KEY == "unsafe-secret-key-change-me":
 
 if not ALLOWED_HOSTS:
     raise RuntimeError("ALLOWED_HOSTS debe configurarse via variable de entorno en produccion.")
+
+if not WOMPI_EVENTS_SECRET:
+    raise RuntimeError("WOMPI_EVENTS_SECRET debe configurarse en produccion para verificar los webhooks de Wompi.")
 
 # HTTPS y headers de seguridad
 SECURE_SSL_REDIRECT = True

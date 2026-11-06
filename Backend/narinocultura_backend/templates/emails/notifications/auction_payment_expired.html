@@ -1,0 +1,6 @@
+{% extends "emails/notifications/base.html" %}
+{% block heading %}Venció el plazo de pago{% endblock %}
+{% block content %}
+<p>El plazo para pagar la obra que ganaste en subasta (<strong>{{ total_amount }}</strong>) venció, así que la orden fue cancelada y la obra quedó disponible de nuevo.</p>
+<p>Si crees que se trata de un error, responde este correo y lo revisaremos.</p>
+{% endblock %}

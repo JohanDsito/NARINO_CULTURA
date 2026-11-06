@@ -1,0 +1,11 @@
+{% extends "emails/notifications/base.html" %}
+{% block heading %}Inscripción confirmada{% endblock %}
+{% block content %}
+<p>Tu inscripción al evento <strong>{{ event_title }}</strong> fue confirmada.</p>
+<div class="details">
+    {% if event_date %}<p>Fecha: <strong>{{ event_date|date:"j \d\e F \d\e Y, g:i a"|lower }}</strong></p>{% endif %}
+    {% if event_location %}<p>Lugar: <strong>{{ event_location }}</strong></p>{% endif %}
+</div>
+<p>¡Te esperamos!</p>
+<p style="text-align: center;"><a href="{{ event_url }}" class="button">Ver el evento</a></p>
+{% endblock %}

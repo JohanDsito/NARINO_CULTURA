@@ -44,4 +44,5 @@ urlpatterns = [
     path("api/v1/", include("apps.administration.urls")),
     path("api/v1/", include("apps.musicians.urls")),
     path("api/v1/", include("apps.music_discovery.urls")),
+    path("api/v1/", include("apps.notifications.urls")),
 ] + static(settings.MEDIA_URL, document_root=getattr(settings, "MEDIA_ROOT", None))

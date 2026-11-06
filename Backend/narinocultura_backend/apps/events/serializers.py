@@ -4,9 +4,8 @@ from apps.events.models import Event, EventRegistration
 
 
 class UserBasicSerializer(serializers.Serializer):
-    """Serializer básico para usuario con información mínima"""
-    id = serializers.IntegerField()
-    email = serializers.EmailField()
+    """Datos públicos del organizador. Sin correo: la agenda es pública (Ley 1581 de 2012)."""
+    id = serializers.UUIDField()
     first_name = serializers.CharField()
     last_name = serializers.CharField()
 

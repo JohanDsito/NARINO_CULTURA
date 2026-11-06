@@ -9,7 +9,7 @@ from rest_framework_simplejwt.tokens import AccessToken
 from apps.auctions.models import Auction, Bid
 from apps.artworks.models import Artwork
 from services.auction_service import AuctionService
-from tests.factories import ArtistProfileFactory, ArtistUserFactory, ArtworkFactory, UserFactory
+from tests.factories import AdminUserFactory, ArtistProfileFactory, ArtistUserFactory, ArtworkFactory, UserFactory
 
 
 def auth_header(user):
@@ -28,19 +28,52 @@ class AuctionServiceTests(APITestCase):
         self.buyer = UserFactory(role="COMPRADOR")
         self.buyer.is_verified = True
         self.buyer.save()
+        self.admin = AdminUserFactory()
 
-        self.auction = AuctionService.create_auction(
+        # Flujo real: el artista crea la subasta (PENDIENTE) y un administrador la aprueba
+        pending = self._create_auction(self.artwork)
+        self.auction = AuctionService.approve_auction(auction=pending, actor=self.admin)
+
+    def _create_auction(self, artwork):
+        return AuctionService.create_auction(
             seller=self.artist_user,
-            artwork=self.artwork,
+            artwork=artwork,
             base_price=Decimal("100000.00"),
             starts_at=timezone.now() - timedelta(hours=1),
             ends_at=timezone.now() + timedelta(hours=24),
         )
 
-    def test_create_auction_sets_artwork_en_subasta(self):
+    def test_create_auction_starts_pending(self):
+        artwork = ArtworkFactory(artist=self.profile, status="DISPONIBLE")
+        auction = self._create_auction(artwork)
+        artwork.refresh_from_db()
+        self.assertEqual(auction.status, Auction.Status.PENDIENTE)
+        self.assertEqual(artwork.status, Artwork.Status.DISPONIBLE)
+
+    def test_approve_auction_activates_and_sets_artwork_en_subasta(self):
         self.artwork.refresh_from_db()
-        self.assertEqual(self.artwork.status, Artwork.Status.EN_SUBASTA)
         self.assertEqual(self.auction.status, Auction.Status.ACTIVA)
+        self.assertEqual(self.artwork.status, Artwork.Status.EN_SUBASTA)
+
+    def test_reject_pending_auction_cancels_it(self):
+        artwork = ArtworkFactory(artist=self.profile, status="DISPONIBLE")
+        auction = self._create_auction(artwork)
+        rejected = AuctionService.reject_auction(auction=auction, actor=self.admin)
+        artwork.refresh_from_db()
+        self.assertEqual(rejected.status, Auction.Status.CANCELADA)
+        self.assertEqual(artwork.status, Artwork.Status.DISPONIBLE)
+
+    def test_only_admin_can_approve(self):
+        artwork = ArtworkFactory(artist=self.profile, status="DISPONIBLE")
+        auction = self._create_auction(artwork)
+        with self.assertRaises(ValueError):
+            AuctionService.approve_auction(auction=auction, actor=self.artist_user)
+
+    def test_cannot_bid_on_pending_auction(self):
+        artwork = ArtworkFactory(artist=self.profile, status="DISPONIBLE")
+        auction = self._create_auction(artwork)
+        with self.assertRaises(ValueError):
+            AuctionService.place_bid(auction=auction, bidder=self.buyer, amount=Decimal("200000.00"))
 
     def test_place_bid_updates_current_price(self):
         bid = AuctionService.place_bid(
@@ -117,3 +150,54 @@ class AuctionExpiredTaskTests(APITestCase):
         AuctionService._close_if_ended(auction_id=auction.id)
         auction.refresh_from_db()
         self.assertEqual(auction.status, Auction.Status.ACTIVA)
+
+
+class AuctionVisibilityTests(APITestCase):
+    def setUp(self):
+        self.seller = ArtistUserFactory()
+        profile = ArtistProfileFactory(user=self.seller)
+        now = timezone.now()
+        self.pending = Auction.objects.create(
+            artwork=ArtworkFactory(artist=profile),
+            seller=self.seller,
+            base_price=Decimal("100000.00"),
+            current_price=Decimal("100000.00"),
+            starts_at=now,
+            ends_at=now + timedelta(days=1),
+            status=Auction.Status.PENDIENTE,
+        )
+        self.active = Auction.objects.create(
+            artwork=ArtworkFactory(artist=profile, status="EN_SUBASTA"),
+            seller=self.seller,
+            base_price=Decimal("100000.00"),
+            current_price=Decimal("100000.00"),
+            starts_at=now,
+            ends_at=now + timedelta(days=1),
+            status=Auction.Status.ACTIVA,
+        )
+
+    def _ids(self, response):
+        data = response.data["results"] if isinstance(response.data, dict) else response.data
+        return {a["id"] for a in data}
+
+    def test_public_does_not_see_pending_auctions(self):
+        r = self.client.get("/api/v1/auctions/")
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(self._ids(r), {str(self.active.id)})
+        self.assertEqual(self.client.get(f"/api/v1/auctions/{self.pending.id}/").status_code, 404)
+
+    def test_seller_sees_own_pending_auction(self):
+        self.client.force_authenticate(user=self.seller)
+        r = self.client.get("/api/v1/auctions/")
+        self.assertEqual(self._ids(r), {str(self.active.id), str(self.pending.id)})
+
+    def test_admin_sees_pending_auctions(self):
+        self.client.force_authenticate(user=AdminUserFactory())
+        r = self.client.get("/api/v1/auctions/", {"status": "PENDIENTE"})
+        self.assertEqual(self._ids(r), {str(self.pending.id)})
+
+    def test_filter_by_status(self):
+        r = self.client.get("/api/v1/auctions/", {"status": "ACTIVA"})
+        self.assertEqual(self._ids(r), {str(self.active.id)})
+        r = self.client.get("/api/v1/auctions/", {"status": "CERRADA"})
+        self.assertEqual(self._ids(r), set())

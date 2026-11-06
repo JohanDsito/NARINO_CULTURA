@@ -35,6 +35,14 @@ class Auction(TimeStampedUUIDModel):
         on_delete=models.SET_NULL,
         related_name="auctions_won",
     )
+    # Orden de pago que se genera para el ganador al cerrar la subasta
+    payment_order = models.OneToOneField(
+        "marketplace.Order",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="auction",
+    )
 
     class Meta:
         ordering = ["-created_at"]

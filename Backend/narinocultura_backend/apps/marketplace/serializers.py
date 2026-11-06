@@ -1,4 +1,3 @@
-from decimal import Decimal
 
 from rest_framework import serializers
 
@@ -56,8 +55,8 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ("id", "buyer", "total_amount", "status", "order_type", "items", "created_at")
-        read_only_fields = ("id", "buyer", "total_amount", "status", "order_type", "items", "created_at")
+        fields = ("id", "buyer", "total_amount", "status", "order_type", "payment_due_at", "items", "created_at")
+        read_only_fields = fields
 
 
 class CheckoutSerializer(serializers.Serializer):

@@ -18,11 +18,9 @@ class ActivityLogMiddleware:
             return response
 
         user = getattr(request, "user", None)
-        user_id = (
-            str(getattr(user, "id", None))
-            if getattr(user, "is_authenticated", False)
-            else None
-        )
+        user_pk = getattr(user, "pk", None) if getattr(user, "is_authenticated", False) else None
+        # Si la petición eliminó al usuario (p. ej. DELETE /auth/delete-account/), su pk queda en None
+        user_id = str(user_pk) if user_pk is not None else None
 
         try:
             from apps.system.tasks import create_activity_log

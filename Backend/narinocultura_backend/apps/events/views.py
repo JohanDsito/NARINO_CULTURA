@@ -1,14 +1,15 @@
 from django.db import transaction
+from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from apps.events.models import Event, EventRegistration
 from apps.events.permissions import IsEventManagerOrReadOnly
 from apps.events.serializers import (
-    EventFlyerExtractSerializer,
     EventFlyerExtractionResultSerializer,
+    EventFlyerExtractSerializer,
     EventSerializer,
 )
 from services.event_service import EventService
@@ -96,7 +97,7 @@ class EventViewSet(viewsets.ModelViewSet):
         if event.is_published:
             return Response({"detail": "El evento ya está publicado."}, status=400)
         event.is_published = True
-        event.save(update_fields=["is_published"])
+        event.save(update_fields=["is_published", "updated_at"])
         NotificationService.send(
             "EVENT_PUBLISHED",
             {"event_id": str(event.id), "title": event.title, "start_date": event.start_date.isoformat()},
@@ -112,12 +113,15 @@ class EventViewSet(viewsets.ModelViewSet):
         event.delete()
         return Response({"detail": "Evento rechazado y eliminado."}, status=200)
 
-    @action(detail=True, methods=["post"], url_path="register")
+    # Inscribirse no es gestionar el evento: basta con tener sesión, sin importar el rol.
+    @action(detail=True, methods=["post"], url_path="register", permission_classes=[IsAuthenticated])
     @transaction.atomic
     def register(self, request, pk=None):
         event = self.get_object()
-        if not request.user.is_authenticated:
-            return Response({"detail": "Autenticación requerida."}, status=401)
+        if not event.is_published:
+            return Response({"detail": "Solo puedes inscribirte en eventos publicados."}, status=400)
+        if event.end_date < timezone.now():
+            return Response({"detail": "El evento ya finalizó."}, status=400)
         reg, created = EventRegistration.objects.get_or_create(event=event, user=request.user)
         if not created:
             return Response({"detail": "Ya estás inscrito en este evento."}, status=400)

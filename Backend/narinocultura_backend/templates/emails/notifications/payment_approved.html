@@ -1,0 +1,10 @@
+{% extends "emails/notifications/base.html" %}
+{% block heading %}Pago confirmado{% endblock %}
+{% block content %}
+<p>Recibimos tu pago. ¡Gracias por apoyar el arte de Nariño!</p>
+<div class="details">
+    <p>Valor pagado: <strong>{{ amount }}</strong></p>
+    <p>Referencia de la orden: <strong>{{ order_id }}</strong></p>
+</div>
+<p style="text-align: center;"><a href="{{ orders_url }}" class="button">Ver mis órdenes</a></p>
+{% endblock %}

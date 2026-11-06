@@ -1,8 +1,5 @@
-import hashlib
-import hmac
 import logging
 
-from django.conf import settings
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -27,26 +24,27 @@ class InitiatePaymentAPIView(APIView):
 
 
 class WompiWebhookAPIView(APIView):
-    """Receives Wompi payment events. Verifies HMAC-SHA256 signature when configured."""
+    """Recibe los eventos de Wompi. Solo procesa eventos firmados con WOMPI_EVENTS_SECRET."""
 
     permission_classes = [AllowAny]
     authentication_classes = []
 
     def post(self, request):
-        integrity_key = getattr(settings, "WOMPI_INTEGRITY_KEY", "")
-        if integrity_key:
-            signature = request.headers.get("X-Event-Checksum", "")
-            expected = hmac.new(
-                integrity_key.encode(),
-                request.body,
-                hashlib.sha256,
-            ).hexdigest()
-            if not hmac.compare_digest(signature, expected):
-                logger.warning("Wompi webhook: invalid signature received")
-                return Response({"detail": "Firma invalida."}, status=401)
+        payload = request.data if isinstance(request.data, dict) else {}
+        if not PaymentService.is_valid_event_signature(
+            payload=payload,
+            header_checksum=request.headers.get("X-Event-Checksum", ""),
+        ):
+            logger.warning("Wompi webhook: firma inválida o ausente")
+            return Response({"detail": "Firma invalida."}, status=401)
+
+        # Wompi exige HTTP 200 para dar el evento por entregado; los eventos que no
+        # son de transacciones se aceptan sin procesarlos.
+        if payload.get("event") != "transaction.updated":
+            return Response({"detail": "Evento ignorado."})
 
         try:
-            PaymentService.process_wompi_webhook(payload=request.data)
+            PaymentService.process_wompi_webhook(payload=payload)
         except ValueError as e:
             return Response({"detail": str(e)}, status=400)
         return Response({"detail": "OK"})

@@ -1,8 +1,9 @@
-import os
 from datetime import timedelta
 from pathlib import Path
-from dotenv import load_dotenv
+
 from decouple import Csv, config
+from dotenv import load_dotenv
+
 load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -158,6 +159,7 @@ REST_FRAMEWORK = {
         "user": "2000/hour",
         "auth_anon": "5/minute",
         "password_reset": "3/hour",
+        "chat": "10/minute",
     },
 }
 
@@ -230,6 +232,8 @@ EMAIL_PORT = config("EMAIL_PORT", default=587, cast=int)
 EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True, cast=bool)
 EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
+# Railway (plan Hobby) bloquea los puertos SMTP: sin timeout, el respaldo SMTP colgaría al worker
+EMAIL_TIMEOUT = config("EMAIL_TIMEOUT", default=10, cast=int)
 DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="noreply@narinocultura.uk")
 
 # Resend Configuration
@@ -251,17 +255,21 @@ WOMPI_BASE_URL = config("WOMPI_BASE_URL", default="https://sandbox.wompi.co/v1")
 WOMPI_PUBLIC_KEY = config("WOMPI_PUBLIC_KEY", default="")
 WOMPI_PRIVATE_KEY = config("WOMPI_PRIVATE_KEY", default="")
 WOMPI_INTEGRITY_KEY = config("WOMPI_INTEGRITY_KEY", default="")
+# Secreto de eventos (Dashboard de Wompi > Mi cuenta > Secretos para integración técnica).
+# Firma los webhooks; es distinto de la llave de integridad usada por el widget.
+WOMPI_EVENTS_SECRET = config("WOMPI_EVENTS_SECRET", default="")
 
 # Celery - Usa Redis si está disponible, sino ejecuta tareas sincronamente
 if REDIS_URL_CONFIGURED:
     CELERY_BROKER_URL = REDIS_URL_CONFIGURED
     CELERY_RESULT_BACKEND = REDIS_URL_CONFIGURED
 else:
-    # TEMPORAL: Celery sin broker (tareas ejecutan sincronamente)
-    CELERY_ALWAYS_EAGER = True
-    CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
+    # Sin broker las tareas se ejecutan en el mismo proceso (con namespace="CELERY",
+    # los nombres antiguos CELERY_ALWAYS_EAGER se ignoraban y las tareas nunca corrían)
+    CELERY_TASK_ALWAYS_EAGER = True
+    CELERY_TASK_EAGER_PROPAGATES = True
     CELERY_BROKER_URL = "memory://"
-    CELERY_RESULT_BACKEND = "cache"
+    CELERY_RESULT_BACKEND = "cache+memory://"
 
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
@@ -272,7 +280,14 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.auctions.tasks.close_expired_auctions",
         "schedule": 60.0,
     },
+    "expire-unpaid-auction-orders": {
+        "task": "apps.auctions.tasks.expire_unpaid_auction_orders",
+        "schedule": 900.0,
+    },
 }
+
+# Horas que tiene el ganador de una subasta para pagar antes de que la obra se libere
+AUCTION_PAYMENT_HOURS = config("AUCTION_PAYMENT_HOURS", default=48, cast=int)
 
 # Cache - Usa Redis si está disponible, sino usa memoria local
 if REDIS_URL_CONFIGURED:
