@@ -159,6 +159,7 @@ REST_FRAMEWORK = {
         "user": "2000/hour",
         "auth_anon": "5/minute",
         "password_reset": "3/hour",
+        "resend_verification": "3/hour",
         "chat": "10/minute",
     },
 }

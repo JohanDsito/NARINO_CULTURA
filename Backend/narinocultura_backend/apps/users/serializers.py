@@ -30,6 +30,10 @@ class EmailVerificationSerializer(serializers.Serializer):
     token = serializers.CharField()
 
 
+class ResendVerificationSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)

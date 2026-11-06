@@ -4,14 +4,7 @@ from decimal import Decimal
 from rest_framework import serializers
 
 from apps.marketplace.models import Cart, CartItem, Favorite, Order, OrderItem
-
-
-def artwork_image_url(artwork, request) -> str:
-    """URL absoluta de la imagen principal de la obra (archivo subido o URL externa)."""
-    if artwork.main_image:
-        url = artwork.main_image.url
-        return request.build_absolute_uri(url) if request else url
-    return artwork.main_image_url or ""
+from utils.media import artwork_image_url
 
 
 class ArtworkSummaryFieldsMixin(serializers.Serializer):
