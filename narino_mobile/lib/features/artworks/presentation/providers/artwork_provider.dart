@@ -95,7 +95,9 @@ class ArtworkNotifier extends StateNotifier<ArtworkState> {
   }
 
   void setRangoPrecio(double? min, double? max) {
-    state = state.copyWith(precioMinFiltro: min, precioMaxFiltro: max);
+    // `clearPrecio` permite quitar el rango (antes `null` no lo borraba).
+    state = state.copyWith(
+        precioMinFiltro: min, precioMaxFiltro: max, clearPrecio: true);
     loadCatalog();
   }
 
@@ -108,6 +110,30 @@ class ArtworkNotifier extends StateNotifier<ArtworkState> {
     state = state.copyWith(soloFavoritos: value);
     loadCatalog();
   }
+
+  /// Aplica todos los filtros del panel de una vez (una sola petición).
+  void aplicarFiltros({
+    String? categoria,
+    String? tecnica,
+    double? precioMin,
+    double? precioMax,
+    String orden = 'fecha',
+  }) {
+    state = state.copyWith(
+      categoriaFiltro: categoria,
+      clearCategoriaFiltro: categoria == null,
+      tecnicaFiltro: tecnica,
+      clearTecnicaFiltro: tecnica == null,
+      precioMinFiltro: precioMin,
+      precioMaxFiltro: precioMax,
+      clearPrecio: true,
+      ordenarPor: orden,
+    );
+    loadCatalog();
+  }
+
+  /// Quita los filtros del panel pero conserva la búsqueda escrita.
+  void limpiarFiltrosPanel() => aplicarFiltros();
 
   void limpiarFiltros() {
     state = const ArtworkState();

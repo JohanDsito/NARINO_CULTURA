@@ -9,6 +9,15 @@ class CategoryModel {
   final String name;
   final String slug;
 
+  /// Nombre para mostrar: el backend guarda algunas categorías sin tilde.
+  String get displayName => _conTildes[name.toLowerCase()] ?? name;
+
+  static const _conTildes = {
+    'fotografia': 'Fotografía',
+    'artesania': 'Artesanía',
+    'ceramica': 'Cerámica',
+  };
+
   factory CategoryModel.fromJson(Map<String, dynamic> json) {
     return CategoryModel(
       id: json['id'] as int,
@@ -23,7 +32,11 @@ class ArtworkModel {
   final String id;
   final String titulo;
   final String descripcion;
+  /// Nombre de la categoría para mostrar (de `category_detail.name`).
   final String categoria;
+
+  /// Id de la categoría en el backend (`category`), para editar/filtrar.
+  final int? categoriaId;
   final String? tecnica;
   final String? dimensiones;
   final int? anio;
@@ -43,6 +56,7 @@ class ArtworkModel {
     required this.titulo,
     required this.descripcion,
     required this.categoria,
+    this.categoriaId,
     this.tecnica,
     this.dimensiones,
     this.anio,
@@ -105,8 +119,10 @@ class ArtworkModel {
 
     // ── price ────────────────────────────────────────────────────────────────
     final priceRaw = json['price'] ?? json['precio'];
-    final precio =
+    final precioNum =
         priceRaw != null ? double.tryParse(priceRaw.toString()) : null;
+    // El backend usa price = 0 para obras solo de exhibición.
+    final precio = (precioNum == null || precioNum <= 0) ? null : precioNum;
 
     // ── status (normalise English → Spanish internal values) ─────────────────
     // Solo subasta y vendida son estados explícitos; cualquier otro valor
@@ -127,9 +143,19 @@ class ArtworkModel {
     }
 
     // ── category ─────────────────────────────────────────────────────────────
+    // `category` es el id; el nombre viene en `category_detail`.
     final categoriaRaw = json['category'];
-    final categoria = json['categoria'] as String? ??
-        (categoriaRaw != null ? categoriaRaw.toString() : '');
+    final detalle = json['category_detail'];
+    final categoriaId = categoriaRaw is int
+        ? categoriaRaw
+        : int.tryParse(categoriaRaw?.toString() ?? '');
+    final nombreDetalle =
+        detalle is Map ? detalle['name']?.toString() ?? '' : '';
+    String categoria = json['categoria'] as String? ?? nombreDetalle;
+    if (categoria.isEmpty && categoriaRaw is String && categoriaId == null) {
+      categoria = categoriaRaw; // datos locales/antiguos con el nombre
+    }
+    categoria = CategoryModel(id: 0, name: categoria, slug: '').displayName;
 
     // ── optional text fields ─────────────────────────────────────────────────
     final tecnicaRaw =
@@ -143,6 +169,7 @@ class ArtworkModel {
       descripcion:
           json['description'] as String? ?? json['descripcion'] as String? ?? '',
       categoria: categoria,
+      categoriaId: categoriaId,
       tecnica: (tecnicaRaw?.isEmpty ?? true) ? null : tecnicaRaw,
       dimensiones: (dimensionesRaw?.isEmpty ?? true) ? null : dimensionesRaw,
       anio: json['anio'] as int?,
@@ -170,6 +197,7 @@ class ArtworkModel {
         titulo: titulo,
         descripcion: descripcion,
         categoria: categoria,
+        categoriaId: categoriaId,
         tecnica: tecnica,
         dimensiones: dimensiones,
         anio: anio,

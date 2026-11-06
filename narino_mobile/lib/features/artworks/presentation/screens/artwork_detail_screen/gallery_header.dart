@@ -66,14 +66,14 @@ class GalleryHeader extends StatelessWidget {
         // Botón "Ver en zoom"
         Positioned(
           right: 14,
-          bottom: imagenes.length > 1 ? 38 : 14,
+          bottom: imagenes.length > 1 ? 62 : 38,
           child: ZoomButton(onTap: onTap),
         ),
 
         // Indicador de páginas
         if (imagenes.length > 1)
           Positioned(
-            bottom: 14,
+            bottom: 38,
             left: 0,
             right: 0,
             child: PageDots(
