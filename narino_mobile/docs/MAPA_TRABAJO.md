@@ -85,6 +85,12 @@ Novedades del backend que impactan la app:
 | 37 | Pago | El sondeo de Wompi seguía cada 5 s para siempre al salir de la pantalla | ✅ se detiene al salir y a los 10 min |
 | 38 | Resultado de pago | "Reintentar" llevaba al carrito, que ya está vacío | ✅ vuelve a pagar la misma orden |
 | 39 | Carrito | No avisaba obras vendidas/en subasta y las sumaba al total | ✅ aviso + se excluyen del total y bloquean el pago |
+| 41 | Subastas | La lista redibujaba toda la pantalla cada segundo por la cuenta regresiva | ✅ `NcCountdown` por tarjeta |
+| 42 | Subastas | La app exigía +5 % para pujar; el backend acepta cualquier monto mayor al actual | ✅ regla real + montos sugeridos (+5/+10/+20 %) |
+| 43 | Subastas | Al crear decía "Subasta abierta" pero queda PENDIENTE hasta aprobación | ✅ "Enviada a revisión" |
+| 44 | Subastas | Una subasta pendiente se mostraba como "cerrada" | ✅ fases: en revisión, próximamente, en vivo, finalizada, cancelada |
+| 45 | Historial | Pestañas con texto inactivo fijo en blanco (invisible en modo claro) | ✅ |
+| 46 | Subastas | La tarjeta mostraba el precio base aunque hubiera pujas (`total_pujas` no existe) | ✅ usa `current_price` y el líder |
 | 40 | Ventas | Una orden con obras de varios artistas suma el total completo; `OrderItemSerializer` no dice de quién es cada ítem | 🚫 pedir `artist_slug` en el ítem |
 
 ---
@@ -145,7 +151,7 @@ Guía completa de color y componentes: **`docs/DISENO_CARNAVAL.md`**.
 | Perfil artístico (onboarding del artista) | ✅ disciplinas con color propio, paso 2 musical con chips |
 | Catálogo + filtros + Detalle de obra + Publicar/Editar + Mis obras | ✅ |
 | Tienda / Carrito / Pago / Resultado / Favoritos / Compras / Orden / Ventas | ✅ acento naranja, códigos cortos de orden, estados en lenguaje claro |
-| Subastas (lista, detalle, crear, historial) | ⏳ |
+| Subastas (lista, detalle, crear, historial) | ✅ oro + tomate en vivo, cuenta regresiva propia, barra de puja con montos sugeridos |
 | Eventos (lista/calendario, detalle, publicar) | ⏳ |
 | Músicos / Descubrimiento musical | ⏳ |
 | Perfil y subpantallas | ⏳ |
@@ -176,3 +182,4 @@ Guía completa de color y componentes: **`docs/DISENO_CARNAVAL.md`**.
   Arreglados #29–#35. 352/352 tests OK. Siguiente: Tienda (carrito, checkout, favoritos, compras, ventas).
 - 2026-11-06 — Commits organizados y push a `mobile-Valery`. Rediseño de la Tienda completa (8 pantallas).
   Arreglados #36–#39. Siguiente: Subastas.
+- 2026-11-06 — Arreglo de backend para ventas por artista (`SaleSerializer`, `seller_amount`, artista e imagen por ítem) probado (262 tests) y entregado como nota; la app ya lo soporta. Rediseño de Subastas. Arreglados #41–#46. Siguiente: Eventos.
