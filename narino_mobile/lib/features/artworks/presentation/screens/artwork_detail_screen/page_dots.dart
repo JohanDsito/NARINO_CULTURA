@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 
 class PageDots extends StatelessWidget {
   const PageDots({
@@ -28,7 +27,7 @@ class PageDots extends StatelessWidget {
             height: 8,
             margin: const EdgeInsets.symmetric(horizontal: 3),
             decoration: BoxDecoration(
-              color: isActive ? AppColors.oroClaro : Colors.white54,
+              color: isActive ? Colors.white : Colors.white.withValues(alpha: 0.45),
               borderRadius: BorderRadius.circular(99),
             ),
           ),

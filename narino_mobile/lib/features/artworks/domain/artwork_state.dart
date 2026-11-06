@@ -45,6 +45,7 @@ class ArtworkState {
     bool clearError = false,
     bool clearCategoriaFiltro = false,
     bool clearTecnicaFiltro = false,
+    bool clearPrecio = false,
   }) =>
       ArtworkState(
         status: status ?? this.status,
@@ -57,14 +58,25 @@ class ArtworkState {
             : (categoriaFiltro ?? this.categoriaFiltro),
         tecnicaFiltro:
             clearTecnicaFiltro ? null : (tecnicaFiltro ?? this.tecnicaFiltro),
-        precioMinFiltro: precioMinFiltro ?? this.precioMinFiltro,
-        precioMaxFiltro: precioMaxFiltro ?? this.precioMaxFiltro,
+        precioMinFiltro:
+            clearPrecio ? precioMinFiltro : (precioMinFiltro ?? this.precioMinFiltro),
+        precioMaxFiltro:
+            clearPrecio ? precioMaxFiltro : (precioMaxFiltro ?? this.precioMaxFiltro),
         ordenarPor: ordenarPor ?? this.ordenarPor,
         soloFavoritos: soloFavoritos ?? this.soloFavoritos,
       );
 
   bool get isLoading => status == ArtworkStatus.loading;
   bool get hasError => errorMessage != null && errorMessage!.isNotEmpty;
+  /// Filtros del panel (sin contar la búsqueda): categoría, técnica, precio
+  /// y orden distinto al predeterminado.
+  int get filtrosPanelActivos => [
+        categoriaFiltro != null,
+        tecnicaFiltro != null,
+        precioMinFiltro != null || precioMaxFiltro != null,
+        ordenarPor != 'fecha',
+      ].where((b) => b).length;
+
   bool get hayFiltrosActivos =>
       busqueda.isNotEmpty ||
       categoriaFiltro != null ||

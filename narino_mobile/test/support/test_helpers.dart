@@ -32,6 +32,9 @@ class FakeArtworkRepository extends ArtworkRepository {
   }) async {
     return (artworks: const <ArtworkModel>[], total: 0);
   }
+
+  @override
+  Future<List<CategoryModel>> getCategories() async => const [];
 }
 
 // ─── Fake notifiers (no-op: evitan llamadas de red en tests) ─────────────────

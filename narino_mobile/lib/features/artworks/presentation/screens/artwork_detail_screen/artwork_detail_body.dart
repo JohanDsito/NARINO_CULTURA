@@ -10,22 +10,19 @@ import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../../../marketplace/domain/marketplace_state.dart';
 import '../../../../marketplace/presentation/providers/favorites_provider.dart';
+import '../../../../profile/presentation/providers/profile_provider.dart';
 import '../../../domain/artwork_model.dart';
 import '../../providers/artwork_provider.dart';
-import 'action_button.dart';
-import 'artist_card.dart';
-import 'auction_banner.dart';
-import 'description_card.dart';
+import '../../../../../core/theme/nc_theme.dart';
+import '../../../../../shared/widgets/design/design.dart';
+import 'detail_sections.dart';
 import 'gallery_header.dart';
-import 'header_row.dart';
 import 'share_option.dart';
-import 'technical_card.dart';
 import 'zoom_gallery.dart';
 
 // ─── Constantes ──────────────────────────────────────────────────────────────
 
-const _kPagePadding = EdgeInsets.fromLTRB(20, 16, 20, 32);
-const _kHeaderHeight = 340.0;
+const _kHeaderHeight = 420.0;
 
 // ─── Cuerpo principal ─────────────────────────────────────────────────────────
 
@@ -41,6 +38,7 @@ class ArtworkDetailBody extends ConsumerStatefulWidget {
 class _ArtworkDetailBodyState extends ConsumerState<ArtworkDetailBody>
     with SingleTickerProviderStateMixin {
   int _imagenActiva = 0;
+  bool _perfilPedido = false;
   late bool _esFavorito;
   late final AnimationController _favAnimController;
   late final Animation<double> _favScale;
@@ -50,8 +48,7 @@ class _ArtworkDetailBodyState extends ConsumerState<ArtworkDetailBody>
     super.initState();
     // Use the favorites provider as source of truth — the catalog API never
     // returns es_favorito so artwork.esFavorito is always false.
-    _esFavorito =
-        ref.read(favoritesProvider).isFavorite(widget.artwork.id);
+    _esFavorito = ref.read(favoritesProvider).isFavorite(widget.artwork.id);
 
     _favAnimController = AnimationController(
       vsync: this,
@@ -70,9 +67,8 @@ class _ArtworkDetailBodyState extends ConsumerState<ArtworkDetailBody>
         ref.read(favoritesProvider.notifier).loadFavorites().then((_) {
           if (mounted) {
             setState(() {
-              _esFavorito = ref
-                  .read(favoritesProvider)
-                  .isFavorite(widget.artwork.id);
+              _esFavorito =
+                  ref.read(favoritesProvider).isFavorite(widget.artwork.id);
             });
           }
         });
@@ -132,8 +128,9 @@ class _ArtworkDetailBodyState extends ConsumerState<ArtworkDetailBody>
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Eliminar obra'),
-        content: const Text('¿Seguro que deseas eliminar esta obra?'),
+        title: const Text('¿Eliminar esta obra?'),
+        content: const Text(
+            'Dejará de aparecer en el catálogo. Esta acción no se puede deshacer.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -142,8 +139,8 @@ class _ArtworkDetailBodyState extends ConsumerState<ArtworkDetailBody>
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: FilledButton.styleFrom(
-              backgroundColor: AppColors.error,
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.tomate,
+              foregroundColor: Colors.black,
             ),
             child: const Text('Eliminar'),
           ),
@@ -159,42 +156,57 @@ class _ArtworkDetailBodyState extends ConsumerState<ArtworkDetailBody>
   Widget build(BuildContext context) {
     final artwork = widget.artwork;
     final role = ref.watch(currentUserRoleProvider).value;
-    final userId = ref.watch(currentUserIdProvider).value;
-    final canManage =
-        role == 'admin' || (userId != null && userId.toString() == artwork.artistaId);
+    // La obra trae el slug del artista; se compara con el perfil propio.
+    final mySlug =
+        role == 'artista' ? ref.watch(profileProvider).profile?.id : null;
+    if (role == 'artista' && mySlug == null && !_perfilPedido) {
+      _perfilPedido = true;
+      WidgetsBinding.instance.addPostFrameCallback(
+          (_) => ref.read(profileProvider.notifier).loadMyProfile());
+    }
+    final canManage = role == 'admin' ||
+        (mySlug != null && mySlug.isNotEmpty && mySlug == artwork.artistaSlug);
 
-    return CustomScrollView(
-      slivers: [
-        _buildSliverAppBar(context, artwork, canManage),
-        SliverPadding(
-          padding: _kPagePadding,
-          sliver: SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                HeaderRow(
-                  artwork: artwork,
-                  esFavorito: _esFavorito,
-                  favScale: _favScale,
-                  onFavTap: _toggleFavorito,
+    final nc = context.nc;
+    return Stack(
+      children: [
+        CustomScrollView(
+          slivers: [
+            _buildSliverAppBar(context, artwork, canManage),
+            // Hoja con esquinas redondeadas que se monta sobre la imagen.
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.zero,
+                child: Container(
+                  color: nc.bg,
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 140),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      DetailHeader(artwork: artwork),
+                      const SizedBox(height: 22),
+                      ArtistTile(artwork: artwork),
+                      if (artwork.descripcion.isNotEmpty) ...[
+                        const SizedBox(height: 26),
+                        DescriptionBlock(text: artwork.descripcion),
+                      ],
+                      const SizedBox(height: 26),
+                      FactsGrid(artwork: artwork),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 20),
-                TechnicalCard(artwork: artwork),
-                if (artwork.descripcion.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  DescriptionCard(descripcion: artwork.descripcion),
-                ],
-                const SizedBox(height: 12),
-                ArtistCard(artwork: artwork),
-                const SizedBox(height: 20),
-                ActionButton(artwork: artwork),
-                if (artwork.estado == 'en_subasta') ...[
-                  const SizedBox(height: 12),
-                  const AuctionBanner(),
-                ],
-                const SizedBox(height: 32),
-              ],
+              ),
             ),
+          ],
+        ),
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: DetailActionBar(
+            artwork: artwork,
+            canManage: canManage,
+            isLoggedIn: role != null,
           ),
         ),
       ],
@@ -206,69 +218,97 @@ class _ArtworkDetailBodyState extends ConsumerState<ArtworkDetailBody>
     ArtworkModel artwork,
     bool canManage,
   ) {
+    final nc = context.nc;
     return SliverAppBar(
       expandedHeight: _kHeaderHeight,
       pinned: true,
-      backgroundColor: AppColors.obsidiana,
-      foregroundColor: Colors.white,
-      leading: const BackButton(color: Colors.white),
-      title: Text(
-        artwork.titulo,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: AppTypography.labelSemiBold(color: Colors.white),
+      stretch: true,
+      backgroundColor: nc.bg,
+      surfaceTintColor: Colors.transparent,
+      shape: const Border(),
+      automaticallyImplyLeading: false,
+      leadingWidth: 64,
+      leading: Padding(
+        padding: const EdgeInsets.only(left: 12),
+        child: Center(
+          child: GlassCircleButton(
+            icon: Icons.arrow_back_rounded,
+            tooltip: 'Volver',
+            onPressed: () => Navigator.of(context).maybePop(),
+          ),
+        ),
       ),
-      centerTitle: false,
       actions: [
         ScaleTransition(
           scale: _favScale,
-          child: IconButton(
-            icon: Icon(
-              _esFavorito ? Icons.favorite : Icons.favorite_outline,
-              color: _esFavorito ? Colors.red[300] : Colors.white,
-            ),
+          child: GlassCircleButton(
+            icon: _esFavorito
+                ? Icons.favorite_rounded
+                : Icons.favorite_border_rounded,
+            color: _esFavorito ? nc.magenta : Colors.white,
+            tooltip:
+                _esFavorito ? 'Quitar de favoritos' : 'Agregar a favoritos',
             onPressed: _toggleFavorito,
           ),
         ),
-        IconButton(
-          icon: const Icon(Icons.share_outlined),
+        const SizedBox(width: 8),
+        GlassCircleButton(
+          icon: Icons.ios_share_rounded,
+          tooltip: 'Compartir',
           onPressed: () => _showShareSheet(context, artwork),
         ),
-        if (canManage)
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
-            onSelected: (value) async {
-              if (value == 'edit') {
-                context.push('/artworks/${artwork.id}/edit');
-              } else if (value == 'delete') {
-                final ok = await _confirmDelete(context);
-                if (!ok) return;
-                final deleted = await ref
-                    .read(artworkProvider.notifier)
-                    .deleteArtwork(artwork.id);
-                if (!context.mounted) return;
-                if (deleted) {
-                  context.pop();
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('No se pudo eliminar la obra.')),
-                  );
-                }
+        if (canManage) ...[
+          const SizedBox(width: 8),
+          GlassCircleButton(
+            icon: Icons.delete_outline_rounded,
+            tooltip: 'Eliminar obra',
+            onPressed: () async {
+              final ok = await _confirmDelete(context);
+              if (!ok) return;
+              final deleted = await ref
+                  .read(artworkProvider.notifier)
+                  .deleteArtwork(artwork.id);
+              if (!context.mounted) return;
+              if (deleted) {
+                context.pop();
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('No se pudo eliminar la obra.')),
+                );
               }
             },
-            itemBuilder: (_) => const [
-              PopupMenuItem(value: 'edit', child: Text('Editar')),
-              PopupMenuItem(value: 'delete', child: Text('Eliminar')),
-            ],
           ),
+        ],
+        const SizedBox(width: 12),
       ],
       flexibleSpace: FlexibleSpaceBar(
-        background: GalleryHeader(
-          artwork: artwork,
-          imagenActiva: _imagenActiva,
-          onTap: () => _openZoom(context),
-          onDotTap: (i) => setState(() => _imagenActiva = i),
+        stretchModes: const [StretchMode.zoomBackground],
+        background: Stack(
+          fit: StackFit.expand,
+          children: [
+            GalleryHeader(
+              artwork: artwork,
+              imagenActiva: _imagenActiva,
+              onTap: () => _openZoom(context),
+              onDotTap: (i) => setState(() => _imagenActiva = i),
+            ),
+            // Borde redondeado de la "hoja" de contenido sobre la imagen.
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: -1,
+              child: Container(
+                height: 30,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: nc.bg,
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(28)),
+                ),
+                child: const NcSerpentina(width: 44),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -285,8 +325,7 @@ Future<void> _showShareSheet(BuildContext context, ArtworkModel artwork) async {
   final isDark = Theme.of(context).brightness == Brightness.dark;
   final bgCard = Theme.of(context).cardTheme.color ??
       Theme.of(context).colorScheme.surface;
-  final handleColor =
-      isDark ? AppColors.borderDark : AppColors.borderLight;
+  final handleColor = isDark ? AppColors.borderDark : AppColors.borderLight;
   final titleColor =
       isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
 
@@ -348,7 +387,8 @@ Future<void> _showShareSheet(BuildContext context, ArtworkModel artwork) async {
               ShareOption(
                 icon: Icons.more_horiz,
                 label: 'Más',
-                color: isDark ? AppColors.textMutedDark : AppColors.textMutedLight,
+                color:
+                    isDark ? AppColors.textMutedDark : AppColors.textMutedLight,
                 onTap: () {
                   Share.share(texto);
                   Navigator.pop(context);
