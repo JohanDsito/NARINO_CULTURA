@@ -8,6 +8,7 @@ class OrderModel {
     required this.items,
     this.comprobantePdfUrl,
     this.wompiPaymentUrl,
+    this.montoVendedor,
   });
 
   final String id;
@@ -17,6 +18,13 @@ class OrderModel {
   final List<OrderItemModel> items;
   final String? comprobantePdfUrl;
   final String? wompiPaymentUrl;
+
+  /// Solo en "Mis ventas": lo que le corresponde al artista (`seller_amount`).
+  /// Si el backend aún no lo envía, es `null` y se usa [total].
+  final double? montoVendedor;
+
+  /// Monto a mostrar en una venta.
+  double get montoVenta => montoVendedor ?? total;
 
   factory OrderModel.fromJson(Map<String, dynamic> json) => OrderModel(
         id: json['id']?.toString() ?? json['order_id']?.toString() ?? '',
@@ -43,6 +51,9 @@ class OrderModel {
             .toList(),
         comprobantePdfUrl: json['comprobante_pdf_url']?.toString(),
         wompiPaymentUrl: json['wompi_payment_url']?.toString(),
+        montoVendedor: json['seller_amount'] == null
+            ? null
+            : double.tryParse(json['seller_amount'].toString()),
       );
 
   bool get isPendiente => estado == 'pendiente';
@@ -87,11 +98,19 @@ class OrderItemModel {
         obraTitulo: json['artwork_title']?.toString() ??
             json['obra_titulo']?.toString() ??
             '',
-        artistaNombre: json['artista_nombre']?.toString() ?? '',
+        artistaNombre: json['artist_name']?.toString() ??
+            json['artista_nombre']?.toString() ??
+            '',
         precio: double.tryParse(
               (json['price'] ?? json['precio'] ?? 0).toString(),
             ) ??
             0,
-        imagenUrl: json['imagen_url']?.toString(),
+        imagenUrl: _nonEmpty(json['artwork_image_url']) ??
+            _nonEmpty(json['imagen_url']),
       );
+}
+
+String? _nonEmpty(Object? v) {
+  final s = v?.toString().trim();
+  return (s == null || s.isEmpty) ? null : s;
 }

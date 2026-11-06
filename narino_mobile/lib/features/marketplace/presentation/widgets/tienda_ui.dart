@@ -168,7 +168,7 @@ class OrderCard extends StatelessWidget {
                 icon: estadoOrdenIcon(order.estado),
               ),
               const Spacer(),
-              Text(formatCOP(order.total),
+              Text(formatCOP(esVenta ? order.montoVenta : order.total),
                   style: AppTypography.price(color: nc.tienda.ink)
                       .copyWith(fontSize: 17)),
             ],
