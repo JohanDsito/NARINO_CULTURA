@@ -94,6 +94,18 @@ class OrdersAPIView(generics.ListAPIView):
         )
 
 
+class OrderDetailAPIView(generics.RetrieveAPIView):
+    """GET /marketplace/orders/{id}/: una orden del comprador autenticado (el administrador ve cualquiera)."""
+
+    serializer_class = OrderSerializer
+
+    def get_queryset(self):
+        qs = Order.objects.select_related("buyer").prefetch_related("items", "items__artwork", "items__artwork__artist")
+        if getattr(self.request.user, "role", None) == "ADMINISTRADOR":
+            return qs
+        return qs.filter(buyer=self.request.user)
+
+
 class SalesAPIView(generics.ListAPIView):
     """Ventas del artista autenticado: cada orden trae solo sus obras y su subtotal (seller_amount)."""
 
