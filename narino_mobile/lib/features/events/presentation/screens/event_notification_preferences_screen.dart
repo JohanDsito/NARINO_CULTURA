@@ -158,11 +158,9 @@ class _EventNotificationPreferencesScreenState
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.obsidiana,
-        foregroundColor: AppColors.oroClaro,
         title: Text(
           'Notificaciones de Eventos',
-          style: AppTypography.displaySemiBold(color: AppColors.oroClaro)
+          style: AppTypography.displaySemiBold()
               .copyWith(fontSize: 20),
         ),
       ),

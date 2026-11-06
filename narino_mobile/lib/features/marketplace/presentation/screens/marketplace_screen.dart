@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/providers/user_role_provider.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../artworks/presentation/providers/artwork_provider.dart';
 import '../providers/cart_provider.dart';
@@ -48,15 +47,13 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.obsidiana,
-        foregroundColor: AppColors.oroClaro,
         title: Text(
           'Tienda',
-          style: AppTypography.displaySemiBold(color: AppColors.oroClaro),
+          style: AppTypography.displaySemiBold(),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.favorite_outline, color: AppColors.oroClaro),
+            icon: const Icon(Icons.favorite_outline),
             tooltip: 'Favoritos',
             onPressed: () => context.push('/marketplace/favorites'),
           ),

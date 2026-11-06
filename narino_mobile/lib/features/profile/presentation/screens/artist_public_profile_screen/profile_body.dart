@@ -43,9 +43,8 @@ class ProfileBody extends ConsumerWidget {
           SliverAppBar(
             pinned: true,
             expandedHeight: 240,
-            backgroundColor: AppColors.obsidiana,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: AppColors.oroClaro),
+              icon: const Icon(Icons.arrow_back),
               onPressed: () => context.pop(),
             ),
             flexibleSpace: FlexibleSpaceBar(
@@ -86,7 +85,6 @@ class ProfileBody extends ConsumerWidget {
                       Text(
                         profile.nombreArtistico,
                         style: AppTypography.displaySemiBold(
-                          color: AppColors.oroClaro,
                         ),
                         textAlign: TextAlign.center,
                       ),

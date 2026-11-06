@@ -143,15 +143,13 @@ class _CreateAuctionScreenState extends ConsumerState<CreateAuctionScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.obsidiana,
-        foregroundColor: AppColors.oroClaro,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: AppColors.oroClaro),
+          icon: const Icon(Icons.close),
           onPressed: () => context.pop(),
         ),
         title: Text(
           'Abrir subasta',
-          style: AppTypography.displaySemiBold(color: AppColors.oroClaro),
+          style: AppTypography.displaySemiBold(),
         ),
       ),
       body: SingleChildScrollView(

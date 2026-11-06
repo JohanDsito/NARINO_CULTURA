@@ -220,18 +220,18 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       appBar: AppBar(
         title: Text(
           'Editar perfil',
-          style: AppTypography.displaySemiBold(color: AppColors.oroClaro)
+          style: AppTypography.displaySemiBold()
               .copyWith(fontSize: 18),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.close, color: AppColors.oroClaro),
+          icon: const Icon(Icons.close),
           onPressed: () => context.pop(),
         ),
         actions: [
           TextButton(
             onPressed: () => setState(() => _showPreview = !_showPreview),
             child: Text(_showPreview ? 'Editar' : 'Vista previa',
-                style: AppTypography.labelMedium(color: AppColors.oroClaro)),
+                style: AppTypography.labelMedium()),
           )
         ],
       ),

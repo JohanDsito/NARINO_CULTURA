@@ -86,11 +86,10 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.obsidiana,
         elevation: 0,
         title: Text(
           'Perfil',
-          style: AppTypography.displaySemiBold(color: AppColors.oroClaro),
+          style: AppTypography.displaySemiBold(),
         ),
         centerTitle: false,
       ),

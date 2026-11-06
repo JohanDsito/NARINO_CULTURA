@@ -10,7 +10,8 @@ final themeModeProvider =
 );
 
 class ThemeModeNotifier extends StateNotifier<ThemeMode> {
-  ThemeModeNotifier() : super(ThemeMode.system) {
+  // El design system parte en modo oscuro ("body.dark" por defecto).
+  ThemeModeNotifier() : super(ThemeMode.dark) {
     _load();
   }
 
@@ -18,14 +19,18 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
 
   Future<void> _load() async {
     final value = await _storage.read(key: _kThemeKey);
-    if (value == 'dark') {
-      state = ThemeMode.dark;
-    } else if (value == 'light') {
+    if (value == 'light') {
       state = ThemeMode.light;
-    } else {
+    } else if (value == 'system') {
       state = ThemeMode.system;
+    } else {
+      state = ThemeMode.dark;
     }
   }
+
+  /// Alterna claro ↔ oscuro (botón ☀️/🌙 del header).
+  Future<void> toggle(Brightness current) => setMode(
+      current == Brightness.dark ? ThemeMode.light : ThemeMode.dark);
 
   Future<void> setMode(ThemeMode mode) async {
     state = mode;

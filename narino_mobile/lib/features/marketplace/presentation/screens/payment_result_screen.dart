@@ -21,13 +21,11 @@ class PaymentResultScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.obsidiana,
-        foregroundColor: AppColors.oroClaro,
         // Sin botón de back — estado terminal del flujo de pago
         automaticallyImplyLeading: false,
         title: Text(
           'Resultado de pago',
-          style: AppTypography.displaySemiBold(color: AppColors.oroClaro),
+          style: AppTypography.displaySemiBold(),
         ),
       ),
       body: Center(

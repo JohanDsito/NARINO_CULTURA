@@ -4,8 +4,9 @@ import 'package:go_router/go_router.dart';
 
 import 'core/constants/app_constants.dart';
 import 'core/providers/theme_provider.dart';
-import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/nc_theme.dart';
+import 'shared/widgets/design/design.dart';
 import 'core/utils/storage_utils.dart';
 import 'features/auctions/presentation/screens/auctions_screen.dart';
 import 'features/auctions/presentation/screens/auction_detail_screen.dart';
@@ -379,23 +380,43 @@ class _MainShellState extends ConsumerState<MainShell> {
     if (idx >= 0) setState(() => _selectedIndex = idx);
   }
 
+  void _goTo(int index) {
+    if (index == _selectedIndex) return;
+    setState(() => _selectedIndex = index);
+    carnavalScrollOffset.value = 0;
+    context.go(MainShell._tabs[index].path);
+  }
+
+  /// Mueve el fondo carnaval con el scroll vertical de la pestaña activa.
+  bool _onScroll(ScrollNotification n) {
+    if (n.depth == 0 && n.metrics.axis == Axis.vertical) {
+      carnavalScrollOffset.value = n.metrics.pixels.clamp(0, 4000).toDouble();
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: widget.child,
-      bottomNavigationBar: BottomNavigationBar(
+      backgroundColor: context.nc.bg,
+      body: Stack(
+        children: [
+          const Positioned.fill(child: CarnavalBackground()),
+          NotificationListener<ScrollNotification>(
+            onNotification: _onScroll,
+            child: widget.child,
+          ),
+        ],
+      ),
+      bottomNavigationBar: NcTabBar(
         currentIndex: _selectedIndex,
-        onTap: (index) {
-          setState(() => _selectedIndex = index);
-          context.go(MainShell._tabs[index].path);
-        },
-        selectedItemColor: AppColors.tierraProfunda,
+        onTap: _goTo,
         items: [
           for (final tab in MainShell._tabs)
-            BottomNavigationBarItem(
-              icon: Icon(tab.iconOutlined),
-              activeIcon: Icon(tab.iconFilled),
+            NcTabItem(
               label: tab.label,
+              icon: tab.iconOutlined,
+              activeIcon: tab.iconFilled,
             ),
         ],
       ),

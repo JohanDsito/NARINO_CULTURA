@@ -124,14 +124,13 @@ class _PublishMusicalWorkScreenState
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.obsidiana,
         elevation: 0,
         title: Text(
           'Publicar obra musical',
-          style: AppTypography.displaySemiBold(color: AppColors.oroClaro),
+          style: AppTypography.displaySemiBold(),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.oroClaro),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
         ),
       ),

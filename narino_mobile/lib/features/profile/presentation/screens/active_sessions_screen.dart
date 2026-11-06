@@ -25,11 +25,9 @@ class ActiveSessionsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.obsidiana,
-        foregroundColor: AppColors.oroClaro,
         title: Text(
           'Sesiones activas',
-          style: AppTypography.displaySemiBold(color: AppColors.oroClaro),
+          style: AppTypography.displaySemiBold(),
         ),
         actions: [
           TextButton(
@@ -40,7 +38,7 @@ class ActiveSessionsScreen extends ConsumerWidget {
                     .revokeOtherSessions(),
             child: Text(
               'Cerrar otras',
-              style: AppTypography.labelSemiBold(color: AppColors.oroClaro),
+              style: AppTypography.labelSemiBold(),
             ),
           ),
         ],

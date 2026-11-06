@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../providers/auctions_provider.dart';
 import 'auction_history_screen/estado_filter.dart';
@@ -27,15 +26,11 @@ class _AuctionHistoryScreenState extends ConsumerState<AuctionHistoryScreen> {
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: AppColors.obsidiana,
-          foregroundColor: AppColors.oroClaro,
           title: Text(
             'Historial de subastas',
-            style: AppTypography.displaySemiBold(color: AppColors.oroClaro),
+            style: AppTypography.displaySemiBold(),
           ),
           bottom: const TabBar(
-            indicatorColor: AppColors.oroClaro,
-            labelColor: AppColors.oroClaro,
             unselectedLabelColor: Colors.white70,
             tabs: [
               Tab(text: 'Mis pujas'),

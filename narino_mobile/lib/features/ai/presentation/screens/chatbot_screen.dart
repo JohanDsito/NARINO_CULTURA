@@ -117,11 +117,9 @@ class _ChatbotScreenState extends State<ChatbotScreen>
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.obsidiana,
-        foregroundColor: AppColors.oroClaro,
         title: Text(
           'Asistente Cultural Nariño',
-          style: AppTypography.displaySemiBold(color: AppColors.oroClaro),
+          style: AppTypography.displaySemiBold(),
         ),
         leading: IconButton(
           onPressed: () => context.pop(),

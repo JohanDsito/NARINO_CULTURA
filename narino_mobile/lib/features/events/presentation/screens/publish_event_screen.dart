@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/providers/user_role_provider.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../providers/events_provider.dart';
 import 'publish_event_screen/date_time_tile.dart';
@@ -141,12 +140,10 @@ class _PublishEventScreenState extends ConsumerState<PublishEventScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.obsidiana,
-        foregroundColor: AppColors.oroClaro,
-        leading: const BackButton(color: AppColors.oroClaro),
+        leading: const BackButton(),
         title: Text(
           'Publicar evento',
-          style: AppTypography.displaySemiBold(color: AppColors.oroClaro),
+          style: AppTypography.displaySemiBold(),
         ),
       ),
       body: SingleChildScrollView(
