@@ -18,14 +18,20 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
   final _storage = const FlutterSecureStorage();
 
   Future<void> _load() async {
-    final value = await _storage.read(key: _kThemeKey);
-    if (value == 'light') {
-      state = ThemeMode.light;
-    } else if (value == 'system') {
-      state = ThemeMode.system;
-    } else {
-      state = ThemeMode.dark;
+    String? value;
+    try {
+      value = await _storage.read(key: _kThemeKey);
+    } catch (_) {
+      // Llavero no disponible (p. ej. tras restaurar una copia en Android):
+      // se queda el tema por defecto.
+      return;
     }
+    if (!mounted) return;
+    state = switch (value) {
+      'light' => ThemeMode.light,
+      'system' => ThemeMode.system,
+      _ => ThemeMode.dark,
+    };
   }
 
   /// Alterna claro ↔ oscuro (botón ☀️/🌙 del header).
@@ -39,6 +45,10 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
       ThemeMode.light => 'light',
       ThemeMode.system => 'system',
     };
-    await _storage.write(key: _kThemeKey, value: stored);
+    try {
+      await _storage.write(key: _kThemeKey, value: stored);
+    } catch (_) {
+      // El cambio aplica igual en esta sesión aunque no se pueda guardar.
+    }
   }
 }
