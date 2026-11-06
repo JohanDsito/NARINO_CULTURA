@@ -37,19 +37,28 @@ class AuctionHistoryParams {
   int get hashCode => Object.hash(mode, estado);
 }
 
+/// Historial del usuario. El backend no filtra por participante ni por
+/// vendedor, así que se trae la lista y se filtra con el id de usuario:
+/// - `participante`: subastas donde va ganando o ganó.
+/// - `artista`: subastas que el usuario publicó (`seller`).
 final auctionHistoryProvider =
     FutureProvider.family.autoDispose<List<AuctionModel>, AuctionHistoryParams>(
   (ref, params) async {
-    if (params.mode == 'participante') {
-      return ref.read(auctionsRepositoryProvider).getAuctions(
-            participante: 'me',
-            estado: params.estado,
-          );
-    }
-    return ref.read(auctionsRepositoryProvider).getAuctions(
-          artista: 'me',
-          estado: params.estado,
-        );
+    final me = ref.read(profileProvider).profile ??
+        await ref.read(profileRepositoryProvider).getMyProfile();
+    final myUserId = me?.userId ?? '';
+    if (myUserId.isEmpty) return const [];
+
+    final todas = await ref
+        .read(auctionsRepositoryProvider)
+        .getAuctions(estado: params.estado);
+
+    final mias = params.mode == 'participante'
+        ? todas.where(
+            (a) => a.pujadorLiderId == myUserId || a.ganadorId == myUserId)
+        : todas.where((a) => a.artistaId == myUserId);
+    return mias.toList()
+      ..sort((a, b) => b.fechaCierre.compareTo(a.fechaCierre));
   },
 );
 

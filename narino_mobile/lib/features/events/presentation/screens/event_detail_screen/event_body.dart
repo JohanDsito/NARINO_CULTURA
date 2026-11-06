@@ -76,18 +76,25 @@ class _EventBodyState extends State<EventBody> {
 
   Future<void> _toggleRecordatorio() async {
     if (_toggleLoading) return;
+    // El backend todavía no permite cancelar la inscripción (solo POST).
+    if (_estaSuscrito) {
+      _showSnackBar(
+          'Ya estás inscrito. Por ahora no se puede cancelar la inscripción desde la app.');
+      return;
+    }
     setState(() => _toggleLoading = true);
     try {
-      final id = widget.event.id;
-      if (_estaSuscrito) {
-        await _eventsRepo.unregisterFromEvent(id);
-        if (mounted) setState(() => _estaSuscrito = false);
-      } else {
-        await _eventsRepo.registerToEvent(id);
+      await _eventsRepo.registerToEvent(widget.event.id);
+      if (mounted) setState(() => _estaSuscrito = true);
+      _showSnackBar('¡Listo! Te avisaremos antes del evento.');
+    } catch (e) {
+      final msg = e.toString();
+      if (msg.toLowerCase().contains('ya estás inscrito')) {
         if (mounted) setState(() => _estaSuscrito = true);
+        _showSnackBar('Ya estabas inscrito en este evento.');
+      } else {
+        _showSnackBar(msg.isNotEmpty ? msg : 'No se pudo completar la inscripción.');
       }
-    } catch (_) {
-      _showSnackBar('No se pudo actualizar el recordatorio.');
     } finally {
       if (mounted) setState(() => _toggleLoading = false);
     }

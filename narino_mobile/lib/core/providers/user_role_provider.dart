@@ -8,8 +8,29 @@ import '../utils/storage_utils.dart';
 class CurrentUserClaims {
   const CurrentUserClaims({required this.role, required this.userId});
 
+  /// Rol normalizado: `artista`, `comprador`, `gestor` o `admin`.
   final String? role;
-  final int? userId;
+
+  /// Id del usuario (UUID en el backend).
+  final String? userId;
+}
+
+/// El backend envía `ARTISTA`, `COMPRADOR`, `GESTOR_CULTURAL` y
+/// `ADMINISTRADOR`; la app compara con `artista`, `comprador`, `gestor` y
+/// `admin`.
+String? normalizeRole(Object? raw) {
+  final r = raw?.toString().trim().toLowerCase();
+  if (r == null || r.isEmpty) return null;
+  return switch (r) {
+    'administrador' || 'administrator' => 'admin',
+    'gestor_cultural' || 'gestor cultural' => 'gestor',
+    _ => r,
+  };
+}
+
+String? _id(Object? v) {
+  final s = v?.toString().trim();
+  return (s == null || s.isEmpty || s == 'null') ? null : s;
 }
 
 final currentUserClaimsProvider = FutureProvider<CurrentUserClaims>((
@@ -21,7 +42,7 @@ final currentUserClaimsProvider = FutureProvider<CurrentUserClaims>((
   }
 
   String? role;
-  int? userId;
+  String? userId;
 
   try {
     final parts = token.split('.');
@@ -36,13 +57,11 @@ final currentUserClaimsProvider = FutureProvider<CurrentUserClaims>((
             json['role'] ??
             json['user_role'] ??
             json['userRole'];
-        role = roleValue?.toString().toLowerCase();
+        role = normalizeRole(roleValue);
 
         final idValue =
             json['user_id'] ?? json['userId'] ?? json['id'] ?? json['sub'];
-        if (idValue != null) {
-          userId = int.tryParse(idValue.toString());
-        }
+        userId = _id(idValue);
       }
     }
   } catch (_) {}
@@ -58,8 +77,8 @@ final currentUserClaimsProvider = FutureProvider<CurrentUserClaims>((
       final roleValue = data['role'] ?? data['rol'];
       final idValue = data['id'] ?? data['user_id'] ?? data['userId'];
       return CurrentUserClaims(
-        role: role ?? roleValue?.toString().toLowerCase(),
-        userId: userId ?? int.tryParse(idValue?.toString() ?? ''),
+        role: role ?? normalizeRole(roleValue),
+        userId: userId ?? _id(idValue),
       );
     }
   } catch (_) {}
@@ -72,7 +91,7 @@ final currentUserRoleProvider = FutureProvider<String?>((ref) async {
   return claims.role;
 });
 
-final currentUserIdProvider = FutureProvider<int?>((ref) async {
+final currentUserIdProvider = FutureProvider<String?>((ref) async {
   final claims = await ref.watch(currentUserClaimsProvider.future);
   return claims.userId;
 });

@@ -20,7 +20,9 @@ class ApiConstants {
   // Perfil de usuario
   static const String profile = '/api/v1/users/me/';
   static const String myProfile = '/api/v1/users/me/';
-  static const String myFollowing = '/api/v1/users/me/following/';
+  /// Artistas y músicos que sigue el usuario (no existe `users/me/following/`).
+  static const String artistsFollowing = '/api/v1/artists/following/';
+  static const String musiciansFollowing = '/api/v1/musicians/following/';
 
   // Artistas
   static const String artists = '/api/v1/artists/';
@@ -87,6 +89,8 @@ class ApiConstants {
   static const String notificationRead = '/api/v1/notifications/{id}/read/';
   static const String notificationsReadAll =
       '/api/v1/notifications/read-all/';
+  static const String notificationsUnreadCount =
+      '/api/v1/notifications/unread-count/';
   static const String eventNotificationPreferences =
       '/api/v1/notifications/event-preferences/';
 

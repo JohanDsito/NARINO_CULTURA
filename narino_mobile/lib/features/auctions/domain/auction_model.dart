@@ -16,8 +16,14 @@ class AuctionModel {
   final String? ganadorNombre;
   final List<AuctionBidModel> ultimasPujas;
 
+  /// Id de USUARIO del vendedor (`seller` en el backend).
   final String? artistaId;
   final String? ganadorId;
+
+  /// Id de usuario de quien va ganando (`highest_bidder`).
+  final String? pujadorLiderId;
+
+  /// Orden de pago del ganador (`payment_order_id`; solo la ve el ganador).
   final String? orderId;
 
   const AuctionModel({
@@ -36,6 +42,7 @@ class AuctionModel {
     required this.ultimasPujas,
     this.artistaId,
     this.ganadorId,
+    this.pujadorLiderId,
     this.orderId,
   });
 
@@ -138,9 +145,13 @@ class AuctionModel {
           (json['ganador_nombre'] ?? json['ganadorNombre'] ?? json['ganador'])
               ?.toString(),
       ultimasPujas: bidsList,
-      artistaId: (json['artista_id'] ?? json['artistaId'])?.toString(),
+      artistaId:
+          (json['seller'] ?? json['artista_id'] ?? json['artistaId'])?.toString(),
       ganadorId: ganadorId,
-      orderId: (json['order_id'] ?? json['orderId'])?.toString(),
+      pujadorLiderId:
+          (json['highest_bidder'] ?? json['highest_bidder_id'])?.toString(),
+      orderId: (json['payment_order_id'] ?? json['order_id'] ?? json['orderId'])
+          ?.toString(),
     );
   }
 
@@ -150,6 +161,7 @@ class AuctionModel {
     String? estado,
     String? ganadorNombre,
     String? ganadorId,
+    String? pujadorLiderId,
     String? orderId,
     List<AuctionBidModel>? ultimasPujas,
     DateTime? fechaCierre,
@@ -170,6 +182,7 @@ class AuctionModel {
       ultimasPujas: ultimasPujas ?? this.ultimasPujas,
       artistaId: artistaId,
       ganadorId: ganadorId ?? this.ganadorId,
+      pujadorLiderId: pujadorLiderId ?? this.pujadorLiderId,
       orderId: orderId ?? this.orderId,
     );
   }

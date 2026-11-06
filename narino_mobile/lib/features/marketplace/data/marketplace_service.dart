@@ -8,15 +8,36 @@ class MarketplaceService {
 
   // ── helpers ──────────────────────────────────────────────────────────────
 
-  Future<Map<String, dynamic>?> _artworkDetail(String artworkId) async {
+  /// Obras del catálogo indexadas por id, buscando solo las de [ids].
+  ///
+  /// Usa la LISTA paginada (no `GET /artworks/{id}/`, que suma una vista cada
+  /// vez) y se detiene apenas encuentra todas o se acaban las páginas.
+  Future<Map<String, Map<String, dynamic>>> _artworksById(Set<String> ids) async {
+    final found = <String, Map<String, dynamic>>{};
+    if (ids.isEmpty) return found;
+    String? nextUrl = ApiConstants.artworks;
+    Map<String, dynamic>? query = {'page_size': 100};
+    var pages = 0;
     try {
-      final r = await _dio.get(
-        ApiConstants.artworkDetail.replaceFirst('{id}', artworkId),
-      );
-      return r.data as Map<String, dynamic>?;
+      while (nextUrl != null && found.length < ids.length && pages < 5) {
+        final r = await _dio.get(nextUrl, queryParameters: query);
+        query = null; // `next` ya trae los parámetros
+        pages++;
+        final data = r.data;
+        final results = data is Map ? data['results'] as List? ?? const [] : const [];
+        for (final item in results.whereType<Map>()) {
+          final id = item['id']?.toString();
+          if (id != null && ids.contains(id)) {
+            found[id] = item.cast<String, dynamic>();
+          }
+        }
+        final next = data is Map ? data['next']?.toString() : null;
+        nextUrl = (next != null && next.isNotEmpty) ? next : null;
+      }
     } catch (_) {
-      return null;
+      // Sin enriquecimiento: la lista se muestra con los datos básicos.
     }
+    return found;
   }
 
   String _nameFromSlug(String? slug) {
@@ -29,7 +50,7 @@ class MarketplaceService {
 
   // ── carrito ───────────────────────────────────────────────────────────────
 
-  Future<List<dynamic>> getCart() async {
+  Future<List<Map<String, dynamic>>> _rawCart() async {
     final r = await _dio.get(ApiConstants.cart);
     final data = r.data;
     final List<dynamic> raw;
@@ -40,23 +61,26 @@ class MarketplaceService {
     } else {
       return [];
     }
+    return raw.whereType<Map>().map((e) => e.cast<String, dynamic>()).toList();
+  }
 
-    final enriched = <Map<String, dynamic>>[];
-    for (final item in raw) {
-      final base = Map<String, dynamic>.from(item as Map);
-      final artworkId = base['artwork']?.toString() ?? '';
-      if (artworkId.isNotEmpty) {
-        final artwork = await _artworkDetail(artworkId);
-        if (artwork != null) {
-          final slug = artwork['artist_slug']?.toString() ?? '';
-          base['artista_nombre'] =
-              artwork['artista_nombre']?.toString() ?? _nameFromSlug(slug);
-          base['imagen_url'] = artwork['main_image_url']?.toString() ?? '';
-        }
+  /// Carrito. El backend ya trae título, precio y estado de cada obra; solo
+  /// falta imagen y artista, que se completan con una sola consulta de lista.
+  Future<List<dynamic>> getCart() async {
+    final items = await _rawCart();
+    final obras = await _artworksById(
+      items.map((i) => i['artwork']?.toString() ?? '').where((id) => id.isNotEmpty).toSet(),
+    );
+    return items.map((item) {
+      final base = Map<String, dynamic>.from(item);
+      final obra = obras[base['artwork']?.toString()];
+      if (obra != null) {
+        base['artista_nombre'] = obra['artista_nombre']?.toString() ??
+            _nameFromSlug(obra['artist_slug']?.toString());
+        base['imagen_url'] = obra['main_image_url']?.toString() ?? '';
       }
-      enriched.add(base);
-    }
-    return enriched;
+      return base;
+    }).toList();
   }
 
   Future<void> addToCart(String obraId) async {
@@ -71,7 +95,7 @@ class MarketplaceService {
   }
 
   Future<void> clearCart() async {
-    final items = await getCart();
+    final items = await _rawCart();
     for (final item in items) {
       final obraId = item['artwork']?.toString() ?? item['obra_id']?.toString();
       if (obraId != null && obraId.isNotEmpty) {
@@ -82,33 +106,36 @@ class MarketplaceService {
     }
   }
 
+  /// Favoritos. El backend solo trae `artwork` (id) y `artwork_title`; el
+  /// resto (imagen, precio, estado, artista) se completa con la lista.
   Future<List<dynamic>> getFavorites() async {
     final r = await _dio.get(ApiConstants.favorites);
     final List<dynamic> raw = r.data is List
         ? r.data as List
         : (r.data['results'] as List? ?? []);
+    final favs = raw.whereType<Map>().map((e) => e.cast<String, dynamic>()).toList();
 
-    final enriched = <Map<String, dynamic>>[];
-    for (final fav in raw) {
-      final base = Map<String, dynamic>.from(fav as Map);
-      final artworkId = base['artwork_id']?.toString() ?? '';
-      if (artworkId.isNotEmpty) {
-        final artwork = await _artworkDetail(artworkId);
-        if (artwork != null) {
-          final slug = artwork['artist_slug']?.toString() ?? '';
-          base['artista_nombre'] =
-              artwork['artista_nombre']?.toString() ?? _nameFromSlug(slug);
-          base['status'] = artwork['status'];
-          base['price'] = artwork['price'];
-          base['main_image_url'] = artwork['main_image_url'];
-          if ((base['title']?.toString() ?? '').isEmpty) {
-            base['title'] = artwork['title'];
-          }
+    String idDe(Map<String, dynamic> f) =>
+        (f['artwork'] ?? f['artwork_id'] ?? '').toString();
+
+    final obras = await _artworksById(
+      favs.map(idDe).where((id) => id.isNotEmpty).toSet(),
+    );
+    return favs.map((fav) {
+      final base = Map<String, dynamic>.from(fav);
+      final obra = obras[idDe(fav)];
+      if (obra != null) {
+        base['artista_nombre'] = obra['artista_nombre']?.toString() ??
+            _nameFromSlug(obra['artist_slug']?.toString());
+        base['status'] = obra['status'];
+        base['price'] = obra['price'];
+        base['main_image_url'] = obra['main_image_url'];
+        if ((base['artwork_title']?.toString() ?? '').isEmpty) {
+          base['title'] = obra['title'];
         }
       }
-      enriched.add(base);
-    }
-    return enriched;
+      return base;
+    }).toList();
   }
 
   Future<void> addFavorite(String obraId) async {

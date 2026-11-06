@@ -29,12 +29,12 @@ class FollowingScreen extends ConsumerWidget {
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
-          'Artistas que sigo',
-          style: AppTypography.displaySemiBold(color: AppColors.oroClaro)
+          'Siguiendo',
+          style: AppTypography.displaySemiBold()
               .copyWith(fontSize: 18),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.oroClaro),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
         ),
       ),
@@ -55,14 +55,14 @@ class FollowingScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'No sigues a ningún artista',
+                      'Todavía no sigues a nadie',
                       style: AppTypography.displaySemiBold(
                         color: textSecondary,
                       ),
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Explora el catálogo y sigue a los artistas que te gusten',
+                      'Explora el catálogo y la música, y sigue a quienes te gusten',
                       style: AppTypography.bodySmall(
                         color: textMuted,
                       ),
@@ -103,13 +103,19 @@ class FollowingScreen extends ConsumerWidget {
                       ),
                     ),
                     subtitle: Text(
-                      artist.disciplina,
+                      artist.esMusico
+                          ? 'Músico'
+                          : (artist.disciplina.isNotEmpty
+                              ? artist.disciplina
+                              : 'Artista'),
                       style: AppTypography.caption(
                         color: textMuted,
                       ),
                     ),
                     trailing: Icon(Icons.chevron_right, color: textMuted),
-                    onTap: () => context.push('/artistas/${artist.id}'),
+                    onTap: () => context.push(artist.esMusico
+                        ? '/musicians/${artist.id}'
+                        : '/artistas/${artist.id}'),
                   );
                 },
               ),

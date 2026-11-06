@@ -122,7 +122,7 @@ void main() {
 
       await expectLater(
         repo.registerToEvent('1'),
-        throwsA('Solo gestores culturales pueden publicar eventos.'),
+        throwsA('Solo artistas y gestores culturales pueden publicar eventos.'),
       );
     });
   });
@@ -253,7 +253,7 @@ void main() {
           fecha: '2025-01-01T00:00:00.000Z',
           lugar: 'Pasto',
         ),
-        throwsA('Solo gestores culturales pueden publicar eventos.'),
+        throwsA('Solo artistas y gestores culturales pueden publicar eventos.'),
       );
     });
 
