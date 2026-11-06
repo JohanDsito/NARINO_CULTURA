@@ -13,6 +13,7 @@ from apps.artworks.models import Artwork
 from apps.auctions.models import Auction, Bid
 from apps.marketplace.models import Order, OrderItem
 from services.notification_service import NotificationService
+from utils.media import public_name
 
 
 class AuctionService:
@@ -121,7 +122,7 @@ class AuctionService:
                         "current_price": str(locked.current_price),
                         "highest_bidder_id": str(bidder.id),
                         "bidder_id": str(bidder.id),
-                        "bidder_name": AuctionService._public_name(bidder),
+                        "bidder_name": public_name(bidder),
                         "ends_at": locked.ends_at.isoformat(),
                     },
                 )
@@ -249,12 +250,6 @@ class AuctionService:
                 )
                 expired += 1
         return expired
-
-    @staticmethod
-    def _public_name(user) -> str:
-        # Nombre visible para los demás postores: nombre y la inicial del apellido
-        initial = f" {user.last_name[:1]}." if user.last_name else ""
-        return f"{user.first_name}{initial}".strip() or "Postor"
 
     @staticmethod
     def _broadcast_on_commit(*, auction_id: str, payload: dict) -> None:
