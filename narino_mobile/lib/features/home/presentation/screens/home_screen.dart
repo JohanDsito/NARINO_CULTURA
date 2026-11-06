@@ -2,20 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_colors.dart';
+import '../../../../shared/widgets/design/design.dart';
 import '../../../ai/data/ai_service.dart';
 import '../../../artworks/data/artwork_repository.dart';
 import '../../../artworks/domain/artwork_model.dart';
 import '../../../events/data/events_repository.dart';
 import '../../../events/domain/event_model.dart';
-import 'home_screen/featured_artworks.dart';
-import 'home_screen/for_you_section.dart';
-import 'home_screen/home_app_bar.dart';
-import 'home_screen/quick_access.dart';
-import 'home_screen/quick_item.dart';
-import 'home_screen/section_header.dart';
-import 'home_screen/upcoming_events.dart';
-import 'home_screen/welcome_banner.dart';
+import 'home_screen/agenda_section.dart';
+import 'home_screen/disciplines_carousel.dart';
+import 'home_screen/featured_strip.dart';
+import 'home_screen/hero_section.dart';
+import 'home_screen/home_header_actions.dart';
 
 // ─── Providers ────────────────────────────────────────────────────────────────
 
@@ -28,6 +25,7 @@ final homeFeaturedArtworksProvider =
   },
 );
 
+/// Próximos eventos ordenados por fecha (la agenda usa hasta [limit]).
 final homeUpcomingEventsProvider =
     FutureProvider.autoDispose.family<List<EventModel>, int>(
   (ref, limit) async {
@@ -38,6 +36,8 @@ final homeUpcomingEventsProvider =
   },
 );
 
+/// Recomendaciones IA. El backend aún no expone `/ai/recommendations/`;
+/// se conserva para cuando exista.
 final homeAiArtworkRecommendationsProvider =
     FutureProvider.autoDispose.family<List<ArtworkModel>, int>(
   (ref, limit) async {
@@ -45,77 +45,6 @@ final homeAiArtworkRecommendationsProvider =
     return list.take(limit).toList();
   },
 );
-
-// ─── Datos de fallback ────────────────────────────────────────────────────────
-
-const mockArtworks = [
-  {'title': 'Cóndor Andino', 'artist': 'María Torres', 'price': '\$320.000'},
-  {'title': 'Volcán en Calma', 'artist': 'Luis Zambrano', 'price': '\$180.000'},
-  {'title': 'Carnaval Eterno', 'artist': 'Ana Benavides', 'price': '\$540.000'},
-  {'title': 'Selva Nariñense', 'artist': 'Carlos Díaz', 'price': '\$210.000'},
-];
-
-const mockEvents = [
-  {
-    'title': 'Exposición: Raíces',
-    'date': '3 mayo · 6:00 PM',
-    'place': 'Casa de la Cultura, Pasto',
-    'type': 'Exposición',
-  },
-  {
-    'title': 'Taller de Acuarela',
-    'date': '10 mayo · 9:00 AM',
-    'place': 'Centro Cultural Taminango',
-    'type': 'Taller',
-  },
-  {
-    'title': 'Feria Artesanal Nariño',
-    'date': '17 mayo · 10:00 AM',
-    'place': 'Parque Nariño, Pasto',
-    'type': 'Feria',
-  },
-];
-
-// ─── Accesos rápidos ──────────────────────────────────────────────────────────
-
-const kQuickItems = [
-  QuickItem(
-    icon: Icons.palette_outlined,
-    label: 'Catálogo',
-    route: '/catalog',
-    color: AppColors.tierraProfunda,
-  ),
-  QuickItem(
-    icon: Icons.storefront_outlined,
-    label: 'Tienda',
-    route: '/marketplace',
-    color: AppColors.oroAndino,
-  ),
-  QuickItem(
-    icon: Icons.gavel_outlined,
-    label: 'Subastas',
-    route: '/auctions',
-    color: AppColors.indigoNoche,
-  ),
-  QuickItem(
-    icon: Icons.event_outlined,
-    label: 'Eventos',
-    route: '/events',
-    color: AppColors.selvaAndina,
-  ),
-  QuickItem(
-    icon: Icons.library_music_outlined,
-    label: 'Músicos',
-    route: '/musicians',
-    color: AppColors.indigoClaro,
-  ),
-  QuickItem(
-    icon: Icons.auto_awesome_outlined,
-    label: 'Descubrir',
-    route: '/music-discovery',
-    color: AppColors.indigoClaro,
-  ),
-];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -128,43 +57,71 @@ String formatCOP(double value) {
 
 // ─── Pantalla principal ───────────────────────────────────────────────────────
 
-class HomeScreen extends ConsumerWidget {
+/// Inicio (`narino_cultura_movil_2_inicio.html`): hero, disciplinas en
+/// carrusel, obras destacadas y agenda con calendario, sobre el fondo carnaval
+/// que pinta el shell.
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  final _agendaKey = GlobalKey();
+
+  void _scrollToAgenda() {
+    final ctx = _agendaKey.currentContext;
+    if (ctx == null) return;
+    final reduce = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    Scrollable.ensureVisible(
+      ctx,
+      duration: reduce ? Duration.zero : const Duration(milliseconds: 600),
+      curve: kNcEase,
+      alignmentPolicy: ScrollPositionAlignmentPolicy.explicit,
+      alignment: 0.05,
+    );
+  }
+
+  Future<void> _refresh() async {
+    ref.invalidate(homeFeaturedArtworksProvider);
+    ref.invalidate(homeUpcomingEventsProvider);
+    await Future.wait([
+      ref.read(homeFeaturedArtworksProvider(kHomeFeaturedLimit).future),
+      ref.read(homeUpcomingEventsProvider(kHomeAgendaLimit).future),
+    ].map((f) => f.catchError((_) => const <Never>[])));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final topInset = MediaQuery.paddingOf(context).top;
+    const headerHeight = NcGlassHeader.contentHeight;
+
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: HomeAppBar(ref: ref),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      // Transparente: el fondo carnaval lo pinta el shell.
+      backgroundColor: Colors.transparent,
+      extendBodyBehindAppBar: true,
+      appBar: const NcGlassHeader(actions: homeHeaderActions),
+      body: RefreshIndicator(
+        edgeOffset: topInset + headerHeight,
+        onRefresh: _refresh,
+        child: ListView(
+          padding: EdgeInsets.only(top: topInset + headerHeight + 28, bottom: 32),
           children: [
-            const WelcomeBanner(),
-            const QuickAccess(),
-            const SectionHeader(
-              title: 'Obras destacadas',
-              subtitle: 'Descubre el arte de Nariño',
-            ),
-            FeaturedArtworks(ref: ref),
-            ForYouSection(ref: ref),
-            const SectionHeader(
-              title: 'Próximos eventos',
-              subtitle: 'Agenda cultural del departamento',
-            ),
-            UpcomingEvents(ref: ref),
-            const SizedBox(height: 32),
+            HeroSection(onSecondaryFallback: _scrollToAgenda),
+            const SizedBox(height: 44),
+            const DisciplinesCarousel(),
+            const SizedBox(height: 44),
+            const FeaturedStrip(),
+            KeyedSubtree(key: _agendaKey, child: const AgendaSection()),
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Theme.of(context).colorScheme.primary,
+        heroTag: 'home-chatbot',
         tooltip: 'Asistente IA',
         onPressed: () => context.push('/chatbot'),
-        child: Icon(
-          Icons.chat_bubble_outline,
-          color: Theme.of(context).colorScheme.onPrimary,
-        ),
+        child: const Icon(Icons.auto_awesome_outlined),
       ),
     );
   }
