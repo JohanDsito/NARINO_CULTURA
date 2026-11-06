@@ -2,12 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/nc_theme.dart';
+import '../../../../shared/widgets/design/design.dart';
+import '../../../musicians/presentation/widgets/musica_ui.dart';
 import '../providers/music_discovery_provider.dart';
-import 'music_discovery_screen/results_body.dart';
-import 'music_discovery_screen/suggestions_panel.dart';
 
+const _sugerencias = [
+  'Música andina de Nariño',
+  'Chirimía del Pacífico',
+  'Cumbia nariñense',
+  'Trova pastusa',
+  'Rock alternativo en Pasto',
+  'Jazz fusión andino',
+];
+
+/// Descubrimiento musical con IA: describe lo que quieres escuchar.
 class MusicDiscoveryScreen extends ConsumerStatefulWidget {
   const MusicDiscoveryScreen({super.key});
 
@@ -17,193 +27,177 @@ class MusicDiscoveryScreen extends ConsumerStatefulWidget {
 }
 
 class _MusicDiscoveryScreenState extends ConsumerState<MusicDiscoveryScreen> {
-  final _queryCtrl = TextEditingController();
-  final _focusNode = FocusNode();
+  final _ctrl = TextEditingController();
+  final _focus = FocusNode();
 
   @override
   void dispose() {
-    _queryCtrl.dispose();
-    _focusNode.dispose();
+    _ctrl.dispose();
+    _focus.dispose();
     super.dispose();
   }
 
-  void _search() {
-    _focusNode.unfocus();
-    ref.read(musicDiscoveryProvider.notifier).search(_queryCtrl.text);
+  void _buscar([String? texto]) {
+    if (texto != null) _ctrl.text = texto;
+    _focus.unfocus();
+    ref.read(musicDiscoveryProvider.notifier).search(_ctrl.text);
   }
 
   @override
   Widget build(BuildContext context) {
+    final nc = context.nc;
     final state = ref.watch(musicDiscoveryProvider);
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final textPrimary =
-        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-    final textMuted =
-        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
-    final cs = theme.colorScheme;
+    final pill = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(22),
+      borderSide: BorderSide(color: nc.border),
+    );
 
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) {
-          if (context.canPop()) {
-            context.pop();
-          } else {
-            context.go('/musicians');
-          }
-        }
+        if (didPop) return;
+        context.canPop() ? context.pop() : context.go('/musicians');
       },
       child: Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Text(
-          'Descubrimiento Musical',
-          style: AppTypography.displaySemiBold(),
-        ),
-      ),
-      body: Column(
-        children: [
-          // ── Header banner ─────────────────────────────────────────────────
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppColors.indigoNoche,
-                  AppColors.indigoClaro.withValues(alpha: 0.85),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        backgroundColor: nc.bg,
+        appBar: AppBar(title: const Text('Descubre tu sonido')),
+        body: Stack(
+          children: [
+            const Positioned.fill(child: CarnavalBackground()),
+            ListView(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
               children: [
-                Row(
-                  children: [
-                    const Icon(Icons.auto_awesome,
-                        color: AppColors.oroClaro, size: 18),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Búsqueda inteligente',
-                      style:
-                          AppTypography.labelSemiBold(color: AppColors.oroClaro),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Describe el tipo de música que buscas y te recomendaremos artistas de Nariño.',
-                  style: AppTypography.bodySmall(color: Colors.white70),
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _queryCtrl,
-                        focusNode: _focusNode,
-                        style: AppTypography.bodyMedium(color: Colors.white),
+                NcCard(
+                  padding: const EdgeInsets.all(18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.auto_awesome_rounded,
+                              size: 18, color: nc.oroA.ink),
+                          const SizedBox(width: 6),
+                          Text('BÚSQUEDA INTELIGENTE',
+                              style: AppTypography.kicker(color: nc.oroA.ink)),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text('¿Qué quieres escuchar hoy?',
+                          style:
+                              AppTypography.displayBold(color: nc.textPrimary)),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Descríbelo con tus palabras: un ritmo, un momento o '
+                        'una emoción. Te recomendamos artistas de Nariño.',
+                        style: AppTypography.bodyMedium(color: nc.textSecondary),
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: _ctrl,
+                        focusNode: _focus,
+                        minLines: 1,
+                        maxLines: 3,
                         textInputAction: TextInputAction.search,
-                        onSubmitted: (_) => _search(),
+                        onSubmitted: (_) => _buscar(),
+                        onChanged: (_) => setState(() {}),
                         decoration: InputDecoration(
-                          hintText:
-                              'Ej: música andina tradicional, rock nariñense...',
-                          hintStyle:
-                              AppTypography.bodySmall(color: Colors.white54),
-                          filled: true,
-                          fillColor: Colors.white.withValues(alpha: 0.15),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                                color: Colors.white.withValues(alpha: 0.3)),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                                color: Colors.white.withValues(alpha: 0.3)),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                                color: AppColors.oroClaro, width: 1.5),
-                          ),
-                          isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 12),
-                          suffixIcon: _queryCtrl.text.isNotEmpty
-                              ? IconButton(
-                                  icon: const Icon(Icons.clear,
-                                      color: Colors.white70, size: 18),
+                          hintText: 'Ej.: algo andino y tranquilo para la tarde',
+                          prefixIcon: const Icon(Icons.graphic_eq_rounded),
+                          suffixIcon: _ctrl.text.isEmpty
+                              ? null
+                              : IconButton(
+                                  tooltip: 'Borrar',
+                                  icon: const Icon(Icons.close_rounded),
                                   onPressed: () {
-                                    setState(_queryCtrl.clear);
+                                    _ctrl.clear();
+                                    setState(() {});
                                     ref
                                         .read(musicDiscoveryProvider.notifier)
                                         .clear();
                                   },
-                                )
-                              : null,
-                        ),
-                        onChanged: (_) => setState(() {}),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    SizedBox(
-                      height: 46,
-                      child: ElevatedButton(
-                        onPressed: state.isLoading ? null : _search,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.oroClaro,
-                          foregroundColor: AppColors.obsidiana,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: state.isLoading
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  color: AppColors.obsidiana,
-                                  strokeWidth: 2,
                                 ),
-                              )
-                            : const Icon(Icons.search, size: 20),
+                          border: pill,
+                          enabledBorder: pill,
+                          focusedBorder: pill.copyWith(
+                              borderSide:
+                                  BorderSide(color: nc.musica.fill, width: 1.5)),
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 12),
+                      NcPrimaryButton(
+                        label: 'Recomiéndame',
+                        icon: Icons.auto_awesome_rounded,
+                        loading: state.isLoading,
+                        onPressed:
+                            _ctrl.text.trim().isEmpty ? null : () => _buscar(),
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(height: 20),
+                if (!state.hasSearched) ...[
+                  Text('Prueba con',
+                      style: AppTypography.labelSemiBold(color: nc.textPrimary)),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (var i = 0; i < _sugerencias.length; i++)
+                        ActionChip(
+                          label: Text(_sugerencias[i]),
+                          onPressed: () => _buscar(_sugerencias[i]),
+                          backgroundColor: [
+                            nc.musica.tint,
+                            nc.magentaA.tint,
+                            nc.naranjaA.tint,
+                          ][i % 3],
+                          side: BorderSide(color: nc.border),
+                          labelStyle:
+                              AppTypography.labelMedium(color: nc.textPrimary)
+                                  .copyWith(fontWeight: FontWeight.w600),
+                        ),
+                    ],
+                  ),
+                ] else if (state.isLoading)
+                  const Padding(
+                    padding: EdgeInsets.all(32),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else if (state.hasError)
+                  NcEmptyState(
+                    icon: Icons.cloud_off_rounded,
+                    accent: nc.tomateA,
+                    title: 'No pudimos recomendarte ahora',
+                    message: state.errorMessage!,
+                    actionLabel: 'Reintentar',
+                    onAction: () => _buscar(state.lastQuery),
+                    padding: EdgeInsets.zero,
+                  )
+                else if (state.results.isEmpty)
+                  NcEmptyState(
+                    icon: Icons.search_off_rounded,
+                    accent: nc.musica,
+                    title: 'Sin coincidencias',
+                    message: 'Prueba describiéndolo de otra forma o con un '
+                        'género más amplio.',
+                    padding: EdgeInsets.zero,
+                  )
+                else ...[
+                  Text('Para "${state.lastQuery}"',
+                      style:
+                          AppTypography.displaySemiBold(color: nc.textPrimary)),
+                  const SizedBox(height: 12),
+                  for (final m in state.results)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: MusicoCard(musician: m),
+                    ),
+                ],
               ],
             ),
-          ),
-
-          // ── Suggestions ───────────────────────────────────────────────────
-          if (!state.hasSearched)
-            SuggestionsPanel(
-              textPrimary: textPrimary,
-              textMuted: textMuted,
-              onSuggestion: (s) {
-                _queryCtrl.text = s;
-                setState(() {});
-                ref.read(musicDiscoveryProvider.notifier).search(s);
-              },
-            ),
-
-          // ── Results ───────────────────────────────────────────────────────
-          if (state.hasSearched)
-            Expanded(
-              child: ResultsBody(
-                state: state,
-                textPrimary: textPrimary,
-                textMuted: textMuted,
-                cs: cs,
-              ),
-            ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }

@@ -3,20 +3,22 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/nc_theme.dart';
+import '../../../../shared/widgets/design/design.dart';
 import '../../data/musician_repository.dart';
 import '../providers/musician_provider.dart';
-import 'publish_musical_work_screen/field_label.dart';
 
-const _kWorkTypes = <String, String>{
-  'VIDEO': 'Video musical',
-  'LIVE': 'Presentación en vivo',
-  'STUDIO': 'Grabación de estudio',
-  'COVER': 'Cover / Versión',
-  'PODCAST': 'Podcast / Entrevista',
+/// Tipos del backend (`MusicalWork.WorkType`).
+const _kTipos = <String, (String, IconData)>{
+  'VIDEO': ('Video musical', Icons.smart_display_outlined),
+  'LIVE': ('En vivo', Icons.mic_external_on_outlined),
+  'STUDIO': ('Estudio', Icons.album_outlined),
+  'COVER': ('Cover', Icons.repeat_rounded),
+  'PODCAST': ('Podcast', Icons.podcasts_rounded),
 };
 
+/// Publicar una obra musical con enlaces para escucharla (acento azul).
 class PublishMusicalWorkScreen extends ConsumerStatefulWidget {
   const PublishMusicalWorkScreen({super.key});
 
@@ -28,7 +30,6 @@ class PublishMusicalWorkScreen extends ConsumerStatefulWidget {
 class _PublishMusicalWorkScreenState
     extends ConsumerState<PublishMusicalWorkScreen> {
   final _musicianRepo = MusicianRepository();
-
   final _formKey = GlobalKey<FormState>();
   final _titleCtrl = TextEditingController();
   final _descriptionCtrl = TextEditingController();
@@ -36,8 +37,7 @@ class _PublishMusicalWorkScreenState
   final _soundcloudCtrl = TextEditingController();
   final _spotifyCtrl = TextEditingController();
   final _durationCtrl = TextEditingController();
-
-  String? _workType;
+  String? _workType = 'STUDIO';
   DateTime? _releaseDate;
   bool _isSaving = false;
   String? _error;
@@ -63,22 +63,44 @@ class _PublishMusicalWorkScreenState
     if (picked != null) setState(() => _releaseDate = picked);
   }
 
-  Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
-    setState(() { _isSaving = true; _error = null; });
+  /// "3:45" → 225. También acepta solo segundos ("225").
+  int? _segundos(String t) {
+    final v = t.trim();
+    if (v.isEmpty) return null;
+    if (v.contains(':')) {
+      final p = v.split(':');
+      final m = int.tryParse(p[0]);
+      final s = int.tryParse(p.length > 1 ? p[1] : '0');
+      if (m == null || s == null || s > 59) return null;
+      return m * 60 + s;
+    }
+    return int.tryParse(v);
+  }
 
+  String? _validarUrl(String? v) {
+    final t = v?.trim() ?? '';
+    if (t.isEmpty) return null;
+    return Uri.tryParse(t)?.hasScheme == true ? null : 'Debe empezar por https://';
+  }
+
+  Future<void> _submit() async {
+    FocusScope.of(context).unfocus();
+    if (!_formKey.currentState!.validate()) return;
+    setState(() {
+      _isSaving = true;
+      _error = null;
+    });
     try {
-      // Obtener slug del músico autenticado
       final slug = (await _musicianRepo.getMyProfile())?.slug;
       if (slug == null || slug.isEmpty) {
         setState(() {
           _isSaving = false;
-          _error = 'No se encontró tu perfil de músico.';
+          _error = 'Primero completa tu perfil musical.';
         });
         return;
       }
-
-      final payload = <String, dynamic>{
+      final d = _releaseDate;
+      await _musicianRepo.addWork(slug, {
         'title': _titleCtrl.text.trim(),
         if (_workType != null) 'work_type': _workType,
         if (_descriptionCtrl.text.trim().isNotEmpty)
@@ -89,252 +111,202 @@ class _PublishMusicalWorkScreenState
           'soundcloud_embed': _soundcloudCtrl.text.trim(),
         if (_spotifyCtrl.text.trim().isNotEmpty)
           'spotify_track_url': _spotifyCtrl.text.trim(),
-        if (_releaseDate != null)
-          'release_date':
-              '${_releaseDate!.year.toString().padLeft(4, '0')}-'
-              '${_releaseDate!.month.toString().padLeft(2, '0')}-'
-              '${_releaseDate!.day.toString().padLeft(2, '0')}',
-        if (_durationCtrl.text.trim().isNotEmpty)
-          'duration_seconds': int.tryParse(_durationCtrl.text.trim()),
-      };
-
-      await _musicianRepo.addWork(slug, payload);
-
-      if (mounted) {
-        ref.invalidate(musicianWorksProvider(slug));
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Obra publicada con éxito')),
-        );
-        context.pop();
-      }
+        if (d != null)
+          'release_date': '${d.year.toString().padLeft(4, '0')}-'
+              '${d.month.toString().padLeft(2, '0')}-'
+              '${d.day.toString().padLeft(2, '0')}',
+        if (_segundos(_durationCtrl.text) != null)
+          'duration_seconds': _segundos(_durationCtrl.text),
+      });
+      if (!mounted) return;
+      ref.invalidate(musicianWorksProvider(slug));
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('¡Tu obra ya está en tu perfil!')));
+      context.pop();
     } catch (e) {
-      if (mounted) setState(() { _isSaving = false; _error = e.toString(); });
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+          _error = e.toString();
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final textPrimary =
-        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-    final textMuted =
-        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+    final nc = context.nc;
+    Widget titulo(String t, {String? hint}) => Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(t,
+                  style: AppTypography.labelSemiBold(color: nc.textPrimary)),
+              if (hint != null)
+                Text(hint,
+                    style: AppTypography.bodySmall(color: nc.textSecondary)),
+            ],
+          ),
+        );
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        elevation: 0,
-        title: Text(
-          'Publicar obra musical',
-          style: AppTypography.displaySemiBold(),
-        ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          tooltip: 'Cerrar',
+          icon: const Icon(Icons.close_rounded),
           onPressed: () => context.pop(),
         ),
+        title: const Text('Subir obra musical'),
       ),
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
           children: [
-            // Título
-            FieldLabel(label: 'Título *', textMuted: textMuted),
-            const SizedBox(height: 6),
-            TextFormField(
-              controller: _titleCtrl,
-              style: TextStyle(color: textPrimary),
-              decoration: _inputDecor(context, isDark, hint: 'Nombre de la obra'),
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'El título es requerido' : null,
-            ),
-            const SizedBox(height: 18),
-
-            // Tipo de obra
-            FieldLabel(label: 'Tipo de obra', textMuted: textMuted),
-            const SizedBox(height: 6),
-            DropdownButtonFormField<String>(
-              initialValue: _workType,
-              decoration: _inputDecor(context, isDark, hint: 'Selecciona el tipo'),
-              dropdownColor:
-                  isDark ? AppColors.bgCardDark : AppColors.bgCardLight,
-              style: TextStyle(color: textPrimary),
-              items: _kWorkTypes.entries
-                  .map((e) => DropdownMenuItem(
-                        value: e.key,
-                        child: Text(e.value),
-                      ))
-                  .toList(),
-              onChanged: (v) => setState(() => _workType = v),
-            ),
-            const SizedBox(height: 18),
-
-            // Descripción
-            FieldLabel(label: 'Descripción', textMuted: textMuted),
-            const SizedBox(height: 6),
-            TextFormField(
-              controller: _descriptionCtrl,
-              style: TextStyle(color: textPrimary),
-              maxLines: 3,
-              decoration: _inputDecor(context, isDark,
-                  hint: 'Cuéntanos sobre esta obra...'),
-            ),
-            const SizedBox(height: 18),
-
-            // Enlace YouTube
-            FieldLabel(label: 'Enlace de YouTube', textMuted: textMuted),
-            const SizedBox(height: 6),
-            TextFormField(
-              controller: _youtubeCtrl,
-              style: TextStyle(color: textPrimary),
-              keyboardType: TextInputType.url,
-              decoration: _inputDecor(context, isDark,
-                  hint: 'https://www.youtube.com/watch?v=...'),
-            ),
-            const SizedBox(height: 18),
-
-            // SoundCloud
-            FieldLabel(label: 'Embed de SoundCloud', textMuted: textMuted),
-            const SizedBox(height: 6),
-            TextFormField(
-              controller: _soundcloudCtrl,
-              style: TextStyle(color: textPrimary),
-              keyboardType: TextInputType.url,
-              decoration: _inputDecor(context, isDark,
-                  hint: 'https://soundcloud.com/...'),
-            ),
-            const SizedBox(height: 18),
-
-            // Spotify
-            FieldLabel(label: 'Enlace de Spotify', textMuted: textMuted),
-            const SizedBox(height: 6),
-            TextFormField(
-              controller: _spotifyCtrl,
-              style: TextStyle(color: textPrimary),
-              keyboardType: TextInputType.url,
-              decoration: _inputDecor(context, isDark,
-                  hint: 'https://open.spotify.com/track/...'),
-            ),
-            const SizedBox(height: 18),
-
-            // Fecha de lanzamiento
-            FieldLabel(label: 'Fecha de lanzamiento', textMuted: textMuted),
-            const SizedBox(height: 6),
-            GestureDetector(
-              onTap: _pickDate,
-              child: AbsorbPointer(
-                child: TextFormField(
-                  style: TextStyle(color: textPrimary),
-                  decoration: _inputDecor(context, isDark,
-                    hint: 'Selecciona una fecha',
-                  ).copyWith(
-                    suffixIcon: Icon(Icons.calendar_today_outlined,
-                        color: textMuted, size: 18),
+            NcCard(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  titulo('¿Qué vas a compartir?'),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final e in _kTipos.entries)
+                        ChoiceChip(
+                          avatar: Icon(e.value.$2,
+                              size: 16,
+                              color: _workType == e.key
+                                  ? nc.musica.onFill
+                                  : nc.musica.ink),
+                          label: Text(e.value.$1),
+                          selected: _workType == e.key,
+                          showCheckmark: false,
+                          onSelected: (_) => setState(() => _workType = e.key),
+                          selectedColor: nc.musica.fill,
+                          side: BorderSide(
+                              color: _workType == e.key
+                                  ? nc.musica.fill
+                                  : nc.border),
+                          labelStyle: AppTypography.labelMedium(
+                            color: _workType == e.key
+                                ? nc.musica.onFill
+                                : nc.textPrimary,
+                          ).copyWith(fontWeight: FontWeight.w600),
+                        ),
+                    ],
                   ),
-                  controller: TextEditingController(
-                    text: _releaseDate == null
-                        ? ''
-                        : '${_releaseDate!.day.toString().padLeft(2, '0')}/'
-                            '${_releaseDate!.month.toString().padLeft(2, '0')}/'
-                            '${_releaseDate!.year}',
+                  const SizedBox(height: 18),
+                  TextFormField(
+                    controller: _titleCtrl,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: const InputDecoration(labelText: 'Título'),
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'Ponle un título'
+                        : null,
                   ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 18),
-
-            // Duración
-            FieldLabel(label: 'Duración (segundos)', textMuted: textMuted),
-            const SizedBox(height: 6),
-            TextFormField(
-              controller: _durationCtrl,
-              style: TextStyle(color: textPrimary),
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration:
-                  _inputDecor(context, isDark, hint: 'Ej: 210 (3 min 30 s)'),
-            ),
-
-            if (_error != null) ...[
-              const SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.error.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                      color: AppColors.error.withValues(alpha: 0.35)),
-                ),
-                child: Text(
-                  _error!,
-                  style: AppTypography.caption(color: AppColors.error),
-                ),
-              ),
-            ],
-
-            const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.tierraProfunda,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 15),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
-                onPressed: _isSaving ? null : _submit,
-                child: _isSaving
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white),
-                      )
-                    : Text(
-                        'Publicar obra',
-                        style:
-                            AppTypography.labelSemiBold(color: Colors.white),
+                  const SizedBox(height: 14),
+                  TextFormField(
+                    controller: _descriptionCtrl,
+                    minLines: 2,
+                    maxLines: 5,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: const InputDecoration(
+                      labelText: 'Descripción (opcional)',
+                      alignLabelWithHint: true,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _pickDate,
+                          icon: const Icon(Icons.event_rounded, size: 18),
+                          label: Text(_releaseDate == null
+                              ? 'Lanzamiento'
+                              : '${_releaseDate!.day}/${_releaseDate!.month}/'
+                                  '${_releaseDate!.year}'),
+                        ),
                       ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _durationCtrl,
+                          keyboardType: TextInputType.datetime,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(RegExp(r'[0-9:]'))
+                          ],
+                          decoration: const InputDecoration(
+                            labelText: 'Duración',
+                            hintText: '3:45',
+                          ),
+                          validator: (v) => (v ?? '').trim().isEmpty ||
+                                  _segundos(v!) != null
+                              ? null
+                              : 'Usa min:seg',
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 16),
+            NcCard(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  titulo('¿Dónde se puede escuchar?',
+                      hint: 'Agrega al menos un enlace para que el público '
+                          'pueda reproducirla.'),
+                  TextFormField(
+                    controller: _youtubeCtrl,
+                    keyboardType: TextInputType.url,
+                    decoration: const InputDecoration(
+                      labelText: 'YouTube',
+                      prefixIcon: Icon(Icons.smart_display_outlined),
+                    ),
+                    validator: _validarUrl,
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _spotifyCtrl,
+                    keyboardType: TextInputType.url,
+                    decoration: const InputDecoration(
+                      labelText: 'Spotify',
+                      prefixIcon: Icon(Icons.graphic_eq_rounded),
+                    ),
+                    validator: _validarUrl,
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _soundcloudCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'SoundCloud (enlace o código para insertar)',
+                      prefixIcon: Icon(Icons.cloud_outlined),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: 12),
+              NcBanner.error(context, _error!),
+            ],
           ],
         ),
       ),
-    );
-  }
-
-  InputDecoration _inputDecor(BuildContext context, bool isDark,
-      {required String hint}) {
-    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
-    final fill = isDark ? AppColors.bgCardDark : AppColors.bgCardLight;
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: TextStyle(
-          color: isDark ? AppColors.textMutedDark : AppColors.textMutedLight,
-          fontSize: 14),
-      filled: true,
-      fillColor: fill,
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: border),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: border),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide:
-            const BorderSide(color: AppColors.tierraProfunda, width: 1.5),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: AppColors.error),
+      bottomNavigationBar: NcGlassBottomBar(
+        child: NcPrimaryButton(
+          label: 'Publicar obra',
+          icon: Icons.library_music_outlined,
+          loading: _isSaving,
+          onPressed: _submit,
+        ),
       ),
     );
   }

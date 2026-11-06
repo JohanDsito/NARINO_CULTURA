@@ -161,3 +161,64 @@ final myMusicianSlugProvider = FutureProvider.autoDispose<String?>((ref) async {
   final profile = await ref.read(musicianRepositoryProvider).getMyProfile();
   return profile?.slug;
 });
+
+// ─── A quién sigo ─────────────────────────────────────────────────────────────
+
+/// Estado de "seguir" como única fuente de verdad para lista y detalle.
+/// [inicial] es lo que dijo el servidor al cargar; [actual] incluye los
+/// cambios optimistas. La diferencia sirve para ajustar el contador.
+class SeguidosState {
+  const SeguidosState({this.inicial = const {}, this.actual = const {}});
+  final Set<String> inicial;
+  final Set<String> actual;
+
+  bool sigue(String slug) => actual.contains(slug);
+
+  /// +1 / −1 / 0 respecto al conteo que trajo el backend.
+  int delta(String slug, {required bool servidorDiceQueSigue}) {
+    final antes = servidorDiceQueSigue || inicial.contains(slug);
+    final ahora = actual.contains(slug);
+    return (ahora ? 1 : 0) - (antes ? 1 : 0);
+  }
+}
+
+final seguidosProvider =
+    StateNotifierProvider<SeguidosNotifier, SeguidosState>(
+  (ref) => SeguidosNotifier(ref.read(musicianRepositoryProvider)),
+);
+
+class SeguidosNotifier extends StateNotifier<SeguidosState> {
+  SeguidosNotifier(this._repo) : super(const SeguidosState()) {
+    cargar();
+  }
+
+  final MusicianRepository _repo;
+
+  Future<void> cargar() async {
+    try {
+      final slugs = await _repo.getFollowingSlugs();
+      state = SeguidosState(inicial: slugs, actual: slugs);
+    } catch (_) {
+      // Sin sesión o sin red: nadie seguido; el botón sigue funcionando.
+    }
+  }
+
+  /// Alterna seguir/dejar de seguir (optimista; revierte si falla).
+  Future<bool> alternar(String slug) async {
+    final antes = state;
+    final siguiendo = state.actual.contains(slug);
+    state = SeguidosState(
+      inicial: state.inicial,
+      actual: siguiendo
+          ? ({...state.actual}..remove(slug))
+          : {...state.actual, slug},
+    );
+    try {
+      await _repo.toggleFollow(slug);
+      return true;
+    } catch (_) {
+      state = antes;
+      return false;
+    }
+  }
+}
