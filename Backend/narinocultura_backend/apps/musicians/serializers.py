@@ -1,7 +1,34 @@
 from django.db import transaction
+from django.db.models import Avg
 from rest_framework import serializers
 
 from apps.musicians.models import MusicalWork, MusicGenre, MusicianProfile, MusicianReview
+
+
+class MusicianSocialStatsMixin(serializers.Serializer):
+    """is_following, average_rating y reviews_count para la web y la app móvil.
+
+    Los listados los traen anotados desde la consulta (MusicianProfileViewSet.get_queryset), sin
+    consultas extra por músico; si el objeto no viene anotado se calculan aquí."""
+
+    is_following = serializers.SerializerMethodField()
+    average_rating = serializers.SerializerMethodField()
+    reviews_count = serializers.SerializerMethodField()
+
+    def get_is_following(self, obj) -> bool:
+        if hasattr(obj, "user_follows"):
+            return bool(obj.user_follows)
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return False
+        return obj.followers.filter(user=request.user).exists()
+
+    def get_average_rating(self, obj) -> float:
+        avg = obj.avg_rating if hasattr(obj, "avg_rating") else obj.reviews.aggregate(avg=Avg("rating"))["avg"]
+        return round(float(avg), 1) if avg is not None else 0.0
+
+    def get_reviews_count(self, obj) -> int:
+        return obj.reviews_total if hasattr(obj, "reviews_total") else obj.reviews.count()
 
 
 class MusicGenreSerializer(serializers.ModelSerializer):
@@ -35,7 +62,7 @@ class MusicalWorkSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "musician", "views_count", "created_at", "updated_at")
 
 
-class MusicianProfileSerializer(serializers.ModelSerializer):
+class MusicianProfileSerializer(MusicianSocialStatsMixin, serializers.ModelSerializer):
     genres = MusicGenreSerializer(many=True, read_only=True)
     genre_ids = serializers.PrimaryKeyRelatedField(
         queryset=MusicGenre.objects.all(),
@@ -77,8 +104,11 @@ class MusicianProfileSerializer(serializers.ModelSerializer):
             "profile_image_url",
             "is_verified",
             "is_active",
+            "is_following",
             "followers_count",
             "popularity_score",
+            "average_rating",
+            "reviews_count",
             "works_count",
             "created_at",
             "updated_at",
@@ -135,7 +165,7 @@ class MusicianProfileSerializer(serializers.ModelSerializer):
         return instance
 
 
-class MusicianProfileListSerializer(serializers.ModelSerializer):
+class MusicianProfileListSerializer(MusicianSocialStatsMixin, serializers.ModelSerializer):
     genres = MusicGenreSerializer(many=True, read_only=True)
     profile_image_url = serializers.SerializerMethodField(read_only=True)
 
@@ -155,8 +185,11 @@ class MusicianProfileListSerializer(serializers.ModelSerializer):
             "youtube_url",
             "instagram_handle",
             "is_verified",
+            "is_following",
             "followers_count",
             "popularity_score",
+            "average_rating",
+            "reviews_count",
         )
 
     def get_profile_image_url(self, obj):
