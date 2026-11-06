@@ -61,6 +61,17 @@ class AuctionBidTests(APITestCase):
         self.assertEqual(r.status_code, 201)
         auction_id = r.data["id"]
 
+        # Las subastas nacen PENDIENTE: un administrador debe aprobarlas antes de recibir pujas
+        admin = User.objects.create_user(
+            email="admin@example.com",
+            password="StrongPass123!",
+            role=User.Role.ADMINISTRADOR,
+            is_verified=True,
+        )
+        self.client.force_authenticate(user=admin)
+        r = self.client.post(f"/api/v1/auctions/{auction_id}/approve/")
+        self.assertEqual(r.status_code, 200)
+
         self.client.force_authenticate(user=self.buyer_user)
         r = self.client.post(f"/api/v1/auctions/{auction_id}/bid/", {"amount": "1000.00"}, format="json")
         self.assertEqual(r.status_code, 400)

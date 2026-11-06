@@ -1,0 +1,6 @@
+{% extends "emails/notifications/base.html" %}
+{% block heading %}Subasta no aprobada{% endblock %}
+{% block content %}
+<p>La solicitud de subasta para <strong>{{ artwork_title }}</strong> no fue aprobada en esta ocasión.</p>
+<p>Si tienes preguntas sobre los motivos, puedes contactar al equipo de Nariño Cultura respondiendo este correo.</p>
+{% endblock %}

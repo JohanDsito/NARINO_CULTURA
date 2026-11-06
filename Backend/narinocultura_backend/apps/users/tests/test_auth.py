@@ -409,4 +409,31 @@ class DeleteAccountTests(APITestCase):
             {"email": "delete@test.com", "password": "StrongPass123!"},
             format="json",
         )
-        self.assertEqual(r.status_code, 401)
+        # El login responde 400 ante credenciales inválidas (ver LoginTests)
+        self.assertEqual(r.status_code, 400)
+
+
+class ChangePasswordTests(APITestCase):
+    def setUp(self):
+        self.user = UserFactory()
+        self.client.force_authenticate(user=self.user)
+
+    def _change(self, method, current="Test1234!"):
+        payload = {"current_password": current, "new_password": "NuevaClave123!"}
+        return getattr(self.client, method)("/api/v1/users/me/password/", payload, format="json")
+
+    def test_change_password_with_post(self):
+        r = self._change("post")
+        self.assertEqual(r.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password("NuevaClave123!"))
+
+    def test_change_password_with_patch(self):
+        r = self._change("patch")
+        self.assertEqual(r.status_code, 200)
+
+    def test_change_password_wrong_current_fails(self):
+        r = self._change("post", current="incorrecta")
+        self.assertEqual(r.status_code, 400)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password("Test1234!"))

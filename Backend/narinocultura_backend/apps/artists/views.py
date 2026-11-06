@@ -6,7 +6,8 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from apps.artists.models import ArtistProfile, Follow
-from apps.artists.serializers import ArtistProfileSerializer
+from apps.artists.serializers import ArtistProfileSerializer, ArtistProfileSummarySerializer
+from apps.users.serializers import PublicUserSummarySerializer
 
 
 class ArtistProfileViewSet(viewsets.ModelViewSet):
@@ -24,7 +25,26 @@ class ArtistProfileViewSet(viewsets.ModelViewSet):
             return qs.filter(is_public=True)
         if self.action in {"list", "retrieve"}:
             return qs.filter(is_public=True) | qs.filter(user=self.request.user)
+        if self.action == "follow":
+            # Se puede seguir cualquier perfil público (no solo el propio)
+            return qs.filter(is_public=True)
+        # update / partial_update / destroy / followers — solo el perfil propio
         return qs.filter(user=self.request.user)
+
+    @action(detail=True, methods=["get"], url_path="followers")
+    def followers(self, request, slug=None):
+        """Usuarios que siguen al artista. Solo visible para el dueño del perfil."""
+        profile = self.get_object()
+        follows = Follow.objects.filter(artist=profile).select_related("follower")
+        users = [f.follower for f in follows]
+        return Response(PublicUserSummarySerializer(users, many=True, context={"request": request}).data)
+
+    @action(detail=False, methods=["get"], url_path="following")
+    def following(self, request):
+        """Perfiles de artista que sigue el usuario autenticado."""
+        follows = Follow.objects.filter(follower=request.user, artist__is_public=True).select_related("artist")
+        profiles = [f.artist for f in follows]
+        return Response(ArtistProfileSummarySerializer(profiles, many=True, context={"request": request}).data)
 
     @action(detail=True, methods=["post"], url_path="follow")
     @transaction.atomic

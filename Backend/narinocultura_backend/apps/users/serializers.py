@@ -81,6 +81,14 @@ class UserMeSerializer(serializers.ModelSerializer):
         return request.build_absolute_uri(obj.avatar.url) if request else obj.avatar.url
 
 
+class PublicUserSummarySerializer(UserMeSerializer):
+    """Datos mínimos de un usuario para listas públicas (p. ej. seguidores). No expone email ni teléfono."""
+
+    class Meta(UserMeSerializer.Meta):
+        fields = ("id", "first_name", "last_name", "avatar_url")
+        read_only_fields = fields
+
+
 class PasswordChangeSerializer(serializers.Serializer):
     current_password = serializers.CharField(write_only=True)
     new_password = serializers.CharField(write_only=True, min_length=8)

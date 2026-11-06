@@ -54,7 +54,7 @@ class EventService:
                     timeout=20,
                 )
                 response.raise_for_status()
-                data = response.json() if response.content else {}
+                data = EventService._normalize_ai_extraction(response.json() if response.content else {})
                 data.setdefault("source", "ai_service")
                 data.setdefault("image_url", image_url)
                 data.setdefault("raw_text", flyer_text)
@@ -67,6 +67,24 @@ class EventService:
         data["source"] = "heuristic"
         data["is_published"] = False if getattr(organizer, "role", None) == "ARTISTA" else False
         return data
+
+    @staticmethod
+    def _normalize_ai_extraction(data: Any) -> dict[str, Any]:
+        """La respuesta del microservicio de IA puede omitir campos o traer un tipo de evento
+        desconocido; se completa para que siempre tenga la forma del resultado heurístico."""
+        data = data if isinstance(data, dict) else {}
+        normalized = {
+            "title": "",
+            "description": "",
+            "event_type": Event.Type.OTRO,
+            "start_date": None,
+            "end_date": None,
+            "location": "",
+        }
+        normalized.update({key: value for key, value in data.items() if value is not None})
+        if normalized["event_type"] not in Event.Type.values:
+            normalized["event_type"] = Event.Type.OTRO
+        return normalized
 
     @staticmethod
     def create_draft_from_extraction(*, organizer, extracted_data: dict[str, Any]) -> Event:

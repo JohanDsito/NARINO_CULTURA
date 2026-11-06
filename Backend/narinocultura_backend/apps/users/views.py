@@ -215,6 +215,9 @@ class MePasswordAPIView(APIView):
         request.user.save(update_fields=["password", "updated_at"])
         return Response({"detail": "Contrasena actualizada correctamente."})
 
+    # El frontend envía POST; se aceptan ambos métodos.
+    post = patch
+
 
 class DeleteAccountAPIView(APIView):
     """

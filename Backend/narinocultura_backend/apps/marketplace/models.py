@@ -60,12 +60,15 @@ class Order(TimeStampedUUIDModel):
     total_amount = models.DecimalField(max_digits=12, decimal_places=2)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDIENTE)
     order_type = models.CharField(max_length=20, choices=Type.choices, default=Type.COMPRA_DIRECTA)
+    # Solo para órdenes de subasta: después de esta fecha la orden se cancela y la obra se libera
+    payment_due_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ["-created_at"]
         indexes = [
             models.Index(fields=["buyer", "-created_at"]),
             models.Index(fields=["status", "-created_at"]),
+            models.Index(fields=["order_type", "status", "payment_due_at"]),
         ]
         constraints = [
             models.CheckConstraint(check=Q(total_amount__gte=0), name="order_total_gte_0"),

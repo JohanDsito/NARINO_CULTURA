@@ -1,7 +1,8 @@
 from rest_framework.test import APITestCase
 from rest_framework_simplejwt.tokens import AccessToken
 
-from tests.factories import ArtistProfileFactory, ArtistUserFactory, ArtworkFactory, CategoryFactory, UserFactory
+from apps.artworks.models import Category
+from tests.factories import ArtistProfileFactory, ArtistUserFactory, ArtworkFactory, UserFactory
 
 
 def auth_header(user):
@@ -11,11 +12,15 @@ def auth_header(user):
 
 class CategoryTests(APITestCase):
     def setUp(self):
-        self.cat = CategoryFactory(name="Pintura", slug="pintura")
+        # "Pintura" la crea la migración 0002_seed_categories
+        self.cat = Category.objects.get(slug="pintura")
 
     def test_list_categories_is_public(self):
         r = self.client.get("/api/v1/artworks/categories/")
         self.assertEqual(r.status_code, 200)
+
+    def test_seeded_categories_exist(self):
+        self.assertGreaterEqual(Category.objects.count(), 9)
 
     def test_retrieve_category_by_slug(self):
         r = self.client.get(f"/api/v1/artworks/categories/{self.cat.slug}/")
