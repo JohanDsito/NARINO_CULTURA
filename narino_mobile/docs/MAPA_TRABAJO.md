@@ -81,6 +81,11 @@ Novedades del backend que impactan la app:
 | 33 | Publicar | Permitía elegir varias imágenes pero solo subía la primera | ✅ una sola portada (galería o cámara) |
 | 34 | Publicar | Botones de IA siempre fallaban (endpoints inexistentes) | ✅ ocultos con `_kIaDisponible` |
 | 35 | Obras | Precio 0 (exhibición) se mostraba como "$0" a la venta | ✅ 0 = "En exhibición" |
+| 36 | Tienda | Al abrirla reiniciaba los filtros del Catálogo (estado compartido) y solo veía la 1.ª página | ✅ consulta propia `status=DISPONIBLE` |
+| 37 | Pago | El sondeo de Wompi seguía cada 5 s para siempre al salir de la pantalla | ✅ se detiene al salir y a los 10 min |
+| 38 | Resultado de pago | "Reintentar" llevaba al carrito, que ya está vacío | ✅ vuelve a pagar la misma orden |
+| 39 | Carrito | No avisaba obras vendidas/en subasta y las sumaba al total | ✅ aviso + se excluyen del total y bloquean el pago |
+| 40 | Ventas | Una orden con obras de varios artistas suma el total completo; `OrderItemSerializer` no dice de quién es cada ítem | 🚫 pedir `artist_slug` en el ítem |
 
 ---
 
@@ -139,7 +144,7 @@ Guía completa de color y componentes: **`docs/DISENO_CARNAVAL.md`**.
 | Login / Registro / Recuperar / Verificar correo | ✅ `AuthScaffold` común; registro con elección de rol y medidor de contraseña |
 | Perfil artístico (onboarding del artista) | ✅ disciplinas con color propio, paso 2 musical con chips |
 | Catálogo + filtros + Detalle de obra + Publicar/Editar + Mis obras | ✅ |
-| Tienda / Carrito / Checkout / Favoritos / Compras / Ventas | ⏳ |
+| Tienda / Carrito / Pago / Resultado / Favoritos / Compras / Orden / Ventas | ✅ acento naranja, códigos cortos de orden, estados en lenguaje claro |
 | Subastas (lista, detalle, crear, historial) | ⏳ |
 | Eventos (lista/calendario, detalle, publicar) | ⏳ |
 | Músicos / Descubrimiento musical | ⏳ |
@@ -151,6 +156,7 @@ Guía completa de color y componentes: **`docs/DISENO_CARNAVAL.md`**.
 ## Mejoras sugeridas 💡
 - Agregar al backend `artworks_count` y `is_following` en `ArtistProfileSerializer` y una acción `artists/me/`.
 - Exponer `artwork_title`, `artwork_image_url` y `bids_count` en `AuctionSerializer`.
+- `OrderItemSerializer`: agregar `artist_slug` e imagen para calcular ventas por artista.
 - Endpoint `DELETE events/{id}/register/` para cancelar inscripción.
 - Desplegar el fix `40ae5be` de músicos en `main`.
 - Archivos de build trackeados en git (`narino_mobile/android/build/...`) → sacarlos con `.gitignore`.
@@ -168,3 +174,5 @@ Guía completa de color y componentes: **`docs/DISENO_CARNAVAL.md`**.
   Arreglados #26–#28. 352/352 tests OK.
 - 2026-11-06 — Rediseño módulo de obras: perfil artístico, catálogo, filtros, detalle, publicar/editar, mis obras.
   Arreglados #29–#35. 352/352 tests OK. Siguiente: Tienda (carrito, checkout, favoritos, compras, ventas).
+- 2026-11-06 — Commits organizados y push a `mobile-Valery`. Rediseño de la Tienda completa (8 pantallas).
+  Arreglados #36–#39. Siguiente: Subastas.
