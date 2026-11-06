@@ -1,0 +1,6 @@
+.env 
+.env.local
+nixpacks.toml
+
+# Volcados de código generados por herramientas
+repomix-output.xml

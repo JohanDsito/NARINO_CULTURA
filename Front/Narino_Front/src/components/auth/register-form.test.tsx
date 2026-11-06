@@ -1,0 +1,235 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { toast } from 'sonner'
+
+import { register } from '@/api/auth.api'
+import { RegisterForm } from '@/components/auth/register-form'
+
+vi.mock('@/api/auth.api', () => ({
+  register: vi.fn(),
+}))
+
+vi.mock('sonner', () => ({
+  toast: {
+    error: vi.fn(),
+    success: vi.fn(),
+  },
+}))
+
+const mockedRegister = vi.mocked(register)
+const mockedToast = vi.mocked(toast)
+
+function renderRegisterForm() {
+  const queryClient = new QueryClient()
+
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter initialEntries={['/register']}>
+        <Routes>
+          <Route
+            path="/register"
+            element={<RegisterForm />}
+          />
+
+          <Route
+            path="/login"
+            element={<div>Login page</div>}
+          />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>,
+  )
+}
+
+describe('RegisterForm', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    localStorage.clear()
+  })
+
+  it('requires artist-specific fields when role is artist', async () => {
+    const user = userEvent.setup()
+
+    renderRegisterForm()
+
+    await user.type(
+      screen.getByLabelText(/nombre$/i),
+      'Ana',
+    )
+
+    await user.type(
+      screen.getByLabelText(/apellido/i),
+      'Mora',
+    )
+
+    await user.type(
+      screen.getByLabelText(/email/i),
+      'artist@test.com',
+    )
+
+    await user.type(
+      screen.getByLabelText(/^contraseña$/i),
+      'secret1234',
+    )
+
+    await user.type(
+      screen.getByLabelText(/confirmar contraseña/i),
+      'secret1234',
+    )
+
+    await user.click(
+      screen.getByLabelText(/acepto los términos/i),
+    )
+
+    await user.selectOptions(
+      screen.getByLabelText(/tipo de usuario/i),
+      'artist',
+    )
+
+    await user.click(
+      screen.getByRole('button', {
+        name: /crear cuenta/i,
+      }),
+    )
+
+    expect(
+      await screen.findByText(
+        /nombre artístico es obligatorio/i,
+      ),
+    ).toBeInTheDocument()
+
+    expect(
+      screen.getByText(/ciudad es obligatoria/i),
+    ).toBeInTheDocument()
+
+    expect(mockedRegister).not.toHaveBeenCalled()
+  })
+
+  it('maps buyer registration to backend role and redirects to login', async () => {
+    const user = userEvent.setup()
+
+    mockedRegister.mockResolvedValueOnce({
+      message: 'Registro exitoso.',
+    })
+
+    renderRegisterForm()
+
+    await user.type(
+      screen.getByLabelText(/nombre$/i),
+      'Bea',
+    )
+
+    await user.type(
+      screen.getByLabelText(/apellido/i),
+      'Rios',
+    )
+
+    await user.type(
+      screen.getByLabelText(/email/i),
+      'buyer@test.com',
+    )
+
+    await user.type(
+      screen.getByLabelText(/^contraseña$/i),
+      'secret1234',
+    )
+
+    await user.type(
+      screen.getByLabelText(/confirmar contraseña/i),
+      'secret1234',
+    )
+
+    await user.click(
+      screen.getByLabelText(/acepto los términos/i),
+    )
+
+    await user.click(
+      screen.getByRole('button', {
+        name: /crear cuenta/i,
+      }),
+    )
+
+    await waitFor(() => {
+      expect(mockedRegister).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: 'buyer@test.com',
+          first_name: 'Bea',
+          last_name: 'Rios',
+          role: 'COMPRADOR',
+        }),
+      )
+    })
+
+    expect(
+      await screen.findByText('Login page'),
+    ).toBeInTheDocument()
+  })
+
+  it('shows static password guidance', () => {
+    renderRegisterForm()
+
+    expect(screen.getByText(/la contraseña debe tener entre 8 y 14 caracteres/i)).toBeInTheDocument()
+    expect(
+      screen.getByText(/entre mayúsculas, minúsculas y caracteres \. , &/i),
+    ).toBeInTheDocument()
+  })
+
+  it('requires accepting terms before registering', async () => {
+    const user = userEvent.setup()
+
+    renderRegisterForm()
+
+    await user.type(screen.getByLabelText(/nombre$/i), 'Bea')
+    await user.type(screen.getByLabelText(/apellido/i), 'Rios')
+    await user.type(screen.getByLabelText(/email/i), 'buyer@test.com')
+    await user.type(screen.getByLabelText(/^contraseña$/i), 'secret1234')
+    await user.type(screen.getByLabelText(/confirmar contraseña/i), 'secret1234')
+
+    await user.click(screen.getByRole('button', { name: /crear cuenta/i }))
+
+    expect(
+      await screen.findByText(/debes aceptar los términos/i),
+    ).toBeInTheDocument()
+    expect(mockedRegister).not.toHaveBeenCalled()
+  })
+
+  it('requires matching password confirmation', async () => {
+    const user = userEvent.setup()
+
+    renderRegisterForm()
+
+    await user.type(screen.getByLabelText(/nombre$/i), 'Bea')
+    await user.type(screen.getByLabelText(/apellido/i), 'Rios')
+    await user.type(screen.getByLabelText(/email/i), 'buyer@test.com')
+    await user.type(screen.getByLabelText(/^contraseña$/i), 'secret1234')
+    await user.type(screen.getByLabelText(/confirmar contraseña/i), 'secret1235')
+    await user.click(screen.getByLabelText(/acepto los términos/i))
+
+    await user.click(screen.getByRole('button', { name: /crear cuenta/i }))
+
+    await waitFor(() => {
+      expect(screen.getAllByText(/las contraseñas no coinciden/i).length).toBeGreaterThan(0)
+    })
+    expect(screen.getByRole('alert')).toHaveClass('text-red-700')
+    expect(mockedToast.error).toHaveBeenCalledWith('Las contraseñas no coinciden.')
+    expect(mockedRegister).not.toHaveBeenCalled()
+  })
+
+  it('limits password fields to 14 characters', async () => {
+    const user = userEvent.setup()
+
+    renderRegisterForm()
+
+    const passwordInput = screen.getByLabelText(/^contraseña$/i)
+    const confirmPasswordInput = screen.getByLabelText(/confirmar contraseña/i)
+
+    await user.type(passwordInput, '123456789012345')
+    await user.type(confirmPasswordInput, 'abcdefghijklmno')
+
+    expect(passwordInput).toHaveValue('12345678901234')
+    expect(confirmPasswordInput).toHaveValue('abcdefghijklmn')
+  })
+})
