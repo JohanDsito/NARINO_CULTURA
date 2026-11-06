@@ -1,0 +1,260 @@
+import { useNavigate } from 'react-router-dom'
+import { useMutation } from '@tanstack/react-query'
+import { useForm, useWatch } from 'react-hook-form'
+import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { toast } from 'sonner'
+
+import { register as registerApi } from '@/api/auth.api'
+import type { Role } from '@/types/auth'
+import { mapRoleToBackendRole } from '@/types/auth'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select } from '@/components/ui/select'
+import { getApiErrorMessage } from '@/utils/apiError'
+import { setPendingArtistProfile } from '@/utils/pendingArtistProfile'
+
+const PASSWORD_MIN_LENGTH = 8
+const PASSWORD_MAX_LENGTH = 14
+const PASSWORD_LENGTH_MESSAGE = `La contraseña debe tener entre ${PASSWORD_MIN_LENGTH} y ${PASSWORD_MAX_LENGTH} caracteres.`
+const PASSWORD_HINT_MESSAGE = 'Entre mayúsculas, minúsculas y caracteres . , &'
+const PASSWORD_MISMATCH_MESSAGE = 'Las contraseñas no coinciden.'
+
+const schema = z
+  .object({
+    email: z.string().email('Ingresa un email válido.'),
+    password: z.string().min(PASSWORD_MIN_LENGTH, PASSWORD_LENGTH_MESSAGE).max(PASSWORD_MAX_LENGTH, PASSWORD_LENGTH_MESSAGE),
+    confirmPassword: z.string().min(PASSWORD_MIN_LENGTH, PASSWORD_LENGTH_MESSAGE).max(PASSWORD_MAX_LENGTH, PASSWORD_LENGTH_MESSAGE),
+    firstName: z.string().min(1, 'El nombre es obligatorio.'),
+    lastName: z.string().min(1, 'El apellido es obligatorio.'),
+    role: z.enum(['buyer', 'artist'] as const satisfies readonly Role[], {
+      message: 'Selecciona un tipo de usuario.',
+    }),
+    phone: z.string().optional(),
+    avatarUrl: z.string().url('Debe ser una URL válida.').optional().or(z.literal('')),
+    artisticName: z.string().optional(),
+    discipline: z.string().optional(),
+    city: z.string().optional(),
+    termsAccepted: z.boolean().refine((value) => value, {
+      message: 'Debes aceptar los términos y la política de privacidad.',
+    }),
+  })
+  .superRefine((values, ctx) => {
+    if (values.password !== values.confirmPassword) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: PASSWORD_MISMATCH_MESSAGE,
+        path: ['confirmPassword'],
+      })
+    }
+
+    if (values.role === 'artist') {
+      if (!values.artisticName?.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'El nombre artístico es obligatorio.',
+          path: ['artisticName'],
+        })
+      }
+      if (!values.city?.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'La ciudad es obligatoria.',
+          path: ['city'],
+        })
+      }
+    }
+  })
+
+type FormValues = z.infer<typeof schema>
+
+export function RegisterForm() {
+  const navigate = useNavigate()
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      email: '',
+      password: '',
+      confirmPassword: '',
+      firstName: '',
+      lastName: '',
+      role: 'buyer',
+      phone: '',
+      avatarUrl: '',
+      artisticName: '',
+      discipline: '',
+      city: '',
+      termsAccepted: false,
+    },
+    mode: 'onTouched',
+  })
+
+  const role = useWatch({ control: form.control, name: 'role' })
+
+  const mutation = useMutation({
+    mutationFn: async (values: FormValues) => {
+      if (values.role === 'artist') {
+        const artistic_name = values.artisticName?.trim() ?? ''
+        const discipline = values.discipline?.trim() || undefined
+        const city = values.city?.trim() || undefined
+        if (artistic_name) setPendingArtistProfile({ artistic_name, discipline, city })
+      }
+
+      return await registerApi({
+        email: values.email,
+        password: values.password,
+        first_name: values.firstName,
+        last_name: values.lastName,
+        role: mapRoleToBackendRole(values.role),
+        category: values.discipline?.trim() || undefined,
+      })
+    },
+    onSuccess: (data) => {
+      toast.success('Registro exitoso.', { description: data.message })
+      navigate('/login', { replace: true })
+    },
+    onError: (err) => {
+      toast.error(getApiErrorMessage(err))
+    },
+  })
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = form
+
+  return (
+    <form
+      className="space-y-3"
+      onSubmit={handleSubmit(
+        (values) => mutation.mutate(values),
+        (formErrors) => {
+          if (formErrors.confirmPassword?.message === PASSWORD_MISMATCH_MESSAGE) {
+            toast.error(PASSWORD_MISMATCH_MESSAGE)
+          }
+        },
+      )}
+      aria-label="Formulario de registro"
+    >
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1">
+          <Label htmlFor="firstName" className="text-xs font-medium">Nombre</Label>
+          <Input id="firstName" autoComplete="given-name" {...register('firstName')} />
+          {errors.firstName ? (
+            <p className="text-xs text-destructive">{errors.firstName.message}</p>
+          ) : null}
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="lastName" className="text-xs font-medium">Apellido</Label>
+          <Input id="lastName" autoComplete="family-name" {...register('lastName')} />
+          {errors.lastName ? (
+            <p className="text-xs text-destructive">{errors.lastName.message}</p>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="space-y-1">
+        <Label htmlFor="email" className="text-xs font-medium">Email</Label>
+        <Input id="email" type="email" autoComplete="email" {...register('email')} />
+        {errors.email ? <p className="text-xs text-destructive">{errors.email.message}</p> : null}
+      </div>
+
+      <div className="space-y-1">
+        <Label htmlFor="password" className="text-xs font-medium">Contraseña</Label>
+        <Input
+          id="password"
+          type="password"
+          autoComplete="new-password"
+          maxLength={PASSWORD_MAX_LENGTH}
+          {...register('password')}
+        />
+        <div className="space-y-0.5 text-xs text-text-secondary">
+          <p>{PASSWORD_LENGTH_MESSAGE}</p>
+          <p>{PASSWORD_HINT_MESSAGE}</p>
+        </div>
+      </div>
+
+      <div className="space-y-1">
+        <Label htmlFor="confirmPassword" className="text-xs font-medium">Confirmar contraseña</Label>
+        <Input
+          id="confirmPassword"
+          type="password"
+          autoComplete="new-password"
+          maxLength={PASSWORD_MAX_LENGTH}
+          {...register('confirmPassword')}
+        />
+      </div>
+
+      {errors.confirmPassword?.message === PASSWORD_MISMATCH_MESSAGE ? (
+        <div
+          role="alert"
+          className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-xs font-medium text-red-700"
+        >
+          {PASSWORD_MISMATCH_MESSAGE}
+        </div>
+      ) : null}
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1">
+          <Label htmlFor="role" className="text-xs font-medium">Tipo de usuario</Label>
+          <Select id="role" {...register('role')} aria-label="Seleccionar tipo de usuario">
+            <option value="buyer">Visitante</option>
+            <option value="artist">Artista</option>
+          </Select>
+          {errors.role ? <p className="text-xs text-destructive">{errors.role.message}</p> : null}
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="phone" className="text-xs font-medium">Teléfono (opt.)</Label>
+          <Input id="phone" autoComplete="tel" {...register('phone')} />
+        </div>
+      </div>
+
+      {role === 'artist' ? (
+        <div className="rounded-lg border border-tierra/20 bg-tierra-pale/20 p-3">
+          <p className="mb-2 text-xs font-semibold text-tierra">Información de artista</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1 sm:col-span-2">
+              <Label htmlFor="artisticName" className="text-xs font-medium">Nombre artístico*</Label>
+              <Input id="artisticName" {...register('artisticName')} />
+              {errors.artisticName ? (
+                <p className="text-xs text-destructive">{errors.artisticName.message}</p>
+              ) : null}
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="discipline" className="text-xs font-medium">Categoría (opt.)</Label>
+              <Input id="discipline" {...register('discipline')} />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="city" className="text-xs font-medium">Ciudad*</Label>
+              <Input id="city" {...register('city')} />
+              {errors.city ? (
+                <p className="text-xs text-destructive">{errors.city.message}</p>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="space-y-1">
+        <label className="flex items-start gap-2 text-xs leading-5 text-text-secondary">
+          <input
+            type="checkbox"
+            className="mt-1 h-4 w-4 rounded border-border text-tierra focus:ring-tierra"
+            {...register('termsAccepted')}
+          />
+          <span>Acepto los términos y la política de privacidad.</span>
+        </label>
+        {errors.termsAccepted ? (
+          <p className="text-xs text-destructive">{errors.termsAccepted.message}</p>
+        ) : null}
+      </div>
+
+      <Button type="submit" className="w-full mt-4" disabled={mutation.isPending} aria-label="Crear cuenta">
+        {mutation.isPending ? 'Creando…' : 'Crear cuenta'}
+      </Button>
+    </form>
+  )
+}
