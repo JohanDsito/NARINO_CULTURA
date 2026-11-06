@@ -6,15 +6,16 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from apps.musicians.models import MusicalWork, MusicGenre, MusicianFollower, MusicianProfile
+from apps.musicians.models import MusicGenre, MusicianFollower, MusicianProfile, MusicianReview, MusicalWork
 from apps.musicians.serializers import (
-    MusicalWorkSerializer,
     MusicGenreSerializer,
     MusicianProfileListSerializer,
     MusicianProfileSerializer,
     MusicianProfileSummarySerializer,
     MusicianReviewSerializer,
+    MusicalWorkSerializer,
 )
 from apps.users.serializers import PublicUserSummarySerializer
 
@@ -115,7 +116,7 @@ class MusicianProfileViewSet(viewsets.ModelViewSet):
         work_type = request.query_params.get("type")
         if work_type:
             qs = qs.filter(work_type=work_type)
-        serializer = MusicalWorkSerializer(qs, many=True)
+        serializer = MusicalWorkSerializer(qs, many=True, context={"request": request})
         return Response(serializer.data)
 
     @action(detail=True, methods=["post"], url_path="works/add", permission_classes=[IsAuthenticated])
@@ -126,7 +127,7 @@ class MusicianProfileViewSet(viewsets.ModelViewSet):
                 {"detail": "Solo puedes agregar obras a tu propio perfil."},
                 status=status.HTTP_403_FORBIDDEN,
             )
-        serializer = MusicalWorkSerializer(data=request.data)
+        serializer = MusicalWorkSerializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         serializer.save(musician=profile)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
