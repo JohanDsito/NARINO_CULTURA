@@ -1,52 +1,42 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/nc_theme.dart';
+import '../../../../shared/widgets/design/design.dart';
 import '../../../musicians/data/musician_repository.dart';
 import '../../../musicians/domain/musician_model.dart';
 import '../../../profile/data/profile_repository.dart';
-import 'artistic_profile_screen/discipline.dart';
-import 'artistic_profile_screen/discipline_card.dart';
-import 'artistic_profile_screen/error_banner.dart';
+import '../widgets/auth_scaffold.dart';
 
-// ─── Disciplinas disponibles ─────────────────────────────────────────────────
+/// Disciplina que se muestra al artista. [value] es lo que espera el backend
+/// (se conserva tal cual); [label] es el nombre neutro que se ve.
+class _Disciplina {
+  const _Disciplina(this.label, this.value, this.icon, this.description,
+      this.accent);
+  final String label;
+  final String value;
+  final IconData icon;
+  final String description;
+  final NcAccent Function(NcColors) accent;
+}
 
-const _kDisciplines = <Discipline>[
-  Discipline(
-    label: 'Artesano',
-    value: 'Artesano',
-    icon: Icons.content_cut_outlined,
-    description: 'Objetos únicos con técnicas tradicionales',
-  ),
-  Discipline(
-    label: 'Fotógrafo',
-    value: 'Fotógrafo',
-    icon: Icons.camera_alt_outlined,
-    description: 'Captura momentos y paisajes del territorio',
-  ),
-  Discipline(
-    label: 'Escultor',
-    value: 'Escultor',
-    icon: Icons.architecture_outlined,
-    description: 'Formas tridimensionales en diferentes materiales',
-  ),
-  Discipline(
-    label: 'Pintor',
-    value: 'Pintor',
-    icon: Icons.brush_outlined,
-    description: 'Expresión visual sobre lienzo u otras superficies',
-  ),
-  Discipline(
-    label: 'Músico',
-    value: 'Música',
-    icon: Icons.music_note_outlined,
-    description: 'Composición, interpretación y producción musical',
-  ),
+final _kDisciplinas = <_Disciplina>[
+  _Disciplina('Artesanía', 'Artesano', Icons.content_cut_rounded,
+      'Barniz de Pasto, tamo, tejidos y técnicas tradicionales.',
+      (nc) => nc.naranjaA),
+  _Disciplina('Fotografía', 'Fotógrafo', Icons.camera_alt_outlined,
+      'El Carnaval, los paisajes y la gente del territorio.', (nc) => nc.azulA),
+  _Disciplina('Escultura', 'Escultor', Icons.architecture_rounded,
+      'Formas en madera, piedra, metal y otros materiales.', (nc) => nc.oroA),
+  _Disciplina('Pintura', 'Pintor', Icons.brush_outlined,
+      'Lienzo, mural, acuarela y otras superficies.', (nc) => nc.magentaA),
+  _Disciplina('Música', 'Música', Icons.music_note_rounded,
+      'Composición, interpretación y producción musical.', (nc) => nc.tomateA),
 ];
 
-/// Clave: valor que espera el backend. Valor: etiqueta visible al usuario.
-const _kAggregationTypes = <String, String>{
+/// Clave: valor que espera el backend. Valor: etiqueta visible.
+const _kAgrupaciones = <String, String>{
   'SOLISTA': 'Solista',
   'DUO': 'Dúo',
   'TRIO': 'Trío',
@@ -55,32 +45,39 @@ const _kAggregationTypes = <String, String>{
   'DJ': 'DJ',
 };
 
-// ─── Pantalla ────────────────────────────────────────────────────────────────
-
+/// Bienvenida del artista: elige su disciplina y, si es música, completa su
+/// perfil musical (paso 2).
 class ArtisticProfileScreen extends StatefulWidget {
-  const ArtisticProfileScreen({super.key});
+  const ArtisticProfileScreen({super.key, this.profileRepo, this.musicianRepo});
+
+  /// Inyectables para pruebas; por defecto los repositorios reales.
+  final ProfileRepository? profileRepo;
+  final MusicianRepository? musicianRepo;
 
   @override
   State<ArtisticProfileScreen> createState() => _ArtisticProfileScreenState();
 }
 
 class _ArtisticProfileScreenState extends State<ArtisticProfileScreen> {
-  final _profileRepo = ProfileRepository();
-  final _musicianRepo = MusicianRepository();
+  late final _profileRepo = widget.profileRepo ?? ProfileRepository();
+  late final _musicianRepo = widget.musicianRepo ?? MusicianRepository();
 
-  // Step 0 state
+  // Paso 0
   String? _selected;
   bool _isLoading = false;
+  bool _initialLoading = true;
   String? _error;
   String _firstName = 'Artista';
 
-  // Step 1 (músico) state
+  // Paso 1 (músico)
   int _step = 0;
+  bool _cameFromStep0 = false;
   final _artisticNameCtrl = TextEditingController();
   String? _aggregationType;
   List<MusicGenreModel> _genres = [];
   final Set<int> _selectedGenreIds = {};
   bool _loadingGenres = false;
+  bool _nameError = false;
 
   @override
   void initState() {
@@ -95,65 +92,68 @@ class _ArtisticProfileScreenState extends State<ArtisticProfileScreen> {
   }
 
   Future<void> _loadExisting() async {
-    if (!mounted) return;
-    setState(() { _isLoading = true; _error = null; });
     try {
       final profile = await _profileRepo.getMyProfile();
       if (profile != null) {
-        _firstName =
-            profile.nombreArtistico.isNotEmpty ? profile.nombreArtistico : 'Artista';
+        _firstName = profile.nombreArtistico.isNotEmpty
+            ? profile.nombreArtistico
+            : 'Artista';
         final discipline = profile.disciplina;
         if (discipline.isNotEmpty && mounted) {
           if (discipline == 'Música') {
             final musician = await _musicianRepo.getMyProfile();
+            if (!mounted) return;
             if (musician != null) {
-              if (!mounted) return;
               context.go('/home');
               return;
             }
             _artisticNameCtrl.text = _firstName;
-            if (mounted) setState(() { _step = 1; _isLoading = false; });
+            setState(() {
+              _step = 1;
+              _initialLoading = false;
+            });
             _fetchGenres();
             return;
           }
-          if (mounted) context.go('/home');
+          context.go('/home');
           return;
         }
       }
-
-      if (mounted) setState(() => _isLoading = false);
     } catch (_) {
-      if (mounted) setState(() => _isLoading = false);
+      // Sin perfil previo: se muestra la elección de disciplina.
     }
+    if (mounted) setState(() => _initialLoading = false);
   }
 
   Future<void> _fetchGenres() async {
     setState(() => _loadingGenres = true);
     try {
       final genres = await _musicianRepo.getGenres();
-      if (mounted) {
-        setState(() {
-          _genres = genres;
-          _loadingGenres = false;
-        });
-      }
+      if (mounted) setState(() => _genres = genres);
     } catch (_) {
+      // Se muestra el aviso de "no se pudieron cargar".
+    } finally {
       if (mounted) setState(() => _loadingGenres = false);
     }
   }
 
   Future<void> _confirm() async {
     if (_selected == null) return;
-    setState(() { _isLoading = true; _error = null; });
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
     try {
       await _profileRepo.updateMyProfile(disciplina: _selected);
-
       if (!mounted) return;
-
       if (_selected == 'Música') {
         _artisticNameCtrl.text = _firstName;
         _fetchGenres();
-        setState(() { _step = 1; _isLoading = false; });
+        setState(() {
+          _step = 1;
+          _cameFromStep0 = true;
+          _isLoading = false;
+        });
       } else {
         context.go('/home');
       }
@@ -161,7 +161,7 @@ class _ArtisticProfileScreenState extends State<ArtisticProfileScreen> {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _error = 'No se pudo guardar el perfil. Intenta de nuevo.';
+          _error = 'No se pudo guardar tu disciplina. Intenta de nuevo.';
         });
       }
     }
@@ -169,19 +169,22 @@ class _ArtisticProfileScreenState extends State<ArtisticProfileScreen> {
 
   Future<void> _saveMusicianProfile() async {
     final name = _artisticNameCtrl.text.trim();
-    if (name.isEmpty) return;
-    setState(() { _isLoading = true; _error = null; });
+    if (name.isEmpty) {
+      setState(() => _nameError = true);
+      return;
+    }
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
     try {
-      // Verificar si ya existe un perfil de músico (para hacer PATCH en vez de POST)
       final existing = await _musicianRepo.getMyProfile();
-
       await _musicianRepo.saveMyProfile(
         artisticName: name,
         aggregationType: _aggregationType,
         genreIds: _selectedGenreIds.toList(),
         existingSlug: existing?.slug,
       );
-
       if (mounted) context.go('/home');
     } catch (e) {
       if (mounted) {
@@ -194,274 +197,194 @@ class _ArtisticProfileScreenState extends State<ArtisticProfileScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    if (_step == 1) return _buildMusicianStep(context);
-    return _buildDisciplineStep(context);
-  }
+  Widget build(BuildContext context) =>
+      _step == 1 ? _musicianStep(context) : _disciplineStep(context);
 
-  // ── Step 0: Selección de disciplina ─────────────────────────────────────────
+  // ── Paso 0: disciplina ────────────────────────────────────────────────────
 
-  Widget _buildDisciplineStep(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final textMuted = isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
-
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(
-              title: '¿Cuál es tu perfil artístico?',
-              subtitle: 'Elige la disciplina que mejor te describe.',
-            ),
-            Expanded(
-              child: _isLoading && _selected == null
-                  ? const Center(child: CircularProgressIndicator())
-                  : SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-                      child: Column(
-                        children: [
-                          for (final d in _kDisciplines) ...[
-                            DisciplineCard(
-                              discipline: d,
-                              isSelected: _selected == d.value,
-                              disabled: _isLoading,
-                              onTap: () => setState(() => _selected = d.value),
-                            ),
-                            const SizedBox(height: 10),
-                          ],
-                          if (_error != null) ...[
-                            const SizedBox(height: 4),
-                            ErrorBanner(message: _error!),
-                            const SizedBox(height: 12),
-                          ],
-                          const SizedBox(height: 8),
-                          SizedBox(
-                            width: double.infinity,
-                            height: 50,
-                            child: FilledButton(
-                              onPressed: (_selected == null || _isLoading) ? null : _confirm,
-                              child: _isLoading
-                                  ? SizedBox(
-                                      width: 18,
-                                      height: 18,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: theme.colorScheme.onPrimary,
-                                      ),
-                                    )
-                                  : const Text('Continuar'),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          TextButton(
-                            onPressed: _isLoading ? null : () => context.go('/home'),
-                            child: Text(
-                              'Completar más tarde',
-                              style: AppTypography.bodySmall(color: textMuted),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-            ),
-          ],
-        ),
+  Widget _disciplineStep(BuildContext context) {
+    final nc = context.nc;
+    return AuthScaffold(
+      kicker: 'Bienvenida al carnaval',
+      title: '¿Qué creas, $_firstName?',
+      subtitle: 'Elige la disciplina que mejor te describe. Podrás cambiarla '
+          'después desde tu perfil.',
+      footer: TextButton(
+        onPressed: _isLoading ? null : () => context.go('/home'),
+        child: const Text('Completar más tarde'),
       ),
-    );
-  }
-
-  // ── Step 1: Perfil musical ───────────────────────────────────────────────────
-
-  Widget _buildMusicianStep(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-    final textMuted = isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
-    final cs = theme.colorScheme;
-
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(
-              title: 'Tu perfil musical',
-              subtitle: 'Cuéntanos más sobre tu propuesta musical.',
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Nombre artístico
-                    Text(
-                      'Nombre artístico *',
-                      style: AppTypography.labelSemiBold(color: textPrimary),
-                    ),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _artisticNameCtrl,
-                      enabled: !_isLoading,
-                      decoration: const InputDecoration(
-                        prefixIcon: Icon(Icons.mic_outlined),
-                        hintText: 'Nombre con el que te conocen',
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Tipo de agrupación
-                    Text(
-                      'Tipo de agrupación',
-                      style: AppTypography.labelSemiBold(color: textPrimary),
-                    ),
-                    const SizedBox(height: 8),
-                    DropdownButtonFormField<String>(
-                      initialValue: _aggregationType,
-                      decoration: const InputDecoration(
-                        prefixIcon: Icon(Icons.group_outlined),
-                        hintText: 'Selecciona una opción',
-                      ),
-                      items: _kAggregationTypes.entries
-                          .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
-                          .toList(),
-                      onChanged: _isLoading
-                          ? null
-                          : (v) => setState(() => _aggregationType = v),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Géneros musicales
-                    Text(
-                      'Géneros musicales',
-                      style: AppTypography.labelSemiBold(color: textPrimary),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Selecciona los géneros que defines tu música.',
-                      style: AppTypography.caption(color: textMuted),
-                    ),
-                    const SizedBox(height: 10),
-                    _loadingGenres
-                        ? const Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(12),
-                              child: CircularProgressIndicator(),
-                            ),
-                          )
-                        : _genres.isEmpty
-                            ? Text(
-                                'No se pudieron cargar los géneros.',
-                                style: AppTypography.caption(color: textMuted),
-                              )
-                            : Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: _genres.map((g) {
-                                  final selected = _selectedGenreIds.contains(g.id);
-                                  return FilterChip(
-                                    label: Text(g.name),
-                                    selected: selected,
-                                    onSelected: _isLoading
-                                        ? null
-                                        : (_) => setState(() {
-                                              if (selected) {
-                                                _selectedGenreIds.remove(g.id);
-                                              } else {
-                                                _selectedGenreIds.add(g.id);
-                                              }
-                                            }),
-                                    selectedColor: cs.primary.withValues(alpha: 0.15),
-                                    checkmarkColor: cs.primary,
-                                    labelStyle: AppTypography.bodySmall(
-                                      color: selected ? cs.primary : textPrimary,
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
-
-                    if (_error != null) ...[
-                      const SizedBox(height: 16),
-                      ErrorBanner(message: _error!),
-                    ],
-                    const SizedBox(height: 24),
-
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: FilledButton(
-                        onPressed: _isLoading ? null : _saveMusicianProfile,
-                        child: _isLoading
-                            ? SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: cs.onPrimary,
-                                ),
-                              )
-                            : const Text('Finalizar'),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextButton(
-                      onPressed: _isLoading ? null : () => context.go('/home'),
-                      child: Text(
-                        'Completar más tarde',
-                        style: AppTypography.bodySmall(color: textMuted),
-                      ),
-                    ),
-                  ],
+      child: _initialLoading
+          ? const Padding(
+              padding: EdgeInsets.symmetric(vertical: 32),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final d in _kDisciplinas) ...[
+                  _DisciplinaTile(
+                    disciplina: d,
+                    accent: d.accent(nc),
+                    selected: _selected == d.value,
+                    onTap: _isLoading
+                        ? null
+                        : () => setState(() => _selected = d.value),
+                  ),
+                  const SizedBox(height: 10),
+                ],
+                if (_error != null) ...[
+                  const SizedBox(height: 4),
+                  NcBanner.error(context, _error!),
+                  const SizedBox(height: 10),
+                ],
+                const SizedBox(height: 8),
+                NcPrimaryButton(
+                  label: 'Continuar',
+                  loading: _isLoading,
+                  onPressed: _selected == null ? null : _confirm,
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
     );
   }
 
-  // ── Header compartido ────────────────────────────────────────────────────────
+  // ── Paso 1: perfil musical ────────────────────────────────────────────────
 
-  Widget _buildHeader({required String title, required String subtitle}) {
-    return Container(
-      width: double.infinity,
-      color: AppColors.obsidiana,
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+  Widget _musicianStep(BuildContext context) {
+    final nc = context.nc;
+    final musica = nc.tomateA;
+
+    Widget label(String text, {String? hint}) => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(text,
+                style: AppTypography.labelSemiBold(color: nc.textPrimary)
+                    .copyWith(fontSize: 14)),
+            if (hint != null) ...[
+              const SizedBox(height: 2),
+              Text(hint,
+                  style: AppTypography.bodySmall(color: nc.textSecondary)),
+            ],
+          ],
+        );
+
+    return AuthScaffold(
+      kicker: 'Paso 2 de 2',
+      title: 'Tu perfil musical',
+      subtitle: 'Cuéntanos cómo suena tu propuesta para que el público te '
+          'encuentre.',
+      logoAccent: musica,
+      onBack: _cameFromStep0 && !_isLoading
+          ? () => setState(() => _step = 0)
+          : null,
+      footer: TextButton(
+        onPressed: _isLoading ? null : () => context.go('/home'),
+        child: const Text('Completar más tarde'),
+      ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
+          label('Nombre artístico'),
+          const SizedBox(height: 10),
+          TextFormField(
+            controller: _artisticNameCtrl,
+            enabled: !_isLoading,
+            textCapitalization: TextCapitalization.words,
+            onChanged: (_) {
+              if (_nameError) setState(() => _nameError = false);
+            },
+            decoration: InputDecoration(
+              prefixIcon: const Icon(Icons.mic_none_rounded),
+              hintText: 'Nombre con el que te conocen',
+              errorText: _nameError ? 'Escribe tu nombre artístico' : null,
+            ),
+          ),
+          const SizedBox(height: 22),
+          label('Formato'),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppColors.oroAndino,
-                  borderRadius: BorderRadius.circular(10),
+              for (final e in _kAgrupaciones.entries)
+                ChoiceChip(
+                  label: Text(e.value),
+                  selected: _aggregationType == e.key,
+                  showCheckmark: false,
+                  onSelected: _isLoading
+                      ? null
+                      : (v) =>
+                          setState(() => _aggregationType = v ? e.key : null),
+                  selectedColor: musica.fill,
+                  labelStyle: AppTypography.labelMedium(
+                    color: _aggregationType == e.key
+                        ? musica.onFill
+                        : nc.textPrimary,
+                  ).copyWith(fontWeight: FontWeight.w600),
+                  side: BorderSide(
+                    color: _aggregationType == e.key
+                        ? musica.fill
+                        : nc.border,
+                  ),
                 ),
-                child: const Icon(Icons.palette_outlined,
-                    size: 22, color: AppColors.obsidiana),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'Nariño Cultura',
-                style: AppTypography.displayBold(color: AppColors.oroClaro)
-                    .copyWith(fontSize: 18),
-              ),
             ],
           ),
-          const SizedBox(height: 20),
-          Text(
-            title,
-            style: AppTypography.displaySemiBold(color: AppColors.oroClaro),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            subtitle,
-            style: AppTypography.quoteItalic(
-              color: AppColors.oroClaro.withAlpha(160),
+          const SizedBox(height: 22),
+          label('Géneros musicales',
+              hint: 'Elige todos los que definen tu música.'),
+          const SizedBox(height: 10),
+          if (_loadingGenres)
+            const Padding(
+              padding: EdgeInsets.all(12),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (_genres.isEmpty)
+            NcBanner(
+              accent: nc.oroA,
+              message: 'No pudimos cargar los géneros. Puedes agregarlos '
+                  'luego desde tu perfil.',
+            )
+          else
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final g in _genres)
+                  FilterChip(
+                    label: Text(g.name),
+                    selected: _selectedGenreIds.contains(g.id),
+                    onSelected: _isLoading
+                        ? null
+                        : (_) => setState(() {
+                              _selectedGenreIds.contains(g.id)
+                                  ? _selectedGenreIds.remove(g.id)
+                                  : _selectedGenreIds.add(g.id);
+                            }),
+                    selectedColor: nc.azulA.tint,
+                    checkmarkColor: nc.azul,
+                    side: BorderSide(
+                      color: _selectedGenreIds.contains(g.id)
+                          ? nc.azul
+                          : nc.border,
+                    ),
+                    labelStyle: AppTypography.labelMedium(
+                      color: _selectedGenreIds.contains(g.id)
+                          ? nc.azul
+                          : nc.textPrimary,
+                    ),
+                  ),
+              ],
             ),
+          if (_error != null) ...[
+            const SizedBox(height: 16),
+            NcBanner.error(context, _error!),
+          ],
+          const SizedBox(height: 24),
+          NcPrimaryButton(
+            label: 'Finalizar',
+            icon: Icons.check_rounded,
+            loading: _isLoading,
+            onPressed: _saveMusicianProfile,
           ),
         ],
       ),
@@ -469,3 +392,98 @@ class _ArtisticProfileScreenState extends State<ArtisticProfileScreen> {
   }
 }
 
+class _DisciplinaTile extends StatelessWidget {
+  const _DisciplinaTile({
+    required this.disciplina,
+    required this.accent,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final _Disciplina disciplina;
+  final NcAccent accent;
+  final bool selected;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final nc = context.nc;
+    return Semantics(
+      selected: selected,
+      inMutuallyExclusiveGroup: true,
+      label: '${disciplina.label}. ${disciplina.description}',
+      excludeSemantics: true,
+      child: NcPressable(
+        onTap: onTap,
+        pressedScale: 0.98,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),
+          decoration: BoxDecoration(
+            color: selected
+                ? Color.alphaBlend(accent.tint, nc.bgCard)
+                : nc.itemFill,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: selected ? accent.fill : nc.border,
+              width: selected ? 1.6 : 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: selected ? accent.fill : accent.tint,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(
+                  disciplina.icon,
+                  size: 22,
+                  color: selected ? accent.onFill : accent.ink,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      disciplina.label,
+                      style: AppTypography.labelSemiBold(
+                          color: selected ? accent.ink : nc.textPrimary),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      disciplina.description,
+                      style: AppTypography.bodySmall(color: nc.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: selected ? accent.fill : Colors.transparent,
+                  border: Border.all(
+                    color: selected ? accent.fill : nc.textMuted,
+                    width: 1.5,
+                  ),
+                ),
+                child: selected
+                    ? Icon(Icons.check_rounded, size: 14, color: accent.onFill)
+                    : null,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
