@@ -63,7 +63,7 @@ Novedades del backend que impactan la app:
 | 15 | Subastas | No hay historial de pujas por REST | 🚫 |
 | 16 | Eventos | Cancelar inscripción (DELETE) no existe → 405 | ✅ mensaje claro; "ya inscrito" marca el estado. Falta endpoint en backend |
 | 17 | IA | `/ai/suggest-category/`, `/ai/generate-description/`, `/ai/recommendations/`, `/ai/artist-stats/` no existen | 🚫 |
-| 18 | Músicos | Producción no envía `is_following` → el botón seguir arranca en "Seguir" | 🚫 hasta desplegar `40ae5be` |
+| 18 | Músicos | Producción no envía `is_following` → el botón seguir arranca en "Seguir" | ✅ se deduce de `musicians/following/` (`seguidosProvider`) |
 | 19 | Artistas | `ArtistProfileSerializer` no trae `is_following` | 🚫 (se puede deducir con `artists/following/`) |
 | 20 | Cuenta | Eliminar cuenta se bloqueaba si existía CUALQUIER subasta activa en la plataforma (`artista=me` ignorado) | ✅ solo cuenta las subastas propias |
 | 21 | Eventos | Mensaje 403 decía "solo gestores"; el backend permite artistas, gestores y admin | ✅ |
@@ -98,6 +98,10 @@ Novedades del backend que impactan la app:
 | 51 | Eventos | Cambiar de calendario a lista mezclaba eventos pasados | ✅ se cargan todos y la vista decide; botón "Ver pasados" |
 | 52 | Publicar evento | Campo "artistas" que nunca se enviaba; duración fija de 2 h; decía "publicado" aunque quedara en borrador | ✅ sin campo, duración elegible, aviso de borrador |
 | 53 | Eventos | Gestores veían borradores mezclados sin distinguir | ✅ insignia "Borrador" |
+| 54 | Músicos | Búsqueda con 1 petición por letra | ✅ espera 450 ms |
+| 55 | Músicos | Las obras mostraban ícono de audio pero no se podían escuchar; enlaces de YouTube/Spotify/SoundCloud sin usar | ✅ botones para abrirlos |
+| 56 | Músicos | No había forma de escribir reseñas (el backend sí lo permite) | ✅ hoja con estrellas y comentario |
+| 57 | Subir obra | Duración en segundos sueltos | ✅ formato min:seg (3:45) |
 | 40 | Ventas | Una orden con obras de varios artistas suma el total completo; `OrderItemSerializer` no dice de quién es cada ítem | 🚫 pedir `artist_slug` en el ítem |
 
 ---
@@ -160,7 +164,7 @@ Guía completa de color y componentes: **`docs/DISENO_CARNAVAL.md`**.
 | Tienda / Carrito / Pago / Resultado / Favoritos / Compras / Orden / Ventas | ✅ acento naranja, códigos cortos de orden, estados en lenguaje claro |
 | Subastas (lista, detalle, crear, historial) | ✅ oro + tomate en vivo, cuenta regresiva propia, barra de puja con montos sugeridos |
 | Eventos (lista/calendario, detalle, publicar) | ✅ tomate, color por tipo, calendario compartido con Inicio |
-| Músicos / Descubrimiento musical | ⏳ |
+| Músicos / Detalle / Subir obra / Descubrimiento musical | ✅ azul, seguir confiable, reseñas y enlaces para escuchar |
 | Perfil y subpantallas | ⏳ |
 | Notificaciones / Chatbot | ⏳ |
 
@@ -191,3 +195,4 @@ Guía completa de color y componentes: **`docs/DISENO_CARNAVAL.md`**.
   Arreglados #36–#39. Siguiente: Subastas.
 - 2026-11-06 — Arreglo de backend para ventas por artista (`SaleSerializer`, `seller_amount`, artista e imagen por ítem) probado (262 tests) y entregado como nota; la app ya lo soporta. Rediseño de Subastas. Arreglados #41–#46. Siguiente: Eventos.
 - 2026-11-06 — Rediseño de Eventos (agenda, detalle, publicar) y calendario compartido `NcMonthCalendar`. Arreglados #47–#53. Siguiente: Músicos.
+- 2026-11-06 — Rediseño de Músicos, detalle, subir obra y Descubrimiento musical. Arreglados #18, #54–#57. Siguiente: Perfil.
