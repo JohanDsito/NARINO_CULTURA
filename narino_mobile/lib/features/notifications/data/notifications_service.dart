@@ -9,7 +9,7 @@ class NotificationsService {
   Future<List<dynamic>> list({bool? onlyUnread}) async {
     try {
       final qp = <String, dynamic>{};
-      if (onlyUnread == true) qp['no_leidas'] = true;
+      if (onlyUnread == true) qp['unread'] = 'true';
       final res =
           await _dio.get(ApiConstants.notifications, queryParameters: qp);
       final data = res.data;
@@ -24,10 +24,22 @@ class NotificationsService {
     }
   }
 
-  Future<void> markRead(int id) async {
+  /// Número de notificaciones sin leer (`GET /notifications/unread-count/`).
+  Future<int> unreadCount() async {
+    final res = await _dio.get(ApiConstants.notificationsUnreadCount);
+    final data = res.data;
+    if (data is Map) {
+      final v = data['unread'];
+      if (v is int) return v;
+      return int.tryParse(v?.toString() ?? '') ?? 0;
+    }
+    return 0;
+  }
+
+  Future<void> markRead(String id) async {
     try {
-      final path = ApiConstants.notificationRead.replaceFirst('{id}', '$id');
-      await _dio.patch(path, data: {});
+      final path = ApiConstants.notificationRead.replaceFirst('{id}', id);
+      await _dio.post(path, data: {});
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) return;
       rethrow;
@@ -43,10 +55,9 @@ class NotificationsService {
     }
   }
 
-  /// NOTA: el backend no expone actualmente ningún endpoint bajo
-  /// `/api/v1/notifications/` para leer o guardar estas preferencias (el app
-  /// `notifications` solo tiene un modelo, sin `views.py`/`urls.py`). Esta
-  /// llamada siempre fallará hasta que se implemente esa API.
+  /// NOTA: el backend (HU-B09) expone la bandeja, pero NO un endpoint de
+  /// preferencias por tipo de evento. Esta llamada falla con 404 hasta que se
+  /// implemente; la pantalla de preferencias guarda localmente mientras tanto.
   Future<Map<String, dynamic>> getEventPreferences() async {
     final res =
         await _dio.get(ApiConstants.eventNotificationPreferences);

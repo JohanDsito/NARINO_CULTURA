@@ -153,24 +153,46 @@ void main() {
 
   group('markRead', () {
     test('completa sin lanzar cuando el backend responde bien', () async {
-      final path = ApiConstants.notificationRead.replaceFirst('{id}', '7');
+      final path = ApiConstants.notificationRead.replaceFirst('{id}', '3f2c1a9e-8b7d-4c6e-9f10-2a3b4c5d6e7f');
       adapter.stub(path, statusCode: 200);
 
-      await expectLater(service.markRead(7), completes);
+      await expectLater(service.markRead('3f2c1a9e-8b7d-4c6e-9f10-2a3b4c5d6e7f'), completes);
     });
 
     test('ignora silenciosamente un 404', () async {
-      final path = ApiConstants.notificationRead.replaceFirst('{id}', '7');
+      final path = ApiConstants.notificationRead.replaceFirst('{id}', '3f2c1a9e-8b7d-4c6e-9f10-2a3b4c5d6e7f');
       adapter.stub(path, statusCode: 404);
 
-      await expectLater(service.markRead(7), completes);
+      await expectLater(service.markRead('3f2c1a9e-8b7d-4c6e-9f10-2a3b4c5d6e7f'), completes);
     });
 
     test('propaga otros códigos de error', () async {
-      final path = ApiConstants.notificationRead.replaceFirst('{id}', '7');
+      final path = ApiConstants.notificationRead.replaceFirst('{id}', '3f2c1a9e-8b7d-4c6e-9f10-2a3b4c5d6e7f');
       adapter.stub(path, statusCode: 500);
 
-      await expectLater(service.markRead(7), throwsA(isA<DioException>()));
+      await expectLater(service.markRead('3f2c1a9e-8b7d-4c6e-9f10-2a3b4c5d6e7f'), throwsA(isA<DioException>()));
+    });
+  });
+
+  group('unreadCount', () {
+    test('lee el campo "unread" del backend', () async {
+      adapter.stub(
+        ApiConstants.notificationsUnreadCount,
+        statusCode: 200,
+        data: {'unread': 4},
+      );
+
+      expect(await service.unreadCount(), 4);
+    });
+
+    test('devuelve 0 si la respuesta no trae el campo', () async {
+      adapter.stub(
+        ApiConstants.notificationsUnreadCount,
+        statusCode: 200,
+        data: <String, dynamic>{},
+      );
+
+      expect(await service.unreadCount(), 0);
     });
   });
 
@@ -211,8 +233,8 @@ void main() {
       adapter.stub(ApiConstants.eventNotificationPreferences, statusCode: 404);
 
       // A diferencia de list/markRead/readAll, este método NO absorbe el
-      // 404 — el endpoint aún no existe en el backend (ver docs/backend-gaps.md)
-      // y por ahora la llamada simplemente falla.
+      // 404 — el endpoint de preferencias aún no existe en el backend
+      // (ver docs/MAPA_TRABAJO.md) y la pantalla guarda localmente.
       await expectLater(
         service.getEventPreferences(),
         throwsA(isA<DioException>()),
