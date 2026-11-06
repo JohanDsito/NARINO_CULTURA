@@ -91,6 +91,13 @@ Novedades del backend que impactan la app:
 | 44 | Subastas | Una subasta pendiente se mostraba como "cerrada" | ✅ fases: en revisión, próximamente, en vivo, finalizada, cancelada |
 | 45 | Historial | Pestañas con texto inactivo fijo en blanco (invisible en modo claro) | ✅ |
 | 46 | Subastas | La tarjeta mostraba el precio base aunque hubiera pujas (`total_pujas` no existe) | ✅ usa `current_price` y el líder |
+| 47 | Eventos | Solo llegaba la 1.ª página (sin `page_size`) → calendario incompleto | ✅ `page_size=100`, orden por fecha |
+| 48 | Eventos | "Convocatoria" no existe en el backend (se guardaba como "Otro"); faltaba "Espectáculo" en preferencias | ✅ tipos reales |
+| 49 | Eventos | El filtro "por artista" nunca encontraba nada (el backend no tiene artistas en eventos) | ✅ búsqueda por nombre, lugar o descripción |
+| 50 | Eventos | Un evento en curso se marcaba como pasado (usaba la fecha de inicio) | ✅ usa `end_date` |
+| 51 | Eventos | Cambiar de calendario a lista mezclaba eventos pasados | ✅ se cargan todos y la vista decide; botón "Ver pasados" |
+| 52 | Publicar evento | Campo "artistas" que nunca se enviaba; duración fija de 2 h; decía "publicado" aunque quedara en borrador | ✅ sin campo, duración elegible, aviso de borrador |
+| 53 | Eventos | Gestores veían borradores mezclados sin distinguir | ✅ insignia "Borrador" |
 | 40 | Ventas | Una orden con obras de varios artistas suma el total completo; `OrderItemSerializer` no dice de quién es cada ítem | 🚫 pedir `artist_slug` en el ítem |
 
 ---
@@ -152,7 +159,7 @@ Guía completa de color y componentes: **`docs/DISENO_CARNAVAL.md`**.
 | Catálogo + filtros + Detalle de obra + Publicar/Editar + Mis obras | ✅ |
 | Tienda / Carrito / Pago / Resultado / Favoritos / Compras / Orden / Ventas | ✅ acento naranja, códigos cortos de orden, estados en lenguaje claro |
 | Subastas (lista, detalle, crear, historial) | ✅ oro + tomate en vivo, cuenta regresiva propia, barra de puja con montos sugeridos |
-| Eventos (lista/calendario, detalle, publicar) | ⏳ |
+| Eventos (lista/calendario, detalle, publicar) | ✅ tomate, color por tipo, calendario compartido con Inicio |
 | Músicos / Descubrimiento musical | ⏳ |
 | Perfil y subpantallas | ⏳ |
 | Notificaciones / Chatbot | ⏳ |
@@ -183,3 +190,4 @@ Guía completa de color y componentes: **`docs/DISENO_CARNAVAL.md`**.
 - 2026-11-06 — Commits organizados y push a `mobile-Valery`. Rediseño de la Tienda completa (8 pantallas).
   Arreglados #36–#39. Siguiente: Subastas.
 - 2026-11-06 — Arreglo de backend para ventas por artista (`SaleSerializer`, `seller_amount`, artista e imagen por ítem) probado (262 tests) y entregado como nota; la app ya lo soporta. Rediseño de Subastas. Arreglados #41–#46. Siguiente: Eventos.
+- 2026-11-06 — Rediseño de Eventos (agenda, detalle, publicar) y calendario compartido `NcMonthCalendar`. Arreglados #47–#53. Siguiente: Músicos.
