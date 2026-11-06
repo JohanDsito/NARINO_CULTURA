@@ -4,17 +4,12 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/money.dart';
 import '../../../../core/theme/nc_theme.dart';
 import '../../../../shared/widgets/design/design.dart';
 import '../../domain/order_model.dart';
 
-/// `$1.250.000`
-String formatCOP(double value) {
-  final n = value
-      .toStringAsFixed(0)
-      .replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+$)'), (m) => '${m[1]}.');
-  return '\$$n';
-}
+export '../../../../core/utils/money.dart' show formatCOP;
 
 /// Código corto y legible de una orden: `#A1B2C3D4` (en vez del UUID).
 String codigoOrden(String id) {
