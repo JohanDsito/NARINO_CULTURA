@@ -57,7 +57,8 @@ class ArtistProfileViewSet(viewsets.ModelViewSet):
         follow, created = Follow.objects.get_or_create(follower=request.user, artist=profile)
         if not created:
             follow.delete()
-            ArtistProfile.objects.filter(id=profile.id).update(followers_count=F("followers_count") - 1)
+            # followers_count__gt=0: un contador desincronizado nunca baja de 0 (evita un error 500)
+            ArtistProfile.objects.filter(id=profile.id, followers_count__gt=0).update(followers_count=F("followers_count") - 1)
             return Response({"detail": "Dejaste de seguir al artista."})
         ArtistProfile.objects.filter(id=profile.id).update(followers_count=F("followers_count") + 1)
         return Response({"detail": "Ahora sigues al artista."}, status=status.HTTP_201_CREATED)
