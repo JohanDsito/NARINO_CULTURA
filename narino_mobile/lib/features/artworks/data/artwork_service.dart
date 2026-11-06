@@ -80,6 +80,19 @@ class ArtworkService {
     return buf.toString();
   }
 
+  /// Obras disponibles para comprar (Tienda), filtradas en el servidor.
+  Future<Map<String, dynamic>> getDisponibles({int pageSize = 60}) async {
+    final response = await _dio.get(
+      ApiConstants.artworks,
+      queryParameters: {
+        'status': 'DISPONIBLE',
+        'ordering': '-created_at',
+        'page_size': pageSize,
+      },
+    );
+    return response.data as Map<String, dynamic>;
+  }
+
   Future<Map<String, dynamic>> getArtworkDetail(String id) async {
     final url = ApiConstants.artworkDetail.replaceAll('{id}', id);
     final response = await _dio.get(url);
