@@ -43,11 +43,25 @@ class EventsState {
   bool get isLoading => status == EventsStatus.loading;
   bool get hasError => errorMessage != null;
 
+  /// Búsqueda local por nombre, lugar o descripción (el backend no tiene
+  /// "artistas relacionados", así que el filtro anterior nunca encontraba nada).
   List<EventModel> get filteredEvents {
-    if (filtroArtista == null || filtroArtista!.isEmpty) return events;
-    final query = filtroArtista!.toLowerCase();
+    final q = _norm(filtroArtista ?? '');
+    if (q.isEmpty) return events;
     return events.where((e) {
-      return e.artistasRelacionados.any((a) => a.toLowerCase().contains(query));
+      final texto = _norm('${e.nombre} ${e.lugar} ${e.descripcion ?? ''} '
+          '${e.artistasRelacionados.join(' ')}');
+      return texto.contains(q);
     }).toList();
+  }
+
+  static String _norm(String s) {
+    const a = 'áéíóúüñ', b = 'aeiouun';
+    final out = StringBuffer();
+    for (final c in s.toLowerCase().trim().split('')) {
+      final i = a.indexOf(c);
+      out.write(i < 0 ? c : b[i]);
+    }
+    return out.toString();
   }
 }

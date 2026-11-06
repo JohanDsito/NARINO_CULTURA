@@ -10,7 +10,9 @@ class EventsService {
     String? tipo,
     bool mostrarPasados = true,
   }) async {
-    final params = <String, dynamic>{};
+    // Sin page_size el backend devuelve solo la primera página (el
+    // calendario quedaba incompleto).
+    final params = <String, dynamic>{'page_size': 100, 'ordering': 'start_date'};
     if (tipo != null) params['event_type'] = tipo.toUpperCase();
     // El backend devuelve todos los eventos publicados; el filtrado de pasados
     // se aplica en el cliente con EventModel.esPasado.
@@ -19,10 +21,10 @@ class EventsService {
     if (mostrarPasados) return raw;
     final now = DateTime.now();
     return raw.where((e) {
-      final fecha = DateTime.tryParse(
-        (e as Map<String, dynamic>)['start_date']?.toString() ?? '',
-      );
-      return fecha != null && !fecha.isBefore(now);
+      final m = e as Map<String, dynamic>;
+      final fin = DateTime.tryParse(m['end_date']?.toString() ?? '') ??
+          DateTime.tryParse(m['start_date']?.toString() ?? '');
+      return fin != null && !fin.isBefore(now);
     }).toList();
   }
 
@@ -52,10 +54,11 @@ class EventsService {
     String? imageUrl,
     List<String>? artistasRelacionados,
     bool isPublished = false,
+    Duration duracion = const Duration(hours: 2),
   }) async {
     // Mapear parámetros mobile → campos exactos del backend
     final startDate = DateTime.tryParse(fecha) ?? DateTime.now();
-    final endDate = startDate.add(const Duration(hours: 2));
+    final endDate = startDate.add(duracion);
 
     // Backend acepta solo los tipos definidos en Event.Type
     const validTypes = {
@@ -69,8 +72,8 @@ class EventsService {
       data: {
         'title': nombre,
         'event_type': safeType,
-        'start_date': startDate.toIso8601String(),
-        'end_date': endDate.toIso8601String(),
+        'start_date': startDate.toUtc().toIso8601String(),
+        'end_date': endDate.toUtc().toIso8601String(),
         'location': lugar,
         if (descripcion != null && descripcion.isNotEmpty)
           'description': descripcion,

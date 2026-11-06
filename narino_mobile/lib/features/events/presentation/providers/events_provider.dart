@@ -70,6 +70,7 @@ class EventsNotifier extends StateNotifier<EventsState> {
     String? imageUrl,
     List<String>? artistas,
     bool isPublished = false,
+    Duration duracion = const Duration(hours: 2),
   }) async {
     try {
       final nuevo = await _repo.publishEvent(
@@ -81,6 +82,7 @@ class EventsNotifier extends StateNotifier<EventsState> {
         imageUrl: imageUrl,
         artistasRelacionados: artistas,
         isPublished: isPublished,
+        duracion: duracion,
       );
       state = state.copyWith(events: [nuevo, ...state.events]);
       return true;

@@ -31,7 +31,7 @@ class _EventNotificationPreferencesScreenState
     'exposicion': true,
     'taller': true,
     'feria': true,
-    'convocatoria': true,
+    'espectaculo': true,
     'otro': true,
   };
   List<String> _favoriteArtists = [];
@@ -292,7 +292,7 @@ class _EventNotificationPreferencesScreenState
       'exposicion': '🎨 Exposiciones',
       'taller': '🖌️ Talleres',
       'feria': '🏪 Ferias',
-      'convocatoria': '📢 Convocatorias',
+      'espectaculo': '🎭 Espectáculos',
       'otro': '📅 Otros',
     };
 
