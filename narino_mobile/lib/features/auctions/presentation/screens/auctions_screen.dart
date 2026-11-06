@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/providers/user_role_provider.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../providers/auctions_provider.dart';
 import 'auctions_screen/auction_list.dart';
@@ -50,25 +49,23 @@ class _AuctionsScreenState extends ConsumerState<AuctionsScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.obsidiana,
-        foregroundColor: AppColors.oroClaro,
         title: Text(
           'Subastas',
-          style: AppTypography.displaySemiBold(color: AppColors.oroClaro),
+          style: AppTypography.displaySemiBold(),
         ),
         actions: [
           TextButton.icon(
             onPressed: () => context.push('/auctions/history'),
             icon:
-                const Icon(Icons.history, color: AppColors.oroClaro, size: 18),
+                const Icon(Icons.history, size: 18),
             label: Text(
               'Mi historial',
-              style: AppTypography.labelSemiBold(color: AppColors.oroClaro),
+              style: AppTypography.labelSemiBold(),
             ),
           ),
           if (canCreate)
             IconButton(
-              icon: const Icon(Icons.add, color: AppColors.oroClaro),
+              icon: const Icon(Icons.add),
               tooltip: 'Abrir subasta',
               onPressed: () => context.push('/auctions/new'),
             ),

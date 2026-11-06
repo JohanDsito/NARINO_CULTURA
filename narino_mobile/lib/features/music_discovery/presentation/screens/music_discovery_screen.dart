@@ -57,11 +57,9 @@ class _MusicDiscoveryScreenState extends ConsumerState<MusicDiscoveryScreen> {
       child: Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.obsidiana,
-        foregroundColor: AppColors.oroClaro,
         title: Text(
           'Descubrimiento Musical',
-          style: AppTypography.displaySemiBold(color: AppColors.oroClaro),
+          style: AppTypography.displaySemiBold(),
         ),
       ),
       body: Column(

@@ -92,13 +92,13 @@ class _PortfolioScreenState extends ConsumerState<PortfolioScreen> {
       appBar: AppBar(
         title: Text(
           'Mi portafolio (${state.portfolio.length}/30)',
-          style: AppTypography.displaySemiBold(color: AppColors.oroClaro)
+          style: AppTypography.displaySemiBold()
               .copyWith(fontSize: 18),
         ),
         actions: [
           IconButton(
             icon:
-                const Icon(Icons.add_circle_outline, color: AppColors.oroClaro),
+                const Icon(Icons.add_circle_outline),
             onPressed: _addItem,
           ),
         ],

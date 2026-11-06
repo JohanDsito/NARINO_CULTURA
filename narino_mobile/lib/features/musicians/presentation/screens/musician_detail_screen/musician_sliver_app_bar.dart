@@ -29,8 +29,6 @@ class MusicianSliverAppBar extends ConsumerWidget {
     return SliverAppBar(
       expandedHeight: 220,
       pinned: true,
-      backgroundColor: AppColors.obsidiana,
-      foregroundColor: AppColors.oroClaro,
       flexibleSpace: FlexibleSpaceBar(
         background: Stack(
           fit: StackFit.expand,

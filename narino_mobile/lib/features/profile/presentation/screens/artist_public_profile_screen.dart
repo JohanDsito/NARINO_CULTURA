@@ -29,9 +29,8 @@ class _ArtistPublicProfileScreenState
       loading: () => Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: AppColors.obsidiana,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: AppColors.oroClaro),
+            icon: const Icon(Icons.arrow_back),
             onPressed: () => context.pop(),
           ),
         ),
@@ -42,9 +41,8 @@ class _ArtistPublicProfileScreenState
       error: (e, _) => Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: AppColors.obsidiana,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: AppColors.oroClaro),
+            icon: const Icon(Icons.arrow_back),
             onPressed: () => context.pop(),
           ),
         ),

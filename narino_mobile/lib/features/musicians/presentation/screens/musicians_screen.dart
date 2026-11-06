@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../providers/musician_provider.dart';
 import 'musicians_screen/genre_chips.dart';
@@ -47,15 +46,13 @@ class _MusiciansScreenState extends ConsumerState<MusiciansScreen> {
       child: Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.obsidiana,
-        foregroundColor: AppColors.oroClaro,
         title: Text(
           'Músicos',
-          style: AppTypography.displaySemiBold(color: AppColors.oroClaro),
+          style: AppTypography.displaySemiBold(),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.music_note_outlined, color: AppColors.oroClaro),
+            icon: const Icon(Icons.music_note_outlined),
             tooltip: 'Descubrimiento musical',
             onPressed: () => context.push('/music-discovery'),
           ),

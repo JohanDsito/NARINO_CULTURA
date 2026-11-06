@@ -35,11 +35,9 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.obsidiana,
-        foregroundColor: AppColors.oroClaro,
         title: Text(
           'Favoritos',
-          style: AppTypography.displaySemiBold(color: AppColors.oroClaro),
+          style: AppTypography.displaySemiBold(),
         ),
         actions: [
           if (state.favorites.isNotEmpty)
@@ -55,7 +53,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                   ),
                   child: Text(
                     '${state.favorites.length}',
-                    style: AppTypography.caption(color: AppColors.oroClaro),
+                    style: AppTypography.caption(),
                   ),
                 ),
               ),

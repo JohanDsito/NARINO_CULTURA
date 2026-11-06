@@ -1,11 +1,14 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
-import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
+import '../../core/theme/nc_theme.dart';
 import '../../features/artworks/domain/artwork_model.dart';
+import 'design/nc_pressable.dart';
 
+/// Tarjeta de obra para grillas: la imagen ocupa el espacio libre y la
+/// información se ajusta a su contenido (no se desborda con textos largos).
 class ArtworkCard extends StatelessWidget {
   const ArtworkCard({super.key, required this.artwork, this.compact = false});
 
@@ -14,34 +17,39 @@ class ArtworkCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    final bgCard = theme.cardTheme.color ?? cs.surface;
-    final bgSubtle = isDark ? AppColors.bgSubtleDark : AppColors.bgSubtleLight;
-    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
-    final textPrimary =
-        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-    final textMuted =
-        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
-    final priceColor = isDark ? AppColors.indigoDark : AppColors.indigoNoche;
+    final nc = context.nc;
     final imageUrl =
         artwork.imagenes.isNotEmpty ? artwork.imagenes.first : null;
 
-    return GestureDetector(
+    Widget fallback(IconData icon) => DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                nc.tomate.withValues(alpha: 0.18),
+                nc.azul.withValues(alpha: 0.18),
+              ],
+            ),
+          ),
+          child: Center(child: Icon(icon, color: nc.textSecondary, size: 32)),
+        );
+
+    return NcPressable(
       onTap: () => context.push('/artworks/${artwork.id}'),
+      pressedScale: 0.97,
+      semanticLabel: '${artwork.titulo}, de ${artwork.artistaNombre}',
       child: Container(
         decoration: BoxDecoration(
-          color: bgCard,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: border),
+          color: nc.bgCard,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: nc.border),
         ),
-        clipBehavior: Clip.hardEdge,
+        clipBehavior: Clip.antiAlias,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Expanded(
-              flex: compact ? 4 : 3,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -49,91 +57,61 @@ class ArtworkCard extends StatelessWidget {
                     CachedNetworkImage(
                       imageUrl: imageUrl,
                       fit: BoxFit.cover,
-                      placeholder: (context, _) => Container(
-                        color: bgSubtle,
-                        child: const Center(
-                          child: SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        ),
-                      ),
-                      errorWidget: (context, _, __) => Container(
-                        color: bgSubtle,
-                        child: Icon(
-                          Icons.image_outlined,
-                          color: textMuted,
-                          size: 32,
-                        ),
-                      ),
+                      placeholder: (_, __) => fallback(Icons.image_outlined),
+                      errorWidget: (_, __, ___) =>
+                          fallback(Icons.image_outlined),
                     )
                   else
-                    Container(
-                      color: bgSubtle,
-                      child: Icon(
-                        Icons.palette_outlined,
-                        color: textMuted,
-                        size: 32,
-                      ),
-                    ),
+                    fallback(Icons.palette_outlined),
                   if (artwork.estado == 'vendida')
                     Positioned(
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        color: Colors.black54,
-                        child: const Text(
-                          'Vendida',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ),
+                      top: 10,
+                      left: 10,
+                      child: _Badge(label: 'Vendida', accent: nc.tomateA),
+                    )
+                  else if (artwork.estado == 'en_subasta')
+                    Positioned(
+                      top: 10,
+                      left: 10,
+                      child: _Badge(label: 'En subasta', accent: nc.subastas),
                     ),
                 ],
               ),
             ),
-            Expanded(
-              flex: compact ? 3 : 2,
-              child: Padding(
-                padding: EdgeInsets.all(compact ? 8 : 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      artwork.titulo,
-                      maxLines: compact ? 1 : 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.labelSemiBold(
-                        color: textPrimary,
-                      ),
+            Padding(
+              padding: EdgeInsets.all(compact ? 10 : 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    artwork.titulo,
+                    maxLines: compact ? 1 : 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.labelSemiBold(color: nc.textPrimary)
+                        .copyWith(fontSize: compact ? 13 : 14, height: 1.25),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    artwork.artistaNombre,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.bodySmall(color: nc.textSecondary),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    artwork.precio == null
+                        ? 'Precio a consultar'
+                        : _fmt(artwork.precio!),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.labelSemiBold(color: nc.tienda.ink)
+                        .copyWith(
+                      fontSize: compact ? 12 : 14,
+                      fontWeight: FontWeight.w700,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      artwork.artistaNombre,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.caption(
-                        color: textMuted,
-                      ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      artwork.precio == null
-                          ? 'Precio a consultar'
-                          : _fmt(artwork.precio!),
-                      style: AppTypography.caption(color: priceColor)
-                          .copyWith(fontSize: compact ? 11 : null),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -147,5 +125,27 @@ class ArtworkCard extends StatelessWidget {
         .toStringAsFixed(0)
         .replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+$)'), (m) => '${m[1]}.');
     return '\$$n COP';
+  }
+}
+
+class _Badge extends StatelessWidget {
+  const _Badge({required this.label, required this.accent});
+  final String label;
+  final NcAccent accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: accent.fill,
+        borderRadius: BorderRadius.circular(99),
+      ),
+      child: Text(
+        label,
+        style: AppTypography.caption(color: accent.onFill)
+            .copyWith(fontWeight: FontWeight.w700),
+      ),
+    );
   }
 }
