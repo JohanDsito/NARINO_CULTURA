@@ -90,6 +90,24 @@ class MusicianRepository {
     }
   }
 
+  Future<Set<String>> getFollowingSlugs() async {
+    try {
+      return (await _service.getFollowingSlugs()).toSet();
+    } on DioException catch (e) {
+      throw _parseDioError(e);
+    }
+  }
+
+  Future<MusicianReviewModel> addReview(
+      String slug, int rating, String? comment) async {
+    try {
+      return MusicianReviewModel.fromJson(
+          await _service.addReview(slug, rating, comment));
+    } on DioException catch (e) {
+      throw _parseDioError(e);
+    }
+  }
+
   Future<List<MusicGenreModel>> getGenres() async {
     try {
       final list = await _service.getGenres();

@@ -73,6 +73,32 @@ class MusicianService {
     return const [];
   }
 
+  /// Slugs de los músicos que sigue el usuario (`musicians/following/`).
+  /// Existe en producción aunque los serializers aún no traen `is_following`.
+  Future<List<String>> getFollowingSlugs() async {
+    final res = await _dio.get(ApiConstants.musiciansFollowing);
+    final data = res.data;
+    final raw = data is List
+        ? data
+        : (data is Map ? (data['results'] as List? ?? const []) : const []);
+    return raw
+        .whereType<Map>()
+        .map((e) => e['slug']?.toString() ?? '')
+        .where((s) => s.isNotEmpty)
+        .toList();
+  }
+
+  /// Publica una reseña (1–5 estrellas). Una por persona y músico.
+  Future<Map<String, dynamic>> addReview(
+      String slug, int rating, String? comment) async {
+    final path = ApiConstants.musicianReviews.replaceAll('{slug}', slug);
+    final res = await _dio.post(path, data: {
+      'rating': rating,
+      if (comment != null && comment.trim().isNotEmpty) 'comment': comment.trim(),
+    });
+    return (res.data as Map).cast<String, dynamic>();
+  }
+
   Future<List<dynamic>> getGenres() async {
     final res = await _dio.get(ApiConstants.musicianGenres);
     final data = res.data;
