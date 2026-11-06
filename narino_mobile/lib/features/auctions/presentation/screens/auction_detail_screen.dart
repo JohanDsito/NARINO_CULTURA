@@ -102,16 +102,36 @@ class _AuctionDetailScreenState extends ConsumerState<AuctionDetailScreen> {
     );
   }
 
+  /// Mensajes del backend: `connected`, `snapshot` (al conectar),
+  /// `bid_placed` (nueva puja) y `auction_closed` (cierre con ganador).
   void _handleWsMessage(Map<String, dynamic> data) {
     final type = (data['type'] ?? data['event'])?.toString();
-    // Backend emits 'closed' on close, 'bid' on new bid, 'snapshot' on connect
-    final forceClosed = type == 'closed' || type == 'auction_closed';
-    _applyServerState(data, forceClosed: forceClosed);
-    if (forceClosed) _timer?.cancel();
+    if (type == 'connected') return;
+
+    final status = data['status']?.toString().toLowerCase();
+    final forceClosed = type == 'closed' ||
+        type == 'auction_closed' ||
+        (type == 'snapshot' && status != null && status != 'activa');
+    _applyServerState(data,
+        forceClosed: forceClosed, esPuja: type == 'bid_placed');
+    if (forceClosed) {
+      _timer?.cancel();
+      // Al cerrar, el detalle REST trae `payment_order_id` para el ganador.
+      if (type == 'auction_closed') _refrescarTrasCierre();
+    }
+  }
+
+  Future<void> _refrescarTrasCierre() async {
+    try {
+      final fresh = await ref
+          .read(auctionsRepositoryProvider)
+          .getDetail(widget.auctionId);
+      if (mounted) setState(() => _auction = fresh);
+    } catch (_) {}
   }
 
   void _applyServerState(Map<String, dynamic> data,
-      {bool forceClosed = false}) {
+      {bool forceClosed = false, bool esPuja = false}) {
     final current = _auction;
     if (current == null) return;
 
@@ -133,7 +153,7 @@ class _AuctionDetailScreenState extends ConsumerState<AuctionDetailScreen> {
 
     // Bids list from WS (if included)
     final bidsRaw = data['bids'] ?? data['ultimas_pujas'];
-    final newBids = bidsRaw is List
+    var newBids = bidsRaw is List
         ? bidsRaw
             .whereType<Map>()
             .map((e) =>
@@ -142,16 +162,38 @@ class _AuctionDetailScreenState extends ConsumerState<AuctionDetailScreen> {
             .toList()
         : null;
 
+    // `bid_placed` trae una sola puja: se agrega al inicio de la lista.
+    var totalPujas = current.totalPujas;
+    if (esPuja && newBids == null) {
+      final monto = _parseDouble(data['amount']);
+      if (monto != null) {
+        newBids = [
+          AuctionBidModel(
+            bidderName: data['bidder_name']?.toString() ?? 'Pujador',
+            amount: monto,
+            createdAt: DateTime.now(),
+          ),
+          ...current.ultimasPujas,
+        ].take(5).toList();
+      }
+      totalPujas = current.totalPujas + 1;
+    } else if (newBids != null) {
+      totalPujas = newBids.length;
+    }
+
     // Winner from close event
     final winnerId = data['winner_id']?.toString();
 
     final merged = current.copyWith(
       precioActual: newPrecio ?? current.precioActual,
       fechaCierre: newCierre ?? current.fechaCierre,
-      totalPujas: newBids != null ? newBids.length : current.totalPujas,
+      totalPujas: totalPujas,
       ultimasPujas: newBids ?? current.ultimasPujas,
       estado: forceClosed ? 'cerrada' : current.estado,
-      ganadorId: winnerId ?? current.ganadorId,
+      ganadorId: (winnerId != null && winnerId != 'null')
+          ? winnerId
+          : current.ganadorId,
+      pujadorLiderId: data['highest_bidder_id']?.toString(),
     );
 
     setState(() => _auction = merged);
@@ -190,7 +232,7 @@ class _AuctionDetailScreenState extends ConsumerState<AuctionDetailScreen> {
       final me = await ref.read(profileRepositoryProvider).getMyProfile();
       if (!mounted || me == null) return;
       final isOwner =
-          _isArtistOwner(auction, myName: me.nombreArtistico, myId: me.id);
+          _isArtistOwner(auction, myName: me.nombreArtistico, myId: me.userId);
       setState(() => _isOwner = isOwner);
     } catch (_) {}
   }
@@ -231,7 +273,7 @@ class _AuctionDetailScreenState extends ConsumerState<AuctionDetailScreen> {
       return;
     }
 
-    if (_isArtistOwner(auction, myName: me.nombreArtistico, myId: me.id)) {
+    if (_isArtistOwner(auction, myName: me.nombreArtistico, myId: me.userId)) {
       _showSnackBar('No puedes pujar en tu propia subasta.');
       return;
     }
@@ -297,15 +339,13 @@ class _AuctionDetailScreenState extends ConsumerState<AuctionDetailScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.obsidiana,
-        foregroundColor: AppColors.oroClaro,
         title: Text(
           'Subasta',
-          style: AppTypography.displaySemiBold(color: AppColors.oroClaro),
+          style: AppTypography.displaySemiBold(),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.history, color: AppColors.oroClaro),
+            icon: const Icon(Icons.history),
             onPressed: () => context.push('/auctions/history'),
           ),
         ],

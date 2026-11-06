@@ -47,7 +47,9 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(eventsProvider);
     final role = ref.watch(currentUserRoleProvider).value;
-    final canPublish = role == 'gestor' || role == 'admin';
+    // El backend permite crear eventos a artistas, gestores y admin.
+    final canPublish =
+        role == 'gestor' || role == 'admin' || role == 'artista';
 
     // ── Colores resueltos desde el tema ──────────────────────────────────────
     final theme = Theme.of(context);
@@ -80,8 +82,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
           ),
           if (canPublish)
             IconButton(
-              icon: const Icon(Icons.add_circle_outline,
-                  color: AppColors.oroClaro),
+              icon: const Icon(Icons.add_circle_outline),
               tooltip: 'Publicar evento',
               onPressed: () => context.push('/events/new'),
             ),

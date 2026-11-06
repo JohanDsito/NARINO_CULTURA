@@ -28,6 +28,9 @@ class ProfileModel {
   final int totalObras;
   final int obrasDisponibles;
 
+  /// `true` cuando el perfil es de un músico (se navega a `/musicians/:slug`).
+  final bool esMusico;
+
   const ProfileModel({
     required this.id,
     required this.userId,
@@ -42,6 +45,7 @@ class ProfileModel {
     required this.redesSociales,
     required this.totalObras,
     required this.obrasDisponibles,
+    this.esMusico = false,
   });
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
@@ -86,6 +90,7 @@ class ProfileModel {
       totalObras: _profileInt(json['artworks_count'] ?? json['total_obras']),
       obrasDisponibles: _profileInt(
           json['available_artworks'] ?? json['obras_disponibles']),
+      esMusico: json['_tipo'] == 'musico',
     );
   }
 }

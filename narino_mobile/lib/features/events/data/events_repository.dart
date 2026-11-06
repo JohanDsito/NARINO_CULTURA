@@ -73,11 +73,16 @@ class EventsRepository {
   }
 
   String _parseError(DioException e) {
-    if (e.type == DioExceptionType.connectionTimeout) {
+    if (e.type == DioExceptionType.connectionTimeout ||
+        e.type == DioExceptionType.receiveTimeout ||
+        e.type == DioExceptionType.connectionError) {
       return 'Sin conexión al servidor.';
     }
+    if (e.response?.statusCode == 401) {
+      return 'Inicia sesión para continuar.';
+    }
     if (e.response?.statusCode == 403) {
-      return 'Solo gestores culturales pueden publicar eventos.';
+      return 'Solo artistas y gestores culturales pueden publicar eventos.';
     }
     if (e.response?.statusCode == 400) {
       final data = e.response?.data;

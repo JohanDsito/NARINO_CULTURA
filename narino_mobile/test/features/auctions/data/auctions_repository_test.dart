@@ -52,8 +52,6 @@ void main() {
   group('getAuctions', () {
     test('mapea la lista de subastas devuelta por el servicio', () async {
       when(() => service.getAuctions(
-            participante: any(named: 'participante'),
-            artista: any(named: 'artista'),
             estado: any(named: 'estado'),
           )).thenAnswer(
         (_) async => [_auctionJson(id: '1'), _auctionJson(id: '2')],
@@ -68,8 +66,6 @@ void main() {
 
     test('ignora elementos que no son mapas en la respuesta', () async {
       when(() => service.getAuctions(
-            participante: any(named: 'participante'),
-            artista: any(named: 'artista'),
             estado: any(named: 'estado'),
           )).thenAnswer((_) async => [_auctionJson(id: '1'), 'no-es-un-mapa']);
 
@@ -78,30 +74,18 @@ void main() {
       expect(result, hasLength(1));
     });
 
-    test('propaga los filtros al servicio', () async {
+    test('propaga el filtro de estado al servicio', () async {
       when(() => service.getAuctions(
-            participante: any(named: 'participante'),
-            artista: any(named: 'artista'),
             estado: any(named: 'estado'),
           )).thenAnswer((_) async => []);
 
-      await repo.getAuctions(
-        participante: 'user-1',
-        artista: 'artist-1',
-        estado: 'activa',
-      );
+      await repo.getAuctions(estado: 'activa');
 
-      verify(() => service.getAuctions(
-            participante: 'user-1',
-            artista: 'artist-1',
-            estado: 'activa',
-          )).called(1);
+      verify(() => service.getAuctions(estado: 'activa')).called(1);
     });
 
     test('traduce un error de conexión a un mensaje entendible', () async {
       when(() => service.getAuctions(
-            participante: any(named: 'participante'),
-            artista: any(named: 'artista'),
             estado: any(named: 'estado'),
           )).thenThrow(_connectionError());
 
@@ -113,8 +97,6 @@ void main() {
 
     test('traduce un 401 a un mensaje de sesión expirada', () async {
       when(() => service.getAuctions(
-            participante: any(named: 'participante'),
-            artista: any(named: 'artista'),
             estado: any(named: 'estado'),
           )).thenThrow(_httpError(401));
 

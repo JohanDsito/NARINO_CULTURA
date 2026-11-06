@@ -38,7 +38,8 @@ class WinnerActions extends ConsumerWidget {
       future: ref.read(profileRepositoryProvider).getMyProfile(),
       builder: (context, snapshot) {
         final me = snapshot.data;
-        final myId = me?.id;
+        // Ganador y vendedor vienen como id de USUARIO en la subasta.
+        final myId = me?.userId;
         final myName = me?.nombreArtistico ?? '';
 
         final isWinner = isWinnerFn(auction, myId: myId);
