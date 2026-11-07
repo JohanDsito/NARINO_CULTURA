@@ -1,11 +1,17 @@
 from rest_framework import serializers
 
 from apps.auctions.models import Auction, Bid
+from utils.media import artwork_image_url, public_name
 
 
 class AuctionSerializer(serializers.ModelSerializer):
     artwork_id = serializers.UUIDField(source="artwork.id", read_only=True)
     payment_order_id = serializers.SerializerMethodField()
+    # Datos para pintar la tarjeta de la subasta sin buscar la obra aparte (app móvil y web)
+    artwork_title = serializers.CharField(source="artwork.title", read_only=True)
+    artwork_image_url = serializers.SerializerMethodField()
+    artist_name = serializers.CharField(source="artwork.artist.artistic_name", read_only=True)
+    bids_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Auction
@@ -13,6 +19,10 @@ class AuctionSerializer(serializers.ModelSerializer):
             "id",
             "artwork",
             "artwork_id",
+            "artwork_title",
+            "artwork_image_url",
+            "artist_name",
+            "bids_count",
             "seller",
             "base_price",
             "current_price",
@@ -26,6 +36,13 @@ class AuctionSerializer(serializers.ModelSerializer):
             "updated_at",
         )
         read_only_fields = ("id", "seller", "current_price", "highest_bidder", "status", "winner", "created_at", "updated_at")
+
+    def get_artwork_image_url(self, obj) -> str:
+        return artwork_image_url(obj.artwork, self.context.get("request"))
+
+    def get_bids_count(self, obj) -> int:
+        # Anotado en AuctionViewSet.get_queryset; si no, se cuenta aquí
+        return obj.bids_total if hasattr(obj, "bids_total") else obj.bids.count()
 
     def get_payment_order_id(self, obj):
         # Solo el ganador ve la orden que debe pagar
@@ -57,3 +74,21 @@ class BidSerializer(serializers.ModelSerializer):
         fields = ("id", "auction", "bidder", "amount", "created_at")
         read_only_fields = fields
 
+
+class BidHistorySerializer(serializers.ModelSerializer):
+    """Puja del historial público: nombre visible del postor, sin datos personales."""
+
+    bidder_name = serializers.SerializerMethodField()
+    is_mine = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Bid
+        fields = ("id", "amount", "bidder_name", "is_mine", "created_at")
+        read_only_fields = fields
+
+    def get_bidder_name(self, obj) -> str:
+        return public_name(obj.bidder)
+
+    def get_is_mine(self, obj) -> bool:
+        request = self.context.get("request")
+        return bool(request and request.user.is_authenticated and obj.bidder_id == request.user.id)

@@ -43,7 +43,6 @@ TESTING_EMAIL_SYSTEM.md
 .github/
 .vscode/
 .docs/
-.env.example
 # Cobertura de pruebas
 .coverage
 coverage.xml

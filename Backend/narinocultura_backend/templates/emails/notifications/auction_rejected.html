@@ -1,6 +1,8 @@
-{% extends "emails/notifications/base.html" %}
-{% block heading %}Subasta no aprobada{% endblock %}
+{% extends "emails/layout.html" %}
+{% block title %}Subasta no aprobada{% endblock %}
+{% block preheader %}Revisamos tu solicitud de subasta para «{{ artwork_title }}».{% endblock %}
+{% block heading %}Tu subasta no fue aprobada{% endblock %}
 {% block content %}
-<p>La solicitud de subasta para <strong>{{ artwork_title }}</strong> no fue aprobada en esta ocasión.</p>
-<p>Si tienes preguntas sobre los motivos, puedes contactar al equipo de Nariño Cultura respondiendo este correo.</p>
+<p style="margin:0 0 16px;">Revisamos la solicitud de subasta de <strong style="color:#1A1208;">{{ artwork_title }}</strong> y en esta ocasión no fue aprobada.</p>
+<p style="margin:0 0 16px;">Tu obra sigue publicada en el catálogo. Si quieres conocer los motivos o volver a intentarlo, responde este correo y el equipo te ayudará.</p>
 {% endblock %}

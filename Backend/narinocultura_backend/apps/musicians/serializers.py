@@ -2,7 +2,33 @@ from django.db import transaction
 from django.db.models import Avg
 from rest_framework import serializers
 
-from apps.musicians.models import MusicGenre, MusicianFollower, MusicianProfile, MusicianReview, MusicalWork
+from apps.musicians.models import MusicalWork, MusicGenre, MusicianProfile, MusicianReview
+
+
+class MusicianSocialStatsMixin(serializers.Serializer):
+    """is_following, average_rating y reviews_count para la web y la app móvil.
+
+    Los listados los traen anotados desde la consulta (MusicianProfileViewSet.get_queryset), sin
+    consultas extra por músico; si el objeto no viene anotado se calculan aquí."""
+
+    is_following = serializers.SerializerMethodField()
+    average_rating = serializers.SerializerMethodField()
+    reviews_count = serializers.SerializerMethodField()
+
+    def get_is_following(self, obj) -> bool:
+        if hasattr(obj, "user_follows"):
+            return bool(obj.user_follows)
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return False
+        return obj.followers.filter(user=request.user).exists()
+
+    def get_average_rating(self, obj) -> float:
+        avg = obj.avg_rating if hasattr(obj, "avg_rating") else obj.reviews.aggregate(avg=Avg("rating"))["avg"]
+        return round(float(avg), 1) if avg is not None else 0.0
+
+    def get_reviews_count(self, obj) -> int:
+        return obj.reviews_total if hasattr(obj, "reviews_total") else obj.reviews.count()
 
 
 class MusicGenreSerializer(serializers.ModelSerializer):
@@ -36,7 +62,7 @@ class MusicalWorkSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "musician", "views_count", "created_at", "updated_at")
 
 
-class MusicianProfileSerializer(serializers.ModelSerializer):
+class MusicianProfileSerializer(MusicianSocialStatsMixin, serializers.ModelSerializer):
     genres = MusicGenreSerializer(many=True, read_only=True)
     genre_ids = serializers.PrimaryKeyRelatedField(
         queryset=MusicGenre.objects.all(),
@@ -49,9 +75,6 @@ class MusicianProfileSerializer(serializers.ModelSerializer):
     works_count = serializers.SerializerMethodField()
     profile_image_url = serializers.SerializerMethodField(read_only=True)
     profile_image = serializers.FileField(write_only=True, required=False, allow_null=True)
-    is_following = serializers.SerializerMethodField()
-    average_rating = serializers.SerializerMethodField()
-    reviews_count = serializers.SerializerMethodField()
 
     class Meta:
         model = MusicianProfile
@@ -110,19 +133,6 @@ class MusicianProfileSerializer(serializers.ModelSerializer):
     def get_works_count(self, obj):
         return obj.works.count()
 
-    def get_is_following(self, obj):
-        request = self.context.get("request")
-        if not request or not request.user.is_authenticated:
-            return False
-        return obj.followers.filter(user=request.user).exists()
-
-    def get_average_rating(self, obj):
-        avg = obj.reviews.aggregate(avg=Avg("rating"))["avg"]
-        return round(avg, 1) if avg is not None else 0.0
-
-    def get_reviews_count(self, obj):
-        return obj.reviews.count()
-
     def validate(self, attrs):
         request = self.context.get("request")
         if request and request.method == "POST":
@@ -155,12 +165,9 @@ class MusicianProfileSerializer(serializers.ModelSerializer):
         return instance
 
 
-class MusicianProfileListSerializer(serializers.ModelSerializer):
+class MusicianProfileListSerializer(MusicianSocialStatsMixin, serializers.ModelSerializer):
     genres = MusicGenreSerializer(many=True, read_only=True)
     profile_image_url = serializers.SerializerMethodField(read_only=True)
-    is_following = serializers.SerializerMethodField()
-    average_rating = serializers.SerializerMethodField()
-    reviews_count = serializers.SerializerMethodField()
 
     class Meta:
         model = MusicianProfile
@@ -190,19 +197,6 @@ class MusicianProfileListSerializer(serializers.ModelSerializer):
             return ""
         request = self.context.get("request")
         return request.build_absolute_uri(obj.profile_image.url) if request else obj.profile_image.url
-
-    def get_is_following(self, obj):
-        request = self.context.get("request")
-        if not request or not request.user.is_authenticated:
-            return False
-        return obj.followers.filter(user=request.user).exists()
-
-    def get_average_rating(self, obj):
-        avg = obj.reviews.aggregate(avg=Avg("rating"))["avg"]
-        return round(avg, 1) if avg is not None else 0.0
-
-    def get_reviews_count(self, obj):
-        return obj.reviews.count()
 
 
 class MusicianProfileSummarySerializer(serializers.ModelSerializer):

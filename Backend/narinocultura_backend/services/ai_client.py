@@ -3,8 +3,8 @@ Cliente HTTP para el microservicio de IA.
 Maneja comunicación con FastAPI AI Service de forma profesional.
 """
 import logging
+
 import requests
-from typing import Optional, List, Dict
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ class AIServiceClient:
             dict: Respuesta JSON
 
         Raises:
-            AIServiceException: Si el servicio no responde
+            AIServiceError: Si el servicio no responde
         """
         url = f"{self.base_url}{endpoint}"
 
@@ -58,16 +58,16 @@ class AIServiceClient:
 
         except requests.exceptions.Timeout:
             logger.error(f"AI Service timeout en {endpoint}")
-            raise AIServiceException("AI Service no responde a tiempo")
+            raise AIServiceError("AI Service no responde a tiempo")
         except requests.exceptions.ConnectionError:
             logger.error(f"No se puede conectar a AI Service en {self.base_url}")
-            raise AIServiceException("No se puede conectar a AI Service")
+            raise AIServiceError("No se puede conectar a AI Service")
         except requests.exceptions.RequestException as e:
             logger.error(f"Error en petición a AI Service: {str(e)}")
-            raise AIServiceException(f"Error en AI Service: {str(e)}")
+            raise AIServiceError(f"Error en AI Service: {str(e)}")
         except ValueError as e:
             logger.error(f"Error al parsear JSON de AI Service: {str(e)}")
-            raise AIServiceException("Respuesta inválida de AI Service")
+            raise AIServiceError("Respuesta inválida de AI Service")
 
     def health_check(self) -> bool:
         """
@@ -79,15 +79,15 @@ class AIServiceClient:
         try:
             response = self._request("GET", "/health")
             return response.get("status") == "ok"
-        except AIServiceException:
+        except AIServiceError:
             return False
 
     def chat(
         self,
         message: str,
         session_id: str,
-        history: Optional[List[Dict]] = None
-    ) -> Dict:
+        history: list[dict] | None = None
+    ) -> dict:
         """
         Envía mensaje a chat conversacional de IA.
         Mantiene contexto de conversación anterior.
@@ -124,7 +124,7 @@ class AIServiceClient:
         description: str = "",
         dimensions: str = "",
         regenerate_description: bool = False
-    ) -> Dict:
+    ) -> dict:
         """
         Enriquece metadata de obra de arte con etiquetas y descripción IA.
 
@@ -155,7 +155,7 @@ class AIServiceClient:
 
         return self._request("POST", "/artworks/enhance", payload)
 
-    def recommend_music(self, query: str) -> Dict:
+    def recommend_music(self, query: str) -> dict:
         """
         Obtiene recomendaciones de música basadas en búsqueda natural.
         Extrae filtros (género, ciudad, tipo agregación) de consulta.
@@ -181,6 +181,6 @@ class AIServiceClient:
         return self._request("POST", "/music/recommendations", payload)
 
 
-class AIServiceException(Exception):
+class AIServiceError(Exception):
     """Excepción para errores del servicio de IA."""
     pass

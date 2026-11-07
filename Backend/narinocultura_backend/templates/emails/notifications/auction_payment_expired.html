@@ -1,6 +1,9 @@
-{% extends "emails/notifications/base.html" %}
+{% extends "emails/layout.html" %}
+{% block title %}Venció el plazo de pago{% endblock %}
+{% block preheader %}La orden de tu subasta se canceló por falta de pago.{% endblock %}
 {% block heading %}Venció el plazo de pago{% endblock %}
 {% block content %}
-<p>El plazo para pagar la obra que ganaste en subasta (<strong>{{ total_amount }}</strong>) venció, así que la orden fue cancelada y la obra quedó disponible de nuevo.</p>
-<p>Si crees que se trata de un error, responde este correo y lo revisaremos.</p>
+<p style="margin:0 0 16px;">El plazo para pagar la obra que ganaste en subasta terminó sin que recibiéramos el pago, así que la orden se canceló y la obra volvió a estar disponible.</p>
+{% include "emails/partials/details.html" with rows=details %}
+<p style="margin:0 0 16px;">Si crees que se trata de un error o ya realizaste el pago, responde este correo y lo revisaremos.</p>
 {% endblock %}

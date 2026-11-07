@@ -1,21 +1,20 @@
 from django.db import transaction
-from django.db.models import F
+from django.db.models import Avg, Count, Exists, F, OuterRef
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
-from apps.musicians.models import MusicGenre, MusicianFollower, MusicianProfile, MusicianReview, MusicalWork
+from apps.musicians.models import MusicalWork, MusicGenre, MusicianFollower, MusicianProfile
 from apps.musicians.serializers import (
+    MusicalWorkSerializer,
     MusicGenreSerializer,
     MusicianProfileListSerializer,
     MusicianProfileSerializer,
     MusicianProfileSummarySerializer,
     MusicianReviewSerializer,
-    MusicalWorkSerializer,
 )
 from apps.users.serializers import PublicUserSummarySerializer
 
@@ -50,7 +49,7 @@ class MusicianProfileViewSet(viewsets.ModelViewSet):
     PUBLIC_DETAIL_ACTIONS = {"retrieve", "follow", "works", "add_work", "reviews"}
 
     def get_queryset(self):
-        qs = MusicianProfile.objects.select_related("user").prefetch_related("genres")
+        qs = self._with_social_stats(MusicianProfile.objects.select_related("user").prefetch_related("genres"))
         if self.action in {"list"} | self.PUBLIC_DETAIL_ACTIONS:
             qs = qs.filter(is_active=True)
             if self.action == "list":
@@ -60,6 +59,16 @@ class MusicianProfileViewSet(viewsets.ModelViewSet):
             return qs
         # update / partial_update / destroy / me — own profile only
         return qs.filter(user=self.request.user)
+
+    def _with_social_stats(self, qs):
+        # Calificación, número de reseñas y si el usuario lo sigue, en la misma consulta del listado
+        qs = qs.annotate(avg_rating=Avg("reviews__rating"), reviews_total=Count("reviews", distinct=True))
+        user = self.request.user
+        if user.is_authenticated:
+            qs = qs.annotate(
+                user_follows=Exists(MusicianFollower.objects.filter(musician=OuterRef("pk"), user=user))
+            )
+        return qs
 
     @action(detail=True, methods=["post"], url_path="follow", permission_classes=[IsAuthenticated])
     @transaction.atomic
@@ -74,7 +83,8 @@ class MusicianProfileViewSet(viewsets.ModelViewSet):
         )
         if not created:
             follower.delete()
-            MusicianProfile.objects.filter(pk=profile.pk).update(
+            # followers_count__gt=0: un contador desincronizado nunca baja de 0 (evita un error 500)
+            MusicianProfile.objects.filter(pk=profile.pk, followers_count__gt=0).update(
                 followers_count=F("followers_count") - 1
             )
             return Response({"detail": "Dejaste de seguir al músico.", "following": False})

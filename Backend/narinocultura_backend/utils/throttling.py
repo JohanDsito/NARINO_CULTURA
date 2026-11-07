@@ -14,3 +14,8 @@ class PasswordResetThrottle(AnonRateThrottle):
 class StrictUserThrottle(UserRateThrottle):
     """Tighter limit for sensitive authenticated actions."""
     scope = "user"
+
+
+class ResendVerificationThrottle(AnonRateThrottle):
+    """3 reenvíos de verificación por hora y por IP."""
+    scope = "resend_verification"

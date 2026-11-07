@@ -1,5 +1,6 @@
-from apps.artists.models import ArtistProfile, Follow
 from rest_framework.test import APITestCase
+
+from apps.artists.models import ArtistProfile, Follow
 from tests.factories import ArtistProfileFactory, UserFactory
 
 

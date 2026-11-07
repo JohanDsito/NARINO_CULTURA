@@ -1,16 +1,15 @@
-{% extends "emails/notifications/base.html" %}
+{% extends "emails/layout.html" %}
+{% block title %}¡Ganaste la subasta!{% endblock %}
+{% block preheader %}Ganaste «{{ artwork_title }}» por {{ final_price }}.{% endblock %}
 {% block heading %}¡Felicitaciones, ganaste la subasta!{% endblock %}
 {% block content %}
-<p>Eres el ganador de la subasta de <strong>{{ artwork_title }}</strong>.</p>
-<div class="details">
-    <p>Precio final: <strong>{{ final_price }}</strong></p>
-    {% if payment_due_at %}<p>Paga antes del: <strong>{{ payment_due_at|date:"j \d\e F \d\e Y, g:i a"|lower }}</strong></p>{% endif %}
-</div>
-{% if payment_due_at %}
-<p>Si no realizas el pago dentro del plazo, la obra quedará disponible de nuevo para otros compradores.</p>
-<p style="text-align: center;"><a href="{{ orders_url }}" class="button">Pagar mi obra</a></p>
+<p style="margin:0 0 16px;">Tu puja fue la más alta: la obra <strong style="color:#1A1208;">{{ artwork_title }}</strong> es tuya.</p>
+{% include "emails/partials/details.html" with rows=details %}
+{% if payment_due %}
+{% include "emails/partials/note.html" with text="Completa el pago antes de la fecha límite. Si el plazo vence, la orden se cancela y la obra vuelve a estar disponible para otros compradores." %}
+{% include "emails/partials/button.html" with url=orders_url label="Pagar mi obra" %}
 {% else %}
-<p>Ingresa a la plataforma para completar el pago de tu obra.</p>
-<p style="text-align: center;"><a href="{{ orders_url }}" class="button">Ver mis órdenes</a></p>
+<p style="margin:0 0 16px;">Ingresa a la plataforma para completar el pago de tu obra.</p>
+{% include "emails/partials/button.html" with url=orders_url label="Ver mis órdenes" %}
 {% endif %}
 {% endblock %}

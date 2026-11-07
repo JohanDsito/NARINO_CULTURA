@@ -1,13 +1,13 @@
-from django.db.models import Q
+from django.db.models import Count, Q
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from apps.auctions.models import Auction
+from apps.auctions.models import Auction, Bid
 from apps.auctions.permissions import IsAuctionSellerOrAdmin
-from apps.auctions.serializers import AuctionSerializer, BidCreateSerializer
+from apps.auctions.serializers import AuctionSerializer, BidCreateSerializer, BidHistorySerializer
 from services.auction_service import AuctionService
 from utils.exceptions import BusinessLogicError
 from utils.permissions import IsAdmin
@@ -25,18 +25,32 @@ class AuctionViewSet(viewsets.ModelViewSet):
         return super().get_permissions()
 
     def get_queryset(self):
-        qs = (
-            Auction.objects.select_related("artwork", "seller", "highest_bidder", "winner")
-            .prefetch_related("bids")
-        )
+        qs = Auction.objects.select_related(
+            "artwork", "artwork__artist", "seller", "highest_bidder", "winner"
+        ).annotate(bids_total=Count("bids"))
         user = self.request.user
-        if user.is_authenticated and user.role == "ADMINISTRADOR":
-            return qs
-        # Las subastas pendientes de aprobación solo las ve su vendedor (y el admin)
-        visible = ~Q(status=Auction.Status.PENDIENTE)
-        if user.is_authenticated:
-            visible |= Q(seller=user)
-        return qs.filter(visible)
+        if not (user.is_authenticated and user.role == "ADMINISTRADOR"):
+            # Las subastas pendientes de aprobación solo las ve su vendedor (y el admin)
+            visible = ~Q(status=Auction.Status.PENDIENTE)
+            if user.is_authenticated:
+                visible |= Q(seller=user)
+            qs = qs.filter(visible)
+        if self.action == "list":
+            qs = self._filter_by_user(qs, user)
+        return qs
+
+    def _filter_by_user(self, qs, user):
+        """?mine=true: subastas que vendo. ?participating=true: subastas en las que pujé (gane o no)."""
+        params = self.request.query_params
+        mine = params.get("mine", "").lower() == "true"
+        participating = params.get("participating", "").lower() == "true"
+        if (mine or participating) and not user.is_authenticated:
+            return qs.none()
+        if mine:
+            qs = qs.filter(seller=user)
+        if participating:
+            qs = qs.filter(id__in=Bid.objects.filter(bidder=user).values("auction_id"))
+        return qs
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -80,6 +94,15 @@ class AuctionViewSet(viewsets.ModelViewSet):
     def perform_destroy(self, instance):
         self._ensure_pending(instance)
         instance.delete()
+
+    @action(detail=True, methods=["get"], url_path="bids", permission_classes=[AllowAny])
+    def bids(self, request, pk=None):
+        """Historial de pujas, de la más reciente a la más antigua."""
+        auction = self.get_object()
+        qs = auction.bids.select_related("bidder").order_by("-created_at")
+        page = self.paginate_queryset(qs)
+        serializer = BidHistorySerializer(page if page is not None else qs, many=True, context={"request": request})
+        return self.get_paginated_response(serializer.data) if page is not None else Response(serializer.data)
 
     @action(detail=True, methods=["post"], url_path="bid")
     def bid(self, request, pk=None):

@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from apps.artists.models import ArtistProfile, Follow
+from apps.artworks.models import PUBLIC_ARTWORK_STATUSES
 
 
 class ArtistProfileSerializer(serializers.ModelSerializer):
@@ -8,6 +9,8 @@ class ArtistProfileSerializer(serializers.ModelSerializer):
     profile_image_url = serializers.SerializerMethodField(read_only=True)
     profile_image = serializers.FileField(write_only=True, required=False, allow_null=True)
     following_count = serializers.SerializerMethodField(read_only=True)
+    is_following = serializers.SerializerMethodField()
+    artworks_count = serializers.SerializerMethodField()
 
     class Meta:
         model = ArtistProfile
@@ -28,6 +31,8 @@ class ArtistProfileSerializer(serializers.ModelSerializer):
             "profile_image_url",
             "followers_count",
             "following_count",
+            "is_following",
+            "artworks_count",
             "is_public",
             "created_at",
             "updated_at",
@@ -40,8 +45,25 @@ class ArtistProfileSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         return request.build_absolute_uri(obj.profile_image.url) if request else obj.profile_image.url
 
-    def get_following_count(self, obj):
+    # Los tres campos vienen anotados desde ArtistProfileViewSet.get_queryset (sin consultas por
+    # artista); si el objeto no viene anotado (p. ej. al crearlo) se calculan aquí.
+    def get_following_count(self, obj) -> int:
+        if hasattr(obj, "following_total"):
+            return obj.following_total
         return Follow.objects.filter(follower=obj.user).count()
+
+    def get_is_following(self, obj) -> bool:
+        if hasattr(obj, "user_follows"):
+            return bool(obj.user_follows)
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return False
+        return Follow.objects.filter(follower=request.user, artist=obj).exists()
+
+    def get_artworks_count(self, obj) -> int:
+        if hasattr(obj, "artworks_total"):
+            return obj.artworks_total
+        return obj.artworks.filter(status__in=PUBLIC_ARTWORK_STATUSES).count()
 
     def validate(self, attrs):
         request = self.context.get("request")

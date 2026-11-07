@@ -73,3 +73,6 @@ class ArtworkImage(TimeStampedUUIDModel):
     def __str__(self):
         return f"{self.artwork_id} - {self.order}"
 
+
+# Estados en los que una obra aparece en el catálogo público
+PUBLIC_ARTWORK_STATUSES = (Artwork.Status.DISPONIBLE, Artwork.Status.EN_SUBASTA, Artwork.Status.VENDIDA)

@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.db.models import Exists, OuterRef
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -31,11 +32,19 @@ class EventViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = Event.objects.select_related("organizer")
-        if self.request.user.is_authenticated and self.request.user.role in {"GESTOR_CULTURAL", "ADMINISTRADOR"}:
-            return qs
-        if self.request.user.is_authenticated and self.request.user.role == "ARTISTA":
-            return qs.filter(is_published=True) | qs.filter(organizer=self.request.user)
-        return qs.filter(is_published=True)
+        user = self.request.user
+        if user.is_authenticated and user.role in {"GESTOR_CULTURAL", "ADMINISTRADOR"}:
+            pass
+        elif user.is_authenticated and user.role == "ARTISTA":
+            qs = qs.filter(is_published=True) | qs.filter(organizer=user)
+        else:
+            qs = qs.filter(is_published=True)
+        if user.is_authenticated:
+            # is_registered en la misma consulta del listado, sin una consulta extra por evento
+            qs = qs.annotate(
+                user_registered=Exists(EventRegistration.objects.filter(event=OuterRef("pk"), user=user))
+            )
+        return qs
 
     def perform_create(self, serializer):
         serializer.instance = EventService.create_event(
@@ -114,10 +123,12 @@ class EventViewSet(viewsets.ModelViewSet):
         return Response({"detail": "Evento rechazado y eliminado."}, status=200)
 
     # Inscribirse no es gestionar el evento: basta con tener sesión, sin importar el rol.
-    @action(detail=True, methods=["post"], url_path="register", permission_classes=[IsAuthenticated])
+    @action(detail=True, methods=["post", "delete"], url_path="register", permission_classes=[IsAuthenticated])
     @transaction.atomic
     def register(self, request, pk=None):
         event = self.get_object()
+        if request.method == "DELETE":
+            return self._unregister(request, event)
         if not event.is_published:
             return Response({"detail": "Solo puedes inscribirte en eventos publicados."}, status=400)
         if event.end_date < timezone.now():
@@ -139,3 +150,11 @@ class EventViewSet(viewsets.ModelViewSet):
         )
         return Response({"detail": "Inscripción realizada."}, status=status.HTTP_201_CREATED)
 
+    def _unregister(self, request, event):
+        """DELETE /events/{id}/register/: cancela la inscripción del usuario autenticado."""
+        if event.end_date < timezone.now():
+            return Response({"detail": "El evento ya finalizó."}, status=400)
+        deleted, _ = EventRegistration.objects.filter(event=event, user=request.user).delete()
+        if not deleted:
+            return Response({"detail": "No estás inscrito en este evento."}, status=400)
+        return Response({"detail": "Inscripción cancelada."})

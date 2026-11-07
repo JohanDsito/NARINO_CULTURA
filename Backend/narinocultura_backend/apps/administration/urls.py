@@ -2,7 +2,6 @@ from django.urls import path
 
 from apps.administration import views
 
-
 urlpatterns = [
     path("admin/users/", views.AdminCreateUserAPIView.as_view()),
     path("admin/users/<uuid:pk>/", views.AdminUserDetailAPIView.as_view()),

@@ -72,3 +72,23 @@ class PaymentWebhookTests(APITestCase):
         tx = Transaction.objects.filter(order=order).latest("created_at")
         self.assertEqual(tx.status, Transaction.Status.APROBADO)
 
+
+    def test_initiating_payment_twice_reuses_the_pending_transaction(self):
+        self.client.force_authenticate(user=self.buyer_user)
+        self.client.post("/api/v1/marketplace/cart/items/", {"artwork_id": str(self.artwork.id)}, format="json")
+        order_id = self.client.post("/api/v1/marketplace/checkout/", {"order_type": "COMPRA_DIRECTA"}, format="json").data["order_id"]
+
+        first = self.client.post("/api/v1/payments/initiate/", {"order_id": order_id}, format="json")
+        second = self.client.post("/api/v1/payments/initiate/", {"order_id": order_id}, format="json")
+        self.assertEqual(first.status_code, 201)
+        self.assertEqual(first.data["transaction_id"], second.data["transaction_id"])
+        self.assertEqual(Transaction.objects.filter(order_id=order_id).count(), 1)
+
+        self.client.force_authenticate(user=None)
+        r = self.client.post("/api/v1/payments/wompi-webhook/", signed_wompi_event({
+            "id": "wompi_tx_456", "status": "APPROVED", "reference": order_id,
+            "amount_in_cents": 5000000, "currency": "COP", "payment_method_type": "CARD",
+        }), format="json")
+        self.assertEqual(r.status_code, 200)
+        statuses = list(Transaction.objects.filter(order_id=order_id).values_list("status", flat=True))
+        self.assertEqual(statuses, [Transaction.Status.APROBADO])

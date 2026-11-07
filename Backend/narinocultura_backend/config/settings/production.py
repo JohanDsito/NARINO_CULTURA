@@ -12,6 +12,10 @@ if not ALLOWED_HOSTS:
 if not WOMPI_EVENTS_SECRET:
     raise RuntimeError("WOMPI_EVENTS_SECRET debe configurarse en produccion para verificar los webhooks de Wompi.")
 
+# En producción CORS nunca queda abierto a cualquier origen, aunque falte CORS_ALLOWED_ORIGINS:
+# los navegadores solo aceptan los dominios del frontend listados en esa variable.
+CORS_ALLOW_ALL_ORIGINS = False
+
 # HTTPS y headers de seguridad
 SECURE_SSL_REDIRECT = True
 SECURE_HSTS_SECONDS = 31536000

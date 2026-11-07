@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="x-apple-disable-message-reformatting">
+<meta name="color-scheme" content="light">
+<title>{% block title %}Nariño Cultura{% endblock %}</title>
+<style>
+  @media only screen and (max-width: 620px) {
+    .container { width: 100% !important; }
+    .px { padding-left: 24px !important; padding-right: 24px !important; }
+    .h1 { font-size: 24px !important; line-height: 32px !important; }
+  }
+</style>
+</head>
+<body style="margin:0; padding:0; background-color:#F7F3EE; -webkit-text-size-adjust:100%;">
+{# Texto de vista previa que muestran Gmail y Outlook junto al asunto #}
+<div style="display:none; max-height:0; overflow:hidden; opacity:0; mso-hide:all;">{% block preheader %}{% endblock %}&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;</div>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F7F3EE;">
+  <tr>
+    <td align="center" style="padding:32px 12px;">
+      <table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%; max-width:600px;">
+
+        <!-- Encabezado: Volcán + Oro andino -->
+        <tr>
+          <td align="center" style="background-color:#2D1B00; border-radius:14px 14px 0 0; padding:30px 24px 26px;">
+            <div style="font-family:'Playfair Display', Georgia, 'Times New Roman', serif; font-size:30px; line-height:36px; font-weight:700; color:#F0C060; letter-spacing:0.5px;">Nariño Cultura</div>
+            <div style="font-family:'Cormorant Garamond', Georgia, serif; font-style:italic; font-size:16px; line-height:22px; color:#C4B89E; padding-top:6px;">Arte, música y tradición del sur de Colombia</div>
+          </td>
+        </tr>
+        <tr>
+          <td style="background-color:#C9921A; height:4px; line-height:4px; font-size:0;">&nbsp;</td>
+        </tr>
+
+        <!-- Contenido -->
+        <tr>
+          <td class="px" style="background-color:#FFFFFF; padding:40px 48px 36px; border-left:1px solid #DDD6CA; border-right:1px solid #DDD6CA;">
+            {% block eyebrow_wrapper %}{% if eyebrow %}<div style="font-family:Arial, Helvetica, sans-serif; font-size:12px; line-height:16px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:#C9921A; padding-bottom:10px;">{{ eyebrow }}</div>{% endif %}{% endblock %}
+            <h1 class="h1" style="margin:0 0 20px; font-family:'Playfair Display', Georgia, 'Times New Roman', serif; font-size:28px; line-height:36px; font-weight:700; color:#1A1208;">{% block heading %}{% endblock %}</h1>
+            <p style="margin:0 0 16px; font-family:Arial, Helvetica, sans-serif; font-size:16px; line-height:26px; color:#1A1208;">Hola{% if name %} {{ name }}{% endif %},</p>
+            <div style="font-family:Arial, Helvetica, sans-serif; font-size:16px; line-height:26px; color:#5C4F3A;">
+              {% block content %}{% endblock %}
+            </div>
+          </td>
+        </tr>
+
+        <!-- Pie -->
+        <tr>
+          <td class="px" style="background-color:#EDE8E1; border-radius:0 0 14px 14px; padding:24px 48px; border:1px solid #DDD6CA; border-top:0;">
+            <p style="margin:0 0 8px; font-family:Arial, Helvetica, sans-serif; font-size:13px; line-height:20px; color:#5C4F3A;">
+              <strong style="color:#2D1B00;">Nariño Cultura</strong> · Plataforma cultural del departamento de Nariño
+            </p>
+            <p style="margin:0 0 8px; font-family:Arial, Helvetica, sans-serif; font-size:12px; line-height:18px; color:#9C8E78;">
+              {% block footer_reason %}Recibes este correo porque tienes una cuenta en Nariño Cultura.{% endblock %}
+            </p>
+            <p style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:12px; line-height:18px;">
+              <a href="{{ frontend_url }}" style="color:#8B4513; text-decoration:underline;">Visitar la plataforma</a>
+              <span style="color:#9C8E78;"> · © {% now "Y" %} Nariño Cultura</span>
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>
