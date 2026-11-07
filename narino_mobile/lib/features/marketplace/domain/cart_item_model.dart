@@ -31,14 +31,22 @@ class CartItemModel {
         obraTitulo: json['artwork_title']?.toString() ??
             json['obra_titulo']?.toString() ??
             '',
-        artistaNombre: json['artista_nombre']?.toString() ?? '',
+        artistaNombre: json['artist_name']?.toString() ??
+            json['artista_nombre']?.toString() ??
+            '',
         precio: double.tryParse(
               (json['artwork_price'] ?? json['precio'] ?? 0).toString(),
             ) ??
             0,
-        imagenUrl: json['imagen_url']?.toString(),
+        imagenUrl: _nonEmpty(json['artwork_image_url']) ??
+            _nonEmpty(json['imagen_url']),
         estadoObra: json['artwork_status']?.toString() ?? 'DISPONIBLE',
       );
+
+  static String? _nonEmpty(Object? v) {
+    final s = v?.toString().trim();
+    return (s == null || s.isEmpty) ? null : s;
+  }
 
   String get precioFormateado {
     final n = precio

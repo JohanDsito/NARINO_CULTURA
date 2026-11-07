@@ -28,19 +28,30 @@ class FavoriteModel {
             json['title']?.toString() ??
             json['obra_titulo']?.toString() ??
             '',
-        artistaNombre: json['artista_nombre']?.toString() ?? '',
-        estado: (json['status']?.toString() ??
+        artistaNombre: json['artist_name']?.toString() ??
+            json['artista_nombre']?.toString() ??
+            '',
+        estado: (json['artwork_status']?.toString() ??
+                json['status']?.toString() ??
                 json['estado']?.toString() ??
                 'disponible')
             .toLowerCase(),
-        precio: json['price'] != null
+        precio: json['artwork_price'] != null
+            ? double.tryParse(json['artwork_price'].toString())
+            : json['price'] != null
             ? double.tryParse(json['price'].toString())
             : json['precio'] != null
                 ? double.tryParse(json['precio'].toString())
                 : null,
-        imagenUrl: json['main_image_url']?.toString() ??
-            json['imagen_url']?.toString(),
+        imagenUrl: _nonEmpty(json['artwork_image_url']) ??
+            _nonEmpty(json['main_image_url']) ??
+            _nonEmpty(json['imagen_url']),
       );
+
+  static String? _nonEmpty(Object? v) {
+    final s = v?.toString().trim();
+    return (s == null || s.isEmpty) ? null : s;
+  }
 
   bool get isDisponible => estado == 'disponible';
   bool get isVendida => estado == 'vendida';
