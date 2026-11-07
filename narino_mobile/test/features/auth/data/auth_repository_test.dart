@@ -236,27 +236,30 @@ void main() {
       test('completa sin lanzar cuando el backend responde 200', () async {
         adapter.stub(ApiConstants.resendVerification, statusCode: 200);
 
-        await expectLater(repo.resendVerification(), completes);
+        await expectLater(
+            repo.resendVerification(email: 'a@b.co'), completes);
       });
 
-      test('ignora silenciosamente un 404 (endpoint no disponible)',
+      test('avisa en vez de fingir éxito con un 404 (endpoint no disponible)',
           () async {
         adapter.stub(ApiConstants.resendVerification, statusCode: 404);
 
-        await expectLater(repo.resendVerification(), completes);
+        await expectLater(repo.resendVerification(email: 'a@b.co'),
+            throwsA('El reenvío todavía no está disponible.'));
       });
 
-      test('ignora silenciosamente un 405 (método no permitido)', () async {
+      test('avisa en vez de fingir éxito con un 405', () async {
         adapter.stub(ApiConstants.resendVerification, statusCode: 405);
 
-        await expectLater(repo.resendVerification(), completes);
+        await expectLater(repo.resendVerification(email: 'a@b.co'),
+            throwsA('El reenvío todavía no está disponible.'));
       });
 
       test('propaga un mensaje de error (String) en otros códigos', () async {
         adapter.stub(ApiConstants.resendVerification, statusCode: 403);
 
         await expectLater(
-          repo.resendVerification(),
+          repo.resendVerification(email: 'a@b.co'),
           throwsA('No tienes permiso para realizar esta acción.'),
         );
       });

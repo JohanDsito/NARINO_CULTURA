@@ -82,12 +82,17 @@ class AuthRepository {
     }
   }
 
-  Future<void> resendVerification() async {
+  /// Reenvía el correo de verificación. Se llama sin sesión (desde la
+  /// pantalla de "revisa tu correo"), así que va el correo en el cuerpo.
+  Future<void> resendVerification({required String email}) async {
     try {
-      await _dio.post(ApiConstants.resendVerification, data: {});
+      await _dio.post(ApiConstants.resendVerification, data: {'email': email});
     } on DioException catch (e) {
       final code = e.response?.statusCode;
-      if (code == 404 || code == 405) return;
+      // Antes se ignoraban y la pantalla decía "reenviado" sin enviar nada.
+      if (code == 404 || code == 405) {
+        throw 'El reenvío todavía no está disponible.';
+      }
       throw _parseDioError(e);
     }
   }
