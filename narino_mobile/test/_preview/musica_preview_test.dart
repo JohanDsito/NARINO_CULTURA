@@ -55,10 +55,10 @@ class _Repo extends MusicianRepository {
   Future<MusicianModel> getMusicianDetail(String slug) async => _m1;
   @override
   Future<List<MusicalWorkModel>> getMusicianWorks(String slug) async => [
-        MusicalWorkModel(id: 1, title: 'Galeras en llamas', createdAt: DateTime(2025),
+        MusicalWorkModel(id: 'w1', title: 'Galeras en llamas', createdAt: DateTime(2025),
             workType: 'VIDEO', year: 2025, durationSeconds: 245,
             youtubeUrl: 'https://youtube.com/x', spotifyTrackUrl: 'https://open.spotify.com/x'),
-        MusicalWorkModel(id: 2, title: 'Negros y Blancos (en vivo)', createdAt: DateTime(2024),
+        MusicalWorkModel(id: 'w2', title: 'Negros y Blancos (en vivo)', createdAt: DateTime(2024),
             workType: 'LIVE', year: 2024, youtubeUrl: 'https://youtube.com/y'),
       ];
   @override

@@ -299,7 +299,7 @@ void main() {
 
       final work = await repo.addWork('los-andinos', {'title': 'Canción 1'});
 
-      expect(work.id, 1);
+      expect(work.id, '1');
       expect(work.audioUrl, 'https://cdn.test/audio.mp3');
       expect(work.coverUrl, 'https://cdn.test/cover.jpg');
     });

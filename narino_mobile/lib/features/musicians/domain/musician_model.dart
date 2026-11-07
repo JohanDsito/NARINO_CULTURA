@@ -33,7 +33,8 @@ class MusicGenreModel {
 }
 
 class MusicalWorkModel {
-  final int id;
+  /// UUID del backend.
+  final String id;
   final String title;
   final String? description;
   final String? audioUrl;
@@ -67,7 +68,7 @@ class MusicalWorkModel {
 
   factory MusicalWorkModel.fromJson(Map<String, dynamic> json) {
     return MusicalWorkModel(
-      id: _parseInt(json['id']),
+      id: json['id']?.toString() ?? '',
       title: json['title']?.toString() ?? json['titulo']?.toString() ?? '',
       description:
           json['description']?.toString() ?? json['descripcion']?.toString(),
@@ -89,7 +90,8 @@ class MusicalWorkModel {
 }
 
 class MusicianReviewModel {
-  final int id;
+  /// UUID del backend.
+  final String id;
   final String reviewerName;
   final String? reviewerAvatar;
   final int rating;
@@ -122,7 +124,7 @@ class MusicianReviewModel {
     }
 
     return MusicianReviewModel(
-      id: _parseInt(json['id']),
+      id: json['id']?.toString() ?? '',
       reviewerName: name,
       reviewerAvatar: avatar,
       rating: _parseInt(json['rating']),

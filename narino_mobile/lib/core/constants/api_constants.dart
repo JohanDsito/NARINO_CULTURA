@@ -80,6 +80,10 @@ class ApiConstants {
 
   // Inteligencia Artificial
   static const String aiChat = '/api/v1/chat/';
+  // Sin `/api/v1` nunca llegaban al backend (404 siempre).
+  static const String aiSuggestCategory = '/api/v1/ai/suggest-category/';
+  static const String aiGenerateDescription =
+      '/api/v1/ai/generate-description/';
   static const String aiRecommendations = '/api/v1/ai/recommendations/';
   static const String aiEventRecommendations =
       '/api/v1/ai/event-recommendations/';
