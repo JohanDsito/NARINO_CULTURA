@@ -77,8 +77,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     _bajar();
     final pregunta = bot.pregunta!;
     try {
-      final r = await _ai.chat(
-          mensaje: pregunta, history: List.of(_historial));
+      final r = await _ai.chat(mensaje: pregunta, history: List.of(_historial));
       if (!mounted) return;
       setState(() {
         bot
@@ -137,9 +136,8 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text('Asistente cultural',
-                      style:
-                          AppTypography.labelSemiBold(color: nc.textPrimary)
-                              .copyWith(fontSize: 16)),
+                      style: AppTypography.labelSemiBold(color: nc.textPrimary)
+                          .copyWith(fontSize: 16)),
                   Text(
                       _enviando
                           ? 'Escribiendo…'
@@ -217,8 +215,8 @@ class _AvatarBot extends StatelessWidget {
       padding: EdgeInsets.all(size * 0.08),
       child: Container(
         decoration: BoxDecoration(color: nc.bgCard, shape: BoxShape.circle),
-        child: Icon(Icons.auto_awesome_rounded,
-            size: size * 0.5, color: nc.azul),
+        child:
+            Icon(Icons.auto_awesome_rounded, size: size * 0.5, color: nc.azul),
       ),
     );
   }
@@ -233,14 +231,30 @@ class _Bienvenida extends StatelessWidget {
   Widget build(BuildContext context) {
     final nc = context.nc;
     final sugerencias = [
-      (Icons.celebration_outlined, nc.tomateA, 'El Carnaval',
-          'Cuéntame la historia del Carnaval de Negros y Blancos.'),
-      (Icons.music_note_rounded, nc.azulA, 'Música',
-          'Recomiéndame bandas de música andina de Nariño.'),
-      (Icons.content_cut_rounded, nc.naranjaA, 'Artesanía',
-          '¿Qué es el barniz de Pasto y quién lo trabaja?'),
-      (Icons.event_rounded, nc.catalogo, 'Eventos',
-          '¿Qué eventos culturales hay pronto en Nariño?'),
+      (
+        Icons.celebration_outlined,
+        nc.tomateA,
+        'El Carnaval',
+        'Cuéntame la historia del Carnaval de Negros y Blancos.'
+      ),
+      (
+        Icons.music_note_rounded,
+        nc.azulA,
+        'Música',
+        'Recomiéndame bandas de música andina de Nariño.'
+      ),
+      (
+        Icons.content_cut_rounded,
+        nc.naranjaA,
+        'Artesanía',
+        '¿Qué es el barniz de Pasto y quién lo trabaja?'
+      ),
+      (
+        Icons.event_rounded,
+        nc.catalogo,
+        'Eventos',
+        '¿Qué eventos culturales hay pronto en Nariño?'
+      ),
     ];
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
@@ -259,52 +273,62 @@ class _Bienvenida extends StatelessWidget {
           style: AppTypography.bodyMedium(color: nc.textSecondary),
         ),
         const SizedBox(height: 24),
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 10,
-          crossAxisSpacing: 10,
-          childAspectRatio: 1.25,
-          children: [
-            for (final (icon, accent, titulo, pregunta) in sugerencias)
-              Semantics(
-                button: true,
-                label: 'Preguntar: $pregunta',
-                excludeSemantics: true,
-                child: NcPressable(
-                  onTap: () => onSugerencia(pregunta),
-                  pressedScale: 0.96,
-                  child: Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Color.alphaBlend(accent.tint, nc.bgCard),
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                          color: accent.fill.withValues(alpha: 0.4)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        NcAccentIcon(icon: icon, accent: accent, size: 34),
-                        const Spacer(),
-                        Text(titulo,
-                            style: AppTypography.labelSemiBold(
-                                color: accent.ink)),
-                        const SizedBox(height: 2),
-                        Text(pregunta,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: AppTypography.bodySmall(
-                                    color: nc.textSecondary)
-                                .copyWith(fontSize: 12)),
-                      ],
+        // Dos filas de tarjetas que crecen con el texto (con letra grande la
+        // cuadrícula de alto fijo se desbordaba).
+        for (var fila = 0; fila < sugerencias.length; fila += 2) ...[
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final (icon, accent, titulo, pregunta)
+                    in sugerencias.skip(fila).take(2)) ...[
+                  if (sugerencias.indexOf((icon, accent, titulo, pregunta)) !=
+                      fila)
+                    const SizedBox(width: 10),
+                  Expanded(
+                    child: Semantics(
+                      button: true,
+                      label: 'Preguntar: $pregunta',
+                      excludeSemantics: true,
+                      child: NcPressable(
+                        onTap: () => onSugerencia(pregunta),
+                        pressedScale: 0.96,
+                        child: Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: Color.alphaBlend(accent.tint, nc.bgCard),
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(
+                                color: accent.fill.withValues(alpha: 0.4)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              NcAccentIcon(
+                                  icon: icon, accent: accent, size: 34),
+                              const SizedBox(height: 14),
+                              Text(titulo,
+                                  style: AppTypography.labelSemiBold(
+                                      color: accent.ink)),
+                              const SizedBox(height: 2),
+                              Text(pregunta,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTypography.bodySmall(
+                                          color: nc.textSecondary)
+                                      .copyWith(fontSize: 12)),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-          ],
-        ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+        ],
         const SizedBox(height: 18),
         Text(
           'Las respuestas las genera una IA y pueden tener errores.',
@@ -540,7 +564,9 @@ class _PuntosState extends State<_Puntos> with SingleTickerProviderStateMixin {
                         0,
                         -4 *
                             (1 -
-                                ((_c.value * 3 - i) % 3 - 0.5).abs().clamp(0, 1)
+                                ((_c.value * 3 - i) % 3 - 0.5)
+                                    .abs()
+                                    .clamp(0, 1)
                                     .toDouble())),
                     child: Container(
                       width: 8,
@@ -608,13 +634,12 @@ class _CompositorState extends State<_Compositor> {
               onSubmitted: (_) => widget.onEnviar(),
               decoration: InputDecoration(
                 hintText: 'Pregúntame algo de Nariño…',
-                counterText: largo > _kMaxChars - 80
-                    ? '$largo/$_kMaxChars'
-                    : '',
+                counterText:
+                    largo > _kMaxChars - 80 ? '$largo/$_kMaxChars' : '',
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(26)),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(26)),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(26),
                   borderSide: BorderSide(color: nc.border),

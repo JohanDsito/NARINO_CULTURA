@@ -16,6 +16,9 @@ import '../support/test_helpers.dart';
 const previewOut = String.fromEnvironment('OUT');
 const _fonts = String.fromEnvironment('FONTS');
 const _icons = String.fromEnvironment('ICONS');
+// Pruebas de estrés: ancho del teléfono y escala de texto (p. ej. 320 y 1.3).
+const _width = int.fromEnvironment('WIDTH', defaultValue: 390);
+const _textScale = String.fromEnvironment('TEXTSCALE', defaultValue: '1.0');
 bool get previewSkip => previewOut.isEmpty;
 
 Future<void> _load(String family, String path) async {
@@ -53,7 +56,7 @@ Future<void> capture(
   double height = 844,
   Future<void> Function(WidgetTester)? interact,
 }) async {
-  tester.view.physicalSize = Size(390 * 2, height * 2);
+  tester.view.physicalSize = Size(_width * 2.0, height * 2);
   tester.view.devicePixelRatio = 2;
   addTearDown(tester.view.reset);
   final key = GlobalKey();
@@ -66,6 +69,11 @@ Future<void> capture(
           debugShowCheckedModeBanner: false,
           theme: dark ? AppTheme.dark : AppTheme.light,
           home: home,
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+                textScaler: TextScaler.linear(double.parse(_textScale))),
+            child: child!,
+          ),
         ),
       ),
     ),
