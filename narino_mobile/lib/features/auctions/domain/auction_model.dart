@@ -93,24 +93,30 @@ class AuctionModel {
         ?.toString() ??
         '';
 
-    final obraTitulo = (json['obra_titulo'] ??
+    final obraTitulo = (json['artwork_title'] ??
+            json['obra_titulo'] ??
             json['obraTitulo'] ??
             obraMap?['titulo'] ??
             obraMap?['nombre'])
         ?.toString();
 
     final artistaNombre =
-        (json['artista_nombre'] ?? json['artistaNombre'] ?? json['artista'])
+        (json['artist_name'] ??
+                json['artista_nombre'] ??
+                json['artistaNombre'] ??
+                json['artista'])
             ?.toString();
 
-    final imagenUrl = (json['imagen_url'] ??
+    final imagenUrl = (json['artwork_image_url'] ??
+            json['imagen_url'] ??
             json['imagenUrl'] ??
             obraMap?['imagen_url'] ??
             obraMap?['imagen_principal'] ??
             obraMap?['imagen'])
         ?.toString();
 
-    final totalPujas = json['total_pujas'] ?? json['totalPujas'];
+    final totalPujas =
+        json['bids_count'] ?? json['total_pujas'] ?? json['totalPujas'];
     final totalPujasInt = totalPujas is int
         ? totalPujas
         : (int.tryParse(totalPujas?.toString() ?? '') ?? bidsList.length);

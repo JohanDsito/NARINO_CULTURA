@@ -4,10 +4,14 @@ class AuctionBidModel {
   final double amount;
   final DateTime? createdAt;
 
+  /// `true` si la puja es del usuario actual (`is_mine` del historial).
+  final bool esMia;
+
   const AuctionBidModel({
     required this.bidderName,
     required this.amount,
     this.createdAt,
+    this.esMia = false,
   });
 
   factory AuctionBidModel.fromJson(Map<String, dynamic> json) {
@@ -26,6 +30,7 @@ class AuctionBidModel {
               'Pujador',
       amount: amount,
       createdAt: createdAt,
+      esMia: json['is_mine'] == true,
     );
   }
 }

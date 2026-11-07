@@ -7,6 +7,7 @@ import '../../../../core/theme/nc_theme.dart';
 import '../../../../shared/widgets/design/design.dart';
 import '../../domain/auction_model.dart';
 import '../providers/auctions_provider.dart';
+import '../../../profile/presentation/providers/profile_provider.dart';
 import '../widgets/subasta_ui.dart';
 
 const _estados = <(String?, String)>[
@@ -77,9 +78,9 @@ class _AuctionHistoryScreenState extends ConsumerState<AuctionHistoryScreen> {
                   _Lista(
                     params: AuctionHistoryParams(
                         mode: 'participante', estado: _estado),
-                    vacioTitulo: 'Aún no has ganado ni vas ganando subastas',
-                    vacioTexto: 'Aquí aparecen las subastas donde tienes la '
-                        'puja más alta o que ganaste.',
+                    vacioTitulo: 'Aún no has pujado',
+                    vacioTexto: 'Aquí verás las subastas en las que '
+                        'participes y cómo te va en cada una.',
                   ),
                   _Lista(
                     params:
@@ -139,22 +140,43 @@ class _Lista extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                 itemCount: list.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (_, i) => _Fila(auction: list[i]),
+                itemBuilder: (_, i) => _Fila(
+                  auction: list[i],
+                  participante: params.mode == 'participante',
+                ),
               ),
       ),
     );
   }
 }
 
-class _Fila extends StatelessWidget {
-  const _Fila({required this.auction});
+class _Fila extends ConsumerWidget {
+  const _Fila({required this.auction, required this.participante});
 
   final AuctionModel auction;
+  final bool participante;
+
+  /// Cómo le fue al usuario en una subasta en la que pujó.
+  (String, IconData, NcAccent)? _resultado(NcColors nc, String yo) {
+    if (!participante || yo.isEmpty) return null;
+    final a = auction;
+    final cerrada = a.estado == 'cerrada';
+    if (a.ganadorId == yo) {
+      return ('Ganaste', Icons.emoji_events_rounded, nc.successA);
+    }
+    if (cerrada) return ('No ganaste', Icons.close_rounded, nc.tomateA);
+    if (a.estado != 'activa') return null;
+    return a.pujadorLiderId == yo
+        ? ('Vas ganando', Icons.trending_up_rounded, nc.successA)
+        : ('Te superaron', Icons.trending_down_rounded, nc.tomateA);
+  }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final nc = context.nc;
     final fase = faseDe(auction);
+    final yo = ref.watch(myProfileProvider).profile?.userId ?? '';
+    final res = _resultado(nc, yo);
     return NcCard(
       padding: const EdgeInsets.all(12),
       gradientBorder: false,
@@ -179,7 +201,15 @@ class _Fila extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: AppTypography.labelSemiBold(color: nc.textPrimary)),
                 const SizedBox(height: 4),
-                FaseBadge(fase: fase),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: [
+                    FaseBadge(fase: fase),
+                    if (res != null)
+                      NcStatusPill(label: res.$1, accent: res.$3, icon: res.$2),
+                  ],
+                ),
                 const SizedBox(height: 6),
                 Text(formatCOP(auction.precioActual),
                     style: AppTypography.labelSemiBold(color: nc.subastas.ink)

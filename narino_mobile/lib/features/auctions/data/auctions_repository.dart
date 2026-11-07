@@ -11,9 +11,14 @@ class AuctionsRepository {
 
   final AuctionsService _service;
 
-  Future<List<AuctionModel>> getAuctions({String? estado}) async {
+  Future<List<AuctionModel>> getAuctions({
+    String? estado,
+    bool mine = false,
+    bool participating = false,
+  }) async {
     try {
-      final data = await _service.getAuctions(estado: estado);
+      final data = await _service.getAuctions(
+          estado: estado, mine: mine, participating: participating);
       return data
           .whereType<Map>()
           .map((e) => AuctionModel.fromJson(e.cast<String, dynamic>()))
