@@ -10,6 +10,10 @@ class AuthInterceptor extends Interceptor {
 
   final Dio _dio;
 
+  /// Renovación en curso: si varias peticiones vencen a la vez (Inicio lanza
+  /// varias), todas esperan la misma en vez de pedir un token cada una.
+  Future<bool>? _renovando;
+
   @override
   Future<void> onRequest(
     RequestOptions options,
@@ -45,7 +49,10 @@ class AuthInterceptor extends Interceptor {
         !alreadyRetried &&
         !skipAuthRefresh &&
         !isRefreshCall) {
-      final refreshed = await _tryRefreshToken();
+      final refreshed =
+          await (_renovando ??= _tryRefreshToken().whenComplete(() {
+        _renovando = null;
+      }));
       if (refreshed) {
         final newToken = await StorageUtils.getAccessToken();
         if (newToken != null && newToken.isNotEmpty) {
@@ -86,9 +93,14 @@ class AuthInterceptor extends Interceptor {
       final newAccess = data['access']?.toString();
       if (newAccess == null || newAccess.isEmpty) return false;
 
+      // Si el backend rota el refresh (ROTATE_REFRESH_TOKENS), hay que
+      // guardar el nuevo: el anterior queda en lista negra.
+      final newRefresh = data['refresh']?.toString();
       await StorageUtils.saveTokens(
         accessToken: newAccess,
-        refreshToken: refreshToken,
+        refreshToken: (newRefresh != null && newRefresh.isNotEmpty)
+            ? newRefresh
+            : refreshToken,
       );
       return true;
     } catch (_) {
