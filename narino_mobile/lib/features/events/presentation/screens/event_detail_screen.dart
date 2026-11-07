@@ -88,12 +88,46 @@ class _EventViewState extends ConsumerState<_EventView> {
     if (!ok && mounted) _snack('No se pudo abrir el mapa.');
   }
 
-  Future<void> _inscribirme() async {
-    if (_inscrito) {
-      // El backend todavía no permite cancelar la inscripción (solo POST).
-      _snack('Ya estás inscrito. Por ahora no se puede cancelar desde la app.');
-      return;
+  Future<void> _cancelar() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('¿Cancelar tu inscripción?'),
+        content: const Text('Dejarás de recibir el recordatorio de este '
+            'evento. Puedes volver a inscribirte cuando quieras.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Mantenerla')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Sí, cancelar')),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    setState(() => _loading = true);
+    try {
+      await ref
+          .read(eventsRepositoryProvider)
+          .unregisterFromEvent(widget.event.id);
+      if (!mounted) return;
+      setState(() => _inscrito = false);
+      _snack('Cancelaste tu inscripción.');
+    } catch (e) {
+      final msg = e.toString();
+      // Si ya no estaba inscrita, el estado real es "no inscrita".
+      if (msg.toLowerCase().contains('no estás inscrito')) {
+        if (mounted) setState(() => _inscrito = false);
+      }
+      _snack(msg);
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
+  }
+
+  Future<void> _inscribirme() async {
+    if (_inscrito) return _cancelar();
     setState(() => _loading = true);
     try {
       await ref.read(eventsRepositoryProvider).registerToEvent(widget.event.id);
@@ -312,9 +346,11 @@ class _EventViewState extends ConsumerState<_EventView> {
           : NcGlassBottomBar(
               child: _inscrito
                   ? NcSecondaryButton(
-                      label: 'Ya estás inscrito',
+                      label: _loading
+                          ? 'Cancelando…'
+                          : 'Inscrito · Cancelar inscripción',
                       icon: Icons.check_circle_rounded,
-                      onPressed: _inscribirme,
+                      onPressed: _loading ? null : _cancelar,
                     )
                   : NcPrimaryButton(
                       label: 'Inscribirme y recibir recordatorio',
