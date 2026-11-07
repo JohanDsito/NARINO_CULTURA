@@ -256,6 +256,13 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                 onTap: () => context.push('/profile/privacy'),
               ),
               _Opcion(
+                icon: Icons.key_rounded,
+                accent: nc.oroA,
+                title: 'Cambiar contraseña',
+                subtitle: 'Usa una clave nueva y segura',
+                onTap: () => context.push('/profile/password'),
+              ),
+              _Opcion(
                 icon: Icons.alternate_email_rounded,
                 accent: nc.azulA,
                 title: 'Cambiar correo',

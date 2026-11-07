@@ -14,6 +14,8 @@ import 'package:narino_cultura/features/profile/domain/profile_state.dart';
 import 'package:narino_cultura/features/profile/presentation/providers/profile_provider.dart';
 import 'package:narino_cultura/features/profile/presentation/screens/artist_public_profile_screen.dart';
 import 'package:narino_cultura/features/profile/presentation/screens/artist_stats_screen.dart';
+import 'package:narino_cultura/features/profile/presentation/screens/change_password_screen.dart';
+import 'package:narino_cultura/features/profile/presentation/screens/delete_account_screen.dart';
 import 'package:narino_cultura/features/profile/presentation/screens/edit_profile_screen.dart';
 import 'package:narino_cultura/features/profile/presentation/screens/following_screen.dart';
 import 'package:narino_cultura/features/profile/presentation/screens/my_profile_screen.dart';
@@ -124,6 +126,14 @@ void main() {
     testWidgets('estadisticas', skip: previewSkip, (t) async {
       await capture(t, name: 'estadisticas', dark: dark, overrides: ov(), height: 1150,
           home: const ArtistStatsScreen());
+    });
+    testWidgets('contrasena', skip: previewSkip, (t) async {
+      await capture(t, name: 'contrasena', dark: dark, overrides: ov(), height: 844,
+          home: const ChangePasswordScreen());
+    });
+    testWidgets('eliminar_cuenta', skip: previewSkip, (t) async {
+      await capture(t, name: 'eliminar_cuenta', dark: dark, overrides: ov(), height: 900,
+          home: const DeleteAccountScreen());
     });
     testWidgets('perfil_publico', skip: previewSkip, (t) async {
       await capture(t, name: 'perfil_publico', dark: dark, overrides: ov(), height: 1350,

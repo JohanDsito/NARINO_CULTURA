@@ -38,6 +38,7 @@ import 'features/profile/presentation/screens/portfolio_screen.dart';
 import 'features/profile/presentation/screens/following_screen.dart';
 import 'features/profile/presentation/screens/change_email_screen.dart';
 import 'features/profile/presentation/screens/active_sessions_screen.dart';
+import 'features/profile/presentation/screens/change_password_screen.dart';
 import 'features/profile/presentation/screens/delete_account_screen.dart';
 import 'features/profile/presentation/screens/artist_stats_screen.dart';
 import 'features/profile/presentation/screens/privacy_policy_screen.dart';
@@ -264,6 +265,10 @@ final _routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/profile/sessions',
             builder: (_, __) => const ActiveSessionsScreen(),
+          ),
+          GoRoute(
+            path: '/profile/password',
+            builder: (_, __) => const ChangePasswordScreen(),
           ),
           GoRoute(
             path: '/profile/delete-account',

@@ -2,11 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/nc_theme.dart';
+import '../../../../shared/widgets/design/design.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../auth/presentation/widgets/auth_fields.dart';
 import '../providers/account_security_provider.dart';
+import '../providers/profile_provider.dart';
+import '../widgets/cuenta_ui.dart';
 
+/// Eliminación permanente de la cuenta (`DELETE auth/delete-account/`).
+/// Acento tomate: es la única acción destructiva de la app.
 class DeleteAccountScreen extends ConsumerStatefulWidget {
   const DeleteAccountScreen({super.key});
 
@@ -16,8 +22,9 @@ class DeleteAccountScreen extends ConsumerStatefulWidget {
 }
 
 class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
+  final _formKey = GlobalKey<FormState>();
   final _passwordCtrl = TextEditingController();
-  bool _accept = false;
+  bool _acepto = false;
 
   @override
   void dispose() {
@@ -25,213 +32,176 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
     super.dispose();
   }
 
-  Future<void> _submit() async {
+  Future<void> _eliminar() async {
     FocusScope.of(context).unfocus();
+    if (!_formKey.currentState!.validate()) return;
+    final nc = context.nc;
 
-    if (!_accept) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Debes confirmar que entiendes las consecuencias.'),
-        ),
-      );
-      return;
-    }
-
-    final password = _passwordCtrl.text;
-    if (password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ingresa tu contraseña para confirmar.')),
-      );
-      return;
-    }
-
-    final confirm = await showDialog<bool>(
+    final ok = await showDialog<bool>(
       context: context,
-      builder: (dialogCtx) => AlertDialog(
-        title: const Text('Eliminar cuenta'),
+      builder: (ctx) => AlertDialog(
+        title: const Text('¿Eliminar tu cuenta?'),
         content: const Text(
-          'Esta acción eliminará tu cuenta permanentemente. ¿Deseas continuar?',
-        ),
+            'Se borrarán tu perfil, tus obras y tu historial. '
+            'No hay forma de recuperarlos.'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(dialogCtx, false),
+            onPressed: () => Navigator.pop(ctx, false),
             child: const Text('Cancelar'),
           ),
           TextButton(
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            onPressed: () => Navigator.pop(dialogCtx, true),
-            child: const Text('Eliminar'),
+            style: TextButton.styleFrom(foregroundColor: nc.tomateA.ink),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sí, eliminar'),
           ),
         ],
       ),
     );
+    if (ok != true) return;
 
-    if (confirm != true) return;
+    await ref
+        .read(deleteAccountProvider.notifier)
+        .submit(password: _passwordCtrl.text);
+    if (!mounted || ref.read(deleteAccountProvider).hasError) return;
 
-    await ref.read(deleteAccountProvider.notifier).submit(password: password);
-
-    if (!mounted) return;
-    final state = ref.read(deleteAccountProvider);
-    if (state.hasError) return;
-
+    ref.read(myProfileProvider.notifier).reset();
     ref.read(authProvider.notifier).forceSignOut();
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Tu cuenta fue eliminada. Gracias por ser parte.')));
     context.go('/login');
   }
 
   @override
   Widget build(BuildContext context) {
+    final nc = context.nc;
     final state = ref.watch(deleteAccountProvider);
-    final isLoading = state.isLoading;
+    final cargando = state.isLoading;
+    final peligro = nc.tomateA;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Text(
-          'Eliminar cuenta',
-          style: AppTypography.displaySemiBold(),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      appBar: AppBar(title: const Text('Eliminar cuenta')),
+      body: Form(
+        key: _formKey,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
           children: [
+            CuentaHeader(
+              icon: Icons.delete_forever_outlined,
+              accent: peligro,
+              title: 'Antes de irte',
+              message: 'Eliminar tu cuenta es definitivo. Esto es lo que pasa:',
+            ),
+            const SizedBox(height: 18),
             Container(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
               decoration: BoxDecoration(
-                color: AppColors.error.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(14),
-                border:
-                    Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+                color: peligro.tint,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: peligro.fill.withValues(alpha: 0.35)),
               ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Advertencia',
-                    style: AppTypography.labelSemiBold(color: AppColors.error),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Se eliminarán permanentemente tu cuenta y todos tus datos. '
-                    'Esta acción no se puede deshacer.',
-                    style: AppTypography.bodyMedium(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? AppColors.textPrimaryDark
-                            : AppColors.textPrimaryLight),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Si tienes subastas activas, no podrás continuar.',
-                    style: AppTypography.bodyMedium(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? AppColors.textSecondaryDark
-                            : AppColors.textSecondaryLight),
-                  ),
+                  CuentaPunto(
+                      icon: Icons.person_off_outlined,
+                      accent: peligro,
+                      text: 'Se borran tu perfil, foto y redes.'),
+                  CuentaPunto(
+                      icon: Icons.palette_outlined,
+                      accent: peligro,
+                      text: 'Tus obras dejan de verse en el catálogo y la tienda.'),
+                  CuentaPunto(
+                      icon: Icons.receipt_long_outlined,
+                      accent: peligro,
+                      text: 'Pierdes el acceso a tus compras, ventas y comprobantes.'),
+                  CuentaPunto(
+                      icon: Icons.gavel_rounded,
+                      accent: peligro,
+                      text: 'Si tienes subastas activas, primero deben terminar.'),
                 ],
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 22),
             if (state.hasError) ...[
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.error.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: AppColors.error.withValues(alpha: 0.3),
-                  ),
-                ),
-                child: Text(
-                  state.error.toString(),
-                  style: AppTypography.bodySmall(color: AppColors.error),
-                ),
-              ),
-              const SizedBox(height: 14),
+              NcBanner.error(context, state.error.toString()),
+              const SizedBox(height: 16),
             ],
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardTheme.color ??
-                    Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? AppColors.borderDark
-                      : AppColors.borderLight,
-                ),
-              ),
-              child: Column(
+            Text('Confirma que eres tú',
+                style: AppTypography.labelSemiBold(color: nc.textPrimary)),
+            const SizedBox(height: 10),
+            PasswordField(
+              controller: _passwordCtrl,
+              label: 'Tu contraseña',
+              enabled: !cargando,
+              validator: (v) => (v == null || v.isEmpty)
+                  ? 'Escribe tu contraseña para continuar'
+                  : null,
+            ),
+            const SizedBox(height: 14),
+            FormField<bool>(
+              initialValue: false,
+              validator: (_) =>
+                  _acepto ? null : 'Marca la casilla para continuar',
+              builder: (field) => Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Confirma tu contraseña',
-                    style: AppTypography.labelSemiBold(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? AppColors.textPrimaryDark
-                          : AppColors.textPrimaryLight,
+                  CheckboxListTile(
+                    value: _acepto,
+                    onChanged: cargando
+                        ? null
+                        : (v) {
+                            setState(() => _acepto = v ?? false);
+                            field.didChange(v);
+                          },
+                    controlAffinity: ListTileControlAffinity.leading,
+                    contentPadding: EdgeInsets.zero,
+                    activeColor: peligro.fill,
+                    checkColor: peligro.onFill,
+                    title: Text(
+                        'Entiendo que no se puede deshacer',
+                        style: AppTypography.bodyMedium(color: nc.textPrimary)),
+                  ),
+                  if (field.hasError)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 12),
+                      child: Text(field.errorText!,
+                          style: AppTypography.bodySmall(color: peligro.ink)),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _passwordCtrl,
-                    obscureText: true,
-                    enabled: !isLoading,
-                    decoration: const InputDecoration(
-                      prefixIcon: Icon(Icons.lock_outline_rounded),
-                      labelText: 'Contraseña',
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Checkbox(
-                        value: _accept,
-                        onChanged: isLoading
-                            ? null
-                            : (v) => setState(() => _accept = v ?? false),
-                      ),
-                      Expanded(
-                        child: Text(
-                          'Entiendo que esta acción es irreversible.',
-                          style: AppTypography.bodyMedium(
-                            color:
-                                Theme.of(context).brightness == Brightness.dark
-                                    ? AppColors.textSecondaryDark
-                                    : AppColors.textSecondaryLight,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.error,
-                        foregroundColor: Theme.of(context).colorScheme.onError,
-                      ),
-                      onPressed: isLoading ? null : _submit,
-                      child: isLoading
-                          ? SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                color: Theme.of(context).colorScheme.onError,
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : Text(
-                              'Eliminar mi cuenta',
-                              style: AppTypography.buttonText(
-                                color: Theme.of(context).colorScheme.onError,
-                              ),
-                            ),
-                    ),
-                  ),
                 ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: NcGlassBottomBar(
+        child: Row(
+          children: [
+            Expanded(
+              child: NcSecondaryButton(
+                label: 'Cancelar',
+                onPressed: cargando ? null : () => context.pop(),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: SizedBox(
+                height: 50,
+                child: FilledButton.icon(
+                  onPressed: cargando ? null : _eliminar,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: peligro.fill,
+                    foregroundColor: peligro.onFill,
+                    shape: const StadiumBorder(),
+                  ),
+                  icon: cargando
+                      ? SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: peligro.onFill),
+                        )
+                      : const Icon(Icons.delete_outline_rounded),
+                  label: const Text('Eliminar'),
+                ),
               ),
             ),
           ],

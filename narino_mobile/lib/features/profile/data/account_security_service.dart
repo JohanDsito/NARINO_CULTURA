@@ -33,6 +33,16 @@ class AccountSecurityService {
     await _dio.delete(ApiConstants.activeSessions);
   }
 
+  Future<void> changePassword({
+    required String current,
+    required String nueva,
+  }) async {
+    await _dio.patch(
+      ApiConstants.mePassword,
+      data: {'current_password': current, 'new_password': nueva},
+    );
+  }
+
   Future<void> deleteAccount({required String password}) async {
     await _dio.delete(
       ApiConstants.deleteAccount,

@@ -16,6 +16,7 @@ class ApiConstants {
   static const String activeSessions = '/api/v1/auth/sessions/';
   static const String sessionDetail = '/api/v1/auth/sessions/{id}/';
   static const String deleteAccount = '/api/v1/auth/delete-account/';
+  static const String mePassword = '/api/v1/users/me/password/';
 
   // Perfil de usuario
   static const String profile = '/api/v1/users/me/';
