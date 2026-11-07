@@ -120,7 +120,8 @@ Novedades del backend que impactan la app:
 | 73 | Cuenta | El backend permite cambiar la contraseña (`PATCH users/me/password/`) pero la app no tenía cómo | ✅ pantalla nueva en Configuración |
 | 74 | Eliminar cuenta | Tras eliminar, el perfil anterior quedaba en memoria | ✅ se limpia antes de volver al login |
 | 75 | Privacidad | "Ejercer mis derechos" no hacía nada en Android 11+ (`canLaunchUrl(mailto)` da false sin `<queries>`) | ✅ abre el correo directo o copia la dirección |
-| 76 | Privacidad | El texto legal no coincide con el backend: dice bcrypt (es Argon2), token de 15 min (son 30) y bloqueo tras 5 intentos (no existe); además falta la Sección 5 | 🚫 decidir con el equipo; el texto se dejó tal cual |
+| 76 | Privacidad | El texto legal no coincidía con el backend (bcrypt, token de 15 min, bloqueo tras 5 intentos, fecha de aceptación guardada, retención de 5 años, OpenAI, dispositivo y ubicación) y faltaba la Sección 5 | ✅ v1.1 alineada con el backend y secciones 1–9 |
+| 77 | Eliminar cuenta (backend) | Si una artista ya vendió obras, borrar su cuenta da 500: `Artwork` cae en cascada pero `OrderItem.artwork` es `PROTECT` | 🚫 nota al equipo de back |
 | 40 | Ventas | Una orden con obras de varios artistas suma el total completo; `OrderItemSerializer` no dice de quién es cada ítem | 🚫 pedir `artist_slug` en el ítem |
 
 ---
@@ -195,7 +196,7 @@ Guía completa de color y componentes: **`docs/DISENO_CARNAVAL.md`**.
 - `OrderItemSerializer`: agregar `artist_slug` e imagen para calcular ventas por artista.
 - Endpoint `DELETE events/{id}/register/` para cancelar inscripción.
 - Desplegar el fix `40ae5be` de músicos en `main`.
-- Revisar el texto de la política de privacidad contra el backend real (ver #76).
+- Eliminar cuenta de artistas con ventas (ver #77): decidir si se anonimiza o se conserva la orden.
 - Archivos de build trackeados en git (`narino_mobile/android/build/...`) → sacarlos con `.gitignore`.
 
 ## Bitácora
