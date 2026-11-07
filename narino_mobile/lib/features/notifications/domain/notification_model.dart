@@ -47,7 +47,13 @@ class NotificationModel {
     if (artwork != null) return '/artworks/$artwork';
     final order = _nonEmpty(data['order_id']);
     if (order != null) return '/marketplace/order/$order';
-    return null;
+    // Sin ids, el backend manda la ruta de la web: se traduce a la de la app
+    // (p. ej. la venta de una obra solo trae `/dashboard/sales`).
+    return switch (_nonEmpty(data['url'])) {
+      '/dashboard/sales' => '/marketplace/sales',
+      '/orders' => '/marketplace/purchases',
+      _ => null,
+    };
   }
 
   NotificationModel copyWith({bool? leida}) => NotificationModel(
