@@ -119,6 +119,8 @@ Novedades del backend que impactan la app:
 | 72 | Estadísticas | Un error mostraba todo en cero en vez de avisar | ✅ estado de error con reintento |
 | 73 | Cuenta | El backend permite cambiar la contraseña (`PATCH users/me/password/`) pero la app no tenía cómo | ✅ pantalla nueva en Configuración |
 | 74 | Eliminar cuenta | Tras eliminar, el perfil anterior quedaba en memoria | ✅ se limpia antes de volver al login |
+| 75 | Privacidad | "Ejercer mis derechos" no hacía nada en Android 11+ (`canLaunchUrl(mailto)` da false sin `<queries>`) | ✅ abre el correo directo o copia la dirección |
+| 76 | Privacidad | El texto legal no coincide con el backend: dice bcrypt (es Argon2), token de 15 min (son 30) y bloqueo tras 5 intentos (no existe); además falta la Sección 5 | 🚫 decidir con el equipo; el texto se dejó tal cual |
 | 40 | Ventas | Una orden con obras de varios artistas suma el total completo; `OrderItemSerializer` no dice de quién es cada ítem | 🚫 pedir `artist_slug` en el ítem |
 
 ---
@@ -182,7 +184,7 @@ Guía completa de color y componentes: **`docs/DISENO_CARNAVAL.md`**.
 | Subastas (lista, detalle, crear, historial) | ✅ oro + tomate en vivo, cuenta regresiva propia, barra de puja con montos sugeridos |
 | Eventos (lista/calendario, detalle, publicar) | ✅ tomate, color por tipo, calendario compartido con Inicio |
 | Músicos / Detalle / Subir obra / Descubrimiento musical | ✅ azul, seguir confiable, reseñas y enlaces para escuchar |
-| Perfil y subpantallas | ⏳ |
+| Perfil: Mi perfil, público, editar, siguiendo, estadísticas, contraseña, eliminar cuenta, privacidad | ✅ portafolio, correo y sesiones quedan "Pronto" (sin backend) |
 | Notificaciones / Chatbot | ⏳ |
 
 ---
@@ -193,6 +195,7 @@ Guía completa de color y componentes: **`docs/DISENO_CARNAVAL.md`**.
 - `OrderItemSerializer`: agregar `artist_slug` e imagen para calcular ventas por artista.
 - Endpoint `DELETE events/{id}/register/` para cancelar inscripción.
 - Desplegar el fix `40ae5be` de músicos en `main`.
+- Revisar el texto de la política de privacidad contra el backend real (ver #76).
 - Archivos de build trackeados en git (`narino_mobile/android/build/...`) → sacarlos con `.gitignore`.
 
 ## Bitácora
@@ -213,3 +216,4 @@ Guía completa de color y componentes: **`docs/DISENO_CARNAVAL.md`**.
 - 2026-11-06 — Arreglo de backend para ventas por artista (`SaleSerializer`, `seller_amount`, artista e imagen por ítem) probado (262 tests) y entregado como nota; la app ya lo soporta. Rediseño de Subastas. Arreglados #41–#46. Siguiente: Eventos.
 - 2026-11-06 — Rediseño de Eventos (agenda, detalle, publicar) y calendario compartido `NcMonthCalendar`. Arreglados #47–#53. Siguiente: Músicos.
 - 2026-11-06 — Rediseño de Músicos, detalle, subir obra y Descubrimiento musical. Arreglados #18, #54–#57. Siguiente: Perfil.
+- 2026-11-06 — Rediseño del módulo de Perfil completo (8 pantallas) y nueva pantalla Cambiar contraseña. Arreglados #58–#75. Siguiente: Notificaciones y Chatbot.
