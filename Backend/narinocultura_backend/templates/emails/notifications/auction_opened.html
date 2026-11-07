@@ -1,8 +1,10 @@
-{% extends "emails/notifications/base.html" %}
+{% extends "emails/layout.html" %}
+{% block title %}Tu subasta fue aprobada{% endblock %}
+{% block preheader %}«{{ artwork_title }}» ya está en subasta.{% endblock %}
 {% block heading %}¡Tu subasta fue aprobada!{% endblock %}
 {% block content %}
-<p>Tu solicitud de subasta para <strong>{{ artwork_title }}</strong> fue aprobada y ya está activa en la plataforma.</p>
-{% if ends_at %}<div class="details"><p>La subasta cierra el <strong>{{ ends_at|date:"j \d\e F \d\e Y, g:i a"|lower }}</strong>.</p></div>{% endif %}
-<p>Los compradores ya pueden ver y pujar por tu obra. ¡Mucho éxito!</p>
-<p style="text-align: center;"><a href="{{ auction_url }}" class="button">Ver la subasta</a></p>
+<p style="margin:0 0 16px;">La subasta de <strong style="color:#1A1208;">{{ artwork_title }}</strong> fue aprobada por el equipo de Nariño Cultura y ya está activa: los compradores pueden ver tu obra y empezar a pujar.</p>
+{% include "emails/partials/details.html" with rows=details %}
+<p style="margin:0 0 16px;">En tu bandeja de notificaciones verás cada nueva puja, y te avisaremos por correo cuando la subasta cierre. ¡Mucho éxito!</p>
+{% include "emails/partials/button.html" with url=auction_url label="Ver mi subasta" %}
 {% endblock %}

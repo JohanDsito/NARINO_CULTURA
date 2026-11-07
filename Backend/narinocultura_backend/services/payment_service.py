@@ -40,7 +40,17 @@ class PaymentService:
         if order.payment_due_at and order.payment_due_at <= timezone.now():
             raise ValueError("El plazo para pagar esta orden venció.")
 
-        tx = Transaction.objects.create(order=order, amount=order.total_amount, currency="COP", status=Transaction.Status.PENDIENTE)
+        # Reabrir el pago (recargar la página, volver a pulsar "Pagar") reutiliza el intento pendiente:
+        # así no quedan transacciones PENDIENTE huérfanas junto a la aprobada.
+        tx = (
+            Transaction.objects.filter(order=order, status=Transaction.Status.PENDIENTE, wompi_transaction_id="")
+            .order_by("-created_at")
+            .first()
+        )
+        if tx is None:
+            tx = Transaction.objects.create(
+                order=order, amount=order.total_amount, currency="COP", status=Transaction.Status.PENDIENTE
+            )
         reference = str(order.id)
         amount_in_cents = PaymentService._amount_in_cents(order.total_amount)
         currency = "COP"

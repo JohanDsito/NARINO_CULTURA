@@ -1,14 +1,17 @@
+from django.db.models import Prefetch
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.marketplace.models import Favorite, Order
+from apps.marketplace.models import Cart, CartItem, Favorite, Order, OrderItem
 from apps.marketplace.serializers import (
     CartItemAddSerializer,
     CartSerializer,
     CheckoutSerializer,
+    FavoriteSerializer,
     FavoriteToggleSerializer,
     OrderSerializer,
+    SaleSerializer,
 )
 from services.marketplace_service import MarketplaceService
 
@@ -16,7 +19,13 @@ from services.marketplace_service import MarketplaceService
 class CartAPIView(APIView):
     def get(self, request):
         cart = MarketplaceService.get_or_create_cart(user=request.user)
-        serializer = CartSerializer(cart)
+        cart = (
+            Cart.objects.prefetch_related(
+                Prefetch("items", queryset=CartItem.objects.select_related("artwork", "artwork__artist"))
+            )
+            .get(pk=cart.pk)
+        )
+        serializer = CartSerializer(cart, context={"request": request})
         return Response(serializer.data)
 
 
@@ -42,9 +51,8 @@ class CartItemsAPIView(APIView):
 
 class FavoritesAPIView(APIView):
     def get(self, request):
-        qs = Favorite.objects.select_related("artwork").filter(user=request.user)
-        data = [{"id": str(f.id), "artwork_id": str(f.artwork_id), "title": f.artwork.title, "created_at": f.created_at} for f in qs]
-        return Response(data)
+        qs = Favorite.objects.select_related("artwork", "artwork__artist").filter(user=request.user)
+        return Response(FavoriteSerializer(qs, many=True, context={"request": request}).data)
 
     def post(self, request):
         serializer = FavoriteToggleSerializer(data=request.data)
@@ -79,17 +87,37 @@ class OrdersAPIView(generics.ListAPIView):
     serializer_class = OrderSerializer
 
     def get_queryset(self):
-        return Order.objects.select_related("buyer").prefetch_related("items", "items__artwork").filter(buyer=self.request.user)
+        return (
+            Order.objects.select_related("buyer")
+            .prefetch_related("items", "items__artwork", "items__artwork__artist")
+            .filter(buyer=self.request.user)
+        )
 
 
-class SalesAPIView(generics.ListAPIView):
+class OrderDetailAPIView(generics.RetrieveAPIView):
+    """GET /marketplace/orders/{id}/: una orden del comprador autenticado (el administrador ve cualquiera)."""
+
     serializer_class = OrderSerializer
 
     def get_queryset(self):
+        qs = Order.objects.select_related("buyer").prefetch_related("items", "items__artwork", "items__artwork__artist")
+        if getattr(self.request.user, "role", None) == "ADMINISTRADOR":
+            return qs
+        return qs.filter(buyer=self.request.user)
+
+
+class SalesAPIView(generics.ListAPIView):
+    """Ventas del artista autenticado: cada orden trae solo sus obras y su subtotal (seller_amount)."""
+
+    serializer_class = SaleSerializer
+
+    def get_queryset(self):
+        own_items = OrderItem.objects.filter(artwork__artist__user=self.request.user).select_related(
+            "artwork", "artwork__artist"
+        )
         return (
             Order.objects.select_related("buyer")
-            .prefetch_related("items", "items__artwork", "items__artwork__artist", "items__artwork__artist__user")
+            .prefetch_related(Prefetch("items", queryset=own_items, to_attr="seller_items"))
             .filter(items__artwork__artist__user=self.request.user, status=Order.Status.PAGADO)
             .distinct()
         )
-

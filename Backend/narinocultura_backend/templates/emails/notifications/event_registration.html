@@ -1,11 +1,10 @@
-{% extends "emails/notifications/base.html" %}
+{% extends "emails/layout.html" %}
+{% block title %}Inscripción confirmada{% endblock %}
+{% block preheader %}Te esperamos en «{{ event_title }}».{% endblock %}
 {% block heading %}Inscripción confirmada{% endblock %}
 {% block content %}
-<p>Tu inscripción al evento <strong>{{ event_title }}</strong> fue confirmada.</p>
-<div class="details">
-    {% if event_date %}<p>Fecha: <strong>{{ event_date|date:"j \d\e F \d\e Y, g:i a"|lower }}</strong></p>{% endif %}
-    {% if event_location %}<p>Lugar: <strong>{{ event_location }}</strong></p>{% endif %}
-</div>
-<p>¡Te esperamos!</p>
-<p style="text-align: center;"><a href="{{ event_url }}" class="button">Ver el evento</a></p>
+<p style="margin:0 0 16px;">Tu inscripción al evento <strong style="color:#1A1208;">{{ event_title }}</strong> quedó registrada.</p>
+{% include "emails/partials/details.html" with rows=details %}
+<p style="margin:0 0 16px;">¡Te esperamos!</p>
+{% include "emails/partials/button.html" with url=event_url label="Ver el evento" %}
 {% endblock %}

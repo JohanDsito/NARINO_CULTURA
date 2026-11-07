@@ -159,6 +159,7 @@ REST_FRAMEWORK = {
         "user": "2000/hour",
         "auth_anon": "5/minute",
         "password_reset": "3/hour",
+        "resend_verification": "3/hour",
         "chat": "10/minute",
     },
 }
@@ -235,6 +236,8 @@ EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
 # Railway (plan Hobby) bloquea los puertos SMTP: sin timeout, el respaldo SMTP colgaría al worker
 EMAIL_TIMEOUT = config("EMAIL_TIMEOUT", default=10, cast=int)
 DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="noreply@narinocultura.uk")
+# Nombre visible del remitente: "Nariño Cultura <noreply@...>"
+EMAIL_FROM_NAME = config("EMAIL_FROM_NAME", default="Nariño Cultura")
 
 # Resend Configuration
 RESEND_API_KEY = config("RESEND_API_KEY", default="")
@@ -288,6 +291,9 @@ CELERY_BEAT_SCHEDULE = {
 
 # Horas que tiene el ganador de una subasta para pagar antes de que la obra se libere
 AUCTION_PAYMENT_HOURS = config("AUCTION_PAYMENT_HOURS", default=48, cast=int)
+
+# Ventana en la que varias visitas del mismo usuario (o IP) a una obra cuentan como una sola vista
+ARTWORK_VIEW_WINDOW_SECONDS = config("ARTWORK_VIEW_WINDOW_SECONDS", default=3600, cast=int)
 
 # Cache - Usa Redis si está disponible, sino usa memoria local
 if REDIS_URL_CONFIGURED:

@@ -3,7 +3,7 @@ import logging
 from django.db import transaction
 from django.http import HttpResponse
 from rest_framework import generics, status
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -17,11 +17,11 @@ from apps.users.serializers import (
     PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
     RegisterSerializer,
+    ResendVerificationSerializer,
     UserMeSerializer,
 )
-from rest_framework.permissions import IsAuthenticated
 from services.email_service import EmailService
-from utils.throttling import AuthAnonThrottle, PasswordResetThrottle
+from utils.throttling import AuthAnonThrottle, PasswordResetThrottle, ResendVerificationThrottle
 
 logger = logging.getLogger(__name__)
 
@@ -102,6 +102,33 @@ class VerifyEmailAPIView(APIView):
         return Response({"detail": message})
 
 
+class ResendVerificationAPIView(APIView):
+    """POST /auth/resend-verification/ {"email"}: envía un nuevo enlace de verificación.
+
+    Responde siempre lo mismo, exista o no la cuenta, para no revelar qué correos están
+    registrados. Cada enlace nuevo invalida los anteriores."""
+
+    permission_classes = [AllowAny]
+    throttle_classes = [ResendVerificationThrottle]
+
+    GENERIC_DETAIL = "Si la cuenta existe y no está verificada, enviamos un nuevo enlace a tu correo."
+
+    @transaction.atomic
+    def post(self, request):
+        serializer = ResendVerificationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = User.objects.filter(
+            email__iexact=serializer.validated_data["email"], is_active=True, is_verified=False
+        ).first()
+        if user:
+            EmailVerification.objects.filter(user=user, used=False).update(used=True)
+            verification = EmailVerification.issue_for_user(user)
+            result = EmailService.send_verification_email(user.email, verification.token, user.first_name)
+            if not result.ok:
+                logger.error("Error al reenviar verificación a %s: %s", user.email, result.error_message)
+        return Response({"detail": self.GENERIC_DETAIL})
+
+
 class LoginAPIView(APIView):
     permission_classes = [AllowAny]
     throttle_classes = [AuthAnonThrottle]
@@ -159,7 +186,7 @@ class PasswordResetRequestAPIView(APIView):
         user = User.objects.filter(email=email).first()
         if user:
             reset = PasswordReset.issue_for_user(user)
-            EmailService.send_password_reset_email(user.email, reset.token)
+            EmailService.send_password_reset_email(user.email, reset.token, user.first_name)
         return Response(
             {
                 "detail": (

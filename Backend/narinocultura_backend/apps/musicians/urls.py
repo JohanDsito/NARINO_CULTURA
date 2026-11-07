@@ -1,6 +1,6 @@
 from rest_framework.routers import DefaultRouter
 
-from apps.musicians.views import MusicGenreViewSet, MusicianProfileViewSet, MusicalWorkViewSet
+from apps.musicians.views import MusicalWorkViewSet, MusicGenreViewSet, MusicianProfileViewSet
 
 router = DefaultRouter()
 router.register(r"musicians/genres", MusicGenreViewSet, basename="music-genre")
