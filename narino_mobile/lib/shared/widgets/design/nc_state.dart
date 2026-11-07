@@ -117,9 +117,13 @@ class NcStatusPill extends StatelessWidget {
             Icon(icon, size: 13, color: fg),
             const SizedBox(width: 4),
           ],
-          Text(label,
-              style: AppTypography.caption(color: fg)
-                  .copyWith(fontSize: 12, fontWeight: FontWeight.w700)),
+          Flexible(
+            child: Text(label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.caption(color: fg)
+                    .copyWith(fontSize: 12, fontWeight: FontWeight.w700)),
+          ),
         ],
       ),
     );

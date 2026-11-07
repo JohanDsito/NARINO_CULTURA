@@ -155,14 +155,19 @@ class OrderCard extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              NcStatusPill(
-                label: esVenta && order.isCompletado
-                    ? 'Vendida'
-                    : estadoOrdenLabel(order.estado),
-                accent: accent,
-                icon: estadoOrdenIcon(order.estado),
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: NcStatusPill(
+                  label: esVenta && order.isCompletado
+                      ? 'Vendida'
+                      : estadoOrdenLabel(order.estado),
+                  accent: accent,
+                  icon: estadoOrdenIcon(order.estado),
+                  ),
+                ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               Text(formatCOP(esVenta ? order.montoVenta : order.total),
                   style: AppTypography.price(color: nc.tienda.ink)
                       .copyWith(fontSize: 17)),

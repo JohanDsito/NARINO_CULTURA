@@ -116,17 +116,24 @@ class EventoCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      Icon(tipoIcon(event.tipo), size: 14, color: accent.ink),
-                      const SizedBox(width: 4),
-                      Text(tipoNombre(event.tipo).toUpperCase(),
-                          style: AppTypography.caption(color: accent.ink)
-                              .copyWith(fontWeight: FontWeight.w800)),
-                      if (!event.publicado) ...[
-                        const SizedBox(width: 8),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(tipoIcon(event.tipo),
+                              size: 14, color: accent.ink),
+                          const SizedBox(width: 4),
+                          Text(tipoNombre(event.tipo).toUpperCase(),
+                              style: AppTypography.caption(color: accent.ink)
+                                  .copyWith(fontWeight: FontWeight.w800)),
+                        ],
+                      ),
+                      if (!event.publicado)
                         NcStatusPill(label: 'Borrador', accent: nc.oroA),
-                      ],
                     ],
                   ),
                   const SizedBox(height: 4),

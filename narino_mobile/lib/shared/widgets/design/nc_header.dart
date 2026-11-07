@@ -208,9 +208,15 @@ class NcGlassHeader extends StatelessWidget implements PreferredSizeWidget {
                     if (leading != null && title != null)
                       const SizedBox(width: 8),
                     Expanded(
+                      // Altura fija (68): con letra grande el título se
+                      // encoge en vez de desbordarse.
                       child: Align(
                         alignment: Alignment.centerLeft,
-                        child: title ?? const NcBrand(),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: title ?? const NcBrand(),
+                        ),
                       ),
                     ),
                     for (var i = 0; i < actions.length; i++) ...[
