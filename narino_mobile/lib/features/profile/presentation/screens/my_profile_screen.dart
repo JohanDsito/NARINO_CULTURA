@@ -15,6 +15,7 @@ import '../../../marketplace/presentation/providers/favorites_provider.dart';
 import '../../../musicians/presentation/providers/musician_provider.dart';
 import '../../domain/profile_model.dart';
 import '../providers/profile_provider.dart';
+import '../widgets/disciplinas.dart';
 
 /// Funciones cuyo endpoint aún no existe en el backend (ver MAPA_TRABAJO #7, #8).
 const _kProximamente = {'portafolio', 'correo', 'sesiones'};
@@ -82,7 +83,7 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
     final role = ref.watch(currentUserRoleProvider).valueOrNull;
     final esArtista = role == 'artista' || role == 'admin';
     final profile = state.profile;
-    final esMusico = profile?.disciplina == 'Música';
+    final esMusico = esDisciplinaMusical(profile?.disciplina);
     final top = MediaQuery.paddingOf(context).top + NcGlassHeader.contentHeight;
     final brightness = Theme.of(context).brightness;
 

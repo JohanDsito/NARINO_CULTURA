@@ -7,33 +7,8 @@ import '../../../../shared/widgets/design/design.dart';
 import '../../../musicians/data/musician_repository.dart';
 import '../../../musicians/domain/musician_model.dart';
 import '../../../profile/data/profile_repository.dart';
+import '../../../profile/presentation/widgets/disciplinas.dart';
 import '../widgets/auth_scaffold.dart';
-
-/// Disciplina que se muestra al artista. [value] es lo que espera el backend
-/// (se conserva tal cual); [label] es el nombre neutro que se ve.
-class _Disciplina {
-  const _Disciplina(this.label, this.value, this.icon, this.description,
-      this.accent);
-  final String label;
-  final String value;
-  final IconData icon;
-  final String description;
-  final NcAccent Function(NcColors) accent;
-}
-
-final _kDisciplinas = <_Disciplina>[
-  _Disciplina('Artesanía', 'Artesano', Icons.content_cut_rounded,
-      'Barniz de Pasto, tamo, tejidos y técnicas tradicionales.',
-      (nc) => nc.naranjaA),
-  _Disciplina('Fotografía', 'Fotógrafo', Icons.camera_alt_outlined,
-      'El Carnaval, los paisajes y la gente del territorio.', (nc) => nc.azulA),
-  _Disciplina('Escultura', 'Escultor', Icons.architecture_rounded,
-      'Formas en madera, piedra, metal y otros materiales.', (nc) => nc.oroA),
-  _Disciplina('Pintura', 'Pintor', Icons.brush_outlined,
-      'Lienzo, mural, acuarela y otras superficies.', (nc) => nc.magentaA),
-  _Disciplina('Música', 'Música', Icons.music_note_rounded,
-      'Composición, interpretación y producción musical.', (nc) => nc.tomateA),
-];
 
 /// Clave: valor que espera el backend. Valor: etiqueta visible.
 const _kAgrupaciones = <String, String>{
@@ -100,7 +75,7 @@ class _ArtisticProfileScreenState extends State<ArtisticProfileScreen> {
             : 'Artista';
         final discipline = profile.disciplina;
         if (discipline.isNotEmpty && mounted) {
-          if (discipline == 'Música') {
+          if (esDisciplinaMusical(discipline)) {
             final musician = await _musicianRepo.getMyProfile();
             if (!mounted) return;
             if (musician != null) {
@@ -146,7 +121,7 @@ class _ArtisticProfileScreenState extends State<ArtisticProfileScreen> {
     try {
       await _profileRepo.updateMyProfile(disciplina: _selected);
       if (!mounted) return;
-      if (_selected == 'Música') {
+      if (esDisciplinaMusical(_selected)) {
         _artisticNameCtrl.text = _firstName;
         _fetchGenres();
         setState(() {
@@ -221,7 +196,7 @@ class _ArtisticProfileScreenState extends State<ArtisticProfileScreen> {
           : Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                for (final d in _kDisciplinas) ...[
+                for (final d in kDisciplinas) ...[
                   _DisciplinaTile(
                     disciplina: d,
                     accent: d.accent(nc),
@@ -400,7 +375,7 @@ class _DisciplinaTile extends StatelessWidget {
     required this.onTap,
   });
 
-  final _Disciplina disciplina;
+  final Disciplina disciplina;
   final NcAccent accent;
   final bool selected;
   final VoidCallback? onTap;
