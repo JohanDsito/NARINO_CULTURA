@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/nc_theme.dart';
 
 class ImageError extends StatelessWidget {
   const ImageError({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgSubtle = isDark ? AppColors.bgSubtleDark : AppColors.bgSubtleLight;
-    final iconColor = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final nc = context.nc;
+    final bgSubtle = nc.itemFill;
+    final iconColor = nc.textMuted;
     return Container(
       color: bgSubtle,
       child: Icon(Icons.image_outlined, size: 60, color: iconColor),
