@@ -6,12 +6,19 @@ import '../../../core/network/api_client.dart';
 class AuctionsService {
   Dio get _dio => ApiClient.instance.dio;
 
-  /// Lista de subastas. El backend solo filtra por `status`
-  /// (PENDIENTE, ACTIVA, CERRADA, CANCELADA); el resto se filtra en la app.
-  /// Cada subasta se completa con título, imagen y artista de su obra.
-  Future<List<dynamic>> getAuctions({String? estado}) async {
+  /// Lista de subastas, filtrada por `status` y, con sesión, por
+  /// `?mine=true` (las que vendo) o `?participating=true` (en las que pujé).
+  /// El backend ya trae `artwork_title`, `artwork_image_url` y `artist_name`;
+  /// solo si faltan (backend viejo) se buscan las obras aparte.
+  Future<List<dynamic>> getAuctions({
+    String? estado,
+    bool mine = false,
+    bool participating = false,
+  }) async {
     final qp = <String, dynamic>{'page_size': 100};
     if (estado != null && estado.isNotEmpty) qp['status'] = estado.toUpperCase();
+    if (mine) qp['mine'] = 'true';
+    if (participating) qp['participating'] = 'true';
 
     final r = await _dio.get(ApiConstants.auctions, queryParameters: qp);
     final data = r.data;
@@ -21,7 +28,11 @@ class AuctionsService {
     final subastas =
         raw.whereType<Map>().map((e) => e.cast<String, dynamic>()).toList();
 
-    final ids = subastas.map(_obraId).where((id) => id.isNotEmpty).toSet();
+    final ids = subastas
+        .where((s) => s['artwork_title'] == null)
+        .map(_obraId)
+        .where((id) => id.isNotEmpty)
+        .toSet();
     final obras = await _artworksById(ids);
     return subastas.map((s) => _conObra(s, obras[_obraId(s)])).toList();
   }
@@ -88,7 +99,21 @@ class AuctionsService {
 
   Future<Map<String, dynamic>> getAuctionDetail(String id) async {
     final r = await _dio.get('${ApiConstants.auctions}$id/');
-    final subasta = (r.data as Map).cast<String, dynamic>();
+    var subasta = (r.data as Map).cast<String, dynamic>();
+    // Historial público de pujas (GET /auctions/{id}/bids/), más reciente
+    // primero, con `bidder_name` e `is_mine`.
+    try {
+      final b = await _dio.get('${ApiConstants.auctions}$id/bids/',
+          queryParameters: {'page_size': 20});
+      final data = b.data;
+      final pujas = data is List
+          ? data
+          : (data is Map ? data['results'] as List? ?? const [] : const []);
+      subasta = {...subasta, 'bids': pujas};
+    } catch (_) {
+      // Sin historial: el detalle sigue con las pujas en vivo.
+    }
+    if (subasta['artwork_title'] != null) return subasta;
     final obraId = _obraId(subasta);
     if (obraId.isEmpty) return subasta;
     // En el detalle sí se abre la obra: es una visita real del usuario.

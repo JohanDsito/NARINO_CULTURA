@@ -58,7 +58,7 @@ final _lista = [
 
 class _Repo extends AuctionsRepository {
   @override
-  Future<List<AuctionModel>> getAuctions({String? estado}) async => _lista;
+  Future<List<AuctionModel>> getAuctions({String? estado, bool mine = false, bool participating = false}) async => _lista;
   @override
   Future<AuctionModel> getDetail(String id) async => _a('1', 'Carnaval de Negros y Blancos',
       inicio: const Duration(days: -1), cierre: const Duration(minutes: 42),

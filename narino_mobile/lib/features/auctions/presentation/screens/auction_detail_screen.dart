@@ -636,7 +636,8 @@ class _PujasEnVivo extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text(pujas[i].bidderName,
+                    child: Text(
+                        pujas[i].esMia ? 'Tú' : pujas[i].bidderName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: AppTypography.labelSemiBold(
