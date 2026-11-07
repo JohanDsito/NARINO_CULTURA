@@ -38,9 +38,7 @@ class EventsService {
     await _dio.post(ApiConstants.eventRegister.replaceFirst('{id}', id));
   }
 
-  /// NOTA: el backend actualmente no expone un endpoint para cancelar la
-  /// inscripción a un evento (la acción `register` solo acepta POST), así
-  /// que esta llamada devolverá un error hasta que se agregue soporte allá.
+  /// Cancela la inscripción (`DELETE /events/{id}/register/`).
   Future<void> unregisterFromEvent(String id) async {
     await _dio.delete(ApiConstants.eventRegister.replaceFirst('{id}', id));
   }

@@ -93,7 +93,8 @@ class EventModel {
               parsedFecha.add(const Duration(hours: 2)))
           .isBefore(DateTime.now()),
       publicado: json['is_published'] as bool? ?? true,
-      estaSuscrito: json['esta_suscrito'] as bool? ??
+      estaSuscrito: json['is_registered'] as bool? ??
+          json['esta_suscrito'] as bool? ??
           json['is_subscribed'] as bool? ??
           false,
       latitud: (json['latitud'] as num?)?.toDouble() ??
