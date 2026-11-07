@@ -195,6 +195,21 @@ Guía completa de color y componentes: **`docs/DISENO_CARNAVAL.md`**.
 
 ---
 
+## Inspección final (2026-11-06) 🔍
+| Revisión | Resultado |
+|---|---|
+| `flutter analyze` / pruebas | ✅ sin problemas · 365 pruebas |
+| Código muerto (alcance desde `main.dart`) | ✅ 5 archivos sin uso eliminados |
+| Rutas: cada `push`/`go` tiene su `GoRoute` | ✅ 50 rutas, ninguna rota |
+| Estrés: 320 px + texto al 130 % en todas las capturas | ✅ 6 desbordes corregidos (cabecera, pastillas, orden, evento, sugerencias del chat) |
+| Restos de la paleta vieja | ✅ avisos de eventos y piezas del detalle de obra migrados; quedan solo correo/sesiones/portafolio (ocultos como "Pronto") |
+| Avisos de eventos sin endpoint | ✅ guarda en el teléfono en vez de fallar |
+| Sesión | ✅ una sola renovación concurrente; listo si el backend rota el refresh |
+| Nombre de la app en el teléfono | ✅ "Nariño Cultura" (era `narino_mobile`) |
+| Compilar APK | ⚠️ Android Studio trae **Java 25** y Gradle 8.12 no lo soporta. Con Java 21: `flutter config --jdk-dir "C:\Program Files\Java\jdk-21.0.11"` y luego `flutter build apk` |
+
+---
+
 ## Mejoras sugeridas 💡
 - ✅ Hecho en main (#172–#177): músicos, datos de subasta + pujas + filtros, cancelar inscripción, `seller_amount`, `/artists/me/`, filtros del catálogo, detalle de orden y reenvío de verificación. Ya conectado en la app.
 - Pendiente en backend: `ai/generate-description/`, `notifications/event-preferences/`, portafolio, `change-email`, `sessions` (contratos enviados al equipo).
@@ -222,3 +237,4 @@ Guía completa de color y componentes: **`docs/DISENO_CARNAVAL.md`**.
 - 2026-11-06 — Rediseño del módulo de Perfil completo (8 pantallas) y nueva pantalla Cambiar contraseña. Arreglados #58–#75. Siguiente: Notificaciones y Chatbot.
 - 2026-11-06 — Política de privacidad v1.1 alineada con el backend. Bandeja de Notificaciones rediseñada. Backend sincronizado con main (#171–#177) y conectado en la app: subastas, eventos, catálogo, `/artists/me/`, carrito y favoritos. Siguiente: Chatbot.
 - 2026-11-06 — Rediseño del Chatbot y arreglos #78–#81. Con esto queda rediseñada toda la app.
+- 2026-11-06 — Inspección final: código muerto, rutas, estrés de letra grande, avisos de eventos, sesión y nombre de la app. Ver sección "Inspección final".
