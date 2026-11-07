@@ -39,6 +39,16 @@ class ProfileService {
     return (count: count, slug: slug);
   }
 
+  /// Slug del perfil propio: `/artists/me/` y, si no existe, la lista.
+  Future<String?> _mySlug(String? userId) async {
+    try {
+      final r = await _dio.get(ApiConstants.artistMe);
+      final slug = (r.data as Map)['slug']?.toString();
+      if (slug != null && slug.isNotEmpty) return slug;
+    } catch (_) {}
+    return _fetchArtistSlug(userId);
+  }
+
   /// Busca el perfil del artista en la lista paginada y devuelve su slug.
   Future<String?> _fetchArtistSlug(String? userId) async {
     if (userId == null || userId.isEmpty) return null;
@@ -76,8 +86,26 @@ class ProfileService {
     final userData = Map<String, dynamic>.from(userResponse.data as Map);
 
     if ((userData['role'] as String?)?.toLowerCase() == 'artista') {
+      // GET /artists/me/: el perfil propio en una sola petición (trae
+      // artworks_count e is_following). 404 = aún no tiene perfil artístico.
       try {
-        // 1 petición: total de obras propias + slug (si tiene obras).
+        final r = await _dio.get(ApiConstants.artistMe);
+        final artistData = Map<String, dynamic>.from(r.data as Map);
+        artistData['avatar_url'] ??= userData['avatar_url'];
+        artistData['is_verified'] ??= userData['is_verified'];
+        return artistData;
+      } on DioException catch (e) {
+        if (e.response?.statusCode == 404) {
+          final detail = e.response?.data is Map
+              ? (e.response!.data as Map)['detail']?.toString() ?? ''
+              : '';
+          // 404 propio del endpoint: no tiene perfil. Otro 404 (backend sin
+          // /artists/me/) cae a la búsqueda de antes.
+          if (detail.contains('perfil de artista')) return userData;
+        }
+      } catch (_) {}
+      try {
+        // Respaldo: total de obras propias + slug (si tiene obras).
         final resumen = await _myArtworksSummary();
         // Sin obras no hay de dónde sacar el slug: se busca en la lista.
         final slug = resumen.slug ??
@@ -151,7 +179,7 @@ class ProfileService {
       if (artistUpdates.isNotEmpty) {
         // Resolver slug: usar el passado si es un slug real, sino buscar en lista
         String? slug = _looksLikeSlug(artistId) ? artistId : null;
-        slug ??= await _fetchArtistSlug(userId);
+        slug ??= await _mySlug(userId);
 
         if (slug != null && slug.isNotEmpty) {
           await _dio.patch(
