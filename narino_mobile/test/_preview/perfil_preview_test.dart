@@ -10,6 +10,8 @@ import 'package:narino_cultura/features/profile/domain/profile_model.dart';
 import 'package:narino_cultura/features/profile/domain/profile_state.dart';
 import 'package:narino_cultura/features/profile/presentation/providers/profile_provider.dart';
 import 'package:narino_cultura/features/profile/presentation/screens/artist_public_profile_screen.dart';
+import 'package:narino_cultura/features/profile/presentation/screens/edit_profile_screen.dart';
+import 'package:narino_cultura/features/profile/presentation/screens/following_screen.dart';
 import 'package:narino_cultura/features/profile/presentation/screens/my_profile_screen.dart';
 
 import '../support/test_helpers.dart';
@@ -55,7 +57,19 @@ class _Repo extends ProfileRepository {
   @override
   Future<ProfileModel> getProfileById(String id) async => _artista;
   @override
-  Future<List<ProfileModel>> getMyFollowing() async => [_artista];
+  Future<List<ProfileModel>> getMyFollowing() async => [
+        _artista,
+        const ProfileModel(
+          id: 'tierra-de-volcanes', userId: '9', nombreArtistico: 'Tierra de Volcanes',
+          disciplina: '', seguidores: 0, siguiendo: 0, esSeguido: true,
+          esVerificado: false, redesSociales: {}, totalObras: 0,
+          obrasDisponibles: 0, esMusico: true),
+        const ProfileModel(
+          id: 'luis-zambrano', userId: '5', nombreArtistico: 'Luis Zambrano',
+          disciplina: 'Artesano', seguidores: 0, siguiendo: 0, esSeguido: true,
+          esVerificado: false, redesSociales: {}, totalObras: 0,
+          obrasDisponibles: 0, ciudad: 'Sandoná'),
+      ];
 }
 
 class _Notifier extends NoOpProfileNotifier {
@@ -82,6 +96,14 @@ void main() {
     testWidgets('mi_perfil', skip: previewSkip, (t) async {
       await capture(t, name: 'mi_perfil', dark: dark, overrides: ov(), height: 1700,
           home: const MainShell(location: '/profile', child: MyProfileScreen()));
+    });
+    testWidgets('editar_perfil', skip: previewSkip, (t) async {
+      await capture(t, name: 'editar_perfil', dark: dark, overrides: ov(), height: 1650,
+          home: const EditProfileScreen());
+    });
+    testWidgets('siguiendo', skip: previewSkip, (t) async {
+      await capture(t, name: 'siguiendo', dark: dark, overrides: ov(), height: 700,
+          home: const FollowingScreen());
     });
     testWidgets('perfil_publico', skip: previewSkip, (t) async {
       await capture(t, name: 'perfil_publico', dark: dark, overrides: ov(), height: 1350,

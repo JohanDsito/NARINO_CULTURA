@@ -106,6 +106,13 @@ Novedades del backend que impactan la app:
 | 59 | Perfil público | El botón siempre decía "Seguir" aunque ya la siguieras (`ArtistProfileSerializer` no trae `is_following`) | ✅ se deduce de `artists/following/`, conteo optimista |
 | 60 | Perfil público | Podías seguir tu propio perfil | ✅ en tu perfil aparece "Editar perfil" |
 | 61 | Tema | Si el llavero del teléfono fallaba, leer el tema lanzaba una excepción | ✅ se usa el tema por defecto |
+| 62 | Editar perfil | Usaba disciplinas distintas a las del onboarding y la web; con "Pintor", "Artesano"… el desplegable se rompía al abrir | ✅ lista compartida (`disciplinas.dart`), conserva valores desconocidos |
+| 63 | Editar perfil | La foto nueva no se veía: se limpiaba la caché de `NetworkImage` y el avatar usa `CachedNetworkImage` | ✅ |
+| 64 | Editar perfil | No se podía quitar el sitio web; enlaces sin `https://` los rechazaba el backend sin explicar | ✅ se envía vacío; se completa `https://` y se entiende `@usuario` |
+| 65 | Editar perfil | Si fallaba el perfil musical igual decía "actualizado" | ✅ aviso claro |
+| 66 | Editar perfil | El municipio (`city`) no se podía editar | ✅ |
+| 67 | Editar perfil | Salir con cambios sin guardar los perdía sin avisar | ✅ confirmación |
+| 68 | Música | Solo "Música" con tilde exacta contaba como músico ("Musica"/"Músico" de la web no) | ✅ `esDisciplinaMusical` |
 | 40 | Ventas | Una orden con obras de varios artistas suma el total completo; `OrderItemSerializer` no dice de quién es cada ítem | 🚫 pedir `artist_slug` en el ítem |
 
 ---

@@ -106,6 +106,7 @@ class ProfileService {
     File? foto,
     Map<String, String>? redesSociales,
     String? artistId,
+    String? ciudad,
   }) async {
     // ─── 1. Obtener userId del usuario actual ─────────────────────────────────
     final userResponse = await _dio.get(ApiConstants.myProfile);
@@ -137,13 +138,14 @@ class ProfileService {
       if (nombreArtistico != null) artistUpdates['artistic_name'] = nombreArtistico;
       if (disciplina != null) artistUpdates['discipline'] = disciplina;
       if (biografia != null) artistUpdates['bio'] = biografia;
+      if (ciudad != null) artistUpdates['city'] = ciudad.trim();
       if (redesSociales != null) {
         String toUrl(String? v) => v?.trim() ?? '';
         artistUpdates['instagram_url'] = toUrl(redesSociales['instagram']);
         artistUpdates['facebook_url'] = toUrl(redesSociales['facebook']);
         artistUpdates['tiktok_url'] = toUrl(redesSociales['tiktok']);
-        final website = toUrl(redesSociales['website']);
-        if (website.isNotEmpty) artistUpdates['website_url'] = website;
+        // Se envía aunque esté vacío para poder quitar el sitio web.
+        artistUpdates['website_url'] = toUrl(redesSociales['website']);
       }
 
       if (artistUpdates.isNotEmpty) {
