@@ -122,11 +122,15 @@ Novedades del backend que impactan la app:
 | 75 | Privacidad | "Ejercer mis derechos" no hacía nada en Android 11+ (`canLaunchUrl(mailto)` da false sin `<queries>`) | ✅ abre el correo directo o copia la dirección |
 | 76 | Privacidad | El texto legal no coincidía con el backend (bcrypt, token de 15 min, bloqueo tras 5 intentos, fecha de aceptación guardada, retención de 5 años, OpenAI, dispositivo y ubicación) y faltaba la Sección 5 | ✅ v1.1 alineada con el backend y secciones 1–9 |
 | 77 | Eliminar cuenta (backend) | Si una artista ya vendió obras, borrar su cuenta da 500: `Artwork` cae en cascada pero `OrderItem.artwork` es `PROTECT` | 🚫 nota al equipo de back |
+| 78 | Chatbot | El historial se enviaba con rol `assistant` y Gemini solo acepta `user`/`model`: desde el 2.º mensaje respondían las reglas de respaldo | ✅ se envía `model` |
+| 79 | Chatbot | Con la IA caída el backend manda una respuesta de respaldo (503 + `reply`) y la app mostraba "No se pudo conectar" | ✅ se muestra el respaldo; 429 con mensaje claro |
+| 80 | Chatbot | Las respuestas mostraban el markdown crudo (`**`, `*`) | ✅ negritas, viñetas y títulos |
+| 81 | Chatbot | Al reintentar, el desplazamiento pasaba del final y bloqueaba los toques un momento | ✅ |
 | 40 | Ventas | Una orden con obras de varios artistas sumaba el total completo | ✅ `seller_amount` e ítems del artista (#173) |
 
 ---
 
-## Fase 3 — Nueva interfaz (por pantallas) 🔧
+## Fase 3 — Nueva interfaz (por pantallas) ✅
 
 Fuente: `narino_cultura_movil_1_design_system.html` y `narino_cultura_movil_2_inicio.html`.
 
@@ -187,7 +191,7 @@ Guía completa de color y componentes: **`docs/DISENO_CARNAVAL.md`**.
 | Músicos / Detalle / Subir obra / Descubrimiento musical | ✅ azul, seguir confiable, reseñas y enlaces para escuchar |
 | Perfil: Mi perfil, público, editar, siguiendo, estadísticas, contraseña, eliminar cuenta, privacidad | ✅ portafolio, correo y sesiones quedan "Pronto" (sin backend) |
 | Notificaciones | ✅ color por tipo, agrupadas por fecha, filtro sin leer |
-| Chatbot | ⏳ |
+| Chatbot | ✅ bienvenida con sugerencias por color, burbujas, markdown, reintentar y nueva conversación |
 
 ---
 
@@ -217,3 +221,4 @@ Guía completa de color y componentes: **`docs/DISENO_CARNAVAL.md`**.
 - 2026-11-06 — Rediseño de Músicos, detalle, subir obra y Descubrimiento musical. Arreglados #18, #54–#57. Siguiente: Perfil.
 - 2026-11-06 — Rediseño del módulo de Perfil completo (8 pantallas) y nueva pantalla Cambiar contraseña. Arreglados #58–#75. Siguiente: Notificaciones y Chatbot.
 - 2026-11-06 — Política de privacidad v1.1 alineada con el backend. Bandeja de Notificaciones rediseñada. Backend sincronizado con main (#171–#177) y conectado en la app: subastas, eventos, catálogo, `/artists/me/`, carrito y favoritos. Siguiente: Chatbot.
+- 2026-11-06 — Rediseño del Chatbot y arreglos #78–#81. Con esto queda rediseñada toda la app.
