@@ -29,7 +29,9 @@ class _VerifyEmailPendingScreenState
     if (_resending) return;
     setState(() => _resending = true);
     try {
-      await ref.read(authRepositoryProvider).resendVerification();
+      await ref
+          .read(authRepositoryProvider)
+          .resendVerification(email: widget.email);
       if (mounted) setState(() => _resent = true);
     } catch (_) {
       // El backend aún no expone el reenvío: se avisa en vez de fallar en
