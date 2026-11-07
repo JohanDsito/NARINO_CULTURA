@@ -19,6 +19,7 @@ import 'package:narino_cultura/features/profile/presentation/screens/delete_acco
 import 'package:narino_cultura/features/profile/presentation/screens/edit_profile_screen.dart';
 import 'package:narino_cultura/features/profile/presentation/screens/following_screen.dart';
 import 'package:narino_cultura/features/profile/presentation/screens/my_profile_screen.dart';
+import 'package:narino_cultura/features/profile/presentation/screens/privacy_policy_screen.dart';
 
 import '../support/test_helpers.dart';
 import 'preview_support.dart';
@@ -134,6 +135,10 @@ void main() {
     testWidgets('eliminar_cuenta', skip: previewSkip, (t) async {
       await capture(t, name: 'eliminar_cuenta', dark: dark, overrides: ov(), height: 900,
           home: const DeleteAccountScreen());
+    });
+    testWidgets('privacidad', skip: previewSkip, (t) async {
+      await capture(t, name: 'privacidad', dark: dark, overrides: ov(), height: 1900,
+          home: const PrivacyPolicyScreen());
     });
     testWidgets('perfil_publico', skip: previewSkip, (t) async {
       await capture(t, name: 'perfil_publico', dark: dark, overrides: ov(), height: 1350,

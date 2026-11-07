@@ -1,243 +1,553 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
-import 'privacy_policy_screen/body.dart';
-import 'privacy_policy_screen/bullet.dart';
-import 'privacy_policy_screen/contact_section.dart';
-import 'privacy_policy_screen/info_row.dart';
-import 'privacy_policy_screen/rights_section.dart';
-import 'privacy_policy_screen/section.dart';
-import 'privacy_policy_screen/sub_title.dart';
+import '../../../../core/theme/nc_theme.dart';
+import '../../../../shared/widgets/design/design.dart';
 
+const _kCorreo = 'privacidad@nariniocultura.edu.co';
+
+/// Política de privacidad. El texto legal se conserva tal cual; aquí solo
+/// cambia la presentación (secciones plegables, derechos y canales a la vista).
 class PrivacyPolicyScreen extends StatelessWidget {
   const PrivacyPolicyScreen({super.key});
 
+  Future<void> _escribir(BuildContext context) async {
+    final uri = Uri(
+      scheme: 'mailto',
+      path: _kCorreo,
+      queryParameters: {
+        'subject': 'Solicitud de derechos ARCO — [Tipo de solicitud]',
+        'body':
+            'Nombre completo: \nCorreo registrado: \nTipo de solicitud: \nDescripción: ',
+      },
+    );
+    // canLaunchUrl('mailto:') da false en Android 11+ sin <queries>: se
+    // intenta abrir directo y, si no hay app de correo, se copia la dirección.
+    var abierto = false;
+    try {
+      abierto = await launchUrl(uri);
+    } catch (_) {}
+    if (abierto || !context.mounted) return;
+    await Clipboard.setData(const ClipboardData(text: _kCorreo));
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('No encontramos una app de correo. Copiamos la '
+            'dirección para que la pegues.')));
+  }
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final textPrimary =
-        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-    final textSecondary =
-        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
-    final textMuted =
-        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
-    final border = isDark ? AppColors.borderDark : AppColors.borderLight;
-    final bgSubtle = isDark ? AppColors.bgSubtleDark : AppColors.bgSubtleLight;
-    final cs = theme.colorScheme;
-
+    final nc = context.nc;
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Text(
-          'Privacidad',
-          style: AppTypography.displaySemiBold(),
-        ),
-      ),
+      appBar: AppBar(title: const Text('Privacidad')),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
-          // Encabezado
-          Center(
-            child: Column(
-              children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: cs.primary.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.shield_outlined, color: cs.primary, size: 28),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Política de Privacidad',
-                  style: AppTypography.displaySemiBold(color: textPrimary)
-                      .copyWith(fontSize: 20),
+          // ── Encabezado ──
+          Column(
+            children: [
+              NcAccentIcon(
+                  icon: Icons.shield_outlined,
+                  accent: nc.successA,
+                  size: 60,
+                  glow: true),
+              const SizedBox(height: 14),
+              Text('Política de Privacidad',
                   textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Nariño Cultura · Versión 1.0 · 2026',
-                  style: AppTypography.caption(color: textMuted),
-                  textAlign: TextAlign.center,
-                ),
-                Text(
+                  style: AppTypography.displayBold(color: nc.textPrimary)
+                      .copyWith(fontSize: 24)),
+              const SizedBox(height: 4),
+              Text(
+                  'Nariño Cultura · Versión 1.0 · 2026\n'
                   'Universidad Cooperativa de Colombia',
-                  style: AppTypography.caption(color: textMuted),
                   textAlign: TextAlign.center,
-                ),
+                  style: AppTypography.bodySmall(color: nc.textMuted)),
+              const SizedBox(height: 12),
+              const NcSerpentina(width: 56),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // ── Lo esencial (frases tomadas de la política) ──
+          NcCard(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Lo esencial',
+                    style: AppTypography.displaySemiBold(color: nc.textPrimary)
+                        .copyWith(fontSize: 17)),
+                const SizedBox(height: 8),
+                _Punto(
+                    icon: Icons.block_rounded,
+                    accent: nc.successA,
+                    text: 'La Plataforma NO vende, alquila ni comparte datos '
+                        'personales con fines comerciales.'),
+                _Punto(
+                    icon: Icons.credit_card_off_outlined,
+                    accent: nc.tienda,
+                    text: 'Los pagos los procesa Wompi. La Plataforma NO '
+                        'almacena datos de tarjetas.'),
+                _Punto(
+                    icon: Icons.verified_user_outlined,
+                    accent: nc.azulA,
+                    text: 'El ejercicio de tus derechos no tiene ningún costo.'),
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
 
-          // Sección 1 — Responsable
-          PolicySection(
-            title: 'Sección 1. Responsable del Tratamiento',
-            textPrimary: textPrimary,
-            textSecondary: textSecondary,
-            border: border,
-            bgSubtle: bgSubtle,
+          const _Seccion(
+            numero: 1,
+            titulo: 'Responsable del Tratamiento',
             children: [
-              PolicyBody(
-                'El responsable del tratamiento es el equipo de desarrollo del proyecto '
-                'Nariño Cultura, conformado por estudiantes del programa de Ingeniería '
-                'de Software de la Universidad Cooperativa de Colombia, sede San Juan de '
-                'Pasto, Nariño.',
-                color: textSecondary,
-              ),
+              _Parrafo(
+                  'El responsable del tratamiento es el equipo de desarrollo del proyecto '
+                  'Nariño Cultura, conformado por estudiantes del programa de Ingeniería '
+                  'de Software de la Universidad Cooperativa de Colombia, sede San Juan de '
+                  'Pasto, Nariño.'),
+              SizedBox(height: 10),
+              _Dato('Proyecto', 'Nariño Cultura'),
+              _Dato('Institución',
+                  'Universidad Cooperativa de Colombia — Sede Pasto'),
+              _Dato('Correo de contacto', _kCorreo),
+              _Dato('Dirección',
+                  'Calle 11 # 6-08, San Juan de Pasto, Nariño, Colombia'),
+            ],
+          ),
+          const _Seccion(
+            numero: 2,
+            titulo: 'Marco Legal Aplicable',
+            children: [
+              _Vineta('Ley 1581 de 2012 — Ley Estatutaria de Protección de Datos Personales.'),
+              _Vineta('Decreto 1074 de 2015 — Decreto Único Reglamentario del Sector Comercio.'),
+              _Vineta('Ley 1266 de 2008 — Disposiciones generales sobre Hábeas Data.'),
+              _Vineta('Circular Única de la SIC — Instrucciones sobre tratamiento de información personal.'),
+            ],
+          ),
+          const _Seccion(
+            numero: 3,
+            titulo: 'Autorización para el Tratamiento',
+            children: [
+              _Parrafo(
+                  'El consentimiento expreso se recoge mediante un checkbox obligatorio '
+                  'en el formulario de registro. El usuario no puede crear una cuenta '
+                  'sin haber aceptado expresamente esta política. La fecha y hora de '
+                  'aceptación quedan registradas para fines de auditoría.'),
+            ],
+          ),
+          const _Seccion(
+            numero: 4,
+            titulo: 'Datos Recolectados y Finalidades',
+            children: [
+              _Subtitulo('Datos de Identificación (todos los usuarios)'),
+              _Vineta('Nombre completo y nombre artístico: identificación dentro de la Plataforma.'),
+              _Vineta('Correo electrónico: gestión de cuenta y notificaciones.'),
+              _Vineta('Contraseña (hash cifrado): autenticación segura.'),
+              _Vineta('Teléfono (opcional): contacto en transacciones.'),
+              _Subtitulo('Datos del Perfil Artístico (artistas)'),
+              _Vineta('Fotografía de perfil y obras: exhibición pública en catálogo.'),
+              _Vineta('Biografía y trayectoria: presentación al público.'),
+              _Vineta('Disciplina y técnicas: categorización en el catálogo.'),
+              _Subtitulo('Datos de Transacciones'),
+              _Vineta('Historial de compras/ventas: gestión de órdenes y comprobantes.'),
+              _Vineta('Datos de pago: procesados por pasarela (Wompi). La Plataforma NO almacena datos de tarjetas.'),
+              _Subtitulo('Datos de Navegación'),
+              _Vineta('Historial de visualización: recomendaciones personalizadas con IA.'),
+              _Vineta('Dispositivo y SO: compatibilidad y optimización.'),
+              _Vineta('IP y ubicación aproximada: seguridad y estadísticas regionales.'),
+            ],
+          ),
+          const _Seccion(
+            numero: 6,
+            titulo: 'Tiempo de Conservación',
+            children: [
+              _Vineta('Datos de cuenta activa: durante toda la vigencia de la cuenta.'),
+              _Vineta('Datos de transacciones: mínimo 5 años desde la fecha de transacción.'),
+              _Vineta('Tras eliminar la cuenta: datos de identificación eliminados en máximo 30 días naturales.'),
+            ],
+          ),
+
+          // ── Sección 7: derechos, siempre a la vista ──
+          _Seccion(
+            numero: 7,
+            titulo: 'Derechos del Titular',
+            accent: nc.catalogo,
+            abierta: true,
+            children: [
+              const _Parrafo(
+                  'Conforme a los artículos 8 y 9 de la Ley 1581 de 2012, tienes los '
+                  'siguientes derechos frente al tratamiento de tus datos:'),
               const SizedBox(height: 10),
-              InfoRow(label: 'Proyecto', value: 'Nariño Cultura', textPrimary: textPrimary, textSecondary: textSecondary),
-              InfoRow(label: 'Institución', value: 'Universidad Cooperativa de Colombia — Sede Pasto', textPrimary: textPrimary, textSecondary: textSecondary),
-              InfoRow(label: 'Correo de contacto', value: 'privacidad@nariniocultura.edu.co', textPrimary: textPrimary, textSecondary: textSecondary),
-              InfoRow(label: 'Dirección', value: 'Calle 11 # 6-08, San Juan de Pasto, Nariño, Colombia', textPrimary: textPrimary, textSecondary: textSecondary),
+              for (final (icon, derecho, desc) in const [
+                (Icons.search_outlined, 'Conocer', 'Solicitar qué datos tuyos son tratados y con qué finalidad.'),
+                (Icons.edit_outlined, 'Actualizar', 'Solicitar la corrección de datos desactualizados o incompletos.'),
+                (Icons.edit_note_outlined, 'Rectificar', 'Solicitar la corrección de errores en tus datos personales.'),
+                (Icons.delete_outline, 'Suprimir', 'Solicitar la eliminación de tus datos cuando no sean necesarios.'),
+                (Icons.undo_outlined, 'Revocar', 'Retirar el consentimiento otorgado en cualquier momento.'),
+                (Icons.folder_open_outlined, 'Acceder', 'Obtener copia de los datos que obran en nuestras bases de datos.'),
+                (Icons.gavel_outlined, 'Presentar quejas', 'Elevar consultas ante la Superintendencia de Industria y Comercio (SIC).'),
+              ])
+                _Derecho(icon: icon, derecho: derecho, desc: desc),
+              const SizedBox(height: 6),
+              const _Parrafo(
+                  'El ejercicio de estos derechos no tiene ningún costo. Plazos de '
+                  'respuesta: 10 días hábiles para consultas y 15 días hábiles para '
+                  'reclamaciones.',
+                  pequeno: true),
             ],
           ),
 
-          // Sección 2 — Marco legal
-          PolicySection(
-            title: 'Sección 2. Marco Legal Aplicable',
-            textPrimary: textPrimary,
-            textSecondary: textSecondary,
-            border: border,
-            bgSubtle: bgSubtle,
+          // ── Sección 8: canales ──
+          _Seccion(
+            numero: 8,
+            titulo: 'Canales para Ejercer tus Derechos',
+            accent: nc.azulA,
+            abierta: true,
             children: [
-              Bullet('Ley 1581 de 2012 — Ley Estatutaria de Protección de Datos Personales.', color: textSecondary),
-              Bullet('Decreto 1074 de 2015 — Decreto Único Reglamentario del Sector Comercio.', color: textSecondary),
-              Bullet('Ley 1266 de 2008 — Disposiciones generales sobre Hábeas Data.', color: textSecondary),
-              Bullet('Circular Única de la SIC — Instrucciones sobre tratamiento de información personal.', color: textSecondary),
-            ],
-          ),
-
-          // Sección 3 — Autorización
-          PolicySection(
-            title: 'Sección 3. Autorización para el Tratamiento',
-            textPrimary: textPrimary,
-            textSecondary: textSecondary,
-            border: border,
-            bgSubtle: bgSubtle,
-            children: [
-              PolicyBody(
-                'El consentimiento expreso se recoge mediante un checkbox obligatorio '
-                'en el formulario de registro. El usuario no puede crear una cuenta '
-                'sin haber aceptado expresamente esta política. La fecha y hora de '
-                'aceptación quedan registradas para fines de auditoría.',
-                color: textSecondary,
+              _Canal(
+                icon: Icons.mail_outline,
+                accent: nc.azulA,
+                titulo: 'Correo electrónico',
+                texto: '$_kCorreo\nAsunto: "Solicitud de derechos ARCO — [Tipo]"',
+                onTap: () => _escribir(context),
+              ),
+              _Canal(
+                icon: Icons.chat_outlined,
+                accent: nc.catalogo,
+                titulo: 'Chat de soporte',
+                texto: 'Disponible en la Plataforma para consultas generales sobre '
+                    'tratamiento de datos.',
+                onTap: () => context.push('/chatbot'),
+              ),
+              _Canal(
+                icon: Icons.language_outlined,
+                accent: nc.oroA,
+                titulo: 'Formulario web',
+                texto: 'Pie de página de la plataforma web → "Política de '
+                    'Privacidad → Ejercer mis derechos".',
+              ),
+              const SizedBox(height: 6),
+              const _Parrafo(
+                  'Para tramitar tu solicitud necesitarás: nombre completo, correo '
+                  'electrónico registrado y descripción clara del derecho que deseas '
+                  'ejercer.',
+                  pequeno: true),
+              const SizedBox(height: 14),
+              NcPrimaryButton(
+                label: 'Ejercer mis derechos',
+                icon: Icons.send_outlined,
+                onPressed: () => _escribir(context),
               ),
             ],
           ),
 
-          // Sección 4 — Datos recolectados
-          PolicySection(
-            title: 'Sección 4. Datos Recolectados y Finalidades',
-            textPrimary: textPrimary,
-            textSecondary: textSecondary,
-            border: border,
-            bgSubtle: bgSubtle,
+          const _Seccion(
+            numero: 9,
+            titulo: 'Medidas de Seguridad',
             children: [
-              SubTitle('Datos de Identificación (todos los usuarios)', color: textPrimary),
-              Bullet('Nombre completo y nombre artístico: identificación dentro de la Plataforma.', color: textSecondary),
-              Bullet('Correo electrónico: gestión de cuenta y notificaciones.', color: textSecondary),
-              Bullet('Contraseña (hash cifrado): autenticación segura.', color: textSecondary),
-              Bullet('Teléfono (opcional): contacto en transacciones.', color: textSecondary),
-              const SizedBox(height: 8),
-              SubTitle('Datos del Perfil Artístico (artistas)', color: textPrimary),
-              Bullet('Fotografía de perfil y obras: exhibición pública en catálogo.', color: textSecondary),
-              Bullet('Biografía y trayectoria: presentación al público.', color: textSecondary),
-              Bullet('Disciplina y técnicas: categorización en el catálogo.', color: textSecondary),
-              const SizedBox(height: 8),
-              SubTitle('Datos de Transacciones', color: textPrimary),
-              Bullet('Historial de compras/ventas: gestión de órdenes y comprobantes.', color: textSecondary),
-              Bullet('Datos de pago: procesados por pasarela (Wompi). La Plataforma NO almacena datos de tarjetas.', color: textSecondary),
-              const SizedBox(height: 8),
-              SubTitle('Datos de Navegación', color: textPrimary),
-              Bullet('Historial de visualización: recomendaciones personalizadas con IA.', color: textSecondary),
-              Bullet('Dispositivo y SO: compatibilidad y optimización.', color: textSecondary),
-              Bullet('IP y ubicación aproximada: seguridad y estadísticas regionales.', color: textSecondary),
+              _Vineta('Autenticación con tokens JWT cifrados (HS256), expiración de 15 minutos.'),
+              _Vineta('Contraseñas almacenadas con bcrypt (nunca en texto plano).'),
+              _Vineta('Comunicaciones cifradas mediante HTTPS/TLS.'),
+              _Vineta('Control de acceso por roles (artista, comprador, gestor, administrador).'),
+              _Vineta('Protección contra inyección SQL mediante ORM de Django.'),
+              _Vineta('Bloqueo tras 5 intentos fallidos de inicio de sesión (15 minutos).'),
+            ],
+          ),
+          const _Seccion(
+            numero: 10,
+            titulo: 'Transferencia a Terceros',
+            children: [
+              _Vineta('Pasarela de pagos (Wompi): para procesar transacciones.'),
+              _Vineta('Proveedor de correo: envío de notificaciones transaccionales.'),
+              _Vineta('Infraestructura cloud (Railway): alojamiento con garantías de seguridad.'),
+              _Vineta('Proveedor de IA (OpenAI / Gemini): datos de navegación anonimizados para recomendaciones. Sin datos de identificación personal.'),
+              SizedBox(height: 8),
+              _Parrafo('La Plataforma NO vende, alquila ni comparte datos personales con fines comerciales.'),
             ],
           ),
 
-          // Sección 6 — Conservación
-          PolicySection(
-            title: 'Sección 6. Tiempo de Conservación',
-            textPrimary: textPrimary,
-            textSecondary: textSecondary,
-            border: border,
-            bgSubtle: bgSubtle,
-            children: [
-              Bullet('Datos de cuenta activa: durante toda la vigencia de la cuenta.', color: textSecondary),
-              Bullet('Datos de transacciones: mínimo 5 años desde la fecha de transacción.', color: textSecondary),
-              Bullet('Tras eliminar la cuenta: datos de identificación eliminados en máximo 30 días naturales.', color: textSecondary),
-            ],
-          ),
-
-          // ─── Sección 7 — DERECHOS DEL TITULAR (destacada) ─────────────────
-          RightsSection(
-            textPrimary: textPrimary,
-            textSecondary: textSecondary,
-            border: border,
-            cs: cs,
-          ),
-
-          // ─── Sección 8 — CANALES DE CONTACTO (destacada) ──────────────────
-          ContactSection(
-            textPrimary: textPrimary,
-            textSecondary: textSecondary,
-            textMuted: textMuted,
-            border: border,
-            cs: cs,
-          ),
-
-          // Sección 9 — Medidas de seguridad
-          PolicySection(
-            title: 'Sección 9. Medidas de Seguridad',
-            textPrimary: textPrimary,
-            textSecondary: textSecondary,
-            border: border,
-            bgSubtle: bgSubtle,
-            children: [
-              Bullet('Autenticación con tokens JWT cifrados (HS256), expiración de 15 minutos.', color: textSecondary),
-              Bullet('Contraseñas almacenadas con bcrypt (nunca en texto plano).', color: textSecondary),
-              Bullet('Comunicaciones cifradas mediante HTTPS/TLS.', color: textSecondary),
-              Bullet('Control de acceso por roles (artista, comprador, gestor, administrador).', color: textSecondary),
-              Bullet('Protección contra inyección SQL mediante ORM de Django.', color: textSecondary),
-              Bullet('Bloqueo tras 5 intentos fallidos de inicio de sesión (15 minutos).', color: textSecondary),
-            ],
-          ),
-
-          // Sección 10 — Transferencia a terceros
-          PolicySection(
-            title: 'Sección 10. Transferencia a Terceros',
-            textPrimary: textPrimary,
-            textSecondary: textSecondary,
-            border: border,
-            bgSubtle: bgSubtle,
-            children: [
-              Bullet('Pasarela de pagos (Wompi): para procesar transacciones.', color: textSecondary),
-              Bullet('Proveedor de correo: envío de notificaciones transaccionales.', color: textSecondary),
-              Bullet('Infraestructura cloud (Railway): alojamiento con garantías de seguridad.', color: textSecondary),
-              Bullet('Proveedor de IA (OpenAI / Gemini): datos de navegación anonimizados para recomendaciones. Sin datos de identificación personal.', color: textSecondary),
-              const SizedBox(height: 8),
-              PolicyBody('La Plataforma NO vende, alquila ni comparte datos personales con fines comerciales.', color: textSecondary),
-            ],
-          ),
-
-          const SizedBox(height: 32),
-
-          // Pie
-          Center(
-            child: Text(
-              'Nariño Cultura · Versión 1.0 · San Juan de Pasto, Nariño, 2026\nUniversidad Cooperativa de Colombia · Ingeniería de Software',
-              style: AppTypography.caption(color: textMuted),
-              textAlign: TextAlign.center,
-            ),
-          ),
           const SizedBox(height: 24),
+          Text(
+            'Nariño Cultura · Versión 1.0 · San Juan de Pasto, Nariño, 2026\n'
+            'Universidad Cooperativa de Colombia · Ingeniería de Software',
+            textAlign: TextAlign.center,
+            style: AppTypography.bodySmall(color: nc.textMuted),
+          ),
         ],
       ),
+    );
+  }
+}
+
+/// Sección plegable de la política.
+class _Seccion extends StatelessWidget {
+  const _Seccion({
+    required this.numero,
+    required this.titulo,
+    required this.children,
+    this.accent,
+    this.abierta = false,
+  });
+
+  final int numero;
+  final String titulo;
+  final List<Widget> children;
+  final NcAccent? accent;
+  final bool abierta;
+
+  @override
+  Widget build(BuildContext context) {
+    final nc = context.nc;
+    final a = accent;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Container(
+        decoration: BoxDecoration(
+          color: a == null ? nc.bgCard : Color.alphaBlend(a.tint, nc.bgCard),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+              color: a == null ? nc.border : a.fill.withValues(alpha: 0.45)),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Theme(
+          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+          child: ExpansionTile(
+            initiallyExpanded: abierta,
+            tilePadding: const EdgeInsets.fromLTRB(14, 4, 10, 4),
+            childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            expandedCrossAxisAlignment: CrossAxisAlignment.start,
+            iconColor: a?.ink ?? nc.textSecondary,
+            collapsedIconColor: nc.textMuted,
+            leading: Container(
+              width: 30,
+              height: 30,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: a?.fill ?? nc.itemFill,
+                shape: BoxShape.circle,
+              ),
+              child: Text('$numero',
+                  style: AppTypography.labelMedium(
+                          color: a?.onFill ?? nc.textSecondary)
+                      .copyWith(fontWeight: FontWeight.w800)),
+            ),
+            title: Text(titulo,
+                style: AppTypography.labelSemiBold(
+                    color: a?.ink ?? nc.textPrimary)),
+            children: children,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Parrafo extends StatelessWidget {
+  const _Parrafo(this.text, {this.pequeno = false});
+
+  final String text;
+  final bool pequeno;
+
+  @override
+  Widget build(BuildContext context) {
+    final nc = context.nc;
+    return Text(text,
+        style: pequeno
+            ? AppTypography.bodySmall(color: nc.textSecondary)
+            : AppTypography.bodyMedium(color: nc.textSecondary));
+  }
+}
+
+class _Subtitulo extends StatelessWidget {
+  const _Subtitulo(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final nc = context.nc;
+    return Padding(
+      padding: const EdgeInsets.only(top: 10, bottom: 4),
+      child: Text(text,
+          style: AppTypography.labelSemiBold(color: nc.textPrimary)),
+    );
+  }
+}
+
+class _Vineta extends StatelessWidget {
+  const _Vineta(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final nc = context.nc;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            margin: const EdgeInsets.only(top: 8, right: 10),
+            width: 5,
+            height: 5,
+            decoration:
+                BoxDecoration(color: nc.textMuted, shape: BoxShape.circle),
+          ),
+          Expanded(
+            child: Text(text,
+                style: AppTypography.bodyMedium(color: nc.textSecondary)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Dato extends StatelessWidget {
+  const _Dato(this.label, this.value);
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final nc = context.nc;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: AppTypography.bodySmall(color: nc.textMuted)),
+          const SizedBox(height: 2),
+          SelectableText(value,
+              style: AppTypography.bodyMedium(color: nc.textPrimary)),
+        ],
+      ),
+    );
+  }
+}
+
+class _Punto extends StatelessWidget {
+  const _Punto({required this.icon, required this.accent, required this.text});
+
+  final IconData icon;
+  final NcAccent accent;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final nc = context.nc;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          NcAccentIcon(icon: icon, accent: accent, size: 30),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 5),
+              child: Text(text,
+                  style: AppTypography.bodyMedium(color: nc.textPrimary)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Derecho extends StatelessWidget {
+  const _Derecho({required this.icon, required this.derecho, required this.desc});
+
+  final IconData icon;
+  final String derecho;
+  final String desc;
+
+  @override
+  Widget build(BuildContext context) {
+    final nc = context.nc;
+    final a = nc.catalogo;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 20, color: a.ink),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text.rich(
+              TextSpan(children: [
+                TextSpan(
+                    text: '$derecho. ',
+                    style: AppTypography.labelSemiBold(color: nc.textPrimary)),
+                TextSpan(
+                    text: desc,
+                    style: AppTypography.bodyMedium(color: nc.textSecondary)),
+              ]),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Canal extends StatelessWidget {
+  const _Canal({
+    required this.icon,
+    required this.accent,
+    required this.titulo,
+    required this.texto,
+    this.onTap,
+  });
+
+  final IconData icon;
+  final NcAccent accent;
+  final String titulo;
+  final String texto;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final nc = context.nc;
+    final fila = Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          NcAccentIcon(icon: icon, accent: accent, size: 36),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(titulo,
+                    style: AppTypography.labelSemiBold(color: nc.textPrimary)),
+                const SizedBox(height: 2),
+                Text(texto,
+                    style: AppTypography.bodySmall(color: nc.textSecondary)),
+              ],
+            ),
+          ),
+          if (onTap != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Icon(Icons.chevron_right_rounded, color: nc.textMuted),
+            ),
+        ],
+      ),
+    );
+    if (onTap == null) return fila;
+    return Semantics(
+      button: true,
+      label: titulo,
+      child: NcPressable(onTap: onTap, pressedScale: 0.98, child: fila),
     );
   }
 }
