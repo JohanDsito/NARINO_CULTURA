@@ -155,7 +155,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
               _Vineta('Historial de compras/ventas: gestión de órdenes y comprobantes.'),
               _Vineta('Datos de pago: procesados por pasarela (Wompi). La Plataforma NO almacena datos de tarjetas.'),
               _Subtitulo('Datos de Navegación'),
-              _Vineta('Visualizaciones de obras: se cuenta el total de vistas de cada obra para ordenar el catálogo y mostrar estadísticas al artista. No se guarda qué obras ve cada persona.'),
+              _Vineta('Visualizaciones de obras: se cuenta el total de vistas de cada obra para ordenar el catálogo y mostrar estadísticas al artista. Para no contar dos veces la misma visita, se recuerda durante una hora que ya viste esa obra; no queda guardado en la base de datos.'),
               _Vineta('Dirección IP: se registra junto con las acciones que crean, modifican o eliminan información, por seguridad y auditoría.'),
             ],
           ),
