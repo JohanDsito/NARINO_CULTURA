@@ -2,16 +2,11 @@ import 'package:dio/dio.dart';
 
 import '../../../core/constants/api_constants.dart';
 import '../../../core/network/api_client.dart';
-import '../../artworks/data/artwork_service.dart';
 import '../../artworks/domain/artwork_model.dart';
 import '../../events/domain/event_model.dart';
 
 class AiService {
-  AiService({ArtworkService? artworkService})
-      : _artworkService = artworkService ?? ArtworkService();
-
   Dio get _dio => ApiClient.instance.dio;
-  final ArtworkService _artworkService;
 
   /// Sugiere una categoría para una obra a partir de su título (usada al
   /// componer una obra nueva, antes de que exista un ID en el backend).
@@ -119,66 +114,6 @@ class AiService {
       return const <EventModel>[];
     } catch (_) {
       return const <EventModel>[];
-    }
-  }
-
-  /// Computes artist statistics from real API data (artworks + sales).
-  /// The AI artist-stats endpoint does not exist in the backend.
-  /// [artistSlug] is the artist's profile slug used to filter artworks.
-  Future<Map<String, dynamic>> getArtistStats({String? artistSlug}) async {
-    try {
-      final myWorks = <ArtworkModel>[];
-      if (artistSlug != null && artistSlug.isNotEmpty) {
-        final raw = await _artworkService.getByArtist(artistSlug);
-        myWorks.addAll(raw.map(ArtworkModel.fromJson));
-      }
-
-      // Compute total views from artworks (views_count field)
-      final visitasTotal =
-          myWorks.fold<int>(0, (sum, a) => sum + a.viewsCount);
-
-      // Get income from sales history for the current month
-      double ingresosMes = 0;
-      try {
-        final salesRes = await _dio.get(ApiConstants.salesHistory);
-        final salesData = salesRes.data;
-        final sales = salesData is List
-            ? salesData
-            : (salesData is Map
-                ? (salesData['results'] as List? ?? [])
-                : <dynamic>[]);
-        final now = DateTime.now();
-        for (final sale in sales) {
-          if (sale is! Map) continue;
-          final dateStr = sale['created_at']?.toString() ?? '';
-          final date = DateTime.tryParse(dateStr);
-          if (date == null) continue;
-          if (date.year == now.year && date.month == now.month) {
-            ingresosMes +=
-                double.tryParse(sale['total_amount']?.toString() ?? '') ?? 0;
-          }
-        }
-      } catch (_) {}
-
-      // Top artworks sorted by views_count
-      myWorks.sort((a, b) => b.viewsCount.compareTo(a.viewsCount));
-      final topWorks = myWorks.take(5).map((a) => {
-            'id': a.id,
-            'title': a.titulo,
-            'image_url':
-                a.imagenes.isNotEmpty ? a.imagenes.first : null,
-            'views': a.viewsCount,
-          }).toList();
-
-      return {
-        'visitas_mes': 0, // per-month breakdown not available from API
-        'visitas_total': visitasTotal,
-        'nuevos_seguidores': 0, // followers endpoint not available
-        'ingresos_mes': ingresosMes,
-        'obras_mas_vistas': topWorks,
-      };
-    } catch (_) {
-      return const <String, dynamic>{};
     }
   }
 }

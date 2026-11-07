@@ -72,6 +72,7 @@ ArtworkModel testArtwork({
   String estado = 'disponible',
   double? precio,
   List<String> imagenes = const [],
+  int viewsCount = 0,
 }) {
   return ArtworkModel(
     id: id,
@@ -83,7 +84,7 @@ ArtworkModel testArtwork({
     artistaId: 'artist-1',
     artistaNombre: artistaNombre,
     precio: precio,
-    viewsCount: 0,
+    viewsCount: viewsCount,
     esFavorito: false,
     creadoEn: DateTime(2025, 1, 1),
   );
