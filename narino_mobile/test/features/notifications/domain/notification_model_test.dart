@@ -101,4 +101,11 @@ void main() {
     expect(read.titulo, n.titulo);
     expect(read.ruta, n.ruta);
   });
+
+  test('traduce las rutas web sin ids a pantallas de la app', () {
+    NotificationModel conUrl(String url) => NotificationModel.fromJson({'data': {'url': url}});
+    expect(conUrl('/dashboard/sales').ruta, '/marketplace/sales');
+    expect(conUrl('/orders').ruta, '/marketplace/purchases');
+    expect(conUrl('/admin/dashboard').ruta, isNull);
+  });
 }
