@@ -113,6 +113,10 @@ Novedades del backend que impactan la app:
 | 66 | Editar perfil | El municipio (`city`) no se podía editar | ✅ |
 | 67 | Editar perfil | Salir con cambios sin guardar los perdía sin avisar | ✅ confirmación |
 | 68 | Música | Solo "Música" con tilde exacta contaba como músico ("Musica"/"Músico" de la web no) | ✅ `esDisciplinaMusical` |
+| 69 | Estadísticas | "Visitas este mes" y "Nuevos seguidores" eran 0 fijos en el código, mostrados como datos reales | ✅ solo cifras reales: vistas, seguidores, obras, vendidas |
+| 70 | Estadísticas | Ingresos sumaban el total de la orden, no lo del artista | ✅ usa `montoVenta` (`seller_amount` si viene) |
+| 71 | Estadísticas | Las obras más vistas no abrían (el id UUID se leía como número) | ✅ |
+| 72 | Estadísticas | Un error mostraba todo en cero en vez de avisar | ✅ estado de error con reintento |
 | 40 | Ventas | Una orden con obras de varios artistas suma el total completo; `OrderItemSerializer` no dice de quién es cada ítem | 🚫 pedir `artist_slug` en el ítem |
 
 ---

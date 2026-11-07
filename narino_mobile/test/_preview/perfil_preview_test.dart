@@ -4,12 +4,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:narino_cultura/app.dart';
 import 'package:narino_cultura/core/providers/user_role_provider.dart';
 import 'package:narino_cultura/features/artworks/presentation/providers/artwork_provider.dart';
+import 'package:narino_cultura/features/marketplace/data/marketplace_repository.dart';
+import 'package:narino_cultura/features/marketplace/domain/order_model.dart';
+import 'package:narino_cultura/features/marketplace/presentation/providers/cart_provider.dart';
 import 'package:narino_cultura/features/marketplace/presentation/providers/favorites_provider.dart';
 import 'package:narino_cultura/features/profile/data/profile_repository.dart';
 import 'package:narino_cultura/features/profile/domain/profile_model.dart';
 import 'package:narino_cultura/features/profile/domain/profile_state.dart';
 import 'package:narino_cultura/features/profile/presentation/providers/profile_provider.dart';
 import 'package:narino_cultura/features/profile/presentation/screens/artist_public_profile_screen.dart';
+import 'package:narino_cultura/features/profile/presentation/screens/artist_stats_screen.dart';
 import 'package:narino_cultura/features/profile/presentation/screens/edit_profile_screen.dart';
 import 'package:narino_cultura/features/profile/presentation/screens/following_screen.dart';
 import 'package:narino_cultura/features/profile/presentation/screens/my_profile_screen.dart';
@@ -78,6 +82,16 @@ class _Notifier extends NoOpProfileNotifier {
   }
 }
 
+class _MRepo extends MarketplaceRepository {
+  @override
+  Future<List<OrderModel>> getSalesHistory() async => [
+        OrderModel(id: 'a1', estado: 'completado', total: 320000, montoVendedor: 320000,
+            creadoEn: DateTime.now(), items: const []),
+        OrderModel(id: 'a2', estado: 'completado', total: 180000, montoVendedor: 180000,
+            creadoEn: DateTime(2026, 9, 3), items: const []),
+      ];
+}
+
 void main() {
   setUpAll(loadPreviewFonts);
 
@@ -87,10 +101,12 @@ void main() {
       myProfileProvider.overrideWith((_) => _Notifier()),
       favoritesProvider.overrideWith((_) => NoOpFavoritesNotifier()),
       currentUserRoleProvider.overrideWith((ref) async => 'artista'),
+      marketplaceRepositoryProvider.overrideWithValue(_MRepo()),
       artistArtworksProvider.overrideWith((ref, slug) async => [
-            testArtwork(id: '1', titulo: 'Cóndor Andino', artistaNombre: 'María Torres', precio: 320000),
-            testArtwork(id: '2', titulo: 'Volcán Galeras', artistaNombre: 'María Torres', precio: 180000, estado: 'vendida'),
-            testArtwork(id: '3', titulo: 'Colibrí', artistaNombre: 'María Torres', precio: 95000),
+            testArtwork(id: '1', titulo: 'Cóndor Andino', artistaNombre: 'María Torres', precio: 320000, viewsCount: 1284),
+            testArtwork(id: '2', titulo: 'Volcán Galeras', artistaNombre: 'María Torres', precio: 180000, estado: 'vendida', viewsCount: 932),
+            testArtwork(id: '3', titulo: 'Colibrí', artistaNombre: 'María Torres', precio: 95000, viewsCount: 210),
+            testArtwork(id: '4', titulo: 'Guaneña en barniz de Pasto', artistaNombre: 'María Torres', precio: 95000, estado: 'en_subasta', viewsCount: 64),
           ]),
     ];
     testWidgets('mi_perfil', skip: previewSkip, (t) async {
@@ -104,6 +120,10 @@ void main() {
     testWidgets('siguiendo', skip: previewSkip, (t) async {
       await capture(t, name: 'siguiendo', dark: dark, overrides: ov(), height: 700,
           home: const FollowingScreen());
+    });
+    testWidgets('estadisticas', skip: previewSkip, (t) async {
+      await capture(t, name: 'estadisticas', dark: dark, overrides: ov(), height: 1150,
+          home: const ArtistStatsScreen());
     });
     testWidgets('perfil_publico', skip: previewSkip, (t) async {
       await capture(t, name: 'perfil_publico', dark: dark, overrides: ov(), height: 1350,
