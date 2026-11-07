@@ -40,29 +40,51 @@ class AiService {
     return descripcion;
   }
 
-  /// Sends a message to the cultural AI assistant.
-  /// [history] is a list of previous turns: `[{'role': 'user'/'assistant', 'text': '...'}]`
+  /// Envía un mensaje al asistente cultural (`POST /api/v1/chat/`).
+  ///
+  /// [history] son los turnos anteriores `{'role': 'user'|'model', 'text'}`.
+  /// Gemini solo acepta `user` y `model`: con `assistant` el historial
+  /// fallaba y el backend respondía con sus reglas de respaldo.
   Future<String> chat({
     required String mensaje,
     List<Map<String, String>> history = const [],
   }) async {
+    String? reply(Object? data) {
+      if (data is! Map) return null;
+      final r = data['reply']?.toString().trim();
+      return (r == null || r.isEmpty) ? null : r;
+    }
+
     try {
       final res = await _dio.post(ApiConstants.aiChat, data: {
         'message': mensaje,
-        'history': history,
+        'history': [
+          for (final h in history)
+            {
+              'role': h['role'] == 'user' ? 'user' : 'model',
+              'text': h['text'] ?? '',
+            },
+        ],
       });
-      final data = res.data;
-      if (data is Map) {
-        final r = data['reply']?.toString();
-        if (r != null && r.isNotEmpty) return r;
-      }
+      final r = reply(res.data);
+      if (r != null) return r;
       throw const FormatException('Respuesta inválida del servidor.');
     } on DioException catch (e) {
-      if (e.response?.statusCode == 404) {
+      final code = e.response?.statusCode;
+      // 503: la IA no está disponible, pero el backend manda una respuesta
+      // de respaldo en `reply`; se muestra en vez de un error.
+      final respaldo = reply(e.response?.data);
+      if (code == 503 && respaldo != null) return respaldo;
+      if (code == 429) {
         throw const FormatException(
-            'El asistente IA no está disponible en este momento.');
+            'Vas muy rápido. Espera un momento y vuelve a preguntar.');
       }
-      rethrow;
+      if (code == 404 || code == 503) {
+        throw const FormatException(
+            'El asistente no está disponible en este momento.');
+      }
+      throw const FormatException(
+          'No pudimos conectar con el asistente. Revisa tu conexión.');
     }
   }
 
