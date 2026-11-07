@@ -21,63 +21,27 @@ class ArtworkService {
     String ordenarPor = 'fecha',
     int page = 1,
   }) async {
-    final filtroLocal = (tecnica != null && tecnica.isNotEmpty) ||
-        precioMin != null ||
-        precioMax != null;
-
+    // Todos los filtros van al servidor (?technique= contiene, ?price_min=,
+    // ?price_max=): así la paginación y el total son reales. Antes técnica y
+    // precio se filtraban en el teléfono solo dentro de las primeras 100.
+    String precio(double v) =>
+        v == v.roundToDouble() ? v.toInt().toString() : v.toString();
     final queryParams = <String, dynamic>{
       'ordering': _mapOrden(ordenarPor),
       'page': page,
-      if (filtroLocal) 'page_size': 100,
+      if (search != null && search.isNotEmpty) 'search': search,
+      if (categoria != null && categoria.isNotEmpty) 'category': categoria,
+      if (tecnica != null && tecnica.trim().isNotEmpty)
+        'technique': tecnica.trim(),
+      if (precioMin != null) 'price_min': precio(precioMin),
+      if (precioMax != null) 'price_max': precio(precioMax),
     };
-    if (search != null && search.isNotEmpty) queryParams['search'] = search;
-    if (categoria != null && categoria.isNotEmpty) {
-      queryParams['category'] = categoria;
-    }
 
     final response = await _dio.get(
       ApiConstants.artworks,
       queryParameters: queryParams,
     );
-    final data = response.data as Map<String, dynamic>;
-    if (!filtroLocal) return data;
-
-    final filtradas = (data['results'] as List? ?? const [])
-        .whereType<Map>()
-        .map((e) => e.cast<String, dynamic>())
-        .where((obra) => _cumpleFiltros(obra, tecnica, precioMin, precioMax))
-        .toList();
-    return {...data, 'results': filtradas, 'count': filtradas.length};
-  }
-
-  static bool _cumpleFiltros(
-    Map<String, dynamic> obra,
-    String? tecnica,
-    double? precioMin,
-    double? precioMax,
-  ) {
-    if (tecnica != null && tecnica.isNotEmpty) {
-      final t = _normalizar((obra['technique'] ?? obra['tecnica'] ?? '').toString());
-      if (!t.contains(_normalizar(tecnica))) return false;
-    }
-    if (precioMin != null || precioMax != null) {
-      final precio = double.tryParse((obra['price'] ?? '').toString());
-      if (precio == null) return false;
-      if (precioMin != null && precio < precioMin) return false;
-      if (precioMax != null && precio > precioMax) return false;
-    }
-    return true;
-  }
-
-  static String _normalizar(String s) {
-    const conTilde = 'áéíóúüñ';
-    const sinTilde = 'aeiouun';
-    final buf = StringBuffer();
-    for (final ch in s.toLowerCase().trim().split('')) {
-      final i = conTilde.indexOf(ch);
-      buf.write(i == -1 ? ch : sinTilde[i]);
-    }
-    return buf.toString();
+    return response.data as Map<String, dynamic>;
   }
 
   /// Obras disponibles para comprar (Tienda), filtradas en el servidor.
