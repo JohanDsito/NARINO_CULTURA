@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/nc_theme.dart';
 import '../../../../../core/theme/app_typography.dart';
 
 // ─── Vista de error ───────────────────────────────────────────────────────────
@@ -12,9 +12,8 @@ class ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textSecondary =
-        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+    final nc = context.nc;
+    final textSecondary = nc.textSecondary;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -29,10 +28,10 @@ class ErrorView extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
+              Icon(
                 Icons.error_outline,
                 size: 48,
-                color: AppColors.error,
+                color: nc.tomateA.ink,
               ),
               const SizedBox(height: 16),
               Text(

@@ -6,7 +6,6 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../../core/providers/user_role_provider.dart';
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../../../marketplace/domain/marketplace_state.dart';
 import '../../../../marketplace/presentation/providers/favorites_provider.dart';
@@ -139,8 +138,8 @@ class _ArtworkDetailBodyState extends ConsumerState<ArtworkDetailBody>
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: FilledButton.styleFrom(
-              backgroundColor: AppColors.tomate,
-              foregroundColor: Colors.black,
+              backgroundColor: context.nc.tomateA.fill,
+              foregroundColor: context.nc.tomateA.onFill,
             ),
             child: const Text('Eliminar'),
           ),
@@ -322,12 +321,10 @@ Future<void> _showShareSheet(BuildContext context, ArtworkModel artwork) async {
   final texto =
       '🎨 ${artwork.titulo} — por ${artwork.artistaNombre}\n\nDescubre esta obra en Nariño Cultura:\n$url';
 
-  final isDark = Theme.of(context).brightness == Brightness.dark;
-  final bgCard = Theme.of(context).cardTheme.color ??
-      Theme.of(context).colorScheme.surface;
-  final handleColor = isDark ? AppColors.borderDark : AppColors.borderLight;
-  final titleColor =
-      isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+  final nc = context.nc;
+  final bgCard = nc.bgCard;
+  final handleColor = nc.border;
+  final titleColor = nc.textPrimary;
 
   await showModalBottomSheet<void>(
     context: context,
@@ -387,8 +384,7 @@ Future<void> _showShareSheet(BuildContext context, ArtworkModel artwork) async {
               ShareOption(
                 icon: Icons.more_horiz,
                 label: 'Más',
-                color:
-                    isDark ? AppColors.textMutedDark : AppColors.textMutedLight,
+                color: nc.textSecondary,
                 onTap: () {
                   Share.share(texto);
                   Navigator.pop(context);

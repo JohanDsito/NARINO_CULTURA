@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/nc_theme.dart';
 import '../../../../../core/theme/app_typography.dart';
 
 class ShareOption extends StatelessWidget {
@@ -19,9 +19,7 @@ class ShareOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textMuted =
-        isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
+    final textMuted = context.nc.textSecondary;
     return GestureDetector(
       onTap: onTap,
       child: Column(
@@ -31,7 +29,7 @@ class ShareOption extends StatelessWidget {
             width: 54,
             height: 54,
             decoration: BoxDecoration(
-              color: color.withAlpha(12),
+              color: color.withValues(alpha: 0.14),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: color, size: 24),
