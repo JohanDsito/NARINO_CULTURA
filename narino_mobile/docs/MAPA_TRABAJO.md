@@ -53,18 +53,18 @@ Novedades del backend que impactan la app:
 | 5 | Perfil | "Siguiendo" llama `users/me/following/` (404) → usar `artists/following/` + `musicians/following/` | ✅ artistas + músicos, navega a la pantalla correcta |
 | 6 | Perfil | `getMyProfile` recorre TODA la lista de artistas y TODAS las obras para contar | ✅ 1 petición `?mine=true` (count + slug); solo recorre artistas si no tiene obras |
 | 7 | Perfil | Portafolio (`artists/{id}/portfolio/`) no existe en backend | 🚫 |
-| 8 | Perfil/Seguridad | `change-email`, `sessions`, `resend-verification` no existen | 🚫 (mensaje claro en UI) |
+| 8 | Perfil/Seguridad | `change-email` y `sessions` no existen; `resend-verification` ya existe en main (#177) | ✅ reenvío con `{email}` · 🚫 correo y sesiones |
 | 9 | Marketplace | Carrito/favoritos hacen 1 `GET /artworks/{id}` por ítem → infla vistas y gasta throttle | ✅ una consulta de lista. Además favoritos leía `artwork_id` (no existe) → nunca mostraba imagen/precio |
 | 10 | Marketplace | `orders/{id}/` no existe (ya hay fallback a la lista) | ✅ (fallback existente) |
 | 11 | Subastas | Tarjetas muestran "Obra"/"Artista" sin imagen: el serializer solo trae el UUID de la obra | ✅ se cruzan con la lista de obras (`EN_SUBASTA` y luego catálogo) |
 | 12 | Subastas | Historial envía `participante=me` / `artista=me` → el backend los ignora y muestra TODAS | ✅ filtro en la app por id de usuario (`seller`, `highest_bidder`, `winner`). Limitación: "participé" = voy ganando o gané (el backend no expone pujas) |
 | 13 | Subastas | Ganador: se leía `order_id`, el backend manda `payment_order_id` | ✅ + ganador/vendedor se comparaban con el slug del artista en vez del id de usuario |
 | 14 | Subastas | WebSocket: revisar que el provider procese `snapshot` / `bid_placed` / `auction_closed` | ✅ puja en vivo se agrega a la lista, snapshot respeta estado, al cerrar se recarga para traer la orden |
-| 15 | Subastas | No hay historial de pujas por REST | 🚫 |
+| 15 | Subastas | No había historial de pujas por REST | ✅ `GET /auctions/{id}/bids/` (#174) en el detalle |
 | 16 | Eventos | Cancelar inscripción (DELETE) no existe → 405 | ✅ mensaje claro; "ya inscrito" marca el estado. Falta endpoint en backend |
-| 17 | IA | `/ai/suggest-category/`, `/ai/generate-description/`, `/ai/recommendations/`, `/ai/artist-stats/` no existen | 🚫 |
+| 17 | IA | `/ai/generate-description/` no existe; recomendaciones y artist-stats ya no hacen falta (la app usa datos reales) | 🚫 solo generar descripción (ruta corregida a `/api/v1/ai/…`) |
 | 18 | Músicos | Producción no envía `is_following` → el botón seguir arranca en "Seguir" | ✅ se deduce de `musicians/following/` (`seguidosProvider`) |
-| 19 | Artistas | `ArtistProfileSerializer` no trae `is_following` | 🚫 (se puede deducir con `artists/following/`) |
+| 19 | Artistas | `ArtistProfileSerializer` no traía `is_following` | ✅ en main (#176) |
 | 20 | Cuenta | Eliminar cuenta se bloqueaba si existía CUALQUIER subasta activa en la plataforma (`artista=me` ignorado) | ✅ solo cuenta las subastas propias |
 | 21 | Eventos | Mensaje 403 decía "solo gestores"; el backend permite artistas, gestores y admin | ✅ |
 | 22 | Roles | El backend manda `ADMINISTRADOR` / `GESTOR_CULTURAL`; la app comparaba con `admin` / `gestor` → gestores no veían "publicar evento" y admin no tenía permisos | ✅ `normalizeRole()` en `user_role_provider` |
@@ -122,7 +122,7 @@ Novedades del backend que impactan la app:
 | 75 | Privacidad | "Ejercer mis derechos" no hacía nada en Android 11+ (`canLaunchUrl(mailto)` da false sin `<queries>`) | ✅ abre el correo directo o copia la dirección |
 | 76 | Privacidad | El texto legal no coincidía con el backend (bcrypt, token de 15 min, bloqueo tras 5 intentos, fecha de aceptación guardada, retención de 5 años, OpenAI, dispositivo y ubicación) y faltaba la Sección 5 | ✅ v1.1 alineada con el backend y secciones 1–9 |
 | 77 | Eliminar cuenta (backend) | Si una artista ya vendió obras, borrar su cuenta da 500: `Artwork` cae en cascada pero `OrderItem.artwork` es `PROTECT` | 🚫 nota al equipo de back |
-| 40 | Ventas | Una orden con obras de varios artistas suma el total completo; `OrderItemSerializer` no dice de quién es cada ítem | 🚫 pedir `artist_slug` en el ítem |
+| 40 | Ventas | Una orden con obras de varios artistas sumaba el total completo | ✅ `seller_amount` e ítems del artista (#173) |
 
 ---
 
@@ -186,16 +186,14 @@ Guía completa de color y componentes: **`docs/DISENO_CARNAVAL.md`**.
 | Eventos (lista/calendario, detalle, publicar) | ✅ tomate, color por tipo, calendario compartido con Inicio |
 | Músicos / Detalle / Subir obra / Descubrimiento musical | ✅ azul, seguir confiable, reseñas y enlaces para escuchar |
 | Perfil: Mi perfil, público, editar, siguiendo, estadísticas, contraseña, eliminar cuenta, privacidad | ✅ portafolio, correo y sesiones quedan "Pronto" (sin backend) |
-| Notificaciones / Chatbot | ⏳ |
+| Notificaciones | ✅ color por tipo, agrupadas por fecha, filtro sin leer |
+| Chatbot | ⏳ |
 
 ---
 
 ## Mejoras sugeridas 💡
-- Agregar al backend `artworks_count` y `is_following` en `ArtistProfileSerializer` y una acción `artists/me/`.
-- Exponer `artwork_title`, `artwork_image_url` y `bids_count` en `AuctionSerializer`.
-- `OrderItemSerializer`: agregar `artist_slug` e imagen para calcular ventas por artista.
-- Endpoint `DELETE events/{id}/register/` para cancelar inscripción.
-- Desplegar el fix `40ae5be` de músicos en `main`.
+- ✅ Hecho en main (#172–#177): músicos, datos de subasta + pujas + filtros, cancelar inscripción, `seller_amount`, `/artists/me/`, filtros del catálogo, detalle de orden y reenvío de verificación. Ya conectado en la app.
+- Pendiente en backend: `ai/generate-description/`, `notifications/event-preferences/`, portafolio, `change-email`, `sessions` (contratos enviados al equipo).
 - Eliminar cuenta de artistas con ventas (ver #77): decidir si se anonimiza o se conserva la orden.
 - Archivos de build trackeados en git (`narino_mobile/android/build/...`) → sacarlos con `.gitignore`.
 
@@ -218,3 +216,4 @@ Guía completa de color y componentes: **`docs/DISENO_CARNAVAL.md`**.
 - 2026-11-06 — Rediseño de Eventos (agenda, detalle, publicar) y calendario compartido `NcMonthCalendar`. Arreglados #47–#53. Siguiente: Músicos.
 - 2026-11-06 — Rediseño de Músicos, detalle, subir obra y Descubrimiento musical. Arreglados #18, #54–#57. Siguiente: Perfil.
 - 2026-11-06 — Rediseño del módulo de Perfil completo (8 pantallas) y nueva pantalla Cambiar contraseña. Arreglados #58–#75. Siguiente: Notificaciones y Chatbot.
+- 2026-11-06 — Política de privacidad v1.1 alineada con el backend. Bandeja de Notificaciones rediseñada. Backend sincronizado con main (#171–#177) y conectado en la app: subastas, eventos, catálogo, `/artists/me/`, carrito y favoritos. Siguiente: Chatbot.
