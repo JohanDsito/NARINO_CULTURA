@@ -4,7 +4,7 @@ import 'account_security_service.dart';
 
 /// Modelo de dominio para representar una sesión activa del usuario.
 class ActiveSessionModel {
-  final int id;
+  final String id;
   final String device;
   final DateTime createdAt;
   final bool isCurrent;
@@ -17,7 +17,7 @@ class ActiveSessionModel {
   });
 
   factory ActiveSessionModel.fromJson(Map<String, dynamic> json) {
-    final id = _asInt(json['id']) ?? 0;
+    final id = json['id']?.toString() ?? '';
 
     final device = (json['dispositivo'] ??
             json['device'] ??
@@ -94,7 +94,7 @@ class AccountSecurityRepository {
     }
   }
 
-  Future<void> revokeSession(int id) async {
+  Future<void> revokeSession(String id) async {
     try {
       await _service.revokeSession(id);
     } on DioException catch (e) {
@@ -170,10 +170,4 @@ class AccountSecurityRepository {
     if (data is String && data.isNotEmpty) return data;
     return null;
   }
-}
-
-int? _asInt(Object? v) {
-  if (v is int) return v;
-  if (v is num) return v.toInt();
-  return int.tryParse(v?.toString() ?? '');
 }

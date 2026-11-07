@@ -24,8 +24,8 @@ class AccountSecurityService {
     return const <dynamic>[];
   }
 
-  Future<void> revokeSession(int id) async {
-    final path = ApiConstants.sessionDetail.replaceAll('{id}', id.toString());
+  Future<void> revokeSession(String id) async {
+    final path = ApiConstants.sessionDetail.replaceAll('{id}', id);
     await _dio.delete(path);
   }
 

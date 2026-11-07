@@ -57,7 +57,7 @@ class ActiveSessionsNotifier
     }
   }
 
-  Future<void> revokeSession(int id) async {
+  Future<void> revokeSession(String id) async {
     final current = state.valueOrNull ?? const <ActiveSessionModel>[];
     state = AsyncValue.data(current);
     try {

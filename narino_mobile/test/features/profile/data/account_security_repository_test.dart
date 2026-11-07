@@ -99,9 +99,9 @@ void main() {
       final sessions = await repo.getActiveSessions();
 
       expect(sessions, hasLength(2));
-      expect(sessions.first.id, 2);
+      expect(sessions.first.id, '2');
       expect(sessions.first.isCurrent, isTrue);
-      expect(sessions.last.id, 1);
+      expect(sessions.last.id, '1');
     });
 
     test('traduce un error de conexión a un mensaje entendible', () async {
@@ -118,16 +118,16 @@ void main() {
     test('llama al servicio con el id dado', () async {
       when(() => service.revokeSession(any())).thenAnswer((_) async {});
 
-      await repo.revokeSession(5);
+      await repo.revokeSession('5');
 
-      verify(() => service.revokeSession(5)).called(1);
+      verify(() => service.revokeSession('5')).called(1);
     });
 
     test('traduce un 404 a un mensaje entendible', () async {
       when(() => service.revokeSession(any())).thenThrow(_httpError(404));
 
       await expectLater(
-        repo.revokeSession(99),
+        repo.revokeSession('99'),
         throwsA('Recurso no encontrado.'),
       );
     });

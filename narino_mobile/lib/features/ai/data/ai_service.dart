@@ -12,7 +12,7 @@ class AiService {
   /// componer una obra nueva, antes de que exista un ID en el backend).
   Future<String> suggestCategory(String titulo) async {
     final response = await _dio.post(
-      '/ai/suggest-category/',
+      ApiConstants.aiSuggestCategory,
       data: {'titulo': titulo},
     );
     final data = response.data;
@@ -29,7 +29,7 @@ class AiService {
     required int categoriaId,
   }) async {
     final response = await _dio.post(
-      '/ai/generate-description/',
+      ApiConstants.aiGenerateDescription,
       data: {'titulo': titulo, 'categoria': categoriaId},
     );
     final data = response.data;
