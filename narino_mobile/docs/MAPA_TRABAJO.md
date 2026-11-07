@@ -117,6 +117,8 @@ Novedades del backend que impactan la app:
 | 70 | Estadísticas | Ingresos sumaban el total de la orden, no lo del artista | ✅ usa `montoVenta` (`seller_amount` si viene) |
 | 71 | Estadísticas | Las obras más vistas no abrían (el id UUID se leía como número) | ✅ |
 | 72 | Estadísticas | Un error mostraba todo en cero en vez de avisar | ✅ estado de error con reintento |
+| 73 | Cuenta | El backend permite cambiar la contraseña (`PATCH users/me/password/`) pero la app no tenía cómo | ✅ pantalla nueva en Configuración |
+| 74 | Eliminar cuenta | Tras eliminar, el perfil anterior quedaba en memoria | ✅ se limpia antes de volver al login |
 | 40 | Ventas | Una orden con obras de varios artistas suma el total completo; `OrderItemSerializer` no dice de quién es cada ítem | 🚫 pedir `artist_slug` en el ítem |
 
 ---

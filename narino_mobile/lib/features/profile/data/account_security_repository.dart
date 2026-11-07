@@ -110,6 +110,17 @@ class AccountSecurityRepository {
     }
   }
 
+  Future<void> changePassword({
+    required String current,
+    required String nueva,
+  }) async {
+    try {
+      await _service.changePassword(current: current, nueva: nueva);
+    } on DioException catch (e) {
+      throw _parseDioError(e);
+    }
+  }
+
   Future<void> deleteAccount({required String password}) async {
     try {
       await _service.deleteAccount(password: password);
