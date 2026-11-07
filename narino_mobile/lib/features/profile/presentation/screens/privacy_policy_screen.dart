@@ -61,7 +61,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                       .copyWith(fontSize: 24)),
               const SizedBox(height: 4),
               Text(
-                  'Nariño Cultura · Versión 1.0 · 2026\n'
+                  'Nariño Cultura · Versión 1.1 · 2026\n'
                   'Universidad Cooperativa de Colombia',
                   textAlign: TextAlign.center,
                   style: AppTypography.bodySmall(color: nc.textMuted)),
@@ -135,8 +135,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
               _Parrafo(
                   'El consentimiento expreso se recoge mediante un checkbox obligatorio '
                   'en el formulario de registro. El usuario no puede crear una cuenta '
-                  'sin haber aceptado expresamente esta política. La fecha y hora de '
-                  'aceptación quedan registradas para fines de auditoría.'),
+                  'sin haber aceptado expresamente esta política.'),
             ],
           ),
           const _Seccion(
@@ -156,24 +155,23 @@ class PrivacyPolicyScreen extends StatelessWidget {
               _Vineta('Historial de compras/ventas: gestión de órdenes y comprobantes.'),
               _Vineta('Datos de pago: procesados por pasarela (Wompi). La Plataforma NO almacena datos de tarjetas.'),
               _Subtitulo('Datos de Navegación'),
-              _Vineta('Historial de visualización: recomendaciones personalizadas con IA.'),
-              _Vineta('Dispositivo y SO: compatibilidad y optimización.'),
-              _Vineta('IP y ubicación aproximada: seguridad y estadísticas regionales.'),
+              _Vineta('Visualizaciones de obras: se cuenta el total de vistas de cada obra para ordenar el catálogo y mostrar estadísticas al artista. No se guarda qué obras ve cada persona.'),
+              _Vineta('Dirección IP: se registra junto con las acciones que crean, modifican o eliminan información, por seguridad y auditoría.'),
             ],
           ),
           const _Seccion(
-            numero: 6,
+            numero: 5,
             titulo: 'Tiempo de Conservación',
             children: [
               _Vineta('Datos de cuenta activa: durante toda la vigencia de la cuenta.'),
-              _Vineta('Datos de transacciones: mínimo 5 años desde la fecha de transacción.'),
-              _Vineta('Tras eliminar la cuenta: datos de identificación eliminados en máximo 30 días naturales.'),
+              _Vineta('Al eliminar la cuenta se borran de inmediato tu perfil, tus obras, tus favoritos, tu carrito y tu historial de compras.'),
+              _Vineta('El registro de seguridad (acción realizada e IP) se conserva sin asociarse a tu cuenta.'),
             ],
           ),
 
           // ── Sección 7: derechos, siempre a la vista ──
           _Seccion(
-            numero: 7,
+            numero: 6,
             titulo: 'Derechos del Titular',
             accent: nc.catalogo,
             abierta: true,
@@ -203,7 +201,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
 
           // ── Sección 8: canales ──
           _Seccion(
-            numero: 8,
+            numero: 7,
             titulo: 'Canales para Ejercer tus Derechos',
             accent: nc.azulA,
             abierta: true,
@@ -246,25 +244,25 @@ class PrivacyPolicyScreen extends StatelessWidget {
           ),
 
           const _Seccion(
-            numero: 9,
+            numero: 8,
             titulo: 'Medidas de Seguridad',
             children: [
-              _Vineta('Autenticación con tokens JWT cifrados (HS256), expiración de 15 minutos.'),
-              _Vineta('Contraseñas almacenadas con bcrypt (nunca en texto plano).'),
+              _Vineta('Autenticación con tokens JWT firmados (HS256): el acceso dura 30 minutos y la sesión se renueva hasta por 7 días.'),
+              _Vineta('Contraseñas almacenadas con Argon2 (nunca en texto plano).'),
               _Vineta('Comunicaciones cifradas mediante HTTPS/TLS.'),
               _Vineta('Control de acceso por roles (artista, comprador, gestor, administrador).'),
               _Vineta('Protección contra inyección SQL mediante ORM de Django.'),
-              _Vineta('Bloqueo tras 5 intentos fallidos de inicio de sesión (15 minutos).'),
+              _Vineta('Límite de 5 intentos por minuto para iniciar sesión o registrarse, y de 3 solicitudes por hora para recuperar la contraseña.'),
             ],
           ),
           const _Seccion(
-            numero: 10,
+            numero: 9,
             titulo: 'Transferencia a Terceros',
             children: [
               _Vineta('Pasarela de pagos (Wompi): para procesar transacciones.'),
               _Vineta('Proveedor de correo: envío de notificaciones transaccionales.'),
               _Vineta('Infraestructura cloud (Railway): alojamiento con garantías de seguridad.'),
-              _Vineta('Proveedor de IA (OpenAI / Gemini): datos de navegación anonimizados para recomendaciones. Sin datos de identificación personal.'),
+              _Vineta('Proveedor de IA (Google Gemini): el texto que escribes al asistente y los datos de la obra (título, técnica, materiales) cuando pides una descripción con IA. No se envían tu nombre, correo ni teléfono.'),
               SizedBox(height: 8),
               _Parrafo('La Plataforma NO vende, alquila ni comparte datos personales con fines comerciales.'),
             ],
@@ -272,7 +270,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
 
           const SizedBox(height: 24),
           Text(
-            'Nariño Cultura · Versión 1.0 · San Juan de Pasto, Nariño, 2026\n'
+            'Nariño Cultura · Versión 1.1 · San Juan de Pasto, Nariño, 2026\n'
             'Universidad Cooperativa de Colombia · Ingeniería de Software',
             textAlign: TextAlign.center,
             style: AppTypography.bodySmall(color: nc.textMuted),
