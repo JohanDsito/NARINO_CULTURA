@@ -28,11 +28,11 @@ function Avatar({ item }: { item: FollowItem }) {
           className="h-8 w-8 rounded-full object-cover flex-none"
         />
       ) : (
-        <div className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+        <div className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-tierra/10 text-xs font-bold text-tierra">
           {initial}
         </div>
       )}
-      <span className="text-sm text-foreground truncate">{name}</span>
+      <span className="text-sm text-text-primary truncate">{name}</span>
     </div>
   )
 }
@@ -62,7 +62,7 @@ function FollowList({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between py-1 text-left text-sm text-primary hover:underline"
+        className="flex w-full items-center justify-between py-1 text-left text-sm text-tierra hover:underline"
       >
         <span>Ver {label}</span>
         {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -74,8 +74,8 @@ function FollowList({
             <div className="space-y-2">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="flex items-center gap-2.5">
-                  <div className="h-8 w-8 animate-pulse rounded-full bg-muted flex-none" />
-                  <div className="h-3 w-24 animate-pulse rounded bg-muted" />
+                  <div className="h-8 w-8 animate-pulse rounded-full bg-bg-subtle flex-none" />
+                  <div className="h-3 w-24 animate-pulse rounded bg-bg-subtle" />
                 </div>
               ))}
             </div>
@@ -86,13 +86,13 @@ function FollowList({
             </p>
           )}
           {!isLoading && !isError && data.length === 0 && (
-            <p className="text-xs text-muted-foreground">No hay {label} aún.</p>
+            <p className="text-xs text-text-secondary">No hay {label} aún.</p>
           )}
           {!isLoading && data.slice(0, 8).map((item) => (
             <Avatar key={item.id} item={item} />
           ))}
           {data.length > 8 && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-text-secondary">
               y {data.length - 8} más…
             </p>
           )}
@@ -121,15 +121,15 @@ export function FollowStatsCard({
       <CardContent className="space-y-4">
         {/* Stats row */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-xl bg-primary/5 px-4 py-3 text-center">
-            <p className="text-2xl font-bold leading-none text-primary">{followersCount}</p>
-            <p className="mt-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          <div className="rounded-xl bg-tierra/5 px-4 py-3 text-center">
+            <p className="text-2xl font-bold leading-none text-tierra">{followersCount}</p>
+            <p className="mt-1 text-[11px] font-medium uppercase tracking-wide text-text-secondary">
               Seguidores
             </p>
           </div>
-          <div className="rounded-xl bg-muted/60 px-4 py-3 text-center">
-            <p className="text-2xl font-bold leading-none text-muted-foreground">—</p>
-            <p className="mt-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          <div className="rounded-xl bg-bg-subtle/60 px-4 py-3 text-center">
+            <p className="text-2xl font-bold leading-none text-text-secondary">—</p>
+            <p className="mt-1 text-[11px] font-medium uppercase tracking-wide text-text-secondary">
               Siguiendo
             </p>
           </div>
