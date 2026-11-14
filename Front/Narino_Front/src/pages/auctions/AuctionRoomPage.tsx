@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { Gavel, Clock, ArrowLeft, TrendingUp } from 'lucide-react'
@@ -13,18 +13,14 @@ import { Badge } from '@/components/ui/badge'
 import { PageLoader } from '@/components/layout/page-loader'
 import { useAuthStore } from '@/store/authStore'
 import { ROUTES } from '@/constants/routes'
-
-function formatPrice(n: number) {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency', currency: 'COP', maximumFractionDigits: 0,
-  }).format(n)
-}
+import { formatCurrency } from '@/utils'
 
 export default function AuctionRoomPage() {
   const { id } = useParams<{ id: string }>()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
 
-  const [currentPrice, setCurrentPrice] = useState<number | null>(null)
+  // Precio recibido por WebSocket; mientras no llegue nada se usa el de la API.
+  const [livePrice, setLivePrice] = useState<number | null>(null)
   const [bidAmount, setBidAmount] = useState('')
   const [wsConnected, setWsConnected] = useState(false)
   const [bidHistory, setBidHistory] = useState<
@@ -37,11 +33,7 @@ export default function AuctionRoomPage() {
     enabled: Boolean(id),
   })
 
-  useEffect(() => {
-    if (auction && currentPrice === null) {
-      setCurrentPrice(parseFloat(auction.current_price))
-    }
-  }, [auction, currentPrice])
+  const currentPrice = livePrice ?? (auction ? parseFloat(auction.current_price) : null)
 
   const handleSocketEvent = useCallback((event: AuctionSocketEvent) => {
     switch (event.type) {
@@ -49,15 +41,15 @@ export default function AuctionRoomPage() {
         setWsConnected(true)
         break
       case 'snapshot':
-        setCurrentPrice(parseFloat(event.current_price))
+        setLivePrice(parseFloat(event.current_price))
         break
       case 'bid_placed':
-        setCurrentPrice(parseFloat(event.current_price))
+        setLivePrice(parseFloat(event.current_price))
         setBidHistory((prev) => [
           { amount: parseFloat(event.amount), time: new Date().toISOString(), bidder: event.bidder_name },
           ...prev.slice(0, 19),
         ])
-        toast.success(`Nueva puja: ${formatPrice(parseFloat(event.amount))}`)
+        toast.success(`Nueva puja: ${formatCurrency(parseFloat(event.amount))}`)
         break
       case 'auction_closed':
         toast.info('La subasta ha finalizado.')
@@ -129,26 +121,26 @@ export default function AuctionRoomPage() {
           <div className="lg:col-span-2 space-y-6">
 
             {/* Precio actual */}
-            <div className="rounded-card border border-border bg-surface p-8 text-center">
+            <div className="rounded-card border border-border bg-bg-card p-8 text-center">
               <p className="font-body text-[11px] uppercase tracking-widest text-text-muted mb-2">
                 Puja actual
               </p>
               <p className="font-display font-black text-oro" style={{ fontSize: '48px' }}>
-                {formatPrice(displayPrice)}
+                {formatCurrency(displayPrice)}
               </p>
               <p className="font-body text-text-muted text-sm mt-1">
-                Precio base: {formatPrice(parseFloat(auction.base_price))}
+                Precio base: {formatCurrency(parseFloat(auction.base_price))}
               </p>
             </div>
 
             {/* Formulario de puja */}
             {isActive && isAuthenticated && (
-              <div className="rounded-card border border-border bg-surface p-6 space-y-4">
+              <div className="rounded-card border border-border bg-bg-card p-6 space-y-4">
                 <h3 className="font-display font-bold text-text-primary text-[18px]">
                   Hacer una puja
                 </h3>
                 <p className="font-body text-text-muted text-sm">
-                  Mínimo: {formatPrice(minBid)}
+                  Mínimo: {formatCurrency(minBid)}
                 </p>
                 <div className="flex gap-3">
                   <input
@@ -157,7 +149,7 @@ export default function AuctionRoomPage() {
                     step={1000}
                     value={bidAmount}
                     onChange={(e) => setBidAmount(e.target.value)}
-                    placeholder={`Ej: ${formatPrice(minBid + 50000)}`}
+                    placeholder={`Ej: ${formatCurrency(minBid + 50000)}`}
                     className="flex-1 rounded-input border border-border bg-bg px-4 py-2.5 font-body text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-oro/50"
                   />
                   <Button
@@ -178,7 +170,7 @@ export default function AuctionRoomPage() {
             )}
 
             {isActive && !isAuthenticated && (
-              <div className="rounded-card border border-border bg-surface p-6 text-center">
+              <div className="rounded-card border border-border bg-bg-card p-6 text-center">
                 <p className="font-body text-text-muted text-sm mb-3">
                   Debes iniciar sesión para hacer una puja.
                 </p>
@@ -190,7 +182,7 @@ export default function AuctionRoomPage() {
 
             {/* Historial de pujas */}
             {bidHistory.length > 0 && (
-              <div className="rounded-card border border-border bg-surface p-6">
+              <div className="rounded-card border border-border bg-bg-card p-6">
                 <h3 className="font-display font-bold text-text-primary text-[16px] mb-4 flex items-center gap-2">
                   <TrendingUp size={18} className="text-oro" />
                   Pujas recientes
@@ -202,7 +194,7 @@ export default function AuctionRoomPage() {
                       className={`flex items-center justify-between py-2 border-b border-border last:border-0 ${i === 0 ? 'text-oro' : 'text-text-muted'}`}
                     >
                       <span className="font-body text-sm font-semibold">
-                        {formatPrice(bid.amount)}
+                        {formatCurrency(bid.amount)}
                       </span>
                       <span className="font-body text-[12px]">
                         {format(new Date(bid.time), 'HH:mm:ss')}
@@ -217,7 +209,7 @@ export default function AuctionRoomPage() {
           {/* Panel lateral */}
           <div className="space-y-4">
             {isActive && (
-              <div className="rounded-card border border-border bg-surface p-5">
+              <div className="rounded-card border border-border bg-bg-card p-5">
                 <div className="flex items-center gap-2 mb-2">
                   <Clock size={16} className="text-oro" />
                   <p className="font-body font-semibold text-text-primary text-sm">
@@ -237,7 +229,7 @@ export default function AuctionRoomPage() {
               </div>
             )}
 
-            <div className="rounded-card border border-border bg-surface p-5 space-y-3">
+            <div className="rounded-card border border-border bg-bg-card p-5 space-y-3">
               <p className="font-body font-semibold text-text-primary text-sm">Detalles</p>
               <div>
                 <p className="font-body text-[11px] uppercase tracking-widest text-text-muted mb-0.5">Inicio</p>

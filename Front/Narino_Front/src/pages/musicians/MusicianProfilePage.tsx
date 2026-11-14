@@ -10,7 +10,8 @@ import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { PageLoader } from '@/components/layout/page-loader'
 import { useAuthStore } from '@/store/authStore'
-import { ROUTES, AGGREGATION_TYPE_LABELS, MUSICAL_WORK_TYPE_LABELS } from '@/constants/routes'
+import { ROUTES } from '@/constants/routes'
+import { AGGREGATION_TYPE_LABELS, MUSICAL_WORK_TYPE_LABELS } from '@/constants/labels'
 
 export default function MusicianProfilePage() {
   const { slug } = useParams<{ slug: string }>()
@@ -368,7 +369,7 @@ export default function MusicianProfilePage() {
                     return (
                       <div
                         key={work.id}
-                        className="rounded-card border border-border bg-surface overflow-hidden"
+                        className="rounded-card border border-border bg-bg-card overflow-hidden"
                       >
                         <div className="flex gap-4 p-4">
                           {/* Thumbnail o ícono */}

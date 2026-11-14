@@ -8,14 +8,14 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ROUTES } from '@/constants/routes'
-import { MUSICAL_WORK_TYPE_LABELS } from '@/constants/routes'
+import { MUSICAL_WORK_TYPE_LABELS } from '@/constants/labels'
 
 export default function MusicianWorksPage() {
   const queryClient = useQueryClient()
 
   const { data: works = [], isLoading } = useQuery({
     queryKey: ['my-musical-works'],
-    queryFn: listMyMusicalWorks,
+    queryFn: () => listMyMusicalWorks(),
   })
 
   const deleteMutation = useMutation({
@@ -33,12 +33,12 @@ export default function MusicianWorksPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pt-16">
+    <div className="min-h-screen bg-bg pt-16">
       <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 py-8 md:px-10">
         <section className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="text-sm font-medium text-muted-foreground">Panel del músico</p>
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+            <p className="text-sm font-medium text-text-secondary">Panel del músico</p>
+            <h1 className="text-3xl font-semibold tracking-tight text-text-primary">
               Mis obras musicales
             </h1>
           </div>
@@ -56,18 +56,18 @@ export default function MusicianWorksPage() {
         </section>
 
         {isLoading && (
-          <p className="text-sm text-muted-foreground">Cargando obras...</p>
+          <p className="text-sm text-text-secondary">Cargando obras...</p>
         )}
 
         {!isLoading && works.length === 0 && (
           <Card>
             <CardContent className="flex flex-col items-center gap-4 py-12 text-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
-                <Music size={26} className="text-primary" />
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-tierra/10">
+                <Music size={26} className="text-tierra" />
               </div>
               <div>
-                <p className="font-medium text-foreground">Aún no tienes obras</p>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <p className="font-medium text-text-primary">Aún no tienes obras</p>
+                <p className="mt-1 text-sm text-text-secondary">
                   Añade tu primera canción, video o podcast.
                 </p>
               </div>
@@ -83,18 +83,18 @@ export default function MusicianWorksPage() {
             {works.map((work) => (
               <Card key={work.id}>
                 <CardContent className="flex items-center gap-4 p-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 flex-none">
-                    <Music size={18} className="text-primary" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-tierra/10 flex-none">
+                    <Music size={18} className="text-tierra" />
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-foreground line-clamp-1">{work.title}</p>
+                    <p className="font-medium text-text-primary line-clamp-1">{work.title}</p>
                     <div className="mt-1 flex items-center gap-2">
                       <Badge variant="secondary" className="text-xs">
                         {MUSICAL_WORK_TYPE_LABELS[work.work_type] ?? work.work_type}
                       </Badge>
                       {work.release_date && (
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-text-secondary">
                           {work.release_date.slice(0, 4)}
                         </span>
                       )}
@@ -107,7 +107,7 @@ export default function MusicianWorksPage() {
                   </div>
 
                   <div className="flex items-center gap-2 flex-none">
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-text-secondary">
                       {work.views_count} visitas
                     </span>
                     <Button
@@ -122,7 +122,7 @@ export default function MusicianWorksPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-destructive hover:text-destructive"
+                      className="text-error hover:text-error"
                       onClick={() => handleDelete(work.id, work.title)}
                       disabled={deleteMutation.isPending}
                     >

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Music, Save } from 'lucide-react'
@@ -12,27 +12,28 @@ import { Label } from '@/components/ui/label'
 import { PageLoader } from '@/components/layout/page-loader'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { ROUTES, MUSICAL_WORK_TYPE_LABELS } from '@/constants/routes'
+import { ROUTES } from '@/constants/routes'
+import { MUSICAL_WORK_TYPE_LABELS } from '@/constants/labels'
+import type { MusicalWork } from '@/types'
 
 type WorkType = CreateMusicalWorkPayload['work_type']
 
 const WORK_TYPE_OPTIONS = Object.entries(MUSICAL_WORK_TYPE_LABELS) as [WorkType, string][]
 
-const emptyForm: CreateMusicalWorkPayload = {
-  title: '',
-  work_type: 'STUDIO',
-  youtube_url: '',
-  soundcloud_embed: '',
-  spotify_track_url: '',
-  description: '',
-  release_date: '',
+function formFromWork(work: MusicalWork): CreateMusicalWorkPayload {
+  return {
+    title: work.title ?? '',
+    work_type: work.work_type ?? 'STUDIO',
+    youtube_url: work.youtube_url ?? '',
+    soundcloud_embed: work.soundcloud_embed ?? '',
+    spotify_track_url: work.spotify_track_url ?? '',
+    description: work.description ?? '',
+    release_date: work.release_date ?? '',
+  }
 }
 
 export default function MusicianWorkEditPage() {
   const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
-  const [form, setForm] = useState(emptyForm)
 
   const { data: work, isLoading, isError } = useQuery({
     queryKey: ['musical-work', id],
@@ -40,19 +41,28 @@ export default function MusicianWorkEditPage() {
     enabled: Boolean(id),
   })
 
-  useEffect(() => {
-    if (work) {
-      setForm({
-        title: work.title ?? '',
-        work_type: work.work_type ?? 'STUDIO',
-        youtube_url: work.youtube_url ?? '',
-        soundcloud_embed: work.soundcloud_embed ?? '',
-        spotify_track_url: work.spotify_track_url ?? '',
-        description: work.description ?? '',
-        release_date: work.release_date ?? '',
-      })
-    }
-  }, [work])
+  if (isLoading) return <PageLoader label="Cargando obra..." />
+
+  if (isError || !work) {
+    return (
+      <div className="min-h-screen bg-bg pt-24 flex flex-col items-center gap-4">
+        <p className="text-text-secondary">No se encontró la obra.</p>
+        <Link to={ROUTES.DASHBOARD.MUSICIAN.WORKS} className="text-sm hover:underline">
+          ← Volver a mis obras
+        </Link>
+      </div>
+    )
+  }
+
+  // `key` reinicia el formulario si se navega a otra obra sin desmontar la página.
+  return <MusicianWorkEditForm key={work.id} work={work} />
+}
+
+function MusicianWorkEditForm({ work }: { work: MusicalWork }) {
+  const id = work.id
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const [form, setForm] = useState(() => formFromWork(work))
 
   const updateMutation = useMutation({
     mutationFn: () => {
@@ -60,13 +70,13 @@ export default function MusicianWorkEditPage() {
       const payload: Partial<CreateMusicalWorkPayload> = {
         title: form.title.trim(),
         work_type: form.work_type,
-        youtube_url: form.youtube_url?.trim() || undefined,
-        soundcloud_embed: form.soundcloud_embed?.trim() || undefined,
-        spotify_track_url: form.spotify_track_url?.trim() || undefined,
-        description: form.description?.trim() || undefined,
+        youtube_url: form.youtube_url?.trim() ?? '',
+        soundcloud_embed: form.soundcloud_embed?.trim() ?? '',
+        spotify_track_url: form.spotify_track_url?.trim() ?? '',
+        description: form.description?.trim() ?? '',
         release_date: form.release_date || undefined,
       }
-      return updateMusicalWork(id!, payload)
+      return updateMusicalWork(id, payload)
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['my-musical-works'] })
@@ -86,26 +96,13 @@ export default function MusicianWorkEditPage() {
     setForm((current) => ({ ...current, [field]: value }))
   }
 
-  if (isLoading) return <PageLoader label="Cargando obra..." />
-
-  if (isError || !work) {
-    return (
-      <div className="min-h-screen bg-background pt-24 flex flex-col items-center gap-4">
-        <p className="text-muted-foreground">No se encontró la obra.</p>
-        <Link to={ROUTES.DASHBOARD.MUSICIAN.WORKS} className="text-sm hover:underline">
-          ← Volver a mis obras
-        </Link>
-      </div>
-    )
-  }
-
   return (
-    <div className="min-h-screen bg-background pt-16">
+    <div className="min-h-screen bg-bg pt-16">
       <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-8 md:px-10">
         <section className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="text-sm font-medium text-muted-foreground">Panel del músico</p>
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+            <p className="text-sm font-medium text-text-secondary">Panel del músico</p>
+            <h1 className="text-3xl font-semibold tracking-tight text-text-primary">
               Editar obra musical
             </h1>
           </div>

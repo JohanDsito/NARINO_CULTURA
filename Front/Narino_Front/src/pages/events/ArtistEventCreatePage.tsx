@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { getApiErrorMessage } from '@/utils/apiError'
-import { EVENT_TYPES } from '@/constants/routes'
+import { EVENT_TYPES } from '@/constants/labels'
 import { getArtistDiscipline } from '@/utils/artistDiscipline'
 import { useAuthStore } from '@/store/authStore'
 
@@ -102,12 +102,12 @@ export default function ArtistEventCreatePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pt-16">
+    <div className="min-h-screen bg-bg pt-16">
       <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-8 md:px-10">
         <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm font-medium text-muted-foreground">Panel de artista</p>
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+            <p className="text-sm font-medium text-text-secondary">Panel de artista</p>
+            <h1 className="text-3xl font-semibold tracking-tight text-text-primary">
               Crear evento
             </h1>
           </div>
@@ -135,7 +135,7 @@ export default function ArtistEventCreatePage() {
               <div className="space-y-1 md:col-span-2">
                 <Label htmlFor="title">Nombre del evento *</Label>
                 <Input id="title" placeholder="Ej: Concierto de música andina" {...register('title')} />
-                {errors.title && <p className="text-xs text-destructive">{errors.title.message}</p>}
+                {errors.title && <p className="text-xs text-error">{errors.title.message}</p>}
               </div>
 
               {/* Tipo */}
@@ -150,7 +150,7 @@ export default function ArtistEventCreatePage() {
                   ))}
                 </Select>
                 {errors.event_type && (
-                  <p className="text-xs text-destructive">{errors.event_type.message}</p>
+                  <p className="text-xs text-error">{errors.event_type.message}</p>
                 )}
               </div>
 
@@ -159,7 +159,7 @@ export default function ArtistEventCreatePage() {
                 <Label htmlFor="location">Lugar *</Label>
                 <Input id="location" placeholder="Ej: Teatro Imperial, Pasto" {...register('location')} />
                 {errors.location && (
-                  <p className="text-xs text-destructive">{errors.location.message}</p>
+                  <p className="text-xs text-error">{errors.location.message}</p>
                 )}
               </div>
 
@@ -168,7 +168,7 @@ export default function ArtistEventCreatePage() {
                 <Label htmlFor="start_date">Fecha y hora de inicio *</Label>
                 <Input id="start_date" type="datetime-local" {...register('start_date')} />
                 {errors.start_date && (
-                  <p className="text-xs text-destructive">{errors.start_date.message}</p>
+                  <p className="text-xs text-error">{errors.start_date.message}</p>
                 )}
               </div>
 
@@ -193,7 +193,7 @@ export default function ArtistEventCreatePage() {
               <div className="space-y-1 md:col-span-2">
                 <Label htmlFor="ticket_url">
                   Link de compra de entradas{' '}
-                  <span className="text-muted-foreground font-normal">(opcional)</span>
+                  <span className="text-text-secondary font-normal">(opcional)</span>
                 </Label>
                 <Input
                   id="ticket_url"
@@ -202,7 +202,7 @@ export default function ArtistEventCreatePage() {
                   {...register('ticket_url')}
                 />
                 {errors.ticket_url && (
-                  <p className="text-xs text-destructive">{errors.ticket_url.message}</p>
+                  <p className="text-xs text-error">{errors.ticket_url.message}</p>
                 )}
               </div>
 
@@ -210,19 +210,19 @@ export default function ArtistEventCreatePage() {
               <div className="space-y-2 md:col-span-2">
                 <Label>
                   Flyer promocional{' '}
-                  <span className="text-muted-foreground font-normal">(opcional)</span>
+                  <span className="text-text-secondary font-normal">(opcional)</span>
                 </Label>
 
                 {/* Pestañas URL / Archivo */}
-                <div className="flex gap-1 rounded-lg border border-border bg-muted/40 p-1 w-fit">
+                <div className="flex gap-1 rounded-lg border border-border bg-bg-subtle/40 p-1 w-fit">
                   <button
                     type="button"
                     onClick={() => setFlyerTab('url')}
                     className={[
                       'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
                       flyerTab === 'url'
-                        ? 'bg-background text-foreground shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground',
+                        ? 'bg-bg text-text-primary shadow-sm'
+                        : 'text-text-secondary hover:text-text-primary',
                     ].join(' ')}
                   >
                     <Link2 size={12} /> URL de imagen
@@ -233,8 +233,8 @@ export default function ArtistEventCreatePage() {
                     className={[
                       'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
                       flyerTab === 'file'
-                        ? 'bg-background text-foreground shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground',
+                        ? 'bg-bg text-text-primary shadow-sm'
+                        : 'text-text-secondary hover:text-text-primary',
                     ].join(' ')}
                   >
                     <ImagePlus size={12} /> Subir archivo
@@ -274,23 +274,23 @@ export default function ArtistEventCreatePage() {
                         <button
                           type="button"
                           onClick={removeFlyerFile}
-                          className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-white hover:bg-destructive/80"
+                          className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-error text-white hover:bg-error/80"
                         >
                           <X size={12} />
                         </button>
-                        <p className="mt-1 text-xs text-muted-foreground truncate">{flyerFile?.name}</p>
+                        <p className="mt-1 text-xs text-text-secondary truncate">{flyerFile?.name}</p>
                       </div>
                     ) : (
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="flex w-full cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed border-border px-6 py-8 text-center transition-colors hover:border-primary hover:bg-primary/5"
+                        className="flex w-full cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed border-border px-6 py-8 text-center transition-colors hover:border-tierra hover:bg-tierra/5"
                       >
-                        <ImagePlus size={28} className="text-muted-foreground" />
-                        <span className="text-sm font-medium text-foreground">
+                        <ImagePlus size={28} className="text-text-secondary" />
+                        <span className="text-sm font-medium text-text-primary">
                           Subir flyer desde tu computador
                         </span>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-text-secondary">
                           PNG, JPG o WEBP · máx. 5 MB
                         </span>
                       </button>

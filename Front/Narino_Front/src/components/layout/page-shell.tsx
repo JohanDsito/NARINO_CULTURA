@@ -26,7 +26,7 @@ export function PageShell({
           <div className="space-y-1">
             <h1 className="text-3xl font-semibold">{title}</h1>
             {sub ? (
-              <p className="text-sm text-muted-foreground">{sub}</p>
+              <p className="text-sm text-text-secondary">{sub}</p>
             ) : null}
           </div>
           {actions ? <div className="shrink-0">{actions}</div> : null}

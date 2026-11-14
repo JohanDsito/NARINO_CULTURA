@@ -14,7 +14,7 @@ import {
 
 import { useLogout } from '@/hooks/useAuth'
 import { useAuthStore } from '@/store/authStore'
-import { useCartStore } from '@/store/cartStore'
+import { useCartCount } from '@/hooks/useCartCount'
 import { useThemeStore } from '@/store/themeStore'
 import { getArtistDashboardPath } from '@/utils/artistDiscipline'
 
@@ -31,7 +31,7 @@ export function Navbar() {
   const { theme, toggle } = useThemeStore()
   const { pathname } = useLocation()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const cartCount = useCartStore((s) => s.items.length)
+  const cartCount = useCartCount()
   const user = useAuthStore((s) => s.user)
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const logout = useLogout()

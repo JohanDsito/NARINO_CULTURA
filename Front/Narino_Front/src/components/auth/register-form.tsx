@@ -6,8 +6,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 
 import { register as registerApi } from '@/api/auth.api'
-import type { Role } from '@/types/auth'
-import { mapRoleToBackendRole } from '@/types/auth'
+import type { Role } from '@/types'
+import { mapRoleToBackendRole } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -108,7 +108,6 @@ export function RegisterForm() {
         first_name: values.firstName,
         last_name: values.lastName,
         role: mapRoleToBackendRole(values.role),
-        category: values.discipline?.trim() || undefined,
       })
     },
     onSuccess: (data) => {
@@ -144,14 +143,14 @@ export function RegisterForm() {
           <Label htmlFor="firstName" className="text-xs font-medium">Nombre</Label>
           <Input id="firstName" autoComplete="given-name" {...register('firstName')} />
           {errors.firstName ? (
-            <p className="text-xs text-destructive">{errors.firstName.message}</p>
+            <p className="text-xs text-error">{errors.firstName.message}</p>
           ) : null}
         </div>
         <div className="space-y-1">
           <Label htmlFor="lastName" className="text-xs font-medium">Apellido</Label>
           <Input id="lastName" autoComplete="family-name" {...register('lastName')} />
           {errors.lastName ? (
-            <p className="text-xs text-destructive">{errors.lastName.message}</p>
+            <p className="text-xs text-error">{errors.lastName.message}</p>
           ) : null}
         </div>
       </div>
@@ -159,7 +158,7 @@ export function RegisterForm() {
       <div className="space-y-1">
         <Label htmlFor="email" className="text-xs font-medium">Email</Label>
         <Input id="email" type="email" autoComplete="email" {...register('email')} />
-        {errors.email ? <p className="text-xs text-destructive">{errors.email.message}</p> : null}
+        {errors.email ? <p className="text-xs text-error">{errors.email.message}</p> : null}
       </div>
 
       <div className="space-y-1">
@@ -204,7 +203,7 @@ export function RegisterForm() {
             <option value="buyer">Visitante</option>
             <option value="artist">Artista</option>
           </Select>
-          {errors.role ? <p className="text-xs text-destructive">{errors.role.message}</p> : null}
+          {errors.role ? <p className="text-xs text-error">{errors.role.message}</p> : null}
         </div>
         <div className="space-y-1">
           <Label htmlFor="phone" className="text-xs font-medium">Teléfono (opt.)</Label>
@@ -220,7 +219,7 @@ export function RegisterForm() {
               <Label htmlFor="artisticName" className="text-xs font-medium">Nombre artístico*</Label>
               <Input id="artisticName" {...register('artisticName')} />
               {errors.artisticName ? (
-                <p className="text-xs text-destructive">{errors.artisticName.message}</p>
+                <p className="text-xs text-error">{errors.artisticName.message}</p>
               ) : null}
             </div>
             <div className="space-y-1">
@@ -231,7 +230,7 @@ export function RegisterForm() {
               <Label htmlFor="city" className="text-xs font-medium">Ciudad*</Label>
               <Input id="city" {...register('city')} />
               {errors.city ? (
-                <p className="text-xs text-destructive">{errors.city.message}</p>
+                <p className="text-xs text-error">{errors.city.message}</p>
               ) : null}
             </div>
           </div>
@@ -248,7 +247,7 @@ export function RegisterForm() {
           <span>Acepto los términos y la política de privacidad.</span>
         </label>
         {errors.termsAccepted ? (
-          <p className="text-xs text-destructive">{errors.termsAccepted.message}</p>
+          <p className="text-xs text-error">{errors.termsAccepted.message}</p>
         ) : null}
       </div>
 

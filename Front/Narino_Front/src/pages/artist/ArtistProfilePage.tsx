@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { UserPlus, UserCheck, Globe, ExternalLink, ArrowLeft, Palette } from 'lucide-react'
@@ -12,20 +12,14 @@ import { Card } from '@/components/ui/card'
 import { PageLoader } from '@/components/layout/page-loader'
 import { useAuthStore } from '@/store/authStore'
 import { ROUTES } from '@/constants/routes'
-
-function formatPrice(n: number) {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    maximumFractionDigits: 0,
-  }).format(n)
-}
+import { formatCurrency } from '@/utils'
 
 export default function ArtistProfilePage() {
   const { slug } = useParams<{ slug: string }>()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const queryClient = useQueryClient()
-  const [isFollowing, setIsFollowing] = useState(false)
+  // null = usar lo que diga el backend; boolean = estado optimista tras seguir/dejar de seguir
+  const [followOverride, setFollowOverride] = useState<boolean | null>(null)
 
   const { data: artist, isLoading, isError } = useQuery({
     queryKey: ['artist', slug],
@@ -33,9 +27,7 @@ export default function ArtistProfilePage() {
     enabled: Boolean(slug),
   })
 
-  useEffect(() => {
-    if (artist) setIsFollowing(artist.is_following ?? false)
-  }, [artist])
+  const isFollowing = followOverride ?? artist?.is_following ?? false
 
   const { data: artworksData } = useQuery({
     queryKey: ['artworks', 'artist', slug],
@@ -46,8 +38,7 @@ export default function ArtistProfilePage() {
   const followMutation = useMutation({
     mutationFn: () => followArtist(slug!),
     onSuccess: (res) => {
-      const nowFollowing = res.detail?.toLowerCase().includes('siguiendo') || !isFollowing
-      setIsFollowing(nowFollowing)
+      setFollowOverride(!isFollowing)
       toast.success(res.detail)
       void queryClient.invalidateQueries({ queryKey: ['artist', slug] })
     },
@@ -333,7 +324,7 @@ export default function ArtistProfilePage() {
                         </p>
                         <div className="flex items-center justify-between">
                           <p className="font-body font-bold text-oro text-[15px]">
-                            {formatPrice(parseFloat(artwork.price))}
+                            {formatCurrency(parseFloat(artwork.price))}
                           </p>
                           <Badge
                             variant={

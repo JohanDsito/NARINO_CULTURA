@@ -105,7 +105,7 @@ export default function EventDetailPage() {
 
           {/* Detalles */}
           <div className="space-y-4">
-            <div className="rounded-card border border-border bg-surface p-5 space-y-4">
+            <div className="rounded-card border border-border bg-bg-card p-5 space-y-4">
               <div className="flex items-start gap-3">
                 <Calendar size={18} className="text-oro flex-none mt-0.5" />
                 <div>

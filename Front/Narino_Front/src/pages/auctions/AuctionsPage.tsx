@@ -9,13 +9,8 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { PageShell } from '@/components/layout/page-shell'
 import { ROUTES } from '@/constants/routes'
-import type { AuctionStatus } from '@/types/auth'
-
-function formatPrice(n: number) {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency', currency: 'COP', maximumFractionDigits: 0,
-  }).format(n)
-}
+import type { AuctionStatus } from '@/types'
+import { formatCurrency } from '@/utils'
 
 const TABS: { label: string; value: AuctionStatus }[] = [
   { label: 'En curso', value: 'ACTIVA' },
@@ -62,7 +57,7 @@ export default function AuctionsPage() {
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="rounded-card border border-border bg-surface animate-pulse h-64" />
+              <div key={i} className="rounded-card border border-border bg-bg-card animate-pulse h-64" />
             ))}
           </div>
         ) : auctions.length === 0 ? (
@@ -103,7 +98,7 @@ export default function AuctionsPage() {
                       Precio base
                     </p>
                     <p className="font-display font-bold text-text-primary text-[18px]">
-                      {formatPrice(parseFloat(auction.base_price))}
+                      {formatCurrency(parseFloat(auction.base_price))}
                     </p>
                   </div>
 
@@ -112,7 +107,7 @@ export default function AuctionsPage() {
                       Puja actual
                     </p>
                     <p className="font-display font-bold text-oro text-[22px]">
-                      {formatPrice(parseFloat(auction.current_price))}
+                      {formatCurrency(parseFloat(auction.current_price))}
                     </p>
                   </div>
 

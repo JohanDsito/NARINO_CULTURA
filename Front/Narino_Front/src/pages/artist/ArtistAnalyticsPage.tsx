@@ -8,26 +8,19 @@ import { TrendingUp, ShoppingBag, DollarSign } from 'lucide-react'
 import { getSales } from '@/api/marketplace.api'
 import { PageShell } from '@/components/layout/page-shell'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-
-function formatCOP(n: number) {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    maximumFractionDigits: 0,
-  }).format(n)
-}
+import { formatCurrency } from '@/utils'
 
 export default function ArtistAnalyticsPage() {
   const { data: sales = [], isLoading } = useQuery({
     queryKey: ['artist-sales'],
-    queryFn: getSales,
+    queryFn: () => getSales(),
     staleTime: 5 * 60 * 1000,
   })
 
   const paid = useMemo(() => sales.filter((o) => o.status === 'PAGADO'), [sales])
 
   const totalRevenue = useMemo(
-    () => paid.reduce((acc, o) => acc + parseFloat(o.total_amount), 0),
+    () => paid.reduce((acc, o) => acc + parseFloat(o.seller_amount), 0),
     [paid],
   )
 
@@ -35,7 +28,7 @@ export default function ArtistAnalyticsPage() {
     const map = new Map<string, number>()
     for (const order of paid) {
       const key = format(new Date(order.created_at), 'MMM yyyy', { locale: es })
-      map.set(key, (map.get(key) ?? 0) + parseFloat(order.total_amount))
+      map.set(key, (map.get(key) ?? 0) + parseFloat(order.seller_amount))
     }
     return Array.from(map.entries())
       .slice(-6)
@@ -50,7 +43,7 @@ export default function ArtistAnalyticsPage() {
         <PageShell title="Analíticas" subtitle="Resumen de ventas y rendimiento" />
         <main className="mx-auto max-w-5xl px-6 py-8 space-y-6">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="rounded-card border border-border bg-surface animate-pulse h-32" />
+            <div key={i} className="rounded-card border border-border bg-bg-card animate-pulse h-32" />
           ))}
         </main>
       </div>
@@ -74,7 +67,7 @@ export default function ArtistAnalyticsPage() {
                   Ingresos totales
                 </p>
                 <p className="font-display text-2xl font-semibold text-text-primary">
-                  {formatCOP(totalRevenue)}
+                  {formatCurrency(totalRevenue)}
                 </p>
               </div>
             </CardContent>
@@ -106,7 +99,7 @@ export default function ArtistAnalyticsPage() {
                   Promedio por venta
                 </p>
                 <p className="font-display text-2xl font-semibold text-text-primary">
-                  {paid.length > 0 ? formatCOP(totalRevenue / paid.length) : '—'}
+                  {paid.length > 0 ? formatCurrency(totalRevenue / paid.length) : '—'}
                 </p>
               </div>
             </CardContent>
@@ -144,7 +137,7 @@ export default function ArtistAnalyticsPage() {
                     tickLine={false}
                   />
                   <Tooltip
-                    formatter={(value: number) => [formatCOP(value), 'Ingresos']}
+                    formatter={(value: number) => [formatCurrency(value), 'Ingresos']}
                     contentStyle={{
                       background: 'var(--color-surface)',
                       border: '1px solid var(--color-border)',
@@ -194,7 +187,7 @@ export default function ArtistAnalyticsPage() {
                           {order.order_type === 'COMPRA_DIRECTA' ? 'Directa' : 'Subasta'}
                         </td>
                         <td className="py-3 font-body font-semibold text-oro text-sm">
-                          {formatCOP(parseFloat(order.total_amount))}
+                          {formatCurrency(order.seller_amount)}
                         </td>
                         <td className="py-3">
                           <span
