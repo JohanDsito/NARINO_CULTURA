@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/providers/user_role_provider.dart';
-import '../../../../core/theme/nc_theme.dart';
 import '../../../../shared/widgets/design/design.dart';
 import '../../../musicians/domain/musician_model.dart';
 import '../../../musicians/presentation/providers/musician_provider.dart';
@@ -246,7 +245,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final nc = context.nc;
     final state = ref.watch(myProfileProvider);
     if (state.profile != null) _initFrom(state.profile!);
     final role = ref.watch(currentUserRoleProvider).valueOrNull;

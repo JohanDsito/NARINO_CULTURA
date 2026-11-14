@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/nc_theme.dart';
 import '../../../../shared/widgets/design/design.dart';
 import '../../../musicians/data/musician_repository.dart';
@@ -9,16 +8,7 @@ import '../../../profile/data/profile_repository.dart';
 import '../../../profile/presentation/widgets/disciplinas.dart';
 import '../widgets/auth_scaffold.dart';
 import 'artistic_profile_screen/disciplina_tile.dart';
-
-/// Clave: valor que espera el backend. Valor: etiqueta visible.
-const _kAgrupaciones = <String, String>{
-  'SOLISTA': 'Solista',
-  'DUO': 'Dúo',
-  'TRIO': 'Trío',
-  'BANDA': 'Banda',
-  'COLECTIVO': 'Colectivo',
-  'DJ': 'DJ',
-};
+import 'artistic_profile_screen/musician_step_form.dart';
 
 /// Bienvenida del artista: elige su disciplina y, si es música, completa su
 /// perfil musical (paso 2).
@@ -229,20 +219,6 @@ class _ArtisticProfileScreenState extends State<ArtisticProfileScreen> {
     final nc = context.nc;
     final musica = nc.tomateA;
 
-    Widget label(String text, {String? hint}) => Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(text,
-                style: AppTypography.labelSemiBold(color: nc.textPrimary)
-                    .copyWith(fontSize: 14)),
-            if (hint != null) ...[
-              const SizedBox(height: 2),
-              Text(hint,
-                  style: AppTypography.bodySmall(color: nc.textSecondary)),
-            ],
-          ],
-        );
-
     return AuthScaffold(
       kicker: 'Paso 2 de 2',
       title: 'Tu perfil musical',
@@ -259,95 +235,24 @@ class _ArtisticProfileScreenState extends State<ArtisticProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          label('Nombre artístico'),
-          const SizedBox(height: 10),
-          TextFormField(
-            controller: _artisticNameCtrl,
-            enabled: !_isLoading,
-            textCapitalization: TextCapitalization.words,
-            onChanged: (_) {
+          MusicianStepForm(
+            nombre: _artisticNameCtrl,
+            nombreError: _nameError,
+            onNombreChanged: () {
               if (_nameError) setState(() => _nameError = false);
             },
-            decoration: InputDecoration(
-              prefixIcon: const Icon(Icons.mic_none_rounded),
-              hintText: 'Nombre con el que te conocen',
-              errorText: _nameError ? 'Escribe tu nombre artístico' : null,
-            ),
+            agrupacion: _aggregationType,
+            onAgrupacion: (v) => setState(() => _aggregationType = v),
+            generos: _genres,
+            seleccionados: _selectedGenreIds,
+            cargandoGeneros: _loadingGenres,
+            onGenero: (id) => setState(() {
+              _selectedGenreIds.contains(id)
+                  ? _selectedGenreIds.remove(id)
+                  : _selectedGenreIds.add(id);
+            }),
+            enabled: !_isLoading,
           ),
-          const SizedBox(height: 22),
-          label('Formato'),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final e in _kAgrupaciones.entries)
-                ChoiceChip(
-                  label: Text(e.value),
-                  selected: _aggregationType == e.key,
-                  showCheckmark: false,
-                  onSelected: _isLoading
-                      ? null
-                      : (v) =>
-                          setState(() => _aggregationType = v ? e.key : null),
-                  selectedColor: musica.fill,
-                  labelStyle: AppTypography.labelMedium(
-                    color: _aggregationType == e.key
-                        ? musica.onFill
-                        : nc.textPrimary,
-                  ).copyWith(fontWeight: FontWeight.w600),
-                  side: BorderSide(
-                    color: _aggregationType == e.key ? musica.fill : nc.border,
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 22),
-          label('Géneros musicales',
-              hint: 'Elige todos los que definen tu música.'),
-          const SizedBox(height: 10),
-          if (_loadingGenres)
-            const Padding(
-              padding: EdgeInsets.all(12),
-              child: Center(child: CircularProgressIndicator()),
-            )
-          else if (_genres.isEmpty)
-            NcBanner(
-              accent: nc.oroA,
-              message: 'No pudimos cargar los géneros. Puedes agregarlos '
-                  'luego desde tu perfil.',
-            )
-          else
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final g in _genres)
-                  FilterChip(
-                    label: Text(g.name),
-                    selected: _selectedGenreIds.contains(g.id),
-                    onSelected: _isLoading
-                        ? null
-                        : (_) => setState(() {
-                              _selectedGenreIds.contains(g.id)
-                                  ? _selectedGenreIds.remove(g.id)
-                                  : _selectedGenreIds.add(g.id);
-                            }),
-                    selectedColor: nc.azulA.tint,
-                    checkmarkColor: nc.azul,
-                    side: BorderSide(
-                      color: _selectedGenreIds.contains(g.id)
-                          ? nc.azul
-                          : nc.border,
-                    ),
-                    labelStyle: AppTypography.labelMedium(
-                      color: _selectedGenreIds.contains(g.id)
-                          ? nc.azul
-                          : nc.textPrimary,
-                    ),
-                  ),
-              ],
-            ),
           if (_error != null) ...[
             const SizedBox(height: 16),
             NcBanner.error(context, _error!),

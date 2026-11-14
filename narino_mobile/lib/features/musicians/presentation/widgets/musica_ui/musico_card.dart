@@ -9,16 +9,7 @@ import '../../providers/musician_provider.dart';
 import 'estrellas.dart';
 import 'musico_avatar.dart';
 import 'seguir_button.dart';
-
-String formatoAgrupacion(String? t) => switch (t?.toUpperCase()) {
-      'SOLISTA' => 'Solista',
-      'DUO' => 'Dúo',
-      'TRIO' => 'Trío',
-      'BANDA' => 'Banda',
-      'COLECTIVO' => 'Colectivo',
-      'DJ' => 'DJ',
-      _ => '',
-    };
+import '../../../domain/agrupaciones.dart';
 
 /// Seguidores con el ajuste optimista de [seguidosProvider].
 int seguidoresVisibles(MusicianModel m, SeguidosState s) =>

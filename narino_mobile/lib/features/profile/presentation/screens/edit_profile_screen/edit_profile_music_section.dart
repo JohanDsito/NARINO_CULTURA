@@ -2,19 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_typography.dart';
 import '../../../../../core/theme/nc_theme.dart';
+import '../../../../musicians/domain/agrupaciones.dart';
 import '../../../../musicians/domain/musician_model.dart';
 import 'edit_profile_chip.dart';
 import 'edit_profile_section.dart';
-
-/// Clave: valor que espera el backend. Valor: etiqueta visible.
-const kAgrupaciones = <String, String>{
-  'SOLISTA': 'Solista',
-  'DUO': 'Dúo',
-  'TRIO': 'Trío',
-  'BANDA': 'Banda',
-  'COLECTIVO': 'Colectivo',
-  'DJ': 'DJ',
-};
 
 /// "Perfil musical": tipo de agrupación y géneros.
 class EditProfileMusicSection extends StatelessWidget {
