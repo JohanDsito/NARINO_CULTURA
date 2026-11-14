@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/providers/user_role_provider.dart';
-import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/nc_theme.dart';
 import '../../../../shared/widgets/design/design.dart';
 import '../../../musicians/domain/musician_model.dart';
@@ -13,48 +12,17 @@ import '../../../musicians/presentation/providers/musician_provider.dart';
 import '../../domain/profile_model.dart';
 import '../providers/profile_provider.dart';
 import '../widgets/disciplinas.dart';
-import 'edit_profile_screen/disciplina_selector.dart';
-import 'edit_profile_screen/edit_profile_chip.dart';
 import 'edit_profile_screen/edit_profile_header.dart';
-import 'edit_profile_screen/edit_profile_section.dart';
+import '../../../../shared/widgets/dialogs/confirmar_accion.dart';
+import '../../../../shared/widgets/dialogs/elegir_origen_foto.dart';
+import 'edit_profile_screen/edit_profile_about_section.dart';
+import 'edit_profile_screen/edit_profile_discipline_section.dart';
+import 'edit_profile_screen/edit_profile_links_section.dart';
+import 'edit_profile_screen/edit_profile_music_section.dart';
+import 'edit_profile_screen/enlaces.dart';
 
-/// Clave: valor que espera el backend. Valor: etiqueta visible.
-const _kAgrupaciones = <String, String>{
-  'SOLISTA': 'Solista',
-  'DUO': 'Dúo',
-  'TRIO': 'Trío',
-  'BANDA': 'Banda',
-  'COLECTIVO': 'Colectivo',
-  'DJ': 'DJ',
-};
-
-/// Convierte lo que escribe la persona en una URL que acepte el backend
-/// (`URLField`): agrega `https://` y entiende `@usuario` en Instagram/TikTok.
-String normalizarEnlace(String red, String texto) {
-  var v = texto.trim();
-  if (v.isEmpty) return '';
-  if (v.startsWith('@')) {
-    final user = v.substring(1);
-    switch (red) {
-      case 'instagram':
-        return 'https://instagram.com/$user';
-      case 'tiktok':
-        return 'https://www.tiktok.com/@$user';
-      case 'facebook':
-        return 'https://facebook.com/$user';
-    }
-  }
-  if (!RegExp(r'^https?://', caseSensitive: false).hasMatch(v)) {
-    v = 'https://$v';
-  }
-  return v;
-}
-
-bool _enlaceValido(String url) {
-  if (url.isEmpty) return true;
-  final u = Uri.tryParse(url);
-  return u != null && u.host.contains('.') && !url.contains(' ');
-}
+// Las pruebas y otras pantallas usan normalizarEnlace desde aquí.
+export 'edit_profile_screen/enlaces.dart' show normalizarEnlace;
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -171,35 +139,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     });
   }
 
-  void _opcionesFoto() {
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Elegir de la galería'),
-              onTap: () {
-                Navigator.pop(ctx);
-                _elegirFoto(ImageSource.gallery);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_camera_outlined),
-              title: const Text('Tomar una foto'),
-              onTap: () {
-                Navigator.pop(ctx);
-                _elegirFoto(ImageSource.camera);
-              },
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
-    );
+  Future<void> _opcionesFoto() async {
+    final origen = await elegirOrigenFoto(context);
+    if (origen != null) await _elegirFoto(origen);
   }
 
   bool _esArtista(String? role) => role == 'artista' || role == null;
@@ -283,24 +225,23 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     }
   }
 
-  Future<bool> _confirmarSalida() async {
-    if (!_dirty) return true;
-    final salir = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('¿Salir sin guardar?'),
-        content: const Text('Los cambios que hiciste se van a perder.'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Seguir editando')),
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Salir')),
-        ],
-      ),
-    );
-    return salir == true;
+  Future<bool> _confirmarSalida() async =>
+      !_dirty ||
+      await confirmarAccion(
+        context,
+        titulo: '¿Salir sin guardar?',
+        mensaje: 'Los cambios que hiciste se van a perder.',
+        cancelar: 'Seguir editando',
+        confirmar: 'Salir',
+      );
+
+  void _elegirDisciplina(String v) {
+    setState(() {
+      _disciplina = v;
+      _faltaDisciplina = false;
+      _dirty = true;
+    });
+    if (esDisciplinaMusical(v)) _cargarMusica();
   }
 
   @override
@@ -348,175 +289,44 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         'No se pudieron guardar los cambios.'),
                 const SizedBox(height: 16),
               ],
-              EditProfileSection(
-                titulo: 'Sobre ti',
-                children: [
-                  TextFormField(
-                    controller: _nombreCtrl,
-                    textCapitalization: TextCapitalization.words,
-                    maxLength: 120,
-                    onChanged: (_) => setState(() {}),
-                    decoration: InputDecoration(
-                      labelText: esArtista ? 'Nombre artístico' : 'Nombre',
-                      prefixIcon: const Icon(Icons.person_outline_rounded),
-                      counterText: '',
-                    ),
-                    validator: (v) => (v == null || v.trim().isEmpty)
-                        ? 'Escribe cómo quieres que te vean'
-                        : null,
-                  ),
-                  if (esArtista) ...[
-                    const SizedBox(height: 14),
-                    TextFormField(
-                      controller: _ciudadCtrl,
-                      textCapitalization: TextCapitalization.words,
-                      maxLength: 120,
-                      decoration: const InputDecoration(
-                        labelText: 'Municipio (opcional)',
-                        hintText: 'Ej.: Pasto, Ipiales, Tumaco',
-                        prefixIcon: Icon(Icons.place_outlined),
-                        counterText: '',
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    TextFormField(
-                      controller: _bioCtrl,
-                      minLines: 3,
-                      maxLines: 6,
-                      maxLength: 500,
-                      textCapitalization: TextCapitalization.sentences,
-                      decoration: const InputDecoration(
-                        labelText: 'Biografía (opcional)',
-                        hintText: 'Tu historia, tu técnica, lo que te inspira…',
-                        alignLabelWithHint: true,
-                      ),
-                    ),
-                  ],
-                ],
+              EditProfileAboutSection(
+                nombre: _nombreCtrl,
+                ciudad: _ciudadCtrl,
+                bio: _bioCtrl,
+                esArtista: esArtista,
+                onNombreChanged: () => setState(() {}),
               ),
               if (esArtista) ...[
                 const SizedBox(height: 16),
-                EditProfileSection(
-                  titulo: 'Tu disciplina',
-                  children: [
-                    DisciplinaSelector(
-                      valor: _disciplina,
-                      onChanged: (v) {
-                        setState(() {
-                          _disciplina = v;
-                          _faltaDisciplina = false;
-                          _dirty = true;
-                        });
-                        if (esDisciplinaMusical(v)) _cargarMusica();
-                      },
-                    ),
-                    if (_faltaDisciplina) ...[
-                      const SizedBox(height: 8),
-                      Text('Elige tu disciplina',
-                          style:
-                              AppTypography.bodySmall(color: nc.tomateA.ink)),
-                    ],
-                  ],
+                EditProfileDisciplineSection(
+                  valor: _disciplina,
+                  falta: _faltaDisciplina,
+                  onChanged: _elegirDisciplina,
                 ),
               ],
               if (esArtista && esMusica) ...[
                 const SizedBox(height: 16),
-                EditProfileSection(
-                  titulo: 'Perfil musical',
-                  icon: Icons.music_note_rounded,
-                  accent: nc.musica,
-                  children: [
-                    Text('¿Cómo te presentas?',
-                        style: AppTypography.labelSemiBold(
-                            color: nc.textSecondary)),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        for (final e in _kAgrupaciones.entries)
-                          EditProfileChip(
-                            label: e.value,
-                            selected: _agrupacion == e.key,
-                            accent: nc.musica,
-                            onTap: () => setState(() {
-                              _agrupacion = e.key;
-                              _dirty = true;
-                            }),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Text('Géneros',
-                        style: AppTypography.labelSemiBold(
-                            color: nc.textSecondary)),
-                    const SizedBox(height: 8),
-                    if (_cargandoGeneros)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                        child: Center(child: CircularProgressIndicator()),
-                      )
-                    else if (_todosGeneros.isEmpty)
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text('No pudimos cargar los géneros.',
-                                style: AppTypography.bodySmall(
-                                    color: nc.textMuted)),
-                          ),
-                          TextButton(
-                              onPressed: _cargarMusica,
-                              child: const Text('Reintentar')),
-                        ],
-                      )
-                    else
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          for (final g in _todosGeneros)
-                            EditProfileChip(
-                              label: g.name,
-                              selected: _generos.contains(g.id),
-                              accent: nc.musica,
-                              check: true,
-                              onTap: () => setState(() {
-                                _generos.contains(g.id)
-                                    ? _generos.remove(g.id)
-                                    : _generos.add(g.id);
-                                _dirty = true;
-                              }),
-                            ),
-                        ],
-                      ),
-                  ],
+                EditProfileMusicSection(
+                  agrupacion: _agrupacion,
+                  generos: _generos,
+                  todosGeneros: _todosGeneros,
+                  cargando: _cargandoGeneros,
+                  onAgrupacion: (a) => setState(() {
+                    _agrupacion = a;
+                    _dirty = true;
+                  }),
+                  onGenero: (id) => setState(() {
+                    _generos.contains(id)
+                        ? _generos.remove(id)
+                        : _generos.add(id);
+                    _dirty = true;
+                  }),
+                  onReintentar: _cargarMusica,
                 ),
               ],
               if (esArtista) ...[
                 const SizedBox(height: 16),
-                EditProfileSection(
-                  titulo: 'Tus redes',
-                  subtitulo: 'Pega el enlace o escribe tu @usuario.',
-                  children: [
-                    for (final red in _links.keys) ...[
-                      TextFormField(
-                        controller: _links[red],
-                        keyboardType: TextInputType.url,
-                        autocorrect: false,
-                        decoration: InputDecoration(
-                          labelText: _nombreRed(red),
-                          hintText: _ejemploRed(red),
-                          prefixIcon: Icon(_iconoRed(red)),
-                        ),
-                        validator: (v) =>
-                            _enlaceValido(normalizarEnlace(red, v ?? ''))
-                                ? null
-                                : 'Revisa el enlace',
-                      ),
-                      if (red != _links.keys.last) const SizedBox(height: 12),
-                    ],
-                  ],
-                ),
+                EditProfileLinksSection(links: _links),
               ],
             ],
           ),
@@ -532,24 +342,4 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       ),
     );
   }
-
-  static String _nombreRed(String k) => switch (k) {
-        'website' => 'Sitio web',
-        'instagram' => 'Instagram',
-        'facebook' => 'Facebook',
-        _ => 'TikTok',
-      };
-
-  static String _ejemploRed(String k) => switch (k) {
-        'website' => 'tusitio.com',
-        'facebook' => 'facebook.com/tu.pagina',
-        _ => '@tuusuario',
-      };
-
-  static IconData _iconoRed(String k) => switch (k) {
-        'website' => Icons.language_rounded,
-        'instagram' => Icons.camera_alt_outlined,
-        'facebook' => Icons.facebook_rounded,
-        _ => Icons.music_video_outlined,
-      };
 }

@@ -9,7 +9,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:narino_cultura/app.dart';
+import 'package:narino_cultura/core/router/main_shell.dart';
 import 'package:narino_cultura/core/providers/user_role_provider.dart';
 import 'package:narino_cultura/core/theme/app_theme.dart';
 import 'package:narino_cultura/features/artworks/domain/artwork_model.dart';

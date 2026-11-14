@@ -1,16 +1,18 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/nc_theme.dart';
 import '../../../../shared/widgets/design/design.dart';
 import '../../../ai/data/ai_service.dart';
 import '../../domain/artwork_model.dart';
 import '../providers/artwork_provider.dart';
+import '../../../../shared/widgets/dialogs/confirmar_accion.dart';
+import '../../../../shared/widgets/dialogs/elegir_origen_foto.dart';
+import 'publish_artwork_screen/obra_clasificacion_section.dart';
+import 'publish_artwork_screen/obra_datos_section.dart';
+import 'publish_artwork_screen/obra_precio_section.dart';
 import 'publish_artwork_screen/portada_obra.dart';
 import 'publish_artwork_screen/publicar_obra_bottom_bar.dart';
 
@@ -100,36 +102,9 @@ class _PublishArtworkScreenState extends ConsumerState<PublishArtworkScreen> {
     if (picked != null) setState(() => _imagen = picked);
   }
 
-  void _opcionesImagen() {
-    showModalBottomSheet<void>(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.photo_library_outlined),
-                title: const Text('Elegir de la galería'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _elegirImagen(ImageSource.gallery);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.photo_camera_outlined),
-                title: const Text('Tomar una foto'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _elegirImagen(ImageSource.camera);
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+  Future<void> _opcionesImagen() async {
+    final origen = await elegirOrigenFoto(context);
+    if (origen != null) await _elegirImagen(origen);
   }
 
   Future<void> _generarDescripcionConIA() async {
@@ -201,29 +176,15 @@ class _PublishArtworkScreenState extends ConsumerState<PublishArtworkScreen> {
   }
 
   Future<void> _confirmarEliminar() async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('¿Eliminar esta obra?'),
-        content: const Text(
-            'Dejará de aparecer en el catálogo. Esta acción no se puede deshacer.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.tomate,
-              foregroundColor: Colors.black,
-            ),
-            child: const Text('Eliminar'),
-          ),
-        ],
-      ),
+    final ok = await confirmarAccion(
+      context,
+      titulo: '¿Eliminar esta obra?',
+      mensaje: 'Dejará de aparecer en el catálogo. Esta acción no se puede '
+          'deshacer.',
+      confirmar: 'Eliminar',
+      peligro: true,
     );
-    if (ok != true || !mounted) return;
+    if (!ok || !mounted) return;
     setState(() => _isLoading = true);
     final deleted = await ref
         .read(artworkProvider.notifier)
@@ -254,22 +215,6 @@ class _PublishArtworkScreenState extends ConsumerState<PublishArtworkScreen> {
         _obraOriginal != null &&
         _obraOriginal!.estado != 'en_subasta';
 
-    Widget titulo(String t, {String? hint}) => Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(t,
-                  style: AppTypography.labelSemiBold(color: nc.textPrimary)),
-              if (hint != null) ...[
-                const SizedBox(height: 2),
-                Text(hint,
-                    style: AppTypography.bodySmall(color: nc.textSecondary)),
-              ],
-            ],
-          ),
-        );
-
     return Scaffold(
       appBar: AppBar(
         title: Text(_modoEdicion ? 'Editar obra' : 'Publicar obra'),
@@ -298,229 +243,47 @@ class _PublishArtworkScreenState extends ConsumerState<PublishArtworkScreen> {
                     ),
                     const SizedBox(height: 16),
                   ],
-
-                  // ── Portada ──
-                  NcCard(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        titulo('Imagen de portada',
-                            hint: 'Una foto nítida, con buena luz y sin '
-                                'marcos. Es lo primero que verá el público.'),
-                        PortadaObra(
-                          archivo: _imagen,
-                          urlActual: _obraOriginal?.imagenes.isNotEmpty == true
-                              ? _obraOriginal!.imagenes.first
-                              : null,
-                          error: _intentado && !_modoEdicion && _imagen == null,
-                          onTap: _isVendida ? null : _opcionesImagen,
-                        ),
-                      ],
-                    ),
+                  NcFormSection(
+                    title: 'Imagen de portada',
+                    hint: 'Una foto nítida, con buena luz y sin marcos. Es lo '
+                        'primero que verá el público.',
+                    children: [
+                      PortadaObra(
+                        archivo: _imagen,
+                        urlActual: _obraOriginal?.imagenes.isNotEmpty == true
+                            ? _obraOriginal!.imagenes.first
+                            : null,
+                        error: _intentado && !_modoEdicion && _imagen == null,
+                        onTap: _isVendida ? null : _opcionesImagen,
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 16),
-
-                  // ── Datos ──
-                  NcCard(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        titulo('Sobre la obra'),
-                        TextFormField(
-                          controller: _tituloCtrl,
-                          enabled: !_isVendida,
-                          maxLength: 120,
-                          textCapitalization: TextCapitalization.sentences,
-                          decoration: const InputDecoration(
-                            labelText: 'Título',
-                            counterText: '',
-                          ),
-                          validator: (v) => (v == null || v.trim().isEmpty)
-                              ? 'Ponle un título a tu obra'
-                              : null,
-                        ),
-                        const SizedBox(height: 14),
-                        TextFormField(
-                          controller: _descCtrl,
-                          enabled: !_isVendida,
-                          minLines: 4,
-                          maxLines: 8,
-                          maxLength: 1500,
-                          textCapitalization: TextCapitalization.sentences,
-                          decoration: const InputDecoration(
-                            labelText: 'Descripción',
-                            alignLabelWithHint: true,
-                            hintText: 'Cuenta la historia, la técnica y qué '
-                                'la hace especial.',
-                          ),
-                        ),
-                        if (_kIaDisponible)
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: TextButton.icon(
-                              onPressed: _generateDescLoading
-                                  ? null
-                                  : _generarDescripcionConIA,
-                              icon: const Icon(Icons.auto_awesome_outlined),
-                              label: const Text('Escribir con IA'),
-                            ),
-                          ),
-                      ],
-                    ),
+                  ObraDatosSection(
+                    titulo: _tituloCtrl,
+                    descripcion: _descCtrl,
+                    editable: !_isVendida,
+                    iaDisponible: _kIaDisponible,
+                    generando: _generateDescLoading,
+                    onGenerar: _generarDescripcionConIA,
                   ),
                   const SizedBox(height: 16),
-
-                  // ── Clasificación ──
-                  NcCard(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        titulo('Categoría'),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            if (categorias.isEmpty)
-                              Text('Cargando categorías…',
-                                  style: AppTypography.bodySmall(
-                                      color: nc.textSecondary)),
-                            for (final c in categorias)
-                              ChoiceChip(
-                                label: Text(c.displayName),
-                                selected: _categoriaId == c.id,
-                                showCheckmark: false,
-                                onSelected: _isVendida
-                                    ? null
-                                    : (_) =>
-                                        setState(() => _categoriaId = c.id),
-                                selectedColor: nc.catalogo.fill,
-                                side: BorderSide(
-                                  color: _categoriaId == c.id
-                                      ? nc.catalogo.fill
-                                      : (_intentado && _categoriaId == null
-                                          ? nc.tomateA.fill
-                                          : nc.border),
-                                ),
-                                labelStyle: AppTypography.labelMedium(
-                                  color: _categoriaId == c.id
-                                      ? nc.catalogo.onFill
-                                      : nc.textPrimary,
-                                ).copyWith(fontWeight: FontWeight.w600),
-                              ),
-                          ],
-                        ),
-                        if (_intentado && _categoriaId == null) ...[
-                          const SizedBox(height: 8),
-                          Text('Elige una categoría',
-                              style: AppTypography.bodySmall(
-                                  color: nc.tomateA.ink)),
-                        ],
-                        const SizedBox(height: 20),
-                        DropdownButtonFormField<String?>(
-                          initialValue: _tecnica,
-                          isExpanded: true,
-                          decoration: const InputDecoration(
-                            labelText: 'Técnica (opcional)',
-                            prefixIcon: Icon(Icons.brush_outlined),
-                          ),
-                          items: [
-                            const DropdownMenuItem(
-                                value: null, child: Text('Sin especificar')),
-                            for (final t in {
-                              ...kTecnicasNarino,
-                              if (_tecnica != null) _tecnica!,
-                            })
-                              DropdownMenuItem(value: t, child: Text(t)),
-                          ],
-                          onChanged: _isVendida
-                              ? null
-                              : (v) => setState(() => _tecnica = v),
-                        ),
-                        const SizedBox(height: 14),
-                        TextFormField(
-                          controller: _dimensionesCtrl,
-                          enabled: !_isVendida,
-                          decoration: const InputDecoration(
-                            labelText: 'Dimensiones (opcional)',
-                            hintText: 'Ej.: 50 × 70 cm',
-                            prefixIcon: Icon(Icons.straighten_rounded),
-                          ),
-                        ),
-                      ],
-                    ),
+                  ObraClasificacionSection(
+                    categorias: categorias,
+                    categoriaId: _categoriaId,
+                    tecnica: _tecnica,
+                    dimensiones: _dimensionesCtrl,
+                    editable: !_isVendida,
+                    mostrarError: _intentado,
+                    onCategoria: (id) => setState(() => _categoriaId = id),
+                    onTecnica: (t) => setState(() => _tecnica = t),
                   ),
                   const SizedBox(height: 16),
-
-                  // ── Precio ──
-                  NcCard(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        titulo('Precio'),
-                        SegmentedButton<bool>(
-                          segments: const [
-                            ButtonSegment(
-                              value: true,
-                              label: Text('A la venta'),
-                              icon: Icon(Icons.sell_outlined),
-                            ),
-                            ButtonSegment(
-                              value: false,
-                              label: Text('Exhibición'),
-                              icon: Icon(Icons.visibility_outlined),
-                            ),
-                          ],
-                          selected: {_aLaVenta},
-                          showSelectedIcon: false,
-                          onSelectionChanged: _isVendida
-                              ? null
-                              : (s) => setState(() => _aLaVenta = s.first),
-                          style: SegmentedButton.styleFrom(
-                            selectedBackgroundColor: nc.tienda.fill,
-                            selectedForegroundColor: nc.tienda.onFill,
-                            side: BorderSide(color: nc.border),
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        AnimatedCrossFade(
-                          duration: const Duration(milliseconds: 220),
-                          crossFadeState: _aLaVenta
-                              ? CrossFadeState.showFirst
-                              : CrossFadeState.showSecond,
-                          firstChild: TextFormField(
-                            controller: _precioCtrl,
-                            enabled: !_isVendida,
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly
-                            ],
-                            decoration: const InputDecoration(
-                              labelText: 'Precio en pesos',
-                              prefixText: r'$ ',
-                              suffixText: 'COP',
-                            ),
-                            validator: (v) {
-                              if (!_aLaVenta) return null;
-                              final n = double.tryParse(v?.trim() ?? '');
-                              if (n == null || n <= 0) {
-                                return 'Escribe un precio mayor que 0';
-                              }
-                              return null;
-                            },
-                          ),
-                          secondChild: Text(
-                            'La obra aparecerá en el catálogo sin opción de '
-                            'compra. Podrás ponerla a la venta después.',
-                            style: AppTypography.bodySmall(
-                                color: nc.textSecondary),
-                          ),
-                        ),
-                      ],
-                    ),
+                  ObraPrecioSection(
+                    aLaVenta: _aLaVenta,
+                    precio: _precioCtrl,
+                    editable: !_isVendida,
+                    onModo: (v) => setState(() => _aLaVenta = v),
                   ),
                 ],
               ),
