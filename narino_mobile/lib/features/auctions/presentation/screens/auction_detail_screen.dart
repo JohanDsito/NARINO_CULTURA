@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../../../core/providers/user_role_provider.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/nc_theme.dart';
@@ -11,9 +10,11 @@ import '../../domain/auction_bid_model.dart';
 import '../../domain/auction_model.dart';
 import '../providers/auctions_provider.dart';
 import '../widgets/subasta_ui.dart';
+import 'auction_detail_screen/avisos_subasta.dart';
 import 'auction_detail_screen/barra_puja.dart';
 import 'auction_detail_screen/marcador_subasta.dart';
 import 'auction_detail_screen/pujas_en_vivo.dart';
+import 'auction_detail_screen/subasta_app_bar.dart';
 
 /// Detalle de subasta en tiempo real (WebSocket): precio, cuenta regresiva,
 /// pujas en vivo y barra fija para pujar.
@@ -219,65 +220,7 @@ class _AuctionDetailScreenState extends ConsumerState<AuctionDetailScreen> {
         onRefresh: _load,
         child: CustomScrollView(
           slivers: [
-            SliverAppBar(
-              expandedHeight: 340,
-              pinned: true,
-              backgroundColor: nc.bg,
-              surfaceTintColor: Colors.transparent,
-              shape: const Border(),
-              automaticallyImplyLeading: false,
-              leadingWidth: 64,
-              leading: Padding(
-                padding: const EdgeInsets.only(left: 12),
-                child: Center(
-                  child: GlassCircleButton(
-                    icon: Icons.arrow_back_rounded,
-                    tooltip: 'Volver',
-                    onPressed: () => Navigator.of(context).maybePop(),
-                  ),
-                ),
-              ),
-              actions: [
-                GlassCircleButton(
-                  icon: Icons.history_rounded,
-                  tooltip: 'Mi historial',
-                  onPressed: () => context.push('/auctions/history'),
-                ),
-                const SizedBox(width: 12),
-              ],
-              flexibleSpace: FlexibleSpaceBar(
-                background: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    GestureDetector(
-                      onTap: a.obraId.isEmpty
-                          ? null
-                          : () => context.push('/artworks/${a.obraId}'),
-                      child: SubastaImage(url: a.imagenUrl),
-                    ),
-                    Positioned(
-                        left: 16,
-                        bottom: 44,
-                        child: FaseBadge(fase: fase, onImage: true)),
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: -1,
-                      child: Container(
-                        height: 30,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: nc.bg,
-                          borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(28)),
-                        ),
-                        child: const NcSerpentina(width: 44),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            SubastaAppBar(auction: a, fase: fase),
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
               sliver: SliverList.list(children: [
@@ -290,7 +233,12 @@ class _AuctionDetailScreenState extends ConsumerState<AuctionDetailScreen> {
                 const SizedBox(height: 18),
                 MarcadorSubasta(auction: a, fase: fase, voyGanando: voyGanando),
                 const SizedBox(height: 16),
-                ..._avisos(context, a, fase, soyVendedor, gane),
+                AvisosSubasta(
+                  auction: a,
+                  fase: fase,
+                  soyVendedor: soyVendedor,
+                  gane: gane,
+                ),
                 const SizedBox(height: 8),
                 PujasEnVivo(
                   pujas: a.ultimasPujas,
@@ -311,86 +259,5 @@ class _AuctionDetailScreenState extends ConsumerState<AuctionDetailScreen> {
             )
           : null,
     );
-  }
-
-  List<Widget> _avisos(BuildContext context, AuctionModel a, FaseSubasta fase,
-      bool soyVendedor, bool gane) {
-    final nc = context.nc;
-    Widget gap(Widget w) =>
-        Padding(padding: const EdgeInsets.only(bottom: 12), child: w);
-
-    return [
-      if (fase == FaseSubasta.pendiente)
-        gap(NcBanner(
-          accent: nc.oroA,
-          icon: Icons.hourglass_top_rounded,
-          message: soyVendedor
-              ? 'Tu subasta está en revisión. Un administrador la aprobará '
-                  'antes de que salga en vivo.'
-              : 'Esta subasta aún no ha sido aprobada.',
-        )),
-      if (fase == FaseSubasta.programada)
-        gap(NcBanner(
-          accent: nc.azulA,
-          icon: Icons.event_available_rounded,
-          message: 'Las pujas se abren el '
-              '${a.fechaInicio.day}/${a.fechaInicio.month} a las '
-              '${a.fechaInicio.hour.toString().padLeft(2, '0')}:'
-              '${a.fechaInicio.minute.toString().padLeft(2, '0')}.',
-        )),
-      if (fase == FaseSubasta.cancelada)
-        gap(NcBanner(
-          accent: nc.tomateA,
-          icon: Icons.block_rounded,
-          message: 'Esta subasta fue cancelada.',
-        )),
-      if (soyVendedor && fase == FaseSubasta.enVivo)
-        gap(NcBanner(
-          accent: nc.subastas,
-          icon: Icons.visibility_outlined,
-          message: 'Es tu subasta: puedes seguir las pujas en vivo, pero no '
-              'pujar.',
-        )),
-      if (fase == FaseSubasta.cerrada && gane)
-        gap(NcCard(
-          padding: const EdgeInsets.all(18),
-          child: Column(
-            children: [
-              NcAccentIcon(
-                  icon: Icons.emoji_events_outlined,
-                  accent: nc.subastas,
-                  size: 60,
-                  glow: true),
-              const SizedBox(height: 12),
-              Text('¡Ganaste la subasta!',
-                  style: AppTypography.displaySemiBold(color: nc.textPrimary)),
-              const SizedBox(height: 4),
-              Text('Completa el pago para recibir tu obra.',
-                  textAlign: TextAlign.center,
-                  style: AppTypography.bodyMedium(color: nc.textSecondary)),
-              const SizedBox(height: 16),
-              NcPrimaryButton(
-                label: 'Pagar ${formatCOP(a.precioActual)}',
-                icon: Icons.credit_card_rounded,
-                onPressed: a.orderId == null
-                    ? () => _snack('Estamos generando tu orden de pago. '
-                        'Desliza hacia abajo en unos segundos.')
-                    : () => context
-                        .push('/marketplace/checkout?orderId=${a.orderId}'),
-              ),
-            ],
-          ),
-        )),
-      if (fase == FaseSubasta.cerrada && !gane)
-        gap(NcBanner(
-          accent: nc.subastas,
-          icon: Icons.flag_outlined,
-          message: a.ganadorId == null
-              ? 'La subasta terminó sin pujas.'
-              : soyVendedor
-                  ? '¡Tu obra se subastó por ${formatCOP(a.precioActual)}!'
-                  : 'La subasta terminó en ${formatCOP(a.precioActual)}.',
-        )),
-    ];
   }
 }

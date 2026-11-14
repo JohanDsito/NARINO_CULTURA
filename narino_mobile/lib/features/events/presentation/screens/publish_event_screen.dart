@@ -1,22 +1,15 @@
-﻿import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/providers/user_role_provider.dart';
-import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/nc_theme.dart';
 import '../../../../shared/widgets/design/design.dart';
 import '../providers/events_provider.dart';
-import '../widgets/eventos_ui.dart';
-
-const _duraciones = <(String, Duration)>[
-  ('1 h', Duration(hours: 1)),
-  ('2 h', Duration(hours: 2)),
-  ('3 h', Duration(hours: 3)),
-  ('Medio día', Duration(hours: 5)),
-  ('Todo el día', Duration(hours: 10)),
-];
+import 'publish_event_screen/evento_cuando_section.dart';
+import 'publish_event_screen/evento_datos_section.dart';
+import 'publish_event_screen/evento_flyer_section.dart';
+import 'publish_event_screen/evento_tipo_section.dart';
 
 /// Publicar un evento en la agenda (acento tomate).
 class PublishEventScreen extends ConsumerStatefulWidget {
@@ -114,24 +107,6 @@ class _PublishEventScreenState extends ConsumerState<PublishEventScreen> {
     final nc = context.nc;
     final role = ref.watch(currentUserRoleProvider).valueOrNull;
     final esBorrador = !(role == 'gestor' || role == 'admin');
-    final fin = _inicio?.add(_duracion);
-    final flyer = _flyerCtrl.text.trim();
-    final flyerValido = Uri.tryParse(flyer)?.hasScheme == true;
-
-    Widget titulo(String t, {String? hint}) => Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(t,
-                  style: AppTypography.labelSemiBold(color: nc.textPrimary)),
-              if (hint != null)
-                Text(hint,
-                    style: AppTypography.bodySmall(color: nc.textSecondary)),
-            ],
-          ),
-        );
-
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -155,208 +130,26 @@ class _PublishEventScreenState extends ConsumerState<PublishEventScreen> {
               ),
               const SizedBox(height: 16),
             ],
-
-            // ── Tipo ──
-            NcCard(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  titulo('¿Qué tipo de evento es?'),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      for (final t in kTiposEvento)
-                        ChoiceChip(
-                          avatar: Icon(tipoIcon(t),
-                              size: 16,
-                              color: _tipo == t
-                                  ? tipoAccent(nc, t).onFill
-                                  : tipoAccent(nc, t).ink),
-                          label: Text(tipoNombre(t)),
-                          selected: _tipo == t,
-                          showCheckmark: false,
-                          onSelected: (_) => setState(() => _tipo = t),
-                          selectedColor: tipoAccent(nc, t).fill,
-                          side: BorderSide(
-                              color: _tipo == t
-                                  ? tipoAccent(nc, t).fill
-                                  : nc.border),
-                          labelStyle: AppTypography.labelMedium(
-                            color: _tipo == t
-                                ? tipoAccent(nc, t).onFill
-                                : nc.textPrimary,
-                          ).copyWith(fontWeight: FontWeight.w600),
-                        ),
-                    ],
-                  ),
-                ],
-              ),
+            EventoTipoSection(
+              tipo: _tipo,
+              onChanged: (t) => setState(() => _tipo = t),
             ),
             const SizedBox(height: 16),
-
-            // ── Datos ──
-            NcCard(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  titulo('Cuéntanos del evento'),
-                  TextFormField(
-                    controller: _nombreCtrl,
-                    textCapitalization: TextCapitalization.sentences,
-                    maxLength: 120,
-                    decoration: const InputDecoration(
-                        labelText: 'Nombre del evento', counterText: ''),
-                    validator: (v) => (v == null || v.trim().isEmpty)
-                        ? 'Ponle un nombre al evento'
-                        : null,
-                  ),
-                  const SizedBox(height: 14),
-                  TextFormField(
-                    controller: _lugarCtrl,
-                    textCapitalization: TextCapitalization.sentences,
-                    decoration: const InputDecoration(
-                      labelText: 'Lugar',
-                      hintText: 'Ej.: Teatro Imperial, Pasto',
-                      prefixIcon: Icon(Icons.place_outlined),
-                    ),
-                    validator: (v) => (v == null || v.trim().isEmpty)
-                        ? 'Indica dónde será'
-                        : null,
-                  ),
-                  const SizedBox(height: 14),
-                  TextFormField(
-                    controller: _descCtrl,
-                    minLines: 3,
-                    maxLines: 6,
-                    maxLength: 1500,
-                    textCapitalization: TextCapitalization.sentences,
-                    decoration: const InputDecoration(
-                      labelText: 'Descripción (opcional)',
-                      alignLabelWithHint: true,
-                    ),
-                  ),
-                ],
-              ),
+            EventoDatosSection(
+              nombre: _nombreCtrl,
+              lugar: _lugarCtrl,
+              descripcion: _descCtrl,
             ),
             const SizedBox(height: 16),
-
-            // ── Cuándo ──
-            NcCard(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  titulo('¿Cuándo?'),
-                  OutlinedButton.icon(
-                    onPressed: _elegirFecha,
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(
-                        color: _intentado && _inicio == null
-                            ? nc.tomateA.fill
-                            : nc.border,
-                      ),
-                    ),
-                    icon: const Icon(Icons.event_rounded),
-                    label: Text(_inicio == null
-                        ? 'Elegir fecha y hora'
-                        : '${_inicio!.day}/${_inicio!.month}/${_inicio!.year} · '
-                            '${hora(_inicio!)}'),
-                  ),
-                  if (_intentado && _inicio == null) ...[
-                    const SizedBox(height: 6),
-                    Text('Elige cuándo empieza',
-                        style: AppTypography.bodySmall(color: nc.tomateA.ink)),
-                  ],
-                  const SizedBox(height: 14),
-                  Text('Duración',
-                      style:
-                          AppTypography.labelMedium(color: nc.textSecondary)),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      for (final (label, d) in _duraciones)
-                        ChoiceChip(
-                          label: Text(label),
-                          selected: _duracion == d,
-                          showCheckmark: false,
-                          onSelected: (_) => setState(() => _duracion = d),
-                          selectedColor: nc.eventos.fill,
-                          side: BorderSide(
-                              color: _duracion == d
-                                  ? nc.eventos.fill
-                                  : nc.border),
-                          labelStyle: AppTypography.labelMedium(
-                            color: _duracion == d
-                                ? nc.eventos.onFill
-                                : nc.textPrimary,
-                          ).copyWith(fontWeight: FontWeight.w600),
-                        ),
-                    ],
-                  ),
-                  if (fin != null) ...[
-                    const SizedBox(height: 12),
-                    Text('Termina a las ${hora(fin)}'
-                        '${soloDia(fin) != soloDia(_inicio!) ? ' del día siguiente' : ''}',
-                        style: AppTypography.labelSemiBold(
-                                color: nc.eventos.ink)
-                            .copyWith(fontSize: 14)),
-                  ],
-                ],
-              ),
+            EventoCuandoSection(
+              inicio: _inicio,
+              duracion: _duracion,
+              mostrarError: _intentado,
+              onElegirFecha: _elegirFecha,
+              onDuracion: (d) => setState(() => _duracion = d),
             ),
             const SizedBox(height: 16),
-
-            // ── Flyer ──
-            NcCard(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  titulo('Flyer (opcional)',
-                      hint: 'Pega el enlace de una imagen ya publicada '
-                          '(el backend aún no permite subir archivos).'),
-                  TextFormField(
-                    controller: _flyerCtrl,
-                    keyboardType: TextInputType.url,
-                    decoration: const InputDecoration(
-                      labelText: 'Enlace de la imagen',
-                      hintText: 'https://…',
-                      prefixIcon: Icon(Icons.link_rounded),
-                    ),
-                    validator: (v) {
-                      final t = v?.trim() ?? '';
-                      if (t.isEmpty) return null;
-                      return Uri.tryParse(t)?.hasScheme == true
-                          ? null
-                          : 'Debe empezar por https://';
-                    },
-                  ),
-                  if (flyerValido) ...[
-                    const SizedBox(height: 12),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: AspectRatio(
-                        aspectRatio: 4 / 5,
-                        child: CachedNetworkImage(
-                          imageUrl: flyer,
-                          fit: BoxFit.cover,
-                          errorWidget: (_, __, ___) => Center(
-                            child: Text('No se pudo cargar la imagen',
-                                style: AppTypography.bodySmall(
-                                    color: nc.tomateA.ink)),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
+            EventoFlyerSection(flyer: _flyerCtrl),
           ],
         ),
       ),
