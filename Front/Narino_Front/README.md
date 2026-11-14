@@ -1,73 +1,76 @@
-# React + TypeScript + Vite
+# Nariño Cultura — Frontend web
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+SPA en React 19 + TypeScript + Vite para la plataforma Nariño Cultura (artistas, obras,
+marketplace, subastas, eventos y músicos). Consume la API Django de `Backend/`.
 
-Currently, two official plugins are available:
+## Puesta en marcha
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm ci
+npm run dev          # http://localhost:5173
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Variables de entorno (`.env.local`):
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+| Variable            | Descripción                                                        |
+|---------------------|--------------------------------------------------------------------|
+| `VITE_API_BASE_URL` | Host del backend. Si termina en `/api/v1` se recorta solo. Por defecto, producción en Railway. |
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Scripts
+
+| Comando              | Qué hace                                                    |
+|----------------------|-------------------------------------------------------------|
+| `npm run dev`        | Servidor de desarrollo con HMR                              |
+| `npm run typecheck`  | `tsc -b`: app, tests y `vite.config.ts`                     |
+| `npm run lint`       | ESLint                                                      |
+| `npm test`           | Vitest una vez (`npm run test:watch` para modo observador)  |
+| `npm run build`      | Typecheck + build de producción en `dist/`                  |
+| `npm start`          | Sirve `dist/` (Railway usa `$PORT`)                         |
+
+Antes de subir cambios: `npm run typecheck && npm run lint && npm test`.
+
+## Estructura de `src/`
+
 ```
+api/          Un módulo por recurso del backend (artworks.api.ts, admin.api.ts...).
+              Todas las llamadas pasan por axiosInstance (token + refresh automático).
+components/
+  ui/         Primitivas del design system: Button, Badge, Card, Input, Select, Skeleton...
+  layout/     Navbar, footer, PageShell, PageLoader, ErrorBoundary.
+  auth/ artist/ musician/ events/ profile/ ai/
+              Componentes de dominio reutilizables (formularios, tarjetas, widgets).
+constants/
+  routes.ts   Rutas de la app (ROUTES).
+  labels.ts   Etiquetas en español de los valores del backend (estados, roles, tipos).
+  roles.ts    Roles para las rutas protegidas.
+hooks/        useAuth (login/logout), useCartCount, useStartPayment (Wompi)...
+pages/        Una carpeta por sección; cada página se carga en diferido desde el router.
+router/       Definición de rutas y protección por rol.
+services/     WebSocket de subastas en vivo.
+store/        Estado global con Zustand: sesión, carrito de invitado y tema.
+types/        Tipos de dominio, uno por archivo; importar siempre desde '@/types'.
+utils/        cn(), formatCurrency(), mensajes de error de la API...
+test/         Setup de Vitest.
+```
+
+## Convenciones
+
+- **Colores**: solo tokens del design system (`bg-bg-card`, `text-text-secondary`, `text-tierra`,
+  `bg-error/10`...). Las variables viven en `src/index.css` (claro y `.dark`) y el config de
+  Tailwind admite opacidad (`/10`, `/30`). No usar clases sueltas de shadcn
+  (`bg-muted`, `text-foreground`...): no existen en el tema. Ver `DESIGN_SYSTEM.md`.
+- **Datos del servidor**: React Query. En `queryFn` siempre una flecha (`() => getX()`), nunca la
+  función directa: React Query le pasaría su contexto como primer argumento.
+- **Formularios con datos cargados**: inicializar el estado una vez (`useState(() => ...)`) en
+  un componente hijo con `key`, en lugar de copiar props a estado dentro de un `useEffect`.
+- **Precios**: `formatCurrency()` de `@/utils` (acepta los strings que envía DRF).
+- **Errores de API**: `getApiErrorMessage(error)` para el texto del toast.
+- **Nombres de archivo**: componentes en `kebab-case.tsx`; páginas en `PascalCasePage.tsx`.
+
+## Pendientes que dependen del backend
+
+- `GET /artists/?search=` se ignora (falta `search_fields`); la búsqueda de artistas filtra en el cliente.
+- El calendario de eventos envía `start_date__gte/lte`, pero `EventViewSet` no tiene esos filtros.
+- Crear evento envía `flyer` y `ticket_url`, que `EventSerializer` no tiene y descarta.
+- `GET /admin/users/` no devuelve la fecha de registro.
+- Las listas paginadas (pedidos, ventas, obras en admin) solo muestran la primera página.
