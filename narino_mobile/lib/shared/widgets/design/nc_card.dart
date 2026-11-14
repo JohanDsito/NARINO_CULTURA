@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-
-import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/nc_theme.dart';
 import 'nc_pressable.dart';
+
+export 'nc_section_header.dart';
 
 /// Tarjeta del design system (`.card-container`): radio 22, borde de 1 px.
 /// En modo oscuro el borde es un degradado neón azul → naranja.
@@ -69,43 +69,5 @@ class NcCard extends StatelessWidget {
     return onTap == null
         ? card
         : NcPressable(onTap: onTap, pressedScale: 0.98, child: card);
-  }
-}
-
-/// Encabezado de sección (`.section-header h2`): 24/800, -0.03em.
-class NcSectionHeader extends StatelessWidget {
-  const NcSectionHeader({
-    super.key,
-    required this.title,
-    this.actionLabel,
-    this.onAction,
-    this.padding = const EdgeInsets.symmetric(horizontal: 20),
-  });
-
-  final String title;
-  final String? actionLabel;
-  final VoidCallback? onAction;
-  final EdgeInsetsGeometry padding;
-
-  @override
-  Widget build(BuildContext context) {
-    final nc = context.nc;
-    return Padding(
-      padding: padding,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Semantics(
-              header: true,
-              child: Text(title,
-                  style: AppTypography.displayBold(color: nc.textPrimary)),
-            ),
-          ),
-          if (actionLabel != null && onAction != null)
-            TextButton(onPressed: onAction, child: Text(actionLabel!)),
-        ],
-      ),
-    );
   }
 }

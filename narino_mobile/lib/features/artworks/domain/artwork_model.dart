@@ -1,37 +1,14 @@
-class CategoryModel {
-  const CategoryModel({
-    required this.id,
-    required this.name,
-    required this.slug,
-  });
+import 'category_model.dart';
 
-  final int id;
-  final String name;
-  final String slug;
-
-  /// Nombre para mostrar: el backend guarda algunas categorías sin tilde.
-  String get displayName => _conTildes[name.toLowerCase()] ?? name;
-
-  static const _conTildes = {
-    'fotografia': 'Fotografía',
-    'artesania': 'Artesanía',
-    'ceramica': 'Cerámica',
-  };
-
-  factory CategoryModel.fromJson(Map<String, dynamic> json) {
-    return CategoryModel(
-      id: json['id'] as int,
-      name: json['name'] as String? ?? '',
-      slug: json['slug'] as String? ?? '',
-    );
-  }
-}
+export 'catalogo_narino.dart';
+export 'category_model.dart';
 
 /// Modelo de dominio que representa una obra de arte dentro del catálogo/marketplace.
 class ArtworkModel {
   final String id;
   final String titulo;
   final String descripcion;
+
   /// Nombre de la categoría para mostrar (de `category_detail.name`).
   final String categoria;
 
@@ -112,7 +89,8 @@ class ArtworkModel {
       if (slug.isNotEmpty) {
         artistaNombre = slug
             .split('-')
-            .map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
+            .map(
+                (w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
             .join(' ');
       }
     }
@@ -128,7 +106,8 @@ class ArtworkModel {
     // Solo subasta y vendida son estados explícitos; cualquier otro valor
     // (available, for_sale, active, published, vacío, desconocido) → disponible.
     final rawStatus =
-        (json['status'] as String? ?? json['estado'] as String? ?? '').toLowerCase();
+        (json['status'] as String? ?? json['estado'] as String? ?? '')
+            .toLowerCase();
     final String estado;
     switch (rawStatus) {
       case 'in_auction':
@@ -166,8 +145,9 @@ class ArtworkModel {
     return ArtworkModel(
       id: json['id']?.toString() ?? '',
       titulo: json['title'] as String? ?? json['titulo'] as String? ?? '',
-      descripcion:
-          json['description'] as String? ?? json['descripcion'] as String? ?? '',
+      descripcion: json['description'] as String? ??
+          json['descripcion'] as String? ??
+          '',
       categoria: categoria,
       categoriaId: categoriaId,
       tecnica: (tecnicaRaw?.isEmpty ?? true) ? null : tecnicaRaw,
@@ -176,18 +156,16 @@ class ArtworkModel {
       precio: precio,
       estado: estado,
       imagenes: imagenes,
-      artistaId: json['artist']?.toString() ??
-          json['artista_id']?.toString() ??
-          '',
+      artistaId:
+          json['artist']?.toString() ?? json['artista_id']?.toString() ?? '',
       artistaSlug: json['artist_slug'] as String? ?? '',
       artistaNombre: artistaNombre,
       artistaFoto: json['artista_foto'] as String?,
       viewsCount: json['views_count'] as int? ?? 0,
       esFavorito: json['es_favorito'] as bool? ?? false,
-      creadoEn: DateTime.tryParse(
-              json['created_at'] as String? ??
-                  json['creado_en'] as String? ??
-                  '') ??
+      creadoEn: DateTime.tryParse(json['created_at'] as String? ??
+              json['creado_en'] as String? ??
+              '') ??
           DateTime.now(),
     );
   }
@@ -215,39 +193,3 @@ class ArtworkModel {
 
   bool get isDisponible => estado == 'disponible';
 }
-
-const kCategoriasNarino = [
-  'Pintura',
-  'Escultura',
-  'Artesanía',
-  'Fotografía',
-  'Grabado',
-  'Dibujo',
-  'Textiles',
-  'Cerámica',
-  'Joyería',
-  'Arte Digital',
-  'Música',
-  'Danza',
-  'Teatro',
-  'Literatura',
-  'Otro',
-];
-
-const kTecnicasNarino = [
-  'Barniz de Pasto',
-  'Tamo',
-  'Talla en madera',
-  'Acuarela',
-  'Óleo',
-  'Acrílico',
-  'Lápiz',
-  'Carboncillo',
-  'Serigrafía',
-  'Tejido',
-  'Cerámica a mano',
-  'Fundición',
-  'Fotografía análoga',
-  'Fotografía digital',
-  'Otra',
-];

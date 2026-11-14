@@ -1,3 +1,7 @@
+import 'order_item_model.dart';
+
+export 'order_item_model.dart';
+
 /// Modelo de dominio que representa una orden de compra/venta en el marketplace.
 class OrderModel {
   const OrderModel({
@@ -28,10 +32,9 @@ class OrderModel {
 
   factory OrderModel.fromJson(Map<String, dynamic> json) => OrderModel(
         id: json['id']?.toString() ?? json['order_id']?.toString() ?? '',
-        estado: switch (
-            (json['status'] ?? json['estado'] ?? 'PENDIENTE')
-                .toString()
-                .toUpperCase()) {
+        estado: switch ((json['status'] ?? json['estado'] ?? 'PENDIENTE')
+            .toString()
+            .toUpperCase()) {
           'PAGADO' => 'completado',
           'CANCELADO' => 'fallido',
           'REEMBOLSADO' => 'reembolsado',
@@ -41,10 +44,9 @@ class OrderModel {
               (json['total_amount'] ?? json['total'] ?? 0).toString(),
             ) ??
             0,
-        creadoEn: DateTime.tryParse(
-                json['created_at']?.toString() ??
-                    json['creado_en']?.toString() ??
-                    '') ??
+        creadoEn: DateTime.tryParse(json['created_at']?.toString() ??
+                json['creado_en']?.toString() ??
+                '') ??
             DateTime.now(),
         items: (json['items'] as List? ?? [])
             .map((e) => OrderItemModel.fromJson(e as Map<String, dynamic>))
@@ -67,50 +69,4 @@ class OrderModel {
         .replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+$)'), (m) => '${m[1]}.');
     return '\$$n COP';
   }
-}
-
-class OrderItemModel {
-  const OrderItemModel({
-    required this.obraId,
-    required this.obraTitulo,
-    required this.artistaNombre,
-    required this.precio,
-    this.imagenUrl,
-  });
-
-  final String obraId;
-  final String obraTitulo;
-  final String artistaNombre;
-  final double precio;
-  final String? imagenUrl;
-
-  String get precioFormateado {
-    final n = precio
-        .toStringAsFixed(0)
-        .replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+$)'), (m) => '${m[1]}.');
-    return '\$$n COP';
-  }
-
-  factory OrderItemModel.fromJson(Map<String, dynamic> json) => OrderItemModel(
-        obraId: json['artwork']?.toString() ??
-            json['obra_id']?.toString() ??
-            '',
-        obraTitulo: json['artwork_title']?.toString() ??
-            json['obra_titulo']?.toString() ??
-            '',
-        artistaNombre: json['artist_name']?.toString() ??
-            json['artista_nombre']?.toString() ??
-            '',
-        precio: double.tryParse(
-              (json['price'] ?? json['precio'] ?? 0).toString(),
-            ) ??
-            0,
-        imagenUrl: _nonEmpty(json['artwork_image_url']) ??
-            _nonEmpty(json['imagen_url']),
-      );
-}
-
-String? _nonEmpty(Object? v) {
-  final s = v?.toString().trim();
-  return (s == null || s.isEmpty) ? null : s;
 }

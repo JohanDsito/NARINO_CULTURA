@@ -1,9 +1,7 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
 import '../../../../core/providers/user_role_provider.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/nc_theme.dart';
@@ -13,6 +11,7 @@ import '../../../marketplace/presentation/providers/favorites_provider.dart';
 import '../../domain/artwork_state.dart';
 import '../providers/artwork_provider.dart';
 import 'catalog_screen/catalog_body.dart';
+import 'catalog_screen/catalog_search_field.dart';
 import 'catalog_screen/category_chips.dart';
 import 'catalog_screen/filtros_sheet.dart';
 
@@ -116,7 +115,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _SearchField(
+                child: CatalogSearchField(
                   controller: _searchCtrl,
                   onChanged: _onSearchChanged,
                   onClear: _clearSearch,
@@ -146,50 +145,6 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
             CatalogBody(state: state),
             const SliverToBoxAdapter(child: SizedBox(height: 24)),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SearchField extends StatelessWidget {
-  const _SearchField({
-    required this.controller,
-    required this.onChanged,
-    required this.onClear,
-  });
-
-  final TextEditingController controller;
-  final ValueChanged<String> onChanged;
-  final VoidCallback onClear;
-
-  @override
-  Widget build(BuildContext context) {
-    final nc = context.nc;
-    final pill = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(99),
-      borderSide: BorderSide(color: nc.border),
-    );
-    return TextField(
-      controller: controller,
-      onChanged: onChanged,
-      textInputAction: TextInputAction.search,
-      decoration: InputDecoration(
-        hintText: 'Buscar obras, técnicas o artistas',
-        prefixIcon: const Icon(Icons.search_rounded),
-        suffixIcon: controller.text.isEmpty
-            ? null
-            : IconButton(
-                tooltip: 'Borrar búsqueda',
-                icon: const Icon(Icons.close_rounded),
-                onPressed: onClear,
-              ),
-        fillColor: nc.bgGlass,
-        contentPadding: const EdgeInsets.symmetric(vertical: 14),
-        border: pill,
-        enabledBorder: pill,
-        focusedBorder: pill.copyWith(
-          borderSide: BorderSide(color: nc.catalogo.fill, width: 1.5),
         ),
       ),
     );

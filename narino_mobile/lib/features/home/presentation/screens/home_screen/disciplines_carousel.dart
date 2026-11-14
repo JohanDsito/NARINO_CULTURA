@@ -1,20 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
 import '../../../../../core/theme/app_typography.dart';
 import '../../../../../core/theme/nc_theme.dart';
 import '../../../../../shared/widgets/design/design.dart';
 import '../../../../artworks/presentation/providers/artwork_provider.dart';
-
-class _Disciplina {
-  const _Disciplina(this.emoji, this.title, this.text, this.link, this.action);
-  final String emoji;
-  final String title;
-  final String text;
-  final String link;
-  final Future<void> Function(BuildContext, WidgetRef) action;
-}
+import 'disciplina_carousel_item.dart';
 
 Future<void> _irCatalogo(BuildContext context, WidgetRef ref,
     {String? categoriaContiene}) async {
@@ -24,8 +15,9 @@ Future<void> _irCatalogo(BuildContext context, WidgetRef ref,
   } else {
     try {
       final cats = await ref.read(categoriesProvider.future);
-      final match = cats.where(
-          (c) => c.name.toLowerCase().contains(categoriaContiene)).firstOrNull;
+      final match = cats
+          .where((c) => c.name.toLowerCase().contains(categoriaContiene))
+          .firstOrNull;
       notifier.setCategoria(match?.id.toString());
     } catch (_) {
       notifier.setCategoria(null);
@@ -34,8 +26,8 @@ Future<void> _irCatalogo(BuildContext context, WidgetRef ref,
   if (context.mounted) context.go('/catalog');
 }
 
-final _disciplinas = <_Disciplina>[
-  _Disciplina(
+final _disciplinas = <DisciplinaCarouselItem>[
+  DisciplinaCarouselItem(
     '🎨',
     'Artesanos & Plásticos',
     'Obras originales, tejido guaneña, barniz de Pasto y carrozas a escala. '
@@ -43,7 +35,7 @@ final _disciplinas = <_Disciplina>[
     'Ver galería →',
     (c, r) => _irCatalogo(c, r),
   ),
-  _Disciplina(
+  DisciplinaCarouselItem(
     '🎸',
     'Músicos & Sonido',
     'Descubre ensambles, escucha sus obras y sigue la música que mueve '
@@ -51,7 +43,7 @@ final _disciplinas = <_Disciplina>[
     'Explorar sonidos →',
     (c, r) async => c.push('/musicians'),
   ),
-  _Disciplina(
+  DisciplinaCarouselItem(
     '📸',
     'Fotógrafos',
     'El registro gráfico del Carnaval y nuestros paisajes. Compra '
@@ -59,7 +51,7 @@ final _disciplinas = <_Disciplina>[
     'Ver portafolios →',
     (c, r) => _irCatalogo(c, r, categoriaContiene: 'foto'),
   ),
-  _Disciplina(
+  DisciplinaCarouselItem(
     '🔨',
     'Subastas en vivo',
     'Puja en tiempo real por piezas únicas de creadores nariñenses y sigue '
@@ -121,8 +113,8 @@ class _DisciplinesCarouselState extends ConsumerState<DisciplinesCarousel> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       ExcludeSemantics(
-                        child: Text(d.emoji,
-                            style: const TextStyle(fontSize: 28)),
+                        child:
+                            Text(d.emoji, style: const TextStyle(fontSize: 28)),
                       ),
                       const SizedBox(height: 14),
                       Text(
@@ -135,8 +127,8 @@ class _DisciplinesCarouselState extends ConsumerState<DisciplinesCarousel> {
                         child: Text(
                           d.text,
                           overflow: TextOverflow.fade,
-                          style: AppTypography.bodyMedium(
-                              color: nc.textSecondary),
+                          style:
+                              AppTypography.bodyMedium(color: nc.textSecondary),
                         ),
                       ),
                       ConstrainedBox(

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/nc_theme.dart';
 import '../../../../shared/widgets/design/design.dart';
 import '../../domain/order_model.dart';
 import '../providers/cart_provider.dart';
 import '../widgets/tienda_ui.dart';
+import 'sales_history_screen/ventas_stat.dart';
 
 final _salesHistoryProvider =
     FutureProvider.autoDispose<List<OrderModel>>((ref) async {
@@ -46,8 +46,7 @@ class SalesHistoryScreen extends ConsumerWidget {
                   o.creadoEn.year == now.year && o.creadoEn.month == now.month)
               .fold<double>(0, (s, o) => s + o.montoVenta);
           final total = pagadas.fold<double>(0, (s, o) => s + o.montoVenta);
-          final obras =
-              pagadas.fold<int>(0, (s, o) => s + o.items.length);
+          final obras = pagadas.fold<int>(0, (s, o) => s + o.items.length);
 
           return RefreshIndicator(
             onRefresh: () async => ref.invalidate(_salesHistoryProvider),
@@ -63,23 +62,23 @@ class SalesHistoryScreen extends ConsumerWidget {
                           style: AppTypography.kicker(color: nc.oroA.ink)),
                       const SizedBox(height: 6),
                       Text(formatCOP(mes),
-                          style: AppTypography.displayBlack(
-                                  color: nc.tienda.ink)
-                              .copyWith(fontSize: 34)),
+                          style:
+                              AppTypography.displayBlack(color: nc.tienda.ink)
+                                  .copyWith(fontSize: 34)),
                       const SizedBox(height: 16),
                       const NcSerpentina(width: double.infinity, height: 3),
                       const SizedBox(height: 16),
                       Row(
                         children: [
                           Expanded(
-                            child: _Stat(
+                            child: VentasStat(
                               label: 'Total histórico',
                               value: formatCOP(total),
                               accent: nc.oroA,
                             ),
                           ),
                           Expanded(
-                            child: _Stat(
+                            child: VentasStat(
                               label: 'Obras vendidas',
                               value: '$obras',
                               accent: nc.successA,
@@ -118,28 +117,6 @@ class SalesHistoryScreen extends ConsumerWidget {
           );
         },
       ),
-    );
-  }
-}
-
-class _Stat extends StatelessWidget {
-  const _Stat({required this.label, required this.value, required this.accent});
-
-  final String label;
-  final String value;
-  final NcAccent accent;
-
-  @override
-  Widget build(BuildContext context) {
-    final nc = context.nc;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(value,
-            style: AppTypography.displaySemiBold(color: accent.ink)),
-        const SizedBox(height: 2),
-        Text(label, style: AppTypography.bodySmall(color: nc.textSecondary)),
-      ],
     );
   }
 }

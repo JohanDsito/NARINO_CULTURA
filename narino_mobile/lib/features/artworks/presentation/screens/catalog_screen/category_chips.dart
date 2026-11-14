@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../../../../core/theme/app_typography.dart';
 import '../../../../../core/theme/nc_theme.dart';
-import '../../../../../shared/widgets/design/design.dart';
 import '../../../domain/artwork_model.dart';
 import '../../../domain/artwork_state.dart';
 import '../../providers/artwork_provider.dart';
+import 'category_chip.dart';
 
 /// Fila de chips: "Filtros" (con contador) + categorías reales del backend.
 class CategoryChips extends ConsumerWidget {
@@ -32,7 +30,7 @@ class CategoryChips extends ConsumerWidget {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         children: [
-          _Chip(
+          CategoryChip(
             label: activos > 0 ? 'Filtros · $activos' : 'Filtros',
             icon: Icons.tune_rounded,
             selected: activos > 0,
@@ -40,7 +38,7 @@ class CategoryChips extends ConsumerWidget {
             onTap: onFilterTap,
           ),
           const SizedBox(width: 8),
-          _Chip(
+          CategoryChip(
             label: 'Todas',
             selected: state.categoriaFiltro == null,
             accent: nc.catalogo,
@@ -48,7 +46,7 @@ class CategoryChips extends ConsumerWidget {
           ),
           for (final cat in categorias) ...[
             const SizedBox(width: 8),
-            _Chip(
+            CategoryChip(
               label: cat.displayName,
               selected: state.categoriaFiltro == cat.id.toString(),
               accent: nc.catalogo,
@@ -60,62 +58,6 @@ class CategoryChips extends ConsumerWidget {
             ),
           ],
         ],
-      ),
-    );
-  }
-}
-
-class _Chip extends StatelessWidget {
-  const _Chip({
-    required this.label,
-    required this.selected,
-    required this.accent,
-    required this.onTap,
-    this.icon,
-  });
-
-  final String label;
-  final bool selected;
-  final NcAccent accent;
-  final VoidCallback onTap;
-  final IconData? icon;
-
-  @override
-  Widget build(BuildContext context) {
-    final nc = context.nc;
-    final fg = selected ? accent.onFill : nc.textPrimary;
-    return Semantics(
-      selected: selected,
-      button: true,
-      label: label,
-      excludeSemantics: true,
-      child: NcPressable(
-        onTap: onTap,
-        pressedScale: 0.94,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: selected ? accent.fill : nc.bgGlass,
-            borderRadius: BorderRadius.circular(99),
-            border: Border.all(color: selected ? accent.fill : nc.border),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (icon != null) ...[
-                Icon(icon, size: 16, color: fg),
-                const SizedBox(width: 6),
-              ],
-              Text(
-                label,
-                style: AppTypography.labelMedium(color: fg)
-                    .copyWith(fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

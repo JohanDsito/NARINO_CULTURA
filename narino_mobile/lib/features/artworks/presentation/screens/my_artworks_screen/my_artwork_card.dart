@@ -1,14 +1,12 @@
-import 'dart:ui';
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
 import '../../../../../core/theme/app_typography.dart';
 import '../../../../../core/theme/nc_theme.dart';
 import '../../../../../shared/widgets/design/design.dart';
 import '../../../domain/artwork_model.dart';
 import '../catalog_screen/artwork_card.dart' show formatPrecioCOP;
+import 'my_artwork_menu.dart';
 
 /// Tarjeta de una obra propia con menú de acciones (editar, subastar,
 /// eliminar). Subastar y eliminar solo aplican a obras disponibles.
@@ -95,7 +93,7 @@ class MyArtworkCard extends StatelessWidget {
                   Positioned(
                     right: 6,
                     top: 6,
-                    child: _Menu(
+                    child: MyArtworkMenu(
                       disponible: disponible,
                       onEdit: onEdit,
                       onAuction: onAuction,
@@ -141,71 +139,6 @@ class MyArtworkCard extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Menu extends StatelessWidget {
-  const _Menu({
-    required this.disponible,
-    required this.onEdit,
-    required this.onAuction,
-    required this.onDelete,
-  });
-
-  final bool disponible;
-  final VoidCallback onEdit;
-  final VoidCallback onAuction;
-  final VoidCallback onDelete;
-
-  @override
-  Widget build(BuildContext context) {
-    final nc = context.nc;
-    return ClipOval(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Material(
-          color: Colors.black.withValues(alpha: 0.35),
-          shape: const CircleBorder(),
-          child: PopupMenuButton<String>(
-            tooltip: 'Opciones de la obra',
-            icon: const Icon(Icons.more_horiz_rounded, color: Colors.white),
-            onSelected: (v) => switch (v) {
-              'edit' => onEdit(),
-              'auction' => onAuction(),
-              'delete' => onDelete(),
-              _ => null,
-            },
-            itemBuilder: (_) => [
-              const PopupMenuItem(
-                value: 'edit',
-                child: ListTile(
-                  leading: Icon(Icons.edit_outlined),
-                  title: Text('Editar'),
-                ),
-              ),
-              if (disponible)
-                PopupMenuItem(
-                  value: 'auction',
-                  child: ListTile(
-                    leading: Icon(Icons.gavel_rounded, color: nc.subastas.ink),
-                    title: const Text('Subastar'),
-                  ),
-                ),
-              if (disponible)
-                PopupMenuItem(
-                  value: 'delete',
-                  child: ListTile(
-                    leading: Icon(Icons.delete_outline_rounded,
-                        color: nc.tomateA.ink),
-                    title: Text('Eliminar',
-                        style: TextStyle(color: nc.tomateA.ink)),
-                  ),
-                ),
-            ],
-          ),
         ),
       ),
     );

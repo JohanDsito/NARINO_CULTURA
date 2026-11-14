@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../../../../core/theme/app_typography.dart';
 import '../../../../../core/theme/nc_theme.dart';
-import '../../../../../shared/widgets/design/design.dart';
 import '../../../domain/artwork_state.dart';
 import '../../providers/artwork_provider.dart';
 import 'artwork_card.dart';
+import 'catalog_skeleton_card.dart';
+import 'catalog_state_message.dart';
 
 const _gridDelegate = SliverGridDelegateWithFixedCrossAxisCount(
   crossAxisCount: 2,
@@ -29,7 +28,7 @@ class CatalogBody extends ConsumerWidget {
         sliver: SliverGrid(
           gridDelegate: _gridDelegate,
           delegate: SliverChildBuilderDelegate(
-            (_, __) => const _SkeletonCard(),
+            (_, __) => const CatalogSkeletonCard(),
             childCount: 6,
           ),
         ),
@@ -37,7 +36,7 @@ class CatalogBody extends ConsumerWidget {
     }
     if (state.hasError) {
       return SliverToBoxAdapter(
-        child: _StateMessage(
+        child: CatalogStateMessage(
           icon: Icons.cloud_off_rounded,
           accent: context.nc.tomateA,
           title: 'No pudimos cargar el catálogo',
@@ -50,7 +49,7 @@ class CatalogBody extends ConsumerWidget {
     if (state.artworks.isEmpty) {
       final filtros = state.hayFiltrosActivos;
       return SliverToBoxAdapter(
-        child: _StateMessage(
+        child: CatalogStateMessage(
           icon: Icons.palette_outlined,
           accent: context.nc.catalogo,
           title: filtros ? 'Nada con esos filtros' : 'Aún no hay obras',
@@ -71,127 +70,6 @@ class CatalogBody extends ConsumerWidget {
         delegate: SliverChildBuilderDelegate(
           (_, i) => CatalogArtworkCard(artwork: state.artworks[i]),
           childCount: state.artworks.length,
-        ),
-      ),
-    );
-  }
-}
-
-class _SkeletonCard extends StatefulWidget {
-  const _SkeletonCard();
-
-  @override
-  State<_SkeletonCard> createState() => _SkeletonCardState();
-}
-
-class _SkeletonCardState extends State<_SkeletonCard>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _c = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 1100),
-  );
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final reduce = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
-    reduce ? _c.stop() : _c.repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _c.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final nc = context.nc;
-    final block = nc.isDark
-        ? Colors.white.withValues(alpha: 0.06)
-        : Colors.black.withValues(alpha: 0.05);
-    Widget bar(double w, double h) => Container(
-          width: w,
-          height: h,
-          decoration: BoxDecoration(
-            color: block,
-            borderRadius: BorderRadius.circular(6),
-          ),
-        );
-    return ExcludeSemantics(
-      child: FadeTransition(
-        opacity: Tween(begin: 0.55, end: 1.0).animate(_c),
-        child: Container(
-          decoration: BoxDecoration(
-            color: nc.bgCard,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: nc.border),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: Container(color: block)),
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    bar(110, 12),
-                    const SizedBox(height: 8),
-                    bar(70, 10),
-                    const SizedBox(height: 10),
-                    bar(60, 12),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _StateMessage extends StatelessWidget {
-  const _StateMessage({
-    required this.icon,
-    required this.accent,
-    required this.title,
-    required this.message,
-    this.actionLabel,
-    this.onAction,
-  });
-
-  final IconData icon;
-  final NcAccent accent;
-  final String title;
-  final String message;
-  final String? actionLabel;
-  final VoidCallback? onAction;
-
-  @override
-  Widget build(BuildContext context) {
-    final nc = context.nc;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
-      child: NcCard(
-        child: Column(
-          children: [
-            NcAccentIcon(icon: icon, accent: accent, size: 64, glow: true),
-            const SizedBox(height: 16),
-            Text(title,
-                textAlign: TextAlign.center,
-                style: AppTypography.displaySemiBold(color: nc.textPrimary)),
-            const SizedBox(height: 8),
-            Text(message,
-                textAlign: TextAlign.center,
-                style: AppTypography.bodyMedium(color: nc.textSecondary)),
-            if (actionLabel != null && onAction != null) ...[
-              const SizedBox(height: 20),
-              NcPrimaryButton(label: actionLabel!, onPressed: onAction),
-            ],
-          ],
         ),
       ),
     );

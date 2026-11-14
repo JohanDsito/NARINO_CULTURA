@@ -1,20 +1,28 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/nc_theme.dart';
 import '../../../../shared/widgets/design/design.dart';
 import '../../../artworks/domain/artwork_model.dart';
 import '../providers/auctions_provider.dart';
-import '../widgets/subasta_ui.dart';
+import 'create_auction_screen/obra_subasta_opcion.dart';
 
 const _duraciones = [1, 3, 7, 14, 30];
 const _meses = [
-  'ene', 'feb', 'mar', 'abr', 'may', 'jun',
-  'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
+  'ene',
+  'feb',
+  'mar',
+  'abr',
+  'may',
+  'jun',
+  'jul',
+  'ago',
+  'sep',
+  'oct',
+  'nov',
+  'dic',
 ];
 
 String _fecha(DateTime d) =>
@@ -163,7 +171,7 @@ class _CreateAuctionScreenState extends ConsumerState<CreateAuctionScreen> {
                         scrollDirection: Axis.horizontal,
                         itemCount: list.length,
                         separatorBuilder: (_, __) => const SizedBox(width: 10),
-                        itemBuilder: (_, i) => _ObraOpcion(
+                        itemBuilder: (_, i) => ObraSubastaOpcion(
                           obra: list[i],
                           selected: _obra?.id == list[i].id,
                           onTap: () => setState(() {
@@ -238,9 +246,8 @@ class _CreateAuctionScreenState extends ConsumerState<CreateAuctionScreen> {
                         side: BorderSide(
                             color: _dias == d ? nc.subastas.fill : nc.border),
                         labelStyle: AppTypography.labelMedium(
-                          color: _dias == d
-                              ? nc.subastas.onFill
-                              : nc.textPrimary,
+                          color:
+                              _dias == d ? nc.subastas.onFill : nc.textPrimary,
                         ).copyWith(fontWeight: FontWeight.w600),
                       ),
                   ],
@@ -248,13 +255,12 @@ class _CreateAuctionScreenState extends ConsumerState<CreateAuctionScreen> {
                 const SizedBox(height: 14),
                 Row(
                   children: [
-                    Icon(Icons.flag_outlined,
-                        size: 18, color: nc.subastas.ink),
+                    Icon(Icons.flag_outlined, size: 18, color: nc.subastas.ink),
                     const SizedBox(width: 8),
                     Text('Termina: ${_fecha(fin)}',
-                        style: AppTypography.labelSemiBold(
-                                color: nc.subastas.ink)
-                            .copyWith(fontSize: 14)),
+                        style:
+                            AppTypography.labelSemiBold(color: nc.subastas.ink)
+                                .copyWith(fontSize: 14)),
                   ],
                 ),
               ],
@@ -264,7 +270,8 @@ class _CreateAuctionScreenState extends ConsumerState<CreateAuctionScreen> {
           NcBanner(
             accent: nc.azulA,
             icon: Icons.verified_outlined,
-            message: 'Un administrador revisa cada subasta antes de publicarla. '
+            message:
+                'Un administrador revisa cada subasta antes de publicarla. '
                 'Te avisaremos cuando salga en vivo.',
           ),
           if (_error != null) ...[
@@ -279,84 +286,6 @@ class _CreateAuctionScreenState extends ConsumerState<CreateAuctionScreen> {
           icon: Icons.gavel_rounded,
           loading: _isSubmitting,
           onPressed: _submit,
-        ),
-      ),
-    );
-  }
-}
-
-class _ObraOpcion extends StatelessWidget {
-  const _ObraOpcion({
-    required this.obra,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final ArtworkModel obra;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final nc = context.nc;
-    final img = obra.imagenes.isNotEmpty ? obra.imagenes.first : null;
-    return Semantics(
-      selected: selected,
-      button: true,
-      label: obra.titulo,
-      excludeSemantics: true,
-      child: NcPressable(
-        onTap: onTap,
-        pressedScale: 0.96,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          width: 132,
-          decoration: BoxDecoration(
-            color: nc.bgCard,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: selected ? nc.subastas.fill : nc.border,
-              width: selected ? 2 : 1,
-            ),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    img == null
-                        ? const SubastaImage(url: null)
-                        : CachedNetworkImage(imageUrl: img, fit: BoxFit.cover),
-                    if (selected)
-                      Positioned(
-                        right: 6,
-                        top: 6,
-                        child: Container(
-                          width: 24,
-                          height: 24,
-                          decoration: BoxDecoration(
-                              color: nc.subastas.fill,
-                              shape: BoxShape.circle),
-                          child: Icon(Icons.check_rounded,
-                              size: 16, color: nc.subastas.onFill),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8),
-                child: Text(obra.titulo,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.labelMedium(color: nc.textPrimary)
-                        .copyWith(fontWeight: FontWeight.w600)),
-              ),
-            ],
-          ),
         ),
       ),
     );
