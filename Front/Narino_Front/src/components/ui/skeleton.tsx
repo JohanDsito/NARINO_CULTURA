@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils'
+import { cn } from '@/utils'
 
 interface SkeletonProps {
   className?: string
@@ -6,13 +6,13 @@ interface SkeletonProps {
 
 export function Skeleton({ className }: SkeletonProps) {
   return (
-    <div className={cn('animate-pulse rounded-md bg-muted', className)} />
+    <div className={cn('animate-pulse rounded-md bg-bg-subtle', className)} />
   )
 }
 
 export function ArtworkCardSkeleton() {
   return (
-    <div className="overflow-hidden rounded-card border border-border bg-surface">
+    <div className="overflow-hidden rounded-card border border-border bg-bg-card">
       <Skeleton className="aspect-[4/3] w-full rounded-none" />
       <div className="space-y-3 p-4">
         <Skeleton className="h-4 w-3/4" />
@@ -29,7 +29,7 @@ export function ArtworkCardSkeleton() {
 
 export function ArtistCardSkeleton() {
   return (
-    <div className="rounded-card border border-border bg-surface p-5">
+    <div className="rounded-card border border-border bg-bg-card p-5">
       <div className="flex items-center gap-4">
         <Skeleton className="h-14 w-14 rounded-full flex-none" />
         <div className="flex-1 space-y-2">
@@ -46,7 +46,7 @@ export function ArtistCardSkeleton() {
 
 export function MusicianCardSkeleton() {
   return (
-    <div className="rounded-card border border-border bg-surface p-5">
+    <div className="rounded-card border border-border bg-bg-card p-5">
       <div className="flex items-center gap-4">
         <Skeleton className="h-16 w-16 rounded-full flex-none" />
         <div className="flex-1 space-y-2">
