@@ -1,6 +1,6 @@
 // TEMPORAL / herramienta de diseño: capturas del módulo de Eventos.
 import 'package:flutter_test/flutter_test.dart';
-import 'package:narino_cultura/app.dart';
+import 'package:narino_cultura/core/router/main_shell.dart';
 import 'package:narino_cultura/core/providers/user_role_provider.dart';
 import 'package:narino_cultura/features/events/data/events_repository.dart';
 import 'package:narino_cultura/features/events/domain/event_model.dart';

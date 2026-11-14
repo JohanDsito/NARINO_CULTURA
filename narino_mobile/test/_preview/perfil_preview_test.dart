@@ -1,7 +1,7 @@
 // TEMPORAL / herramienta de diseño: capturas del módulo de perfil.
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:narino_cultura/app.dart';
+import 'package:narino_cultura/core/router/main_shell.dart';
 import 'package:narino_cultura/core/providers/user_role_provider.dart';
 import 'package:narino_cultura/features/artworks/presentation/providers/artwork_provider.dart';
 import 'package:narino_cultura/features/marketplace/data/marketplace_repository.dart';
