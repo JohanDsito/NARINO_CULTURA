@@ -1,30 +1,32 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../../../core/providers/user_role_provider.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../../../../core/theme/nc_theme.dart';
 import '../../../../../shared/widgets/design/design.dart';
 import '../../../../artworks/presentation/providers/artwork_provider.dart';
-import '../../../../artworks/presentation/screens/catalog_screen/artwork_card.dart';
 import '../../../domain/profile_model.dart';
 import '../../providers/profile_provider.dart';
+import 'artist_artworks_grid.dart';
+import 'artist_avatar.dart';
+import 'artist_links_wrap.dart';
+import 'artist_profile_app_bar.dart';
 import 'artist_stat.dart';
 import 'follow_artist_button.dart';
 
+/// Perfil público de un artista: datos, seguir, redes y sus obras.
 class ArtistProfileView extends ConsumerStatefulWidget {
   const ArtistProfileView({super.key, required this.profile});
 
   final ProfileModel profile;
 
   @override
-  ConsumerState<ArtistProfileView> createState() => _PerfilState();
+  ConsumerState<ArtistProfileView> createState() => _ArtistProfileViewState();
 }
 
-class _PerfilState extends ConsumerState<ArtistProfileView> {
+class _ArtistProfileViewState extends ConsumerState<ArtistProfileView> {
   /// Cambio optimista mientras el servidor responde.
   bool? _override;
   bool _loading = false;
@@ -75,99 +77,18 @@ class _PerfilState extends ConsumerState<ArtistProfileView> {
     final links = p.redesSociales.entries
         .where((e) => e.value.trim().isNotEmpty)
         .toList();
-    final foto = p.fotoUrl;
 
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          SliverAppBar(
-            expandedHeight: 150,
-            pinned: true,
-            backgroundColor: nc.bg,
-            surfaceTintColor: Colors.transparent,
-            shape: const Border(),
-            automaticallyImplyLeading: false,
-            leadingWidth: 64,
-            leading: Padding(
-              padding: const EdgeInsets.only(left: 12),
-              child: Center(
-                child: GlassCircleButton(
-                  icon: Icons.arrow_back_rounded,
-                  tooltip: 'Volver',
-                  onPressed: () => Navigator.of(context).maybePop(),
-                ),
-              ),
-            ),
-            flexibleSpace: FlexibleSpaceBar(
-              background: Stack(
-                fit: StackFit.expand,
-                children: [
-                  // Serpentina del Carnaval, suavizada para no competir
-                  // con el contenido.
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          for (final c in nc.carnavalGradient.colors)
-                            c.withValues(alpha: nc.isDark ? 0.45 : 0.28),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: -1,
-                    child: Container(
-                      height: 30,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: nc.bg,
-                        borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(28)),
-                      ),
-                      child: const NcSerpentina(width: 44),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          const ArtistProfileAppBar(),
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
             sliver: SliverList.list(children: [
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(3),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: SweepGradient(colors: [
-                        ...nc.carnavalGradient.colors,
-                        nc.carnavalGradient.colors.first,
-                      ]),
-                    ),
-                    child: CircleAvatar(
-                      radius: 40,
-                      backgroundColor: nc.bgCard,
-                      backgroundImage: (foto != null && foto.isNotEmpty)
-                          ? CachedNetworkImageProvider(foto)
-                          : null,
-                      child: (foto == null || foto.isEmpty)
-                          ? Text(
-                              p.nombreArtistico.isNotEmpty
-                                  ? p.nombreArtistico.characters.first
-                                      .toUpperCase()
-                                  : '?',
-                              style: AppTypography.displayBold(
-                                      color: nc.catalogo.ink)
-                                  .copyWith(fontSize: 30))
-                          : null,
-                    ),
-                  ),
+                  ArtistAvatar(nombre: p.nombreArtistico, fotoUrl: p.fotoUrl),
                   const Spacer(),
                   if (esMio)
                     NcSecondaryButton(
@@ -243,94 +164,17 @@ class _PerfilState extends ConsumerState<ArtistProfileView> {
               ],
               if (links.isNotEmpty) ...[
                 const SizedBox(height: 18),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    for (final e in links)
-                      NcPressable(
-                        onTap: () => launchUrl(Uri.parse(e.value),
-                            mode: LaunchMode.externalApplication),
-                        semanticLabel: 'Abrir ${_red(e.key)}',
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 9),
-                          decoration: BoxDecoration(
-                            color: nc.azulA.tint,
-                            borderRadius: BorderRadius.circular(99),
-                            border: Border.all(
-                                color: nc.azul.withValues(alpha: 0.4)),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(_icono(e.key), size: 16, color: nc.azul),
-                              const SizedBox(width: 6),
-                              Text(_red(e.key),
-                                  style: AppTypography.labelMedium(
-                                          color: nc.azul)
-                                      .copyWith(fontWeight: FontWeight.w700)),
-                            ],
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
+                ArtistLinksWrap(links: links),
               ],
               const SizedBox(height: 26),
               Text('Obras',
                   style: AppTypography.displayBold(color: nc.textPrimary)),
               const SizedBox(height: 12),
-              obras.when(
-                loading: () => const Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-                error: (_, __) =>
-                    NcBanner.error(context, 'No pudimos cargar sus obras.'),
-                data: (list) => list.isEmpty
-                    ? NcEmptyState(
-                        icon: Icons.palette_outlined,
-                        accent: nc.catalogo,
-                        title: 'Aún no hay obras',
-                        message: 'Cuando publique, sus obras aparecerán aquí.',
-                        padding: EdgeInsets.zero,
-                      )
-                    : GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        padding: EdgeInsets.zero,
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 14,
-                          childAspectRatio: 0.64,
-                        ),
-                        itemCount: list.length,
-                        itemBuilder: (_, i) =>
-                            CatalogArtworkCard(artwork: list[i]),
-                      ),
-              ),
+              ArtistArtworksGrid(obras: obras),
             ]),
           ),
         ],
       ),
     );
   }
-
-  static IconData _icono(String k) => switch (k) {
-        'instagram' => Icons.camera_alt_outlined,
-        'facebook' => Icons.facebook_rounded,
-        'tiktok' => Icons.music_video_outlined,
-        _ => Icons.language_rounded,
-      };
-
-  static String _red(String k) => switch (k) {
-        'instagram' => 'Instagram',
-        'facebook' => 'Facebook',
-        'tiktok' => 'TikTok',
-        'website' => 'Sitio web',
-        _ => k,
-      };
 }

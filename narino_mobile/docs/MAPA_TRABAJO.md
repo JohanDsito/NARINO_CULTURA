@@ -195,6 +195,25 @@ Guía completa de color y componentes: **`docs/DISENO_CARNAVAL.md`**.
 
 ---
 
+## Organización del código 🗂️
+Convención (2026-11-14): **una clase por archivo** (un widget va con su `State`).
+
+| Qué | Dónde |
+|---|---|
+| Pantalla | `presentation/screens/x_screen.dart`, solo arma las piezas y maneja el estado |
+| Piezas de una pantalla (secciones, tarjetas, filas) | `presentation/screens/x_screen/<pieza>.dart` |
+| Kits de UI de un módulo (`musica_ui`, `tienda_ui`, `subasta_ui`, `cuenta_ui`, `auth_fields`) | `presentation/widgets/<kit>/<widget>.dart`; `<kit>.dart` es un *barrel* que los exporta |
+| Design system | `shared/widgets/design/nc_*.dart` (uno por componente), todo exportado por `design.dart` |
+| Diálogos comunes | `shared/widgets/dialogs/` (`confirmarAccion`, `elegirOrigenFoto`) |
+| Modelos y estados | `domain/` (uno por archivo; el archivo original reexporta para no romper imports) |
+| Providers | `presentation/providers/`, un notifier por archivo junto a su provider |
+| Rutas y pestañas | `core/router/app_router.dart`, `main_shell.dart`, `shell_tab.dart` |
+
+Resultado: 355 archivos, ninguno con más de una clase, 83 líneas en promedio. Los tres que pasan de 300
+(`edit_profile_screen`, `publish_artwork_screen`, `profile_service`) son lógica de formulario/servicio, no UI.
+
+---
+
 ## Inspección final (2026-11-06) 🔍
 | Revisión | Resultado |
 |---|---|
@@ -238,3 +257,4 @@ Guía completa de color y componentes: **`docs/DISENO_CARNAVAL.md`**.
 - 2026-11-06 — Política de privacidad v1.1 alineada con el backend. Bandeja de Notificaciones rediseñada. Backend sincronizado con main (#171–#177) y conectado en la app: subastas, eventos, catálogo, `/artists/me/`, carrito y favoritos. Siguiente: Chatbot.
 - 2026-11-06 — Rediseño del Chatbot y arreglos #78–#81. Con esto queda rediseñada toda la app.
 - 2026-11-06 — Inspección final: código muerto, rutas, estrés de letra grande, avisos de eventos, sesión y nombre de la app. Ver sección "Inspección final".
+- 2026-11-14 — Reorganización: una clase por archivo en toda la app (pantallas, kits, design system, modelos y providers); secciones grandes de 14 pantallas extraídas; diálogos y listas repetidas centralizados. Sin cambios de comportamiento: 365 pruebas OK.

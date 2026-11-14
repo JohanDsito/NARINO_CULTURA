@@ -5,10 +5,12 @@ import '../../../artworks/presentation/providers/artwork_provider.dart';
 import '../../../profile/presentation/providers/profile_provider.dart';
 import '../../data/auctions_repository.dart';
 import '../../domain/auction_model.dart';
+import '../../domain/auction_history_params.dart';
+
+export '../../domain/auction_history_params.dart';
 
 final auctionsRepositoryProvider =
     Provider<AuctionsRepository>((ref) => AuctionsRepository());
-
 
 final auctionsProvider =
     StateNotifierProvider<AuctionsNotifier, AsyncValue<List<AuctionModel>>>(
@@ -19,23 +21,6 @@ final auctionDetailProvider =
     FutureProvider.family.autoDispose<AuctionModel, String>((ref, id) async {
   return ref.read(auctionsRepositoryProvider).getDetail(id);
 });
-
-class AuctionHistoryParams {
-  final String mode;
-  final String? estado;
-
-  const AuctionHistoryParams({required this.mode, this.estado});
-
-  @override
-  bool operator ==(Object other) {
-    return other is AuctionHistoryParams &&
-        other.mode == mode &&
-        other.estado == estado;
-  }
-
-  @override
-  int get hashCode => Object.hash(mode, estado);
-}
 
 /// Historial del usuario, filtrado en el backend:
 /// - `participante`: `?participating=true`, subastas en las que pujó

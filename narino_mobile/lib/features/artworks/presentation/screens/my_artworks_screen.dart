@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/nc_theme.dart';
 import '../../../../shared/widgets/design/design.dart';
 import '../../../profile/presentation/providers/profile_provider.dart';
 import '../../domain/artwork_model.dart';
 import '../providers/artwork_provider.dart';
+import '../../../../shared/widgets/dialogs/confirmar_accion.dart';
+import 'my_artworks_screen/mis_obras_filtros.dart';
+import 'my_artworks_screen/mis_obras_mensaje.dart';
 import 'my_artworks_screen/my_artwork_card.dart';
 
 /// Panel de obras del artista: resumen por estado, filtro y acciones propias.
@@ -78,30 +80,15 @@ class _MyArtworksScreenState extends ConsumerState<MyArtworksScreen> {
   }
 
   Future<void> _confirmDelete(ArtworkModel artwork) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('¿Eliminar esta obra?'),
-        content: Text(
-            '"${artwork.titulo}" dejará de aparecer en el catálogo. Esta acción '
-            'no se puede deshacer.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.tomate,
-              foregroundColor: Colors.black,
-            ),
-            child: const Text('Eliminar'),
-          ),
-        ],
-      ),
+    final ok = await confirmarAccion(
+      context,
+      titulo: '¿Eliminar esta obra?',
+      mensaje: '"${artwork.titulo}" dejará de aparecer en el catálogo. Esta '
+          'acción no se puede deshacer.',
+      confirmar: 'Eliminar',
+      peligro: true,
     );
-    if (ok != true || !mounted) return;
+    if (!ok || !mounted) return;
     try {
       await ref.read(artworkRepositoryProvider).delete(artwork.id);
       if (!mounted) return;
@@ -140,42 +127,8 @@ class _MyArtworksScreenState extends ConsumerState<MyArtworksScreen> {
     final nc = context.nc;
     if (_isLoading) return const Center(child: CircularProgressIndicator());
 
-    Widget mensaje({
-      required IconData icon,
-      required NcAccent accent,
-      required String title,
-      required String text,
-      required String action,
-      required VoidCallback onAction,
-    }) =>
-        ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
-          children: [
-            const SizedBox(height: 40),
-            NcCard(
-              child: Column(
-                children: [
-                  NcAccentIcon(icon: icon, accent: accent, size: 64, glow: true),
-                  const SizedBox(height: 16),
-                  Text(title,
-                      textAlign: TextAlign.center,
-                      style:
-                          AppTypography.displaySemiBold(color: nc.textPrimary)),
-                  const SizedBox(height: 8),
-                  Text(text,
-                      textAlign: TextAlign.center,
-                      style: AppTypography.bodyMedium(color: nc.textSecondary)),
-                  const SizedBox(height: 20),
-                  NcPrimaryButton(label: action, onPressed: onAction),
-                ],
-              ),
-            ),
-          ],
-        );
-
     if (_error != null) {
-      return mensaje(
+      return MisObrasMensaje(
         icon: Icons.cloud_off_rounded,
         accent: nc.tomateA,
         title: 'Algo salió mal',
@@ -185,7 +138,7 @@ class _MyArtworksScreenState extends ConsumerState<MyArtworksScreen> {
       );
     }
     if (_artworks.isEmpty) {
-      return mensaje(
+      return MisObrasMensaje(
         icon: Icons.palette_outlined,
         accent: nc.catalogo,
         title: 'Tu galería está esperando',
@@ -196,13 +149,6 @@ class _MyArtworksScreenState extends ConsumerState<MyArtworksScreen> {
       );
     }
 
-    int contar(String e) => _artworks.where((a) => a.estado == e).length;
-    final stats = <(String?, String, int, NcAccent)>[
-      (null, 'Todas', _artworks.length, nc.catalogo),
-      ('disponible', 'Disponibles', contar('disponible'), nc.successA),
-      ('en_subasta', 'En subasta', contar('en_subasta'), nc.subastas),
-      ('vendida', 'Vendidas', contar('vendida'), nc.tomateA),
-    ];
     final visibles = _filtro == null
         ? _artworks
         : _artworks.where((a) => a.estado == _filtro).toList();
@@ -211,52 +157,10 @@ class _MyArtworksScreenState extends ConsumerState<MyArtworksScreen> {
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
         SliverToBoxAdapter(
-          child: SizedBox(
-            height: 96,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              itemCount: stats.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 10),
-              itemBuilder: (_, i) {
-                final s = stats[i];
-                final sel = _filtro == s.$1;
-                return Semantics(
-                  selected: sel,
-                  button: true,
-                  label: '${s.$2}: ${s.$3}',
-                  excludeSemantics: true,
-                  child: NcPressable(
-                    onTap: () => setState(() => _filtro = s.$1),
-                    pressedScale: 0.95,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 220),
-                      width: 108,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: sel ? s.$4.fill : nc.bgCard,
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: sel ? s.$4.fill : nc.border),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('${s.$3}',
-                              style: AppTypography.displayBold(
-                                  color: sel ? s.$4.onFill : s.$4.ink)),
-                          Text(s.$2,
-                              style: AppTypography.bodySmall(
-                                  color: sel
-                                      ? s.$4.onFill
-                                      : nc.textSecondary)),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
+          child: MisObrasFiltros(
+            obras: _artworks,
+            filtro: _filtro,
+            onFiltro: (f) => setState(() => _filtro = f),
           ),
         ),
         if (visibles.isEmpty)
