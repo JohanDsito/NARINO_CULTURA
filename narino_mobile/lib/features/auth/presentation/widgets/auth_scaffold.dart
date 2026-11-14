@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../../../core/providers/theme_provider.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/nc_theme.dart';
 import '../../../../shared/widgets/design/design.dart';
+
+export 'auth_scaffold/auth_card_title.dart';
+export 'auth_scaffold/auth_link.dart';
 
 /// Estructura común de las pantallas de acceso (login, registro, recuperar,
 /// verificar): fondo carnaval con parallax, logo con brillo y serpentina,
@@ -181,67 +183,6 @@ class _AuthScaffoldState extends ConsumerState<AuthScaffold> {
           ),
         ],
       ),
-    );
-  }
-}
-
-/// "¿No tienes cuenta? Regístrate" — texto + enlace con área táctil de 44 px.
-class AuthLink extends StatelessWidget {
-  const AuthLink({
-    super.key,
-    required this.question,
-    required this.actionLabel,
-    required this.onTap,
-    this.enabled = true,
-  });
-
-  final String question;
-  final String actionLabel;
-  final VoidCallback onTap;
-  final bool enabled;
-
-  @override
-  Widget build(BuildContext context) {
-    final nc = context.nc;
-    return Wrap(
-      alignment: WrapAlignment.center,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        Text(question,
-            style: AppTypography.bodyMedium(color: nc.textSecondary)),
-        TextButton(
-          onPressed: enabled ? onTap : null,
-          style: TextButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 6),
-            minimumSize: const Size(44, 44),
-          ),
-          child: Text(actionLabel),
-        ),
-      ],
-    );
-  }
-}
-
-/// Título interno de la tarjeta.
-class AuthCardTitle extends StatelessWidget {
-  const AuthCardTitle(this.text, {super.key, this.subtitle});
-
-  final String text;
-  final String? subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    final nc = context.nc;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(text, style: AppTypography.displaySemiBold(color: nc.textPrimary)),
-        if (subtitle != null) ...[
-          const SizedBox(height: 6),
-          Text(subtitle!,
-              style: AppTypography.bodyMedium(color: nc.textSecondary)),
-        ],
-      ],
     );
   }
 }

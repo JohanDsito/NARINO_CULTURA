@@ -1,16 +1,15 @@
 import 'dart:convert';
-
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
-
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/nc_theme.dart';
 import '../../../../shared/widgets/design/design.dart';
 import '../../../notifications/data/notifications_service.dart';
 import '../widgets/eventos_ui.dart';
+import 'event_notification_preferences_screen/tipo_evento_chip.dart';
 
 const _kCache = 'event_notification_preferences';
 const _kMaxArtistas = 10;
@@ -212,7 +211,7 @@ class _EventNotificationPreferencesScreenState
                           runSpacing: 8,
                           children: [
                             for (final t in kTiposEvento)
-                              _ChipTipo(
+                              TipoEventoChip(
                                 tipo: t,
                                 activo: _tipos[t] ?? true,
                                 onTap: () => setState(
@@ -245,7 +244,8 @@ class _EventNotificationPreferencesScreenState
                                 onSubmitted: (_) => _agregarArtista(),
                                 decoration: const InputDecoration(
                                   hintText: 'Nombre del artista o banda',
-                                  prefixIcon: Icon(Icons.person_search_outlined),
+                                  prefixIcon:
+                                      Icon(Icons.person_search_outlined),
                                 ),
                               ),
                             ),
@@ -294,55 +294,6 @@ class _EventNotificationPreferencesScreenState
                 onPressed: _guardar,
               ),
             ),
-    );
-  }
-}
-
-class _ChipTipo extends StatelessWidget {
-  const _ChipTipo({
-    required this.tipo,
-    required this.activo,
-    required this.onTap,
-  });
-
-  final String tipo;
-  final bool activo;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final nc = context.nc;
-    final a = tipoAccent(nc, tipo);
-    return Semantics(
-      toggled: activo,
-      button: true,
-      label: tipoNombre(tipo),
-      excludeSemantics: true,
-      child: NcPressable(
-        onTap: onTap,
-        pressedScale: 0.94,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-          decoration: BoxDecoration(
-            color: activo ? a.fill : nc.itemFill,
-            borderRadius: BorderRadius.circular(99),
-            border: Border.all(color: activo ? a.fill : nc.border),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(activo ? Icons.check_rounded : tipoIcon(tipo),
-                  size: 16, color: activo ? a.onFill : a.ink),
-              const SizedBox(width: 6),
-              Text(tipoNombre(tipo),
-                  style: AppTypography.labelMedium(
-                          color: activo ? a.onFill : nc.textPrimary)
-                      .copyWith(fontWeight: FontWeight.w600)),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

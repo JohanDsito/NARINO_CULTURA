@@ -1,11 +1,9 @@
 import 'dart:io';
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-
 import '../../../../core/providers/user_role_provider.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/nc_theme.dart';
@@ -15,6 +13,10 @@ import '../../../musicians/presentation/providers/musician_provider.dart';
 import '../../domain/profile_model.dart';
 import '../providers/profile_provider.dart';
 import '../widgets/disciplinas.dart';
+import 'edit_profile_screen/disciplina_selector.dart';
+import 'edit_profile_screen/edit_profile_chip.dart';
+import 'edit_profile_screen/edit_profile_header.dart';
+import 'edit_profile_screen/edit_profile_section.dart';
 
 /// Clave: valor que espera el backend. Valor: etiqueta visible.
 const _kAgrupaciones = <String, String>{
@@ -92,7 +94,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (esDisciplinaMusical(ref.read(myProfileProvider).profile?.disciplina)) {
+      if (esDisciplinaMusical(
+          ref.read(myProfileProvider).profile?.disciplina)) {
         _cargarMusica();
       }
     });
@@ -157,8 +160,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final ext = picked.path.split('.').last.toLowerCase();
     if (!['jpg', 'jpeg', 'png'].contains(ext)) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Usa una imagen JPG o PNG.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Usa una imagen JPG o PNG.')));
       }
       return;
     }
@@ -330,7 +333,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
             children: [
-              _Cabecera(
+              EditProfileHeader(
                 nombre: _nombreCtrl,
                 disciplina: _disciplina,
                 foto: _nuevaFoto,
@@ -339,12 +342,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               ),
               const SizedBox(height: 20),
               if (state.hasError && !_guardando) ...[
-                NcBanner.error(context,
-                    state.errorMessage ?? 'No se pudieron guardar los cambios.'),
+                NcBanner.error(
+                    context,
+                    state.errorMessage ??
+                        'No se pudieron guardar los cambios.'),
                 const SizedBox(height: 16),
               ],
-
-              _Bloque(
+              EditProfileSection(
                 titulo: 'Sobre ti',
                 children: [
                   TextFormField(
@@ -353,8 +357,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     maxLength: 120,
                     onChanged: (_) => setState(() {}),
                     decoration: InputDecoration(
-                      labelText:
-                          esArtista ? 'Nombre artístico' : 'Nombre',
+                      labelText: esArtista ? 'Nombre artístico' : 'Nombre',
                       prefixIcon: const Icon(Icons.person_outline_rounded),
                       counterText: '',
                     ),
@@ -391,13 +394,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   ],
                 ],
               ),
-
               if (esArtista) ...[
                 const SizedBox(height: 16),
-                _Bloque(
+                EditProfileSection(
                   titulo: 'Tu disciplina',
                   children: [
-                    _SelectorDisciplina(
+                    DisciplinaSelector(
                       valor: _disciplina,
                       onChanged: (v) {
                         setState(() {
@@ -411,15 +413,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     if (_faltaDisciplina) ...[
                       const SizedBox(height: 8),
                       Text('Elige tu disciplina',
-                          style: AppTypography.bodySmall(color: nc.tomateA.ink)),
+                          style:
+                              AppTypography.bodySmall(color: nc.tomateA.ink)),
                     ],
                   ],
                 ),
               ],
-
               if (esArtista && esMusica) ...[
                 const SizedBox(height: 16),
-                _Bloque(
+                EditProfileSection(
                   titulo: 'Perfil musical',
                   icon: Icons.music_note_rounded,
                   accent: nc.musica,
@@ -433,7 +435,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       runSpacing: 8,
                       children: [
                         for (final e in _kAgrupaciones.entries)
-                          _Chip(
+                          EditProfileChip(
                             label: e.value,
                             selected: _agrupacion == e.key,
                             accent: nc.musica,
@@ -473,7 +475,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         runSpacing: 8,
                         children: [
                           for (final g in _todosGeneros)
-                            _Chip(
+                            EditProfileChip(
                               label: g.name,
                               selected: _generos.contains(g.id),
                               accent: nc.musica,
@@ -490,10 +492,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   ],
                 ),
               ],
-
               if (esArtista) ...[
                 const SizedBox(height: 16),
-                _Bloque(
+                EditProfileSection(
                   titulo: 'Tus redes',
                   subtitulo: 'Pega el enlace o escribe tu @usuario.',
                   children: [
@@ -551,251 +552,4 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         'facebook' => Icons.facebook_rounded,
         _ => Icons.music_video_outlined,
       };
-}
-
-/// Avatar editable con anillo de serpentina y vista previa del nombre.
-class _Cabecera extends StatelessWidget {
-  const _Cabecera({
-    required this.nombre,
-    required this.disciplina,
-    required this.foto,
-    required this.fotoUrl,
-    required this.onFoto,
-  });
-
-  final TextEditingController nombre;
-  final String? disciplina;
-  final File? foto;
-  final String? fotoUrl;
-  final VoidCallback onFoto;
-
-  @override
-  Widget build(BuildContext context) {
-    final nc = context.nc;
-    final d = disciplinaDe(disciplina);
-    final accent = d?.accent(nc) ?? nc.catalogo;
-    final texto = nombre.text.trim();
-    final ImageProvider<Object>? img = foto != null
-        ? FileImage(foto!) as ImageProvider<Object>
-        : (fotoUrl != null && fotoUrl!.isNotEmpty
-            ? CachedNetworkImageProvider(fotoUrl!)
-            : null);
-
-    return Column(
-      children: [
-        Semantics(
-          button: true,
-          label: 'Cambiar foto de perfil',
-          excludeSemantics: true,
-          child: NcPressable(
-            onTap: onFoto,
-            pressedScale: 0.95,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(3),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: SweepGradient(colors: [
-                      ...nc.carnavalGradient.colors,
-                      nc.carnavalGradient.colors.first,
-                    ]),
-                  ),
-                  child: CircleAvatar(
-                    radius: 50,
-                    backgroundColor: nc.bgCard,
-                    backgroundImage: img,
-                    child: img == null
-                        ? Text(
-                            texto.isEmpty
-                                ? '?'
-                                : texto.characters.first.toUpperCase(),
-                            style: AppTypography.displayBold(color: accent.ink)
-                                .copyWith(fontSize: 36))
-                        : null,
-                  ),
-                ),
-                Positioned(
-                  right: -2,
-                  bottom: -2,
-                  child: Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: nc.azulA.fill,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: nc.bg, width: 3),
-                    ),
-                    child: Icon(Icons.photo_camera_rounded,
-                        size: 17, color: nc.azulA.onFill),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Text(texto.isEmpty ? 'Tu nombre' : texto,
-            textAlign: TextAlign.center,
-            style: AppTypography.displayBold(
-                color: texto.isEmpty ? nc.textMuted : nc.textPrimary)),
-        if (d != null || (disciplina ?? '').isNotEmpty) ...[
-          const SizedBox(height: 6),
-          NcStatusPill(
-              label: d?.label ?? disciplina!, accent: accent, filled: true),
-        ],
-      ],
-    );
-  }
-}
-
-class _Bloque extends StatelessWidget {
-  const _Bloque({
-    required this.titulo,
-    required this.children,
-    this.subtitulo,
-    this.icon,
-    this.accent,
-  });
-
-  final String titulo;
-  final String? subtitulo;
-  final IconData? icon;
-  final NcAccent? accent;
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    final nc = context.nc;
-    return NcCard(
-      padding: const EdgeInsets.all(16),
-      gradientBorder: false,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              if (icon != null && accent != null) ...[
-                NcAccentIcon(icon: icon!, accent: accent!, size: 30),
-                const SizedBox(width: 10),
-              ],
-              Expanded(
-                child: Semantics(
-                  header: true,
-                  child: Text(titulo,
-                      style:
-                          AppTypography.displaySemiBold(color: nc.textPrimary)
-                              .copyWith(fontSize: 17)),
-                ),
-              ),
-            ],
-          ),
-          if (subtitulo != null) ...[
-            const SizedBox(height: 4),
-            Text(subtitulo!,
-                style: AppTypography.bodySmall(color: nc.textSecondary)),
-          ],
-          const SizedBox(height: 14),
-          ...children,
-        ],
-      ),
-    );
-  }
-}
-
-/// Disciplinas conocidas con su color. Si la guardada es otra (texto libre de
-/// la web o el admin), se conserva como una opción más.
-class _SelectorDisciplina extends StatelessWidget {
-  const _SelectorDisciplina({required this.valor, required this.onChanged});
-
-  final String? valor;
-  final ValueChanged<String> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final nc = context.nc;
-    final actual = disciplinaDe(valor);
-    final otra = valor != null && valor!.trim().isNotEmpty && actual == null;
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        for (final d in kDisciplinas)
-          _Chip(
-            label: d.label,
-            icon: d.icon,
-            accent: d.accent(nc),
-            selected: actual?.value == d.value,
-            // Se guarda el valor canónico (el mismo que usa la web).
-            onTap: () => onChanged(d.value),
-          ),
-        if (otra)
-          _Chip(
-            label: valor!,
-            icon: Icons.auto_awesome_outlined,
-            accent: nc.successA,
-            selected: true,
-            onTap: () {},
-          ),
-      ],
-    );
-  }
-}
-
-class _Chip extends StatelessWidget {
-  const _Chip({
-    required this.label,
-    required this.selected,
-    required this.accent,
-    required this.onTap,
-    this.icon,
-    this.check = false,
-  });
-
-  final String label;
-  final bool selected;
-  final NcAccent accent;
-  final VoidCallback onTap;
-  final IconData? icon;
-  final bool check;
-
-  @override
-  Widget build(BuildContext context) {
-    final nc = context.nc;
-    final fg = selected ? accent.onFill : nc.textPrimary;
-    final leading = check && selected ? Icons.check_rounded : icon;
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: label,
-      excludeSemantics: true,
-      child: NcPressable(
-        onTap: onTap,
-        pressedScale: 0.94,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-          decoration: BoxDecoration(
-            color: selected ? accent.fill : nc.itemFill,
-            borderRadius: BorderRadius.circular(99),
-            border: Border.all(color: selected ? accent.fill : nc.border),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (leading != null) ...[
-                Icon(leading,
-                    size: 16, color: selected ? accent.onFill : accent.ink),
-                const SizedBox(width: 6),
-              ],
-              Text(label,
-                  style: AppTypography.labelMedium(color: fg)
-                      .copyWith(fontWeight: FontWeight.w600)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }

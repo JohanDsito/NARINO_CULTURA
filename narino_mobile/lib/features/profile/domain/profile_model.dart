@@ -1,3 +1,5 @@
+export 'artistic_disciplines.dart';
+
 int _profileInt(dynamic v, [int fallback = 0]) {
   if (v == null) return fallback;
   if (v is int) return v;
@@ -75,8 +77,7 @@ class ProfileModel {
       disciplina: json['discipline']?.toString() ??
           json['disciplina']?.toString() ??
           '',
-      biografia:
-          json['bio']?.toString() ?? json['biografia']?.toString(),
+      biografia: json['bio']?.toString() ?? json['biografia']?.toString(),
       fotoUrl: _nonEmpty(json['avatar_url']) ??
           _nonEmpty(json['profile_image_url']) ??
           _nonEmpty(json['foto_url']),
@@ -94,28 +95,9 @@ class ProfileModel {
       ciudad: _nonEmpty(json['city']) ?? _nonEmpty(json['ciudad']),
       redesSociales: redes,
       totalObras: _profileInt(json['artworks_count'] ?? json['total_obras']),
-      obrasDisponibles: _profileInt(
-          json['available_artworks'] ?? json['obras_disponibles']),
+      obrasDisponibles:
+          _profileInt(json['available_artworks'] ?? json['obras_disponibles']),
       esMusico: json['_tipo'] == 'musico',
     );
   }
-}
-
-class ArtisticDisciplines {
-  static const List<String> all = [
-    'Pintura',
-    'Escultura',
-    'Fotografía',
-    'Artesanía',
-    'Música',
-    'Danza',
-    'Teatro',
-    'Literatura',
-    'Arte digital',
-    'Grabado',
-    'Cerámica',
-    'Textil',
-    'Muralismo',
-    'Otro',
-  ];
 }

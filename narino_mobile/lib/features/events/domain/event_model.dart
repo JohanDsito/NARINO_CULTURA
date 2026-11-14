@@ -1,3 +1,5 @@
+export 'event_types.dart';
+
 /// Modelo de dominio que representa un evento cultural en la agenda.
 class EventModel {
   final String id;
@@ -44,9 +46,8 @@ class EventModel {
     final parsedFecha =
         DateTime.tryParse(rawFecha?.toString() ?? '') ?? DateTime.now();
 
-    final rawTipo = (json['event_type'] ?? json['tipo'] ?? 'otro')
-        .toString()
-        .toLowerCase();
+    final rawTipo =
+        (json['event_type'] ?? json['tipo'] ?? 'otro').toString().toLowerCase();
 
     final rawArtistas = json['featured_musicians'] ??
         json['artists'] ??
@@ -56,9 +57,10 @@ class EventModel {
     final artistasList = (rawArtistas is List ? rawArtistas : const <dynamic>[])
         .map((e) {
           if (e is Map) {
-            final nombre =
-                e['nombre']?.toString() ?? e['nombre_artistico']?.toString() ??
-                e['artistic_name']?.toString() ?? e['name']?.toString();
+            final nombre = e['nombre']?.toString() ??
+                e['nombre_artistico']?.toString() ??
+                e['artistic_name']?.toString() ??
+                e['name']?.toString();
             if (nombre != null && nombre.isNotEmpty) return nombre;
             final id = e['id']?.toString();
             if (id != null && id.isNotEmpty) return id;
@@ -78,8 +80,8 @@ class EventModel {
       lugar: json['location']?.toString() ??
           json['lugar']?.toString() ??
           'Sin lugar',
-      descripcion: json['description']?.toString() ??
-          json['descripcion']?.toString(),
+      descripcion:
+          json['description']?.toString() ?? json['descripcion']?.toString(),
       flyerUrl: json['flyer_url']?.toString() ??
           json['image_url']?.toString() ??
           json['flyer']?.toString(),
@@ -87,7 +89,8 @@ class EventModel {
       esDestacado: json['es_destacado'] as bool? ??
           json['is_featured'] as bool? ??
           false,
-      fechaFin: DateTime.tryParse(json['end_date']?.toString() ?? '')?.toLocal(),
+      fechaFin:
+          DateTime.tryParse(json['end_date']?.toString() ?? '')?.toLocal(),
       // Un evento en curso no es "pasado": se compara con la fecha de fin.
       esPasado: (DateTime.tryParse(json['end_date']?.toString() ?? '') ??
               parsedFecha.add(const Duration(hours: 2)))
@@ -133,24 +136,4 @@ class EventModel {
     ];
     return '${fecha.day} ${meses[fecha.month - 1]} · ${fecha.hour.toString().padLeft(2, '0')}:${fecha.minute.toString().padLeft(2, '0')}';
   }
-}
-
-class EventTypes {
-  static const List<String> all = [
-    'concierto',
-    'exposicion',
-    'taller',
-    'feria',
-    'espectaculo',
-    'otro',
-  ];
-
-  static const Map<String, String> labels = {
-    'concierto': '🎵 Concierto',
-    'exposicion': '🎨 Exposición',
-    'taller': '🖌️ Taller',
-    'feria': '🏪 Feria',
-    'espectaculo': '🎭 Espectáculo',
-    'otro': '📅 Otro',
-  };
 }

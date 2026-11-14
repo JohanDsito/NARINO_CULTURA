@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
-
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/nc_theme.dart';
 import '../../../../shared/widgets/design/design.dart';
-import '../../domain/order_model.dart';
 import '../providers/orders_provider.dart';
 import '../widgets/tienda_ui.dart';
+import 'checkout_screen/checkout_esperando.dart';
+import 'checkout_screen/checkout_linea.dart';
 
 /// Tiempo máximo esperando la confirmación de Wompi antes de dejar de
 /// consultar (la persona puede volver a verificar manualmente).
@@ -127,7 +127,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
           children: [
             if (_esperando) ...[
-              const _Esperando(),
+              const CheckoutEsperando(),
               const SizedBox(height: 16),
             ],
             NcCard(
@@ -153,7 +153,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         style:
                             AppTypography.bodyMedium(color: nc.textSecondary))
                   else
-                    for (final item in order.items) _Linea(item: item),
+                    for (final item in order.items) CheckoutLinea(item: item),
                   Divider(height: 28, color: nc.border),
                   Row(
                     children: [
@@ -196,88 +196,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                           orderAsync.valueOrNull!.items.isEmpty ? null : _pay,
                     ),
             ),
-    );
-  }
-}
-
-class _Linea extends StatelessWidget {
-  const _Linea({required this.item});
-
-  final OrderItemModel item;
-
-  @override
-  Widget build(BuildContext context) {
-    final nc = context.nc;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        children: [
-          ObraThumb(url: item.imagenUrl, size: 52),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(item.obraTitulo,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.labelSemiBold(color: nc.textPrimary)
-                        .copyWith(fontSize: 14)),
-                if (item.artistaNombre.isNotEmpty)
-                  Text(item.artistaNombre,
-                      style: AppTypography.bodySmall(color: nc.textSecondary)),
-              ],
-            ),
-          ),
-          Text(formatCOP(item.precio),
-              style: AppTypography.labelSemiBold(color: nc.textPrimary)
-                  .copyWith(fontSize: 14)),
-        ],
-      ),
-    );
-  }
-}
-
-class _Esperando extends StatelessWidget {
-  const _Esperando();
-
-  @override
-  Widget build(BuildContext context) {
-    final nc = context.nc;
-    return Semantics(
-      liveRegion: true,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: nc.azulA.tint,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: nc.azul.withValues(alpha: 0.45)),
-        ),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 26,
-              height: 26,
-              child: CircularProgressIndicator(strokeWidth: 2.4, color: nc.azul),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Esperando la confirmación del pago…',
-                      style: AppTypography.labelSemiBold(color: nc.textPrimary)
-                          .copyWith(fontSize: 14)),
-                  const SizedBox(height: 2),
-                  Text('Termina el pago en Wompi. Esta pantalla se actualiza '
-                      'sola.',
-                      style: AppTypography.bodySmall(color: nc.textSecondary)),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

@@ -1,8 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/nc_theme.dart';
+import 'carnaval_background/lente_painter.dart';
+import 'carnaval_background/nota_painter.dart';
+import 'carnaval_background/sol_painter.dart';
+import 'carnaval_background/talco.dart';
 
 /// Desplazamiento vertical de la pantalla visible, para el parallax del fondo.
 /// El shell lo actualiza con el scroll de la pestaña activa.
@@ -95,15 +98,29 @@ class _CarnavalBackgroundState extends State<CarnavalBackground>
                   clipBehavior: Clip.none,
                   children: [
                     // ── Orbes ──
-                    _orb(layer, 0.04, left: -40, top: 0, size: 280,
-                        color: AppColors.tomate, opacity: orbOpacity),
-                    _orb(layer, -0.06, right: -60, top: h * 0.48, size: 240,
-                        color: AppColors.naranjaNeon, opacity: orbOpacity),
-                    _orb(layer, 0.03, left: w * 0.10, bottom: -60, size: 320,
+                    _orb(layer, 0.04,
+                        left: -40,
+                        top: 0,
+                        size: 280,
+                        color: AppColors.tomate,
+                        opacity: orbOpacity),
+                    _orb(layer, -0.06,
+                        right: -60,
+                        top: h * 0.48,
+                        size: 240,
+                        color: AppColors.naranjaNeon,
+                        opacity: orbOpacity),
+                    _orb(layer, 0.03,
+                        left: w * 0.10,
+                        bottom: -60,
+                        size: 320,
                         color: nc.azul,
                         opacity: nc.isDark ? 0.35 : orbOpacity),
-                    _orb(layer, -0.05, left: w * 0.35, top: h * 0.28,
-                        size: 220, color: nc.magenta,
+                    _orb(layer, -0.05,
+                        left: w * 0.35,
+                        top: h * 0.28,
+                        size: 220,
+                        color: nc.magenta,
                         opacity: nc.isDark ? 0.25 : orbOpacity),
 
                     // ── Formas culturales ──
@@ -117,7 +134,7 @@ class _CarnavalBackgroundState extends State<CarnavalBackground>
                             turns: _spin,
                             child: CustomPaint(
                               size: const Size.square(180),
-                              painter: _SolPainter(shapeColor),
+                              painter: SolPainter(shapeColor),
                             ),
                           ),
                         ),
@@ -130,7 +147,7 @@ class _CarnavalBackgroundState extends State<CarnavalBackground>
                         0.09,
                         CustomPaint(
                           size: const Size.square(90),
-                          painter: _NotaPainter(notaColor),
+                          painter: NotaPainter(notaColor),
                         ),
                       ),
                     ),
@@ -141,7 +158,7 @@ class _CarnavalBackgroundState extends State<CarnavalBackground>
                         -0.05,
                         CustomPaint(
                           size: const Size.square(130),
-                          painter: _LentePainter(lenteColor),
+                          painter: LentePainter(lenteColor),
                         ),
                       ),
                     ),
@@ -228,100 +245,10 @@ class _CarnavalBackgroundState extends State<CarnavalBackground>
   }
 }
 
-class _Talco {
-  const _Talco(this.size, this.speed,
-      {this.top, this.bottom, this.left, this.right});
-  final double size;
-  final double speed;
-  final double? top, bottom, left, right;
-}
-
 const _talco = [
-  _Talco(8, -0.12, top: 0.20, left: 0.30),
-  _Talco(12, 0.16, top: 0.60, right: 0.20),
-  _Talco(6, -0.09, bottom: 0.30, left: 0.40),
-  _Talco(10, 0.11, top: 0.40, right: 0.40),
-  _Talco(5, 0.13, top: 0.80, left: 0.60),
+  Talco(8, -0.12, top: 0.20, left: 0.30),
+  Talco(12, 0.16, top: 0.60, right: 0.20),
+  Talco(6, -0.09, bottom: 0.30, left: 0.40),
+  Talco(10, 0.11, top: 0.40, right: 0.40),
+  Talco(5, 0.13, top: 0.80, left: 0.60),
 ];
-
-// ─── Formas (mismos trazos que los SVG del diseño) ───────────────────────────
-
-Paint _stroke(Color c, double width) => Paint()
-  ..color = c
-  ..style = PaintingStyle.stroke
-  ..strokeWidth = width
-  ..strokeCap = StrokeCap.round
-  ..strokeJoin = StrokeJoin.round;
-
-/// viewBox 0 0 100 100: círculo r20 + 8 rayos.
-class _SolPainter extends CustomPainter {
-  _SolPainter(this.color);
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final k = size.width / 100;
-    final p = _stroke(color, 2 * k);
-    canvas.drawCircle(Offset(50 * k, 50 * k), 20 * k, p);
-    const rays = [
-      [50, 10, 50, 25], [50, 90, 50, 75], [10, 50, 25, 50], [90, 50, 75, 50],
-      [22, 22, 32, 32], [78, 78, 68, 68], [22, 78, 32, 68], [78, 22, 68, 32],
-    ];
-    for (final r in rays) {
-      canvas.drawLine(
-          Offset(r[0] * k, r[1] * k), Offset(r[2] * k, r[3] * k), p);
-    }
-  }
-
-  @override
-  bool shouldRepaint(_SolPainter old) => old.color != color;
-}
-
-/// viewBox 0 0 24 24: corchea doble.
-class _NotaPainter extends CustomPainter {
-  _NotaPainter(this.color);
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final k = size.width / 24;
-    final p = _stroke(color, 2 * k);
-    final path = Path()
-      ..moveTo(9 * k, 18 * k)
-      ..lineTo(9 * k, 5 * k)
-      ..lineTo(21 * k, 3 * k)
-      ..lineTo(21 * k, 16 * k);
-    canvas.drawPath(path, p);
-    canvas.drawCircle(Offset(6 * k, 18 * k), 3 * k, p);
-    canvas.drawCircle(Offset(18 * k, 16 * k), 3 * k, p);
-  }
-
-  @override
-  bool shouldRepaint(_NotaPainter old) => old.color != color;
-}
-
-/// viewBox 0 0 100 100: lente de cámara.
-class _LentePainter extends CustomPainter {
-  _LentePainter(this.color);
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final k = size.width / 100;
-    final p = _stroke(color, 2 * k);
-    final c = Offset(50 * k, 50 * k);
-    canvas.drawCircle(c, 40 * k, p);
-    canvas.drawCircle(c, 25 * k, p);
-    const lines = [
-      [50, 25, 65, 10], [50, 75, 35, 90], [25, 50, 10, 35], [75, 50, 90, 65],
-    ];
-    for (final l in lines) {
-      canvas.drawLine(
-          Offset(l[0] * k, l[1] * k), Offset(l[2] * k, l[3] * k), p);
-    }
-  }
-
-  @override
-  bool shouldRepaint(_LentePainter old) => old.color != color;
-}
-

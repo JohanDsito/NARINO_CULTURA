@@ -1,17 +1,17 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
 import '../../../../core/providers/user_role_provider.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/nc_theme.dart';
 import '../../../../shared/widgets/design/design.dart';
-import '../../domain/event_model.dart';
 import '../../domain/events_state.dart';
 import '../providers/events_provider.dart';
-import '../widgets/eventos_ui.dart';
+import 'events_screen/eventos_buscador.dart';
+import 'events_screen/eventos_vista_calendario.dart';
+import 'events_screen/eventos_vista_lista.dart';
+import 'events_screen/tipo_evento_filtros.dart';
 
 /// Agenda cultural (acento tomate): calendario o lista, búsqueda y tipos.
 class EventsScreen extends ConsumerStatefulWidget {
@@ -108,7 +108,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _Buscador(
+              child: EventosBuscador(
                 controller: _searchCtrl,
                 onChanged: _buscar,
                 onClear: () {
@@ -118,7 +118,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            _TipoChips(
+            TipoEventoFiltros(
               selected: state.tipoFiltro,
               onSelect: (t) =>
                   ref.read(eventsProvider.notifier).setTipoFiltro(t),
@@ -139,7 +139,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
                 onAction: () => ref.read(eventsProvider.notifier).loadEvents(),
               )
             else if (_calendario)
-              _VistaCalendario(
+              EventosVistaCalendario(
                 eventos: eventos,
                 view: _view,
                 selected: _selected,
@@ -150,297 +150,16 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
                 onSelect: (d) => setState(() => _selected = d),
               )
             else
-              _VistaLista(
+              EventosVistaLista(
                 eventos: eventos,
                 verPasados: _verPasados,
                 onTogglePasados: () =>
                     setState(() => _verPasados = !_verPasados),
-                hayBusqueda: _searchCtrl.text.isNotEmpty ||
-                    state.tipoFiltro != null,
+                hayBusqueda:
+                    _searchCtrl.text.isNotEmpty || state.tipoFiltro != null,
               ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _Buscador extends StatelessWidget {
-  const _Buscador({
-    required this.controller,
-    required this.onChanged,
-    required this.onClear,
-  });
-
-  final TextEditingController controller;
-  final ValueChanged<String> onChanged;
-  final VoidCallback onClear;
-
-  @override
-  Widget build(BuildContext context) {
-    final nc = context.nc;
-    final pill = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(99),
-      borderSide: BorderSide(color: nc.border),
-    );
-    return TextField(
-      controller: controller,
-      onChanged: onChanged,
-      textInputAction: TextInputAction.search,
-      decoration: InputDecoration(
-        hintText: 'Buscar por nombre, lugar o tema',
-        prefixIcon: const Icon(Icons.search_rounded),
-        suffixIcon: controller.text.isEmpty
-            ? null
-            : IconButton(
-                tooltip: 'Borrar búsqueda',
-                icon: const Icon(Icons.close_rounded),
-                onPressed: onClear,
-              ),
-        fillColor: nc.bgGlass,
-        contentPadding: const EdgeInsets.symmetric(vertical: 14),
-        border: pill,
-        enabledBorder: pill,
-        focusedBorder: pill.copyWith(
-            borderSide: BorderSide(color: nc.eventos.fill, width: 1.5)),
-      ),
-    );
-  }
-}
-
-class _TipoChips extends StatelessWidget {
-  const _TipoChips({required this.selected, required this.onSelect});
-
-  final String? selected;
-  final ValueChanged<String?> onSelect;
-
-  @override
-  Widget build(BuildContext context) {
-    final nc = context.nc;
-    final opciones = <String?>[null, ...kTiposEvento];
-    return SizedBox(
-      height: 40,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: opciones.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
-        itemBuilder: (_, i) {
-          final t = opciones[i];
-          final sel = selected == t;
-          final a = t == null ? nc.eventos : tipoAccent(nc, t);
-          final fg = sel ? a.onFill : nc.textPrimary;
-          return Semantics(
-            selected: sel,
-            button: true,
-            label: t == null ? 'Todos' : tipoNombre(t),
-            excludeSemantics: true,
-            child: NcPressable(
-              onTap: () => onSelect(sel && t != null ? null : t),
-              pressedScale: 0.94,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: sel ? a.fill : nc.bgGlass,
-                  borderRadius: BorderRadius.circular(99),
-                  border: Border.all(color: sel ? a.fill : nc.border),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (t != null) ...[
-                      Icon(tipoIcon(t), size: 16, color: sel ? fg : a.ink),
-                      const SizedBox(width: 6),
-                    ],
-                    Text(t == null ? 'Todos' : tipoNombre(t),
-                        style: AppTypography.labelMedium(color: fg)
-                            .copyWith(fontWeight: FontWeight.w600)),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _VistaCalendario extends StatelessWidget {
-  const _VistaCalendario({
-    required this.eventos,
-    required this.view,
-    required this.selected,
-    required this.onPrev,
-    required this.onNext,
-    required this.onSelect,
-  });
-
-  final List<EventModel> eventos;
-  final DateTime view;
-  final DateTime selected;
-  final VoidCallback onPrev;
-  final VoidCallback onNext;
-  final ValueChanged<DateTime> onSelect;
-
-  @override
-  Widget build(BuildContext context) {
-    final nc = context.nc;
-    final porDia = <DateTime, List<EventModel>>{};
-    for (final e in eventos) {
-      porDia.putIfAbsent(soloDia(e.fecha.toLocal()), () => []).add(e);
-    }
-    final delDia = porDia[selected] ?? const <EventModel>[];
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          NcCard(
-            child: NcMonthCalendar(
-              view: view,
-              selected: selected,
-              markedDays: porDia.keys.toSet(),
-              onPrev: onPrev,
-              onNext: onNext,
-              onSelect: onSelect,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'Eventos del ${selected.day} de '
-            '${kMesesNombre[selected.month - 1].toLowerCase()}',
-            style: AppTypography.displaySemiBold(color: nc.textPrimary),
-          ),
-          const SizedBox(height: 12),
-          if (delDia.isEmpty)
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: nc.itemFill,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: nc.border),
-              ),
-              child: Text(
-                'No hay eventos este día. Toca un día con punto naranja para '
-                'ver su agenda.',
-                style: AppTypography.bodyMedium(color: nc.textSecondary),
-              ),
-            )
-          else
-            for (final e in delDia)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: EventoCard(event: e),
-              ),
-        ],
-      ),
-    );
-  }
-}
-
-class _VistaLista extends StatelessWidget {
-  const _VistaLista({
-    required this.eventos,
-    required this.verPasados,
-    required this.onTogglePasados,
-    required this.hayBusqueda,
-  });
-
-  final List<EventModel> eventos;
-  final bool verPasados;
-  final VoidCallback onTogglePasados;
-  final bool hayBusqueda;
-
-  @override
-  Widget build(BuildContext context) {
-    final nc = context.nc;
-    final hoy = soloDia(DateTime.now());
-    final semana = hoy.add(const Duration(days: 7));
-    final proximos = eventos.where((e) => !e.esPasado).toList()
-      ..sort((a, b) => a.fecha.compareTo(b.fecha));
-    final pasados = eventos.where((e) => e.esPasado).toList()
-      ..sort((a, b) => b.fecha.compareTo(a.fecha));
-
-    final grupos = <(String, List<EventModel>)>[
-      ('Hoy', proximos.where((e) => soloDia(e.fecha.toLocal()) == hoy).toList()),
-      (
-        'Esta semana',
-        proximos.where((e) {
-          final d = soloDia(e.fecha.toLocal());
-          return d.isAfter(hoy) && d.isBefore(semana);
-        }).toList()
-      ),
-      (
-        'Más adelante',
-        proximos
-            .where((e) => !soloDia(e.fecha.toLocal()).isBefore(semana))
-            .toList()
-      ),
-    ];
-
-    if (proximos.isEmpty && (!verPasados || pasados.isEmpty)) {
-      return Column(
-        children: [
-          NcEmptyState(
-            icon: Icons.event_busy_outlined,
-            accent: nc.eventos,
-            title: hayBusqueda ? 'Nada con esa búsqueda' : 'No hay eventos próximos',
-            message: hayBusqueda
-                ? 'Prueba con otra palabra o quita el filtro de tipo.'
-                : 'Pronto habrá conciertos, ferias y talleres en la agenda.',
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-          ),
-          if (pasados.isNotEmpty)
-            TextButton(
-              onPressed: onTogglePasados,
-              child: const Text('Ver eventos pasados'),
-            ),
-        ],
-      );
-    }
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          for (final (titulo, lista) in grupos)
-            if (lista.isNotEmpty) ...[
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10, top: 4),
-                child: Text(titulo,
-                    style: AppTypography.displaySemiBold(color: nc.textPrimary)),
-              ),
-              for (final e in lista)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: EventoCard(event: e),
-                ),
-              const SizedBox(height: 8),
-            ],
-          if (pasados.isNotEmpty)
-            Center(
-              child: TextButton.icon(
-                onPressed: onTogglePasados,
-                icon: Icon(verPasados
-                    ? Icons.expand_less_rounded
-                    : Icons.history_rounded),
-                label: Text(verPasados
-                    ? 'Ocultar eventos pasados'
-                    : 'Ver eventos pasados (${pasados.length})'),
-              ),
-            ),
-          if (verPasados)
-            for (final e in pasados)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: EventoCard(event: e),
-              ),
-        ],
       ),
     );
   }

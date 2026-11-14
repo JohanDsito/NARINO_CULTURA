@@ -1,10 +1,7 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
 import '../../../../core/providers/user_role_provider.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/nc_theme.dart';
@@ -14,6 +11,9 @@ import '../../domain/auction_bid_model.dart';
 import '../../domain/auction_model.dart';
 import '../providers/auctions_provider.dart';
 import '../widgets/subasta_ui.dart';
+import 'auction_detail_screen/barra_puja.dart';
+import 'auction_detail_screen/marcador_subasta.dart';
+import 'auction_detail_screen/pujas_en_vivo.dart';
 
 /// Detalle de subasta en tiempo real (WebSocket): precio, cuenta regresiva,
 /// pujas en vivo y barra fija para pujar.
@@ -63,8 +63,9 @@ class _AuctionDetailScreenState extends ConsumerState<AuctionDetailScreen> {
       _error = null;
     });
     try {
-      final a =
-          await ref.read(auctionsRepositoryProvider).getDetail(widget.auctionId);
+      final a = await ref
+          .read(auctionsRepositoryProvider)
+          .getDetail(widget.auctionId);
       if (!mounted) return;
       setState(() {
         _auction = a;
@@ -106,8 +107,7 @@ class _AuctionDetailScreenState extends ConsumerState<AuctionDetailScreen> {
 
     double? toDouble(Object? v) =>
         v is num ? v.toDouble() : double.tryParse(v?.toString() ?? '');
-    final precio =
-        toDouble(data['current_price']) ?? toDouble(data['amount']);
+    final precio = toDouble(data['current_price']) ?? toDouble(data['amount']);
     final cierre = DateTime.tryParse(data['ends_at']?.toString() ?? '');
     final status = data['status']?.toString().toLowerCase();
     final cerrada = type == 'auction_closed' ||
@@ -155,8 +155,8 @@ class _AuctionDetailScreenState extends ConsumerState<AuctionDetailScreen> {
     final a = _auction;
     if (a == null) return;
     FocusScope.of(context).unfocus();
-    final monto =
-        double.tryParse(_bidCtrl.text.trim().replaceAll('.', '').replaceAll(',', '.'));
+    final monto = double.tryParse(
+        _bidCtrl.text.trim().replaceAll('.', '').replaceAll(',', '.'));
     // Regla del backend: la puja debe ser mayor al precio actual.
     if (monto == null || monto <= a.precioActual) {
       _snack('Tu puja debe ser mayor a ${formatCOP(a.precioActual)}.');
@@ -288,11 +288,11 @@ class _AuctionDetailScreenState extends ConsumerState<AuctionDetailScreen> {
                 Text('de ${a.artistaNombre}',
                     style: AppTypography.bodyMedium(color: nc.textSecondary)),
                 const SizedBox(height: 18),
-                _Marcador(auction: a, fase: fase, voyGanando: voyGanando),
+                MarcadorSubasta(auction: a, fase: fase, voyGanando: voyGanando),
                 const SizedBox(height: 16),
                 ..._avisos(context, a, fase, soyVendedor, gane),
                 const SizedBox(height: 8),
-                _PujasEnVivo(
+                PujasEnVivo(
                   pujas: a.ultimasPujas,
                   resaltar: _pujasEnVivo > 0,
                   enVivo: fase == FaseSubasta.enVivo,
@@ -303,7 +303,7 @@ class _AuctionDetailScreenState extends ConsumerState<AuctionDetailScreen> {
         ),
       ),
       bottomNavigationBar: puedePujar
-          ? _BarraPuja(
+          ? BarraPuja(
               controller: _bidCtrl,
               precioActual: a.precioActual,
               loading: _isBidding,
@@ -392,379 +392,5 @@ class _AuctionDetailScreenState extends ConsumerState<AuctionDetailScreen> {
                   : 'La subasta terminó en ${formatCOP(a.precioActual)}.',
         )),
     ];
-  }
-}
-
-/// Precio actual + cuenta regresiva + estado de liderazgo.
-class _Marcador extends StatelessWidget {
-  const _Marcador({
-    required this.auction,
-    required this.fase,
-    required this.voyGanando,
-  });
-
-  final AuctionModel auction;
-  final FaseSubasta fase;
-  final bool voyGanando;
-
-  @override
-  Widget build(BuildContext context) {
-    final nc = context.nc;
-    final a = auction;
-    final hayPujas = a.pujadorLiderId != null || a.precioActual > a.precioBase;
-    final mostrarTiempo =
-        fase == FaseSubasta.enVivo || fase == FaseSubasta.programada;
-
-    return NcCard(
-      padding: const EdgeInsets.all(18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      fase == FaseSubasta.cerrada
-                          ? 'PRECIO FINAL'
-                          : (hayPujas ? 'PUJA ACTUAL' : 'PRECIO BASE'),
-                      style: AppTypography.kicker(color: nc.oroA.ink),
-                    ),
-                    const SizedBox(height: 4),
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 300),
-                      transitionBuilder: (c, anim) => ScaleTransition(
-                          scale: Tween(begin: 1.15, end: 1.0).animate(anim),
-                          child: FadeTransition(opacity: anim, child: c)),
-                      child: Text(
-                        formatCOP(a.precioActual),
-                        key: ValueKey(a.precioActual),
-                        style: AppTypography.displayBlack(color: nc.subastas.ink)
-                            .copyWith(fontSize: 32),
-                      ),
-                    ),
-                    if (hayPujas && fase != FaseSubasta.cerrada)
-                      Text('Base ${formatCOP(a.precioBase)}',
-                          style:
-                              AppTypography.bodySmall(color: nc.textSecondary)),
-                  ],
-                ),
-              ),
-              if (voyGanando && fase == FaseSubasta.enVivo)
-                NcStatusPill(
-                  label: 'Vas ganando',
-                  accent: nc.successA,
-                  filled: true,
-                  icon: Icons.emoji_events_outlined,
-                ),
-            ],
-          ),
-          if (mostrarTiempo) ...[
-            const SizedBox(height: 16),
-            const NcSerpentina(width: double.infinity, height: 3),
-            const SizedBox(height: 16),
-            NcCountdown(
-              target: fase == FaseSubasta.programada
-                  ? a.fechaInicio
-                  : a.fechaCierre,
-              builder: (_, r) => _Segmentos(
-                remaining: r,
-                titulo: fase == FaseSubasta.programada
-                    ? 'Empieza en'
-                    : 'Cierra en',
-                urgente: fase == FaseSubasta.enVivo && r.inMinutes < 60,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _Segmentos extends StatelessWidget {
-  const _Segmentos({
-    required this.remaining,
-    required this.titulo,
-    required this.urgente,
-  });
-
-  final Duration remaining;
-  final String titulo;
-  final bool urgente;
-
-  @override
-  Widget build(BuildContext context) {
-    final nc = context.nc;
-    final accent = urgente ? nc.enVivo : nc.subastas;
-    final partes = <(int, String)>[
-      (remaining.inDays, 'días'),
-      (remaining.inHours.remainder(24), 'horas'),
-      (remaining.inMinutes.remainder(60), 'min'),
-      (remaining.inSeconds.remainder(60), 'seg'),
-    ];
-    return Semantics(
-      label: '$titulo ${NcCountdown.spoken(remaining)}',
-      excludeSemantics: true,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(titulo,
-              style: AppTypography.labelMedium(color: nc.textSecondary)),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              for (var i = 0; i < partes.length; i++) ...[
-                if (i > 0) const SizedBox(width: 8),
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: urgente ? accent.fill : accent.tint,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          partes[i].$1.toString().padLeft(2, '0'),
-                          style: AppTypography.displaySemiBold(
-                                  color: urgente ? accent.onFill : accent.ink)
-                              .copyWith(
-                            fontSize: 22,
-                            fontFeatures: const [FontFeature.tabularFigures()],
-                          ),
-                        ),
-                        Text(partes[i].$2,
-                            style: AppTypography.caption(
-                                color: urgente
-                                    ? accent.onFill
-                                    : nc.textSecondary)),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PujasEnVivo extends StatelessWidget {
-  const _PujasEnVivo({
-    required this.pujas,
-    required this.resaltar,
-    required this.enVivo,
-  });
-
-  final List<AuctionBidModel> pujas;
-  final bool resaltar;
-  final bool enVivo;
-
-  @override
-  Widget build(BuildContext context) {
-    final nc = context.nc;
-    final palette = [nc.tomateA, nc.naranjaA, nc.oroA, nc.magentaA, nc.azulA];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text('Pujas en vivo',
-                style: AppTypography.displaySemiBold(color: nc.textPrimary)),
-            if (enVivo) ...[
-              const SizedBox(width: 8),
-              LiveDot(color: nc.enVivo.ink),
-            ],
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Aquí aparecen las pujas que llegan mientras tienes la subasta '
-          'abierta.',
-          style: AppTypography.bodySmall(color: nc.textSecondary),
-        ),
-        const SizedBox(height: 12),
-        if (pujas.isEmpty)
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: nc.itemFill,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: nc.border),
-            ),
-            child: Text(
-              enVivo
-                  ? 'Todavía no llegan pujas nuevas. ¡Puedes ser la primera '
-                      'persona en pujar!'
-                  : 'No hay pujas para mostrar.',
-              style: AppTypography.bodyMedium(color: nc.textSecondary),
-            ),
-          )
-        else
-          for (var i = 0; i < pujas.length; i++)
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 400),
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: i == 0 && resaltar ? nc.subastas.tint : nc.itemFill,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                    color: i == 0 && resaltar
-                        ? nc.subastas.fill.withValues(alpha: 0.5)
-                        : nc.border),
-              ),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 16,
-                    backgroundColor: palette[i % palette.length].fill,
-                    child: Text(
-                      pujas[i].bidderName.isNotEmpty
-                          ? pujas[i].bidderName.characters.first.toUpperCase()
-                          : '?',
-                      style: AppTypography.labelSemiBold(
-                              color: palette[i % palette.length].onFill)
-                          .copyWith(fontSize: 13),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                        pujas[i].esMia ? 'Tú' : pujas[i].bidderName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.labelSemiBold(
-                                color: nc.textPrimary)
-                            .copyWith(fontSize: 14)),
-                  ),
-                  Text(formatCOP(pujas[i].amount),
-                      style: AppTypography.labelSemiBold(
-                          color: i == 0 ? nc.subastas.ink : nc.textSecondary)),
-                ],
-              ),
-            ),
-      ],
-    );
-  }
-}
-
-/// Barra fija para pujar con montos sugeridos (+5 %, +10 %, +20 %).
-class _BarraPuja extends StatelessWidget {
-  const _BarraPuja({
-    required this.controller,
-    required this.precioActual,
-    required this.loading,
-    required this.onPujar,
-  });
-
-  final TextEditingController controller;
-  final double precioActual;
-  final bool loading;
-  final VoidCallback onPujar;
-
-  @override
-  Widget build(BuildContext context) {
-    final nc = context.nc;
-    double redondear(double v) => (v / 1000).ceil() * 1000;
-    final sugeridos = [1.05, 1.10, 1.20]
-        .map((f) => redondear(precioActual * f))
-        .toSet()
-        .toList();
-
-    return ClipRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-        child: Container(
-          padding: EdgeInsets.fromLTRB(
-              16, 12, 16, 12 + MediaQuery.paddingOf(context).bottom),
-          decoration: BoxDecoration(
-            color: nc.bgGlass,
-            border: Border(top: BorderSide(color: nc.border)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                children: [
-                  for (final s in sugeridos) ...[
-                    Expanded(
-                      child: NcPressable(
-                        onTap: () =>
-                            controller.text = s.toStringAsFixed(0),
-                        semanticLabel: 'Pujar ${formatCOP(s)}',
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 9),
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: nc.subastas.tint,
-                            borderRadius: BorderRadius.circular(99),
-                            border: Border.all(
-                                color:
-                                    nc.subastas.fill.withValues(alpha: 0.45)),
-                          ),
-                          child: Text(formatCOP(s),
-                              style: AppTypography.labelMedium(
-                                      color: nc.subastas.ink)
-                                  .copyWith(fontWeight: FontWeight.w700)),
-                        ),
-                      ),
-                    ),
-                    if (s != sugeridos.last) const SizedBox(width: 8),
-                  ],
-                ],
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: controller,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      enabled: !loading,
-                      onSubmitted: (_) => onPujar(),
-                      decoration: InputDecoration(
-                        hintText: 'Más de ${formatCOP(precioActual)}',
-                        prefixText: r'$ ',
-                        isDense: true,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(99),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(99),
-                          borderSide: BorderSide(color: nc.border),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(99),
-                          borderSide:
-                              BorderSide(color: nc.subastas.fill, width: 1.5),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 18, vertical: 14),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  NcPrimaryButton(
-                    label: 'Pujar',
-                    icon: Icons.gavel_rounded,
-                    expand: false,
-                    loading: loading,
-                    onPressed: onPujar,
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }

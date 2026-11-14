@@ -1,0 +1,154 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../../../../core/theme/app_typography.dart';
+import '../../../../../core/theme/nc_theme.dart';
+import '../../../../../core/utils/money.dart';
+import '../../../../../shared/widgets/design/design.dart';
+import '../../../domain/order_model.dart';
+import 'obra_thumb.dart';
+import 'orden_formato.dart';
+
+/// Código corto y legible de una orden: `#A1B2C3D4` (en vez del UUID).
+String codigoOrden(String id) {
+  final limpio = id.replaceAll('-', '');
+  return '#${(limpio.length > 8 ? limpio.substring(0, 8) : limpio).toUpperCase()}';
+}
+
+const _meses = [
+  'ene',
+  'feb',
+  'mar',
+  'abr',
+  'may',
+  'jun',
+  'jul',
+  'ago',
+  'sep',
+  'oct',
+  'nov',
+  'dic',
+];
+
+/// `6 nov 2026`
+String fechaCorta(DateTime d) => '${d.day} ${_meses[d.month - 1]} ${d.year}';
+
+/// Etiqueta en lenguaje claro para el estado interno de la orden.
+String estadoOrdenLabel(String estado) => switch (estado) {
+      'completado' => 'Pagada',
+      'pendiente' => 'Pendiente de pago',
+      'fallido' => 'Cancelada',
+      'reembolsado' => 'Reembolsada',
+      _ => 'Pendiente',
+    };
+
+IconData estadoOrdenIcon(String estado) => switch (estado) {
+      'completado' => Icons.check_circle_rounded,
+      'pendiente' => Icons.schedule_rounded,
+      'fallido' => Icons.cancel_rounded,
+      _ => Icons.replay_rounded,
+    };
+
+/// Tarjeta de orden para "Mis compras" y "Mis ventas".
+class OrderCard extends StatelessWidget {
+  const OrderCard({super.key, required this.order, this.esVenta = false});
+
+  final OrderModel order;
+  final bool esVenta;
+
+  @override
+  Widget build(BuildContext context) {
+    final nc = context.nc;
+    final accent = estadoOrdenAccent(nc, order.estado);
+    final items = order.items;
+    final titulo = items.isEmpty
+        ? 'Orden ${codigoOrden(order.id)}'
+        : items.length == 1
+            ? items.first.obraTitulo
+            : '${items.first.obraTitulo} y ${items.length - 1} más';
+
+    return NcCard(
+      padding: const EdgeInsets.all(14),
+      gradientBorder: false,
+      onTap: () => context.push('/marketplace/order/${order.id}'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              SizedBox(
+                width: 64 + (items.length > 1 ? 14.0 : 0),
+                height: 64,
+                child: Stack(
+                  children: [
+                    if (items.length > 1)
+                      Positioned(
+                        left: 14,
+                        child: Opacity(
+                          opacity: 0.6,
+                          child: ObraThumb(url: items[1].imagenUrl),
+                        ),
+                      ),
+                    ObraThumb(
+                        url: items.isNotEmpty ? items.first.imagenUrl : null),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(titulo,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style:
+                            AppTypography.labelSemiBold(color: nc.textPrimary)),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${codigoOrden(order.id)} · ${fechaCorta(order.creadoEn)}',
+                      style: AppTypography.bodySmall(color: nc.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: NcStatusPill(
+                    label: esVenta && order.isCompletado
+                        ? 'Vendida'
+                        : estadoOrdenLabel(order.estado),
+                    accent: accent,
+                    icon: estadoOrdenIcon(order.estado),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(formatCOP(esVenta ? order.montoVenta : order.total),
+                  style: AppTypography.price(color: nc.tienda.ink)
+                      .copyWith(fontSize: 17)),
+            ],
+          ),
+          if (order.isCompletado && order.comprobantePdfUrl != null) ...[
+            const SizedBox(height: 6),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () => launchUrl(Uri.parse(order.comprobantePdfUrl!),
+                    mode: LaunchMode.externalApplication),
+                icon: const Icon(Icons.receipt_long_outlined, size: 18),
+                label: const Text('Comprobante'),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}

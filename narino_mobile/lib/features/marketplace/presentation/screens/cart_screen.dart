@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/nc_theme.dart';
@@ -10,6 +9,7 @@ import '../../domain/cart_item_model.dart';
 import '../providers/cart_provider.dart';
 import '../providers/orders_provider.dart';
 import '../widgets/tienda_ui.dart';
+import 'cart_screen/cart_item_card.dart';
 
 class CartScreen extends ConsumerStatefulWidget {
   const CartScreen({super.key});
@@ -64,7 +64,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
   }
 
   Future<void> _remove(CartItemModel item) async {
-    final ok = await ref.read(cartProvider.notifier).removeFromCart(item.obraId);
+    final ok =
+        await ref.read(cartProvider.notifier).removeFromCart(item.obraId);
     if (!mounted) return;
     _snack(ok
         ? '"${item.obraTitulo}" salió del carrito.'
@@ -144,7 +145,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                         const SizedBox(height: 14),
                       ],
                       for (final item in state.items) ...[
-                        _ItemCard(item: item, onRemove: () => _remove(item)),
+                        CartItemCard(item: item, onRemove: () => _remove(item)),
                         const SizedBox(height: 12),
                       ],
                     ],
@@ -182,65 +183,6 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                 ],
               ),
             ),
-    );
-  }
-}
-
-class _ItemCard extends StatelessWidget {
-  const _ItemCard({required this.item, required this.onRemove});
-
-  final CartItemModel item;
-  final VoidCallback onRemove;
-
-  @override
-  Widget build(BuildContext context) {
-    final nc = context.nc;
-    return NcCard(
-      padding: const EdgeInsets.all(12),
-      gradientBorder: false,
-      onTap: () => context.push('/artworks/${item.obraId}'),
-      child: Row(
-        children: [
-          Opacity(
-            opacity: item.disponible ? 1 : 0.45,
-            child: ObraThumb(url: item.imagenUrl, size: 76),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(item.obraTitulo,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.labelSemiBold(color: nc.textPrimary)),
-                if (item.artistaNombre.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Text(item.artistaNombre,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.bodySmall(color: nc.textSecondary)),
-                ],
-                const SizedBox(height: 8),
-                item.disponible
-                    ? Text(formatCOP(item.precio),
-                        style: AppTypography.labelSemiBold(color: nc.tienda.ink)
-                            .copyWith(fontWeight: FontWeight.w800))
-                    : NcStatusPill(
-                        label: 'Ya no disponible',
-                        accent: nc.tomateA,
-                        icon: Icons.block_rounded,
-                      ),
-              ],
-            ),
-          ),
-          IconButton(
-            tooltip: 'Quitar del carrito',
-            onPressed: onRemove,
-            icon: Icon(Icons.close_rounded, color: nc.textSecondary),
-          ),
-        ],
-      ),
     );
   }
 }

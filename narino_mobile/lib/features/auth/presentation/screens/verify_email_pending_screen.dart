@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/nc_theme.dart';
 import '../../../../shared/widgets/design/design.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/auth_scaffold.dart';
+import 'verify_email_pending_screen/verificacion_paso.dart';
 
 class VerifyEmailPendingScreen extends ConsumerStatefulWidget {
   const VerifyEmailPendingScreen({super.key, required this.email});
@@ -106,7 +106,8 @@ class _VerifyEmailPendingScreenState
           const SizedBox(height: 22),
           for (var i = 0; i < steps.length; i++) ...[
             if (i > 0) const SizedBox(height: 12),
-            _Step(number: i + 1, text: steps[i].$1, accent: steps[i].$2),
+            VerificacionPaso(
+                number: i + 1, text: steps[i].$1, accent: steps[i].$2),
           ],
           const SizedBox(height: 24),
           NcPrimaryButton(
@@ -140,43 +141,6 @@ class _VerifyEmailPendingScreenState
             ),
         ],
       ),
-    );
-  }
-}
-
-class _Step extends StatelessWidget {
-  const _Step({required this.number, required this.text, required this.accent});
-
-  final int number;
-  final String text;
-  final NcAccent accent;
-
-  @override
-  Widget build(BuildContext context) {
-    final nc = context.nc;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 28,
-          height: 28,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(color: accent.fill, shape: BoxShape.circle),
-          child: Text(
-            '$number',
-            style: AppTypography.labelSemiBold(color: accent.onFill)
-                .copyWith(fontSize: 13, fontWeight: FontWeight.w800),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Text(text,
-                style: AppTypography.bodyMedium(color: nc.textPrimary)),
-          ),
-        ),
-      ],
     );
   }
 }
