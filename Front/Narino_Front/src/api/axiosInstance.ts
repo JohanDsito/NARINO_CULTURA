@@ -1,6 +1,7 @@
 import axios from 'axios'
 
 import { API_BASE_URL } from '@/config/env'
+import { useAuthStore } from '@/store/authStore'
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -19,6 +20,12 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error)
 )
 
+/** Cierra la sesión local (tokens + store persistido) y manda al login. */
+function forceLogout() {
+  useAuthStore.getState().logout()
+  if (window.location.pathname !== '/login') window.location.href = '/login'
+}
+
 // Response interceptor: refresco automático en 401
 axiosInstance.interceptors.response.use(
   (response) => response,
@@ -30,9 +37,7 @@ axiosInstance.interceptors.response.use(
       const refreshToken = localStorage.getItem('refresh_token')
 
       if (!refreshToken) {
-        localStorage.removeItem('access_token')
-        localStorage.removeItem('refresh_token')
-        window.location.href = '/login'
+        forceLogout()
         return Promise.reject(error)
       }
 
@@ -42,12 +47,11 @@ axiosInstance.interceptors.response.use(
           { refresh: refreshToken }
         )
         localStorage.setItem('access_token', data.access)
+        useAuthStore.setState({ accessToken: data.access })
         originalRequest.headers.Authorization = `Bearer ${data.access}`
         return axiosInstance(originalRequest)
       } catch {
-        localStorage.removeItem('access_token')
-        localStorage.removeItem('refresh_token')
-        window.location.href = '/login'
+        forceLogout()
         return Promise.reject(error)
       }
     }
