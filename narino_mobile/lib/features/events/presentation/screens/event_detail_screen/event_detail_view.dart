@@ -1,9 +1,6 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../../core/providers/user_role_provider.dart';
@@ -13,20 +10,25 @@ import '../../../../../shared/widgets/design/design.dart';
 import '../../../domain/event_model.dart';
 import '../../providers/events_provider.dart';
 import '../../widgets/eventos_ui.dart';
+import '../../../../../shared/widgets/dialogs/confirmar_accion.dart';
 import 'event_info_tile.dart';
+import 'evento_app_bar.dart';
+import 'evento_etiquetas.dart';
+import 'evento_mapa.dart';
 
 const _eventBaseUrl = 'https://narinocultura.com/eventos';
 
+/// Detalle de un evento: datos, mapa, compartir e inscripción.
 class EventDetailView extends ConsumerStatefulWidget {
   const EventDetailView({super.key, required this.event});
 
   final EventModel event;
 
   @override
-  ConsumerState<EventDetailView> createState() => _EventViewState();
+  ConsumerState<EventDetailView> createState() => _EventDetailViewState();
 }
 
-class _EventViewState extends ConsumerState<EventDetailView> {
+class _EventDetailViewState extends ConsumerState<EventDetailView> {
   late bool _inscrito = widget.event.estaSuscrito;
   bool _loading = false;
 
@@ -60,23 +62,15 @@ class _EventViewState extends ConsumerState<EventDetailView> {
   }
 
   Future<void> _cancelar() async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('¿Cancelar tu inscripción?'),
-        content: const Text('Dejarás de recibir el recordatorio de este '
-            'evento. Puedes volver a inscribirte cuando quieras.'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Mantenerla')),
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Sí, cancelar')),
-        ],
-      ),
+    final ok = await confirmarAccion(
+      context,
+      titulo: '¿Cancelar tu inscripción?',
+      mensaje: 'Dejarás de recibir el recordatorio de este evento. Puedes '
+          'volver a inscribirte cuando quieras.',
+      cancelar: 'Mantenerla',
+      confirmar: 'Sí, cancelar',
     );
-    if (ok != true || !mounted) return;
+    if (!ok || !mounted) return;
     setState(() => _loading = true);
     try {
       await ref
@@ -123,113 +117,21 @@ class _EventViewState extends ConsumerState<EventDetailView> {
   Widget build(BuildContext context) {
     final nc = context.nc;
     final e = widget.event;
-    final accent = tipoAccent(nc, e.tipo);
     final logueado = ref.watch(currentUserRoleProvider).valueOrNull != null;
-    final flyer = e.flyerUrl;
     final coords = e.latitud != null && e.longitud != null;
-
-    final fallback = DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [accent.tint, nc.tomateA.tint],
-        ),
-      ),
-      child: Center(child: Icon(tipoIcon(e.tipo), size: 56, color: accent.ink)),
-    );
 
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          SliverAppBar(
-            expandedHeight: 320,
-            pinned: true,
-            backgroundColor: nc.bg,
-            surfaceTintColor: Colors.transparent,
-            shape: const Border(),
-            automaticallyImplyLeading: false,
-            leadingWidth: 64,
-            leading: Padding(
-              padding: const EdgeInsets.only(left: 12),
-              child: Center(
-                child: GlassCircleButton(
-                  icon: Icons.arrow_back_rounded,
-                  tooltip: 'Volver',
-                  onPressed: () => Navigator.of(context).maybePop(),
-                ),
-              ),
-            ),
-            actions: [
-              GlassCircleButton(
-                icon: Icons.link_rounded,
-                tooltip: 'Copiar enlace',
-                onPressed: _copiar,
-              ),
-              const SizedBox(width: 8),
-              GlassCircleButton(
-                icon: Icons.ios_share_rounded,
-                tooltip: 'Compartir',
-                onPressed: _compartir,
-              ),
-              const SizedBox(width: 12),
-            ],
-            flexibleSpace: FlexibleSpaceBar(
-              background: Stack(
-                fit: StackFit.expand,
-                children: [
-                  if (flyer != null && flyer.isNotEmpty)
-                    CachedNetworkImage(
-                      imageUrl: flyer,
-                      fit: BoxFit.cover,
-                      placeholder: (_, __) => fallback,
-                      errorWidget: (_, __, ___) => fallback,
-                    )
-                  else
-                    fallback,
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: -1,
-                    child: Container(
-                      height: 30,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: nc.bg,
-                        borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(28)),
-                      ),
-                      child: const NcSerpentina(width: 44),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          EventoAppBar(
+            event: e,
+            onCopiar: _copiar,
+            onCompartir: _compartir,
           ),
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
             sliver: SliverList.list(children: [
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  NcStatusPill(
-                    label: tipoNombre(e.tipo),
-                    accent: accent,
-                    icon: tipoIcon(e.tipo),
-                    filled: true,
-                  ),
-                  if (e.esDestacado)
-                    NcStatusPill(
-                        label: 'Destacado',
-                        accent: nc.oroA,
-                        icon: Icons.star_rounded),
-                  if (e.esPasado)
-                    NcStatusPill(label: 'Ya pasó', accent: nc.azulA),
-                  if (!e.publicado)
-                    NcStatusPill(label: 'Borrador', accent: nc.oroA),
-                ],
-              ),
+              EventoEtiquetas(event: e),
               const SizedBox(height: 14),
               Semantics(
                 header: true,
@@ -274,40 +176,11 @@ class _EventViewState extends ConsumerState<EventDetailView> {
               ],
               if (coords) ...[
                 const SizedBox(height: 26),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(22),
-                  child: SizedBox(
-                    height: 200,
-                    child: FlutterMap(
-                      options: MapOptions(
-                        initialCenter: LatLng(e.latitud!, e.longitud!),
-                        initialZoom: 15,
-                        interactionOptions: const InteractionOptions(
-                            flags: InteractiveFlag.none),
-                        onTap: (_, __) => _abrirMapa(),
-                      ),
-                      children: [
-                        TileLayer(
-                          urlTemplate:
-                              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                          userAgentPackageName: 'com.narino_cultura.app',
-                        ),
-                        MarkerLayer(markers: [
-                          Marker(
-                            point: LatLng(e.latitud!, e.longitud!),
-                            width: 44,
-                            height: 44,
-                            child: Icon(Icons.location_on_rounded,
-                                size: 44, color: nc.eventos.fill),
-                          ),
-                        ]),
-                      ],
-                    ),
-                  ),
+                EventoMapa(
+                  latitud: e.latitud!,
+                  longitud: e.longitud!,
+                  onAbrir: _abrirMapa,
                 ),
-                const SizedBox(height: 4),
-                Text('© OpenStreetMap',
-                    style: AppTypography.caption(color: nc.textMuted)),
               ],
             ]),
           ),
