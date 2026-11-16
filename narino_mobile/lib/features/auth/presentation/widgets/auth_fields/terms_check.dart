@@ -27,6 +27,7 @@ class TermsCheck extends StatelessWidget {
     return Semantics(
       checked: accepted,
       label: 'Acepto los Términos y Condiciones y la Política de Privacidad',
+      onTap: enabled ? () => onChanged(!accepted) : null,
       excludeSemantics: true,
       child: NcPressable(
         onTap: enabled ? () => onChanged(!accepted) : null,

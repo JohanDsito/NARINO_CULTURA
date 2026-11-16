@@ -14,3 +14,4 @@ export 'nc_pressable.dart';
 export 'nc_state.dart';
 export 'nc_buttons.dart';
 export 'nc_tab_bar.dart';
+export 'nc_tap_target.dart';

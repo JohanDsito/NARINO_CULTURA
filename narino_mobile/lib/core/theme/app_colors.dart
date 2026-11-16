@@ -46,6 +46,12 @@ class AppColors {
   static const Color magentaInk = Color(0xFFC8004A); // 5.4:1
   static const Color verdeInk = Color(0xFF007A47); // 5.0:1
 
+  // ─── Tintas para texto en modo oscuro ──────────────────────────────────────
+  // Sobre su propio fondo tintado, el tomate y el magenta puros daban 4.4:1 y
+  // 4.3:1 (MO-ACC-03). Un punto más claros pasan sin perder el tono.
+  static const Color tomateInkDark = Color(0xFFFF4D26); // 4.9:1 sobre su tinte
+  static const Color magentaInkDark = Color(0xFFFF3377); // 4.8:1 sobre su tinte
+
   // ─── Superficies — modo oscuro (por defecto) ───────────────────────────────
   static const Color bgDark = Color(0xFF050505);
   static const Color bgCardDark = Color(0xFF121214);
@@ -53,8 +59,9 @@ class AppColors {
   static const Color bgSubtleDark = Color(0xFF1C1C1F);
   static const Color borderDark = Color(0x14FFFFFF); // rgba(255,255,255,.08)
   static const Color textPrimaryDark = Color(0xFFF5F5F7);
-  static const Color textSecondaryDark = Color(0xFF86868B);
-  static const Color textMutedDark = Color(0xFF7C7C82); // 4.5:1 sobre tarjeta
+  // Contraste ≥ 4.5:1 sobre bg, tarjeta y bgSubtle (MO-ACC-03).
+  static const Color textSecondaryDark = Color(0xFF9A9AA0); // 6.2:1 sobre bgSubtle
+  static const Color textMutedDark = Color(0xFF84848A); // 4.6:1 sobre bgSubtle
 
   // ─── Superficies — modo claro ──────────────────────────────────────────────
   static const Color bgLight = Color(0xFFF5F5F7);
@@ -63,8 +70,10 @@ class AppColors {
   static const Color bgSubtleLight = Color(0xFFEBEBED);
   static const Color borderLight = Color(0x0F000000); // rgba(0,0,0,.06)
   static const Color textPrimaryLight = Color(0xFF1D1D1F);
-  static const Color textSecondaryLight = Color(0xFF6E6E73);
-  static const Color textMutedLight = Color(0xFF74747A); // 4.6:1 sobre blanco
+  // Contraste ≥ 4.5:1 sobre bg, tarjeta y bgSubtle (MO-ACC-03); antes el tenue
+  // daba 3.9:1 sobre bgSubtle y el secundario 4.3:1.
+  static const Color textSecondaryLight = Color(0xFF626267); // 5.1:1 sobre bgSubtle
+  static const Color textMutedLight = Color(0xFF6A6A6F); // 4.5:1 sobre bgSubtle
 
   // ─── Semánticos ────────────────────────────────────────────────────────────
   static const Color error = tomate;

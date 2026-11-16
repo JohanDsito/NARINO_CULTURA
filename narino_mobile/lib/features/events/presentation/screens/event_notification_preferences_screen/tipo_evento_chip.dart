@@ -24,6 +24,7 @@ class TipoEventoChip extends StatelessWidget {
       toggled: activo,
       button: true,
       label: tipoNombre(tipo),
+      onTap: onTap,
       excludeSemantics: true,
       child: NcPressable(
         onTap: onTap,

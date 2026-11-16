@@ -26,11 +26,13 @@ class AppTheme {
       primary: nc.azul,
       onPrimary: nc.onAzul,
       secondary: nc.naranja,
-      onSecondary: Colors.white,
+      onSecondary: nc.naranjaA.onFill, // blanco sobre naranja daba 2.9:1
       tertiary: nc.magenta,
       onTertiary: Colors.white,
-      error: AppColors.tomate,
-      onError: Colors.white,
+      // Texto de error de los formularios: la tinta (5.6:1 en claro). El
+      // tomate puro daba 3.7:1 sobre blanco (MO-ACC-03).
+      error: nc.tomateA.ink,
+      onError: nc.tomateA.onFill,
       surface: nc.bgCard,
       onSurface: nc.textPrimary,
       onSurfaceVariant: nc.textSecondary,
@@ -226,7 +228,10 @@ class AppTheme {
         backgroundColor: nc.textPrimary,
         contentTextStyle: AppTypography.labelSemiBold(color: nc.bg)
             .copyWith(fontSize: 14),
-        actionTextColor: nc.azul,
+        // El SnackBar es oscuro en modo claro y claro en modo oscuro: la acción
+        // usa el azul del modo contrario (10.9:1 y 5.2:1; antes 3.0 y 1.4).
+        actionTextColor:
+            nc.isDark ? AppColors.azulNeonLight : AppColors.azulNeon,
         shape: pill,
         elevation: 0,
         insetPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),

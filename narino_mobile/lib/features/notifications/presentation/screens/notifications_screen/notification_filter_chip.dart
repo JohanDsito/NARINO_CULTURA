@@ -23,6 +23,7 @@ class NotificationFilterChip extends StatelessWidget {
       button: true,
       selected: selected,
       label: label,
+      onTap: onTap,
       excludeSemantics: true,
       child: NcPressable(
         onTap: onTap,

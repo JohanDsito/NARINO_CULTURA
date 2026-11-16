@@ -23,23 +23,26 @@ class SeguirButton extends ConsumerWidget {
     // La lista de `musicians/following/` es la fuente de verdad.
     final sigue = ref.watch(seguidosProvider).sigue(musician.slug);
 
+    Future<void> alternar() async {
+      HapticFeedback.selectionClick();
+      final ok =
+          await ref.read(seguidosProvider.notifier).alternar(musician.slug);
+      if (!ok && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('No se pudo actualizar. Intenta de nuevo.')));
+      }
+    }
+
     return Semantics(
       button: true,
       toggled: sigue,
       label: sigue
           ? 'Dejar de seguir a ${musician.name}'
           : 'Seguir a ${musician.name}',
+      onTap: alternar,
       excludeSemantics: true,
       child: NcPressable(
-        onTap: () async {
-          HapticFeedback.selectionClick();
-          final ok =
-              await ref.read(seguidosProvider.notifier).alternar(musician.slug);
-          if (!ok && context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                content: Text('No se pudo actualizar. Intenta de nuevo.')));
-          }
-        },
+        onTap: alternar,
         pressedScale: 0.92,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 220),

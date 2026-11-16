@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/theme/nc_theme.dart';
+import '../../../../../shared/widgets/design/nc_tap_target.dart';
 import '../../../domain/artwork_model.dart';
 import '../../../domain/artwork_state.dart';
 import '../../providers/artwork_provider.dart';
@@ -25,7 +26,7 @@ class CategoryChips extends ConsumerWidget {
     final activos = state.filtrosPanelActivos;
 
     return SizedBox(
-      height: 40,
+      height: kNcMinTapTarget, // MO-ACC-04; el chip se ve de 40
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),

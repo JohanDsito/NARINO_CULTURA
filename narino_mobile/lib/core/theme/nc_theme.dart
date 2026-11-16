@@ -175,7 +175,7 @@ class NcColors extends ThemeExtension<NcColors> {
     tomateA: NcAccent(
       fill: AppColors.tomate,
       onFill: Colors.black,
-      ink: AppColors.tomate,
+      ink: AppColors.tomateInkDark,
       tint: Color(0x29FF3300),
     ),
     naranjaA: NcAccent(
@@ -193,7 +193,7 @@ class NcColors extends ThemeExtension<NcColors> {
     magentaA: NcAccent(
       fill: AppColors.magentaLight, // con blanco encima cumple 4.7:1
       onFill: Colors.white,
-      ink: AppColors.magenta,
+      ink: AppColors.magentaInkDark,
       tint: Color(0x29FF0055),
     ),
     successA: NcAccent(

@@ -77,6 +77,7 @@ class CatalogArtworkCard extends ConsumerWidget {
                   else
                     fallback,
                   if (badge != null)
+                    // Ya está en la etiqueta de la tarjeta.
                     Positioned(
                       left: 10,
                       top: 10,
@@ -87,54 +88,62 @@ class CatalogArtworkCard extends ConsumerWidget {
                           color: badgeAccent!.fill,
                           borderRadius: BorderRadius.circular(99),
                         ),
-                        child: Text(
-                          badge,
-                          style:
-                              AppTypography.caption(color: badgeAccent.onFill)
-                                  .copyWith(fontWeight: FontWeight.w700),
+                        child: ExcludeSemantics(
+                          child: Text(
+                            badge,
+                            style:
+                                AppTypography.caption(color: badgeAccent.onFill)
+                                    .copyWith(fontWeight: FontWeight.w700),
+                          ),
                         ),
                       ),
                     ),
                   Positioned(
-                    right: 8,
-                    top: 8,
+                    // 4 + (48 − 40) / 2 = 8: el corazón se ve donde estaba.
+                    right: 4,
+                    top: 4,
                     child: ArtworkFavoriteButton(artwork: artwork),
                   ),
                 ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    artwork.titulo,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.labelSemiBold(color: nc.textPrimary)
-                        .copyWith(fontSize: 14),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    artwork.artistaNombre,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.bodySmall(color: nc.textSecondary),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    artwork.precio != null
-                        ? formatPrecioCOP(artwork.precio!)
-                        : 'En exhibición',
-                    maxLines: 1,
-                    style: artwork.precio != null
-                        ? AppTypography.labelSemiBold(color: nc.tienda.ink)
-                            .copyWith(fontWeight: FontWeight.w800, fontSize: 14)
-                        : AppTypography.bodySmall(color: nc.textMuted),
-                  ),
-                ],
+            // Título, artista y precio ya van en la etiqueta de la tarjeta:
+            // sin esto TalkBack los leía dos veces.
+            ExcludeSemantics(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      artwork.titulo,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.labelSemiBold(color: nc.textPrimary)
+                          .copyWith(fontSize: 14),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      artwork.artistaNombre,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.bodySmall(color: nc.textSecondary),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      artwork.precio != null
+                          ? formatPrecioCOP(artwork.precio!)
+                          : 'En exhibición',
+                      maxLines: 1,
+                      style: artwork.precio != null
+                          ? AppTypography.labelSemiBold(color: nc.tienda.ink)
+                              .copyWith(
+                                  fontWeight: FontWeight.w800, fontSize: 14)
+                          : AppTypography.bodySmall(color: nc.textMuted),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

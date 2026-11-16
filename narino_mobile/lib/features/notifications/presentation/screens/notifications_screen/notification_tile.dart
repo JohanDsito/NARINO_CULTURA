@@ -50,6 +50,7 @@ class NotificationTile extends StatelessWidget {
       button: true,
       label: '${nueva ? 'Sin leer. ' : ''}${n.titulo}. ${n.descripcion}. '
           '${_cuando(n.creadoEn)}',
+      onTap: onTap,
       excludeSemantics: true,
       child: NcPressable(
         onTap: onTap,

@@ -31,6 +31,7 @@ class TopArtworkRow extends StatelessWidget {
     return Semantics(
       button: true,
       label: 'Puesto $puesto: ${obra.titulo}, ${obra.viewsCount} vistas',
+      onTap: () => context.push('/artworks/${obra.id}'),
       excludeSemantics: true,
       child: NcPressable(
         onTap: () => context.push('/artworks/${obra.id}'),

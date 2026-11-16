@@ -78,6 +78,7 @@ class NcDayCell extends StatelessWidget {
       label: semantics,
       selected: active,
       button: true,
+      onTap: onTap,
       excludeSemantics: true,
       child: NcPressable(onTap: onTap, pressedScale: 0.88, child: cell),
     );
