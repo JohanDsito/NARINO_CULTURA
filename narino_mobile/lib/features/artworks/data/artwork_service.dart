@@ -124,25 +124,6 @@ class ArtworkService {
     await _dio.delete(url);
   }
 
-  Future<Map<String, dynamic>> toggleFavorite(String artworkId) async {
-    try {
-      await _dio.post(
-        ApiConstants.favorites,
-        data: {'artwork_id': artworkId},
-      );
-      return {'es_favorito': true};
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 400) {
-        await _dio.delete(
-          ApiConstants.favorites,
-          data: {'artwork_id': artworkId},
-        );
-        return {'es_favorito': false};
-      }
-      rethrow;
-    }
-  }
-
   String _mapOrden(String orden) {
     switch (orden) {
       case 'precio_asc':

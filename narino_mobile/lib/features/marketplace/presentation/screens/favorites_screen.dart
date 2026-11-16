@@ -26,15 +26,17 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
 
   Future<void> _quitar(FavoriteModel fav) async {
     await ref.read(favoritesProvider.notifier).toggleFavorite(fav.obraId);
-    if (!mounted) return;
+    // Si falló, el aviso global ya lo dijo y la obra volvió a la lista.
+    if (!mounted || ref.read(favoritesProvider).isFavorite(fav.obraId)) return;
     ScaffoldMessenger.of(context)
       ..clearSnackBars()
       ..showSnackBar(SnackBar(
         content: Text('Quitaste "${fav.obraTitulo}" de favoritos.'),
         action: SnackBarAction(
           label: 'Deshacer',
-          onPressed: () =>
-              ref.read(favoritesProvider.notifier).toggleFavorite(fav.obraId),
+          onPressed: () => ref
+              .read(favoritesProvider.notifier)
+              .toggleFavorite(fav.obraId, favorito: fav),
         ),
       ));
   }
@@ -43,7 +45,9 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
   Widget build(BuildContext context) {
     final nc = context.nc;
     final state = ref.watch(favoritesProvider);
-    final favs = state.favorites;
+    // Las que se están quitando desaparecen al instante (optimista).
+    final favs =
+        state.favorites.where((f) => state.isFavorite(f.obraId)).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -51,6 +55,20 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
       ),
       body: state.isLoading && favs.isEmpty
           ? const Center(child: CircularProgressIndicator())
+          : state.hasError && favs.isEmpty
+              // Antes un error de carga decía "Aún no guardas favoritos".
+              ? ListView(children: [
+                  NcEmptyState(
+                    icon: Icons.cloud_off_rounded,
+                    accent: nc.tomateA,
+                    title: 'No pudimos cargar tus favoritos',
+                    message: state.errorMessage ?? '',
+                    actionLabel: 'Reintentar',
+                    onAction: () =>
+                        ref.read(favoritesProvider.notifier).loadFavorites(),
+                    padding: const EdgeInsets.fromLTRB(16, 40, 16, 0),
+                  ),
+                ])
           : favs.isEmpty
               ? ListView(children: [
                   NcEmptyState(

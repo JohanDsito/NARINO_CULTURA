@@ -178,20 +178,6 @@ void main() {
     });
   });
 
-  group('toggleFavorite', () {
-    test('mapea es_favorito y cantidad_favoritos de la respuesta', () async {
-      when(() => service.toggleFavorite('1')).thenAnswer((_) async => {
-            'es_favorito': true,
-            'cantidad_favoritos': 5,
-          });
-
-      final result = await repo.toggleFavorite('1');
-
-      expect(result.esFavorito, isTrue);
-      expect(result.cantidad, 5);
-    });
-  });
-
   group('delete', () {
     test('propaga el mensaje de error cuando no se tiene permiso', () async {
       when(() => service.deleteArtwork('1')).thenThrow(_httpError(403));
