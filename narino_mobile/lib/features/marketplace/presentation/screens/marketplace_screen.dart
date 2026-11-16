@@ -153,13 +153,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
                       SliverPadding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         sliver: SliverGrid(
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 14,
-                            childAspectRatio: 0.64,
-                          ),
+                          gridDelegate: ncArtworkGridDelegate,
                           delegate: SliverChildBuilderDelegate(
                             (_, i) => CatalogArtworkCard(artwork: list[i]),
                             childCount: list.length,

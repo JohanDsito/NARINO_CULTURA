@@ -1,18 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/theme/nc_theme.dart';
+import '../../../../../shared/widgets/design/nc_artwork_grid.dart';
 import '../../../domain/artwork_state.dart';
 import '../../providers/artwork_provider.dart';
 import 'artwork_card.dart';
 import 'catalog_skeleton_card.dart';
 import 'catalog_state_message.dart';
-
-const _gridDelegate = SliverGridDelegateWithFixedCrossAxisCount(
-  crossAxisCount: 2,
-  crossAxisSpacing: 12,
-  mainAxisSpacing: 14,
-  childAspectRatio: 0.64,
-);
 
 /// Cuerpo del catálogo como sliver: esqueletos, error, vacío o grilla.
 class CatalogBody extends ConsumerWidget {
@@ -26,7 +20,7 @@ class CatalogBody extends ConsumerWidget {
       return SliverPadding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         sliver: SliverGrid(
-          gridDelegate: _gridDelegate,
+          gridDelegate: ncArtworkGridDelegate,
           delegate: SliverChildBuilderDelegate(
             (_, __) => const CatalogSkeletonCard(),
             childCount: 6,
@@ -66,7 +60,7 @@ class CatalogBody extends ConsumerWidget {
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       sliver: SliverGrid(
-        gridDelegate: _gridDelegate,
+        gridDelegate: ncArtworkGridDelegate,
         delegate: SliverChildBuilderDelegate(
           (_, i) => CatalogArtworkCard(artwork: state.artworks[i]),
           childCount: state.artworks.length,

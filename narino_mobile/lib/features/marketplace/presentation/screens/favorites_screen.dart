@@ -69,13 +69,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                       ref.read(favoritesProvider.notifier).loadFavorites(),
                   child: GridView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 14,
-                      childAspectRatio: 0.64,
-                    ),
+                    gridDelegate: ncArtworkGridDelegate,
                     itemCount: favs.length,
                     itemBuilder: (_, i) => FavoriteCard(
                         fav: favs[i], onRemove: () => _quitar(favs[i])),

@@ -176,12 +176,7 @@ class _MyArtworksScreenState extends ConsumerState<MyArtworksScreen> {
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
             sliver: SliverGrid(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 14,
-                childAspectRatio: 0.64,
-              ),
+              gridDelegate: ncArtworkGridDelegate,
               delegate: SliverChildBuilderDelegate(
                 (_, i) => MyArtworkCard(
                   artwork: visibles[i],
