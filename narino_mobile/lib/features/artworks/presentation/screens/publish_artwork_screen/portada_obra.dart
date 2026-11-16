@@ -56,6 +56,7 @@ class PortadaObra extends StatelessWidget {
       label: tieneImagen
           ? 'Cambiar imagen de portada'
           : 'Agregar imagen de portada',
+      onTap: onTap,
       excludeSemantics: true,
       child: NcPressable(
         onTap: onTap,

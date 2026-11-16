@@ -23,6 +23,7 @@ class FollowArtistButton extends StatelessWidget {
       button: true,
       toggled: sigue,
       label: sigue ? 'Dejar de seguir' : 'Seguir',
+      onTap: loading ? null : onTap,
       excludeSemantics: true,
       child: NcPressable(
         onTap: loading ? null : onTap,

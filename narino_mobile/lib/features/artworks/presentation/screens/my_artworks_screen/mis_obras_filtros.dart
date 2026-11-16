@@ -45,6 +45,7 @@ class MisObrasFiltros extends StatelessWidget {
             selected: sel,
             button: true,
             label: '$label: $cantidad',
+            onTap: () => onFiltro(estado),
             excludeSemantics: true,
             child: NcPressable(
               onTap: () => onFiltro(estado),

@@ -33,6 +33,7 @@ class ProfileOptionTile extends StatelessWidget {
     return Semantics(
       button: true,
       label: '$title. $subtitle${proximamente ? '. Próximamente' : ''}',
+      onTap: onTap,
       excludeSemantics: true,
       child: InkWell(
         onTap: onTap,

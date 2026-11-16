@@ -40,6 +40,7 @@ class EditProfileHeader extends StatelessWidget {
         Semantics(
           button: true,
           label: 'Cambiar foto de perfil',
+          onTap: onFoto,
           excludeSemantics: true,
           child: NcPressable(
             onTap: onFoto,

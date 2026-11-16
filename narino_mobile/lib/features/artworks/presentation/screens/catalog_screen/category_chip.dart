@@ -27,32 +27,36 @@ class CategoryChip extends StatelessWidget {
       selected: selected,
       button: true,
       label: label,
+      onTap: onTap,
       excludeSemantics: true,
       child: NcPressable(
         onTap: onTap,
         pressedScale: 0.94,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: selected ? accent.fill : nc.bgGlass,
-            borderRadius: BorderRadius.circular(99),
-            border: Border.all(color: selected ? accent.fill : nc.border),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (icon != null) ...[
-                Icon(icon, size: 16, color: fg),
-                const SizedBox(width: 6),
+        child: Center(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            height: 40,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: selected ? accent.fill : nc.bgGlass,
+              borderRadius: BorderRadius.circular(99),
+              border: Border.all(color: selected ? accent.fill : nc.border),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (icon != null) ...[
+                  Icon(icon, size: 16, color: fg),
+                  const SizedBox(width: 6),
+                ],
+                Text(
+                  label,
+                  style: AppTypography.labelMedium(color: fg)
+                      .copyWith(fontWeight: FontWeight.w600),
+                ),
               ],
-              Text(
-                label,
-                style: AppTypography.labelMedium(color: fg)
-                    .copyWith(fontWeight: FontWeight.w600),
-              ),
-            ],
+            ),
           ),
         ),
       ),

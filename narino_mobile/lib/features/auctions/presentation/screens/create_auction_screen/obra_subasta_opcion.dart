@@ -26,6 +26,7 @@ class ObraSubastaOpcion extends StatelessWidget {
       selected: selected,
       button: true,
       label: obra.titulo,
+      onTap: onTap,
       excludeSemantics: true,
       child: NcPressable(
         onTap: onTap,

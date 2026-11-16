@@ -25,6 +25,7 @@ class DisciplinaTile extends StatelessWidget {
       selected: selected,
       inMutuallyExclusiveGroup: true,
       label: '${disciplina.label}. ${disciplina.description}',
+      onTap: onTap,
       excludeSemantics: true,
       child: NcPressable(
         onTap: onTap,

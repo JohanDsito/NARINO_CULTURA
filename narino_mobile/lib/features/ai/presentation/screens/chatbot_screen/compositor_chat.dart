@@ -80,6 +80,7 @@ class _CompositorState extends State<CompositorChat> {
               button: true,
               enabled: puede,
               label: 'Enviar',
+              onTap: puede ? widget.onEnviar : null,
               excludeSemantics: true,
               child: NcPressable(
                 onTap: puede ? widget.onEnviar : null,

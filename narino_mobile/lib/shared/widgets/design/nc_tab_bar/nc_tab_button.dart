@@ -28,6 +28,7 @@ class NcTabButton extends StatelessWidget {
       selected: active,
       button: true,
       label: item.label,
+      onTap: onTap,
       excludeSemantics: true,
       child: NcPressable(
         onTap: onTap,

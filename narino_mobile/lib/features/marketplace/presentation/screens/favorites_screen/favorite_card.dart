@@ -70,24 +70,27 @@ class FavoriteCard extends StatelessWidget {
                           label: badge, accent: accent!, filled: true),
                     ),
                   Positioned(
-                    right: 8,
-                    top: 8,
+                    right: 4,
+                    top: 4,
                     child: Semantics(
                       button: true,
                       label: 'Quitar de favoritos',
+                      onTap: onRemove,
                       excludeSemantics: true,
                       child: NcPressable(
                         onTap: onRemove,
                         pressedScale: 0.85,
-                        child: ClipOval(
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                            child: Container(
-                              width: 40,
-                              height: 40,
-                              color: Colors.black.withValues(alpha: 0.32),
-                              child: Icon(Icons.favorite_rounded,
-                                  size: 20, color: nc.magenta),
+                        child: NcTapTarget(
+                          child: ClipOval(
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                              child: Container(
+                                width: 40,
+                                height: 40,
+                                color: Colors.black.withValues(alpha: 0.32),
+                                child: Icon(Icons.favorite_rounded,
+                                    size: 20, color: nc.magenta),
+                              ),
                             ),
                           ),
                         ),

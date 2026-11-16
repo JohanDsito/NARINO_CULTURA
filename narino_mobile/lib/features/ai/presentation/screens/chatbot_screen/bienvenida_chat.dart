@@ -71,6 +71,7 @@ class BienvenidaChat extends StatelessWidget {
                     child: Semantics(
                       button: true,
                       label: 'Preguntar: $pregunta',
+                      onTap: () => onSugerencia(pregunta),
                       excludeSemantics: true,
                       child: NcPressable(
                         onTap: () => onSugerencia(pregunta),

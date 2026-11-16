@@ -29,6 +29,7 @@ class RoleOption extends StatelessWidget {
       selected: selected,
       inMutuallyExclusiveGroup: true,
       label: '$title. $description',
+      onTap: onTap,
       excludeSemantics: true,
       child: NcPressable(
         onTap: onTap,

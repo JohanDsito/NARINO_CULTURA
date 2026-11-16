@@ -31,6 +31,7 @@ class TipoEventoFiltros extends StatelessWidget {
             selected: sel,
             button: true,
             label: t == null ? 'Todos' : tipoNombre(t),
+            onTap: () => onSelect(sel && t != null ? null : t),
             excludeSemantics: true,
             child: NcPressable(
               onTap: () => onSelect(sel && t != null ? null : t),

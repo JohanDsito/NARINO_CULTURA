@@ -26,13 +26,16 @@ class FollowingTile extends StatelessWidget {
         ? p.nombreArtistico.characters.first.toUpperCase()
         : '?';
 
+    void abrir() =>
+        context.push(p.esMusico ? '/musicians/${p.id}' : '/artistas/${p.id}');
+
     return Semantics(
       button: true,
       label: '${p.nombreArtistico}, $sub',
+      onTap: abrir,
       excludeSemantics: true,
       child: NcPressable(
-        onTap: () => context
-            .push(p.esMusico ? '/musicians/${p.id}' : '/artistas/${p.id}'),
+        onTap: abrir,
         pressedScale: 0.98,
         child: Container(
           padding: const EdgeInsets.all(12),

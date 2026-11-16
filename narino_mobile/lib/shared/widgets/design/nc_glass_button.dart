@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import 'nc_pressable.dart';
+import 'nc_tap_target.dart';
 
 /// Botón circular de vidrio para usar sobre imágenes (volver, favorito,
 /// compartir…). Fondo negro translúcido con desenfoque y borde blanco sutil.
@@ -27,23 +28,26 @@ class GlassCircleButton extends StatelessWidget {
       child: Semantics(
         button: true,
         label: tooltip,
+        onTap: onPressed,
         excludeSemantics: true,
         child: NcPressable(
           onTap: onPressed,
           pressedScale: 0.88,
-          child: ClipOval(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.black.withValues(alpha: 0.35),
-                  border:
-                      Border.all(color: Colors.white.withValues(alpha: 0.18)),
+          child: NcTapTarget(
+            child: ClipOval(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.black.withValues(alpha: 0.35),
+                    border:
+                        Border.all(color: Colors.white.withValues(alpha: 0.18)),
+                  ),
+                  child: Icon(icon, size: 21, color: color),
                 ),
-                child: Icon(icon, size: 21, color: color),
               ),
             ),
           ),
