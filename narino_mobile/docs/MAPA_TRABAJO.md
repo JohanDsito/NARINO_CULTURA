@@ -229,6 +229,27 @@ Resultado: 355 archivos, ninguno con más de una clase, 83 líneas en promedio. 
 
 ---
 
+## Casos de prueba MO-* (2026-11-16) 🧪
+Auditoría de los 23 issues abiertos del hito "Pruebas Testing" contra el código y arreglo de los huecos.
+Detalle por issue en `SEGUIMIENTO/ISSUES_PRUEBAS.md` (fuera del repo).
+
+| Arreglo | Issues | Commit |
+|---|---|---|
+| Mensajes de error: `core/network/api_error.dart` único (tiempo agotado vs sin conexión, nunca HTML/traceback), login y registro dicen qué hacer, `sendTimeout` | #127 #133 | `8928d06` |
+| Aviso "sin conexión" con Reintentar en Inicio; `NcBanner` con acción | #125 | `589dc2a` |
+| Sesión expirada → login automático (`SessionExpiry` + `refreshListenable`), `resetUserSession` limpia todo lo del usuario, el interceptor no cierra sesión por un timeout | #140 #131 | `e2fa4bf` |
+| Rejillas de obras con columnas según ancho (`ncArtworkGridDelegate`) | #136 | `19dd7d1` |
+| Favoritos optimistas con candado por obra, errores visibles, estado de error con Reintentar | #76 #129 #131 | `6a15f0c` |
+| Accesibilidad: acción de toque en 25 `Semantics`, `NcTapTarget` 48×48, contraste AA en ambos modos | #121–#124 | `058751d` |
+| Catálogo con scroll infinito, sin respuestas fuera de orden, sin blur por tarjeta | #130 #131 | `53e7fbb` |
+| Recarga automática al volver la red (`connectivity_plus`) | #126 | `eda28d8` |
+
+Quedan para un celular físico: TalkBack (#122), traceroute (#128), red lenta (#129), interrupciones (#120),
+datos límite (#119), compra sin instrucciones (#132), Android 7 y 14 (#134, #135), y la verificación con
+`adb` de #137–#139 (el código ya cumple). #134 debe corregirse a **API 24** (minSdk real).
+
+---
+
 ## Mejoras sugeridas 💡
 - ✅ Hecho en main (#172–#177): músicos, datos de subasta + pujas + filtros, cancelar inscripción, `seller_amount`, `/artists/me/`, filtros del catálogo, detalle de orden y reenvío de verificación. Ya conectado en la app.
 - Pendiente en backend: `ai/generate-description/`, `notifications/event-preferences/`, portafolio, `change-email`, `sessions` (contratos enviados al equipo).
@@ -258,3 +279,4 @@ Resultado: 355 archivos, ninguno con más de una clase, 83 líneas en promedio. 
 - 2026-11-06 — Rediseño del Chatbot y arreglos #78–#81. Con esto queda rediseñada toda la app.
 - 2026-11-06 — Inspección final: código muerto, rutas, estrés de letra grande, avisos de eventos, sesión y nombre de la app. Ver sección "Inspección final".
 - 2026-11-14 — Reorganización: una clase por archivo en toda la app (pantallas, kits, design system, modelos y providers); secciones grandes de 14 pantallas extraídas; diálogos y listas repetidas centralizados. Sin cambios de comportamiento: 365 pruebas OK.
+- 2026-11-16 — Casos de prueba MO-*: 8 arreglos (errores, sin conexión, sesión expirada, rejillas, favoritos, accesibilidad, paginación, reconexión). `flutter analyze` limpio, **412 pruebas OK** (47 nuevas). Ver sección "Casos de prueba MO-*".
