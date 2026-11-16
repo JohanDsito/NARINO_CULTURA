@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:narino_cultura/core/network/api_error.dart';
 import 'package:narino_cultura/features/artworks/data/artwork_repository.dart';
 import 'package:narino_cultura/features/artworks/data/artwork_service.dart';
 
@@ -118,7 +119,7 @@ void main() {
 
       await expectLater(
         repo.getCatalog(),
-        throwsA('No se pudo conectar al servidor.'),
+        throwsA(ApiError.sinConexion),
       );
     });
 

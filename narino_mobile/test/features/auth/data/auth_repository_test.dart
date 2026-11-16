@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:narino_cultura/core/constants/api_constants.dart';
 import 'package:narino_cultura/core/network/api_client.dart';
+import 'package:narino_cultura/core/network/api_error.dart';
 import 'package:narino_cultura/features/auth/data/auth_repository.dart';
 import 'package:narino_cultura/features/auth/data/auth_service.dart';
 
@@ -179,7 +180,7 @@ void main() {
             isA<FormatException>().having(
               (e) => e.message,
               'message',
-              'Recurso no encontrado.',
+              ApiError.noEncontrado,
             ),
           ),
         );
@@ -302,7 +303,7 @@ void main() {
             isA<FormatException>().having(
               (e) => e.message,
               'message',
-              'Correo o contraseña incorrectos.',
+              AuthRepository.friendlyLoginMessage(null),
             ),
           ),
         );
@@ -352,7 +353,7 @@ void main() {
             isA<FormatException>().having(
               (e) => e.message,
               'message',
-              'Cuenta bloqueada temporalmente. Intenta en 15 minutos.',
+              'Hiciste demasiados intentos. Tu cuenta quedó bloqueada 15 minutos; intenta después.',
             ),
           ),
         );
@@ -370,7 +371,7 @@ void main() {
             isA<FormatException>().having(
               (e) => e.message,
               'message',
-              'No se pudo conectar al servidor. Verifica tu conexión.',
+              ApiError.sinConexion,
             ),
           ),
         );
@@ -419,7 +420,7 @@ void main() {
             isA<FormatException>().having(
               (e) => e.message,
               'message',
-              'Ya existe una cuenta con este correo electrónico.',
+              'Ya existe una cuenta con este correo. Inicia sesión o recupera tu contraseña.',
             ),
           ),
         );
@@ -472,7 +473,7 @@ void main() {
             isA<FormatException>().having(
               (e) => e.message,
               'message',
-              'No se pudo conectar al servidor. Verifica tu conexión.',
+              ApiError.sinConexion,
             ),
           ),
         );
@@ -532,7 +533,7 @@ void main() {
             isA<FormatException>().having(
               (e) => e.message,
               'message',
-              'Recurso no encontrado.',
+              ApiError.noEncontrado,
             ),
           ),
         );

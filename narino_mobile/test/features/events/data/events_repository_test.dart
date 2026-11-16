@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:narino_cultura/core/network/api_error.dart';
 import 'package:narino_cultura/features/events/data/events_repository.dart';
 import 'package:narino_cultura/features/events/data/events_service.dart';
 
@@ -68,7 +69,7 @@ void main() {
 
       await expectLater(
         repo.getEvents(),
-        throwsA('Sin conexión al servidor.'),
+        throwsA(ApiError.tiempoAgotado),
       );
     });
 
@@ -80,7 +81,7 @@ void main() {
 
       await expectLater(
         repo.getEvents(),
-        throwsA('Ocurrió un error inesperado.'),
+        throwsA(ApiError.errorServidor),
       );
     });
   });
@@ -136,12 +137,12 @@ void main() {
       verify(() => service.unregisterFromEvent('1')).called(1);
     });
 
-    test('traduce un error inesperado a un mensaje genérico', () async {
+    test('traduce un 404 a "no encontrado"', () async {
       when(() => service.unregisterFromEvent('1')).thenThrow(_httpError(404));
 
       await expectLater(
         repo.unregisterFromEvent('1'),
-        throwsA('Ocurrió un error inesperado.'),
+        throwsA(ApiError.noEncontrado),
       );
     });
   });

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:narino_cultura/core/network/api_error.dart';
 import 'package:narino_cultura/features/profile/data/profile_repository.dart';
 import 'package:narino_cultura/features/profile/data/profile_service.dart';
 
@@ -83,7 +84,7 @@ void main() {
 
       await expectLater(
         repo.getMyProfile(),
-        throwsA('No se pudo conectar al servidor.'),
+        throwsA(ApiError.sinConexion),
       );
     });
   });
@@ -139,7 +140,7 @@ void main() {
 
       await expectLater(
         repo.getProfileById('inexistente'),
-        throwsA('Recurso no encontrado.'),
+        throwsA(ApiError.noEncontrado),
       );
     });
   });
@@ -216,7 +217,7 @@ void main() {
           file: File('test.jpg'),
           tipo: 'imagen',
         ),
-        throwsA('No se pudo conectar al servidor.'),
+        throwsA(ApiError.sinConexion),
       );
     });
   });
@@ -236,7 +237,7 @@ void main() {
 
       await expectLater(
         repo.followArtist('ana-diaz'),
-        throwsA('Tu sesión expiró. Inicia sesión nuevamente.'),
+        throwsA(ApiError.sesionExpirada),
       );
     });
   });
@@ -258,7 +259,7 @@ void main() {
 
       await expectLater(
         repo.unfollowArtist('ana-diaz'),
-        throwsA('Error inesperado. Intenta de nuevo.'),
+        throwsA(ApiError.errorServidor),
       );
     });
   });
@@ -292,7 +293,7 @@ void main() {
 
       await expectLater(
         repo.getMyFollowing(),
-        throwsA('No se pudo conectar al servidor.'),
+        throwsA(ApiError.sinConexion),
       );
     });
   });

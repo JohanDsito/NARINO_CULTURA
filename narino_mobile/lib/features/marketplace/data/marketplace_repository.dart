@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../../../core/network/api_error.dart';
 import '../domain/cart_item_model.dart';
 import '../domain/favorite_model.dart';
 import '../domain/order_model.dart';
@@ -154,18 +155,11 @@ class MarketplaceRepository {
   }
 
   String _err(DioException e) {
-    if (e.type == DioExceptionType.connectionTimeout ||
-        e.type == DioExceptionType.receiveTimeout) {
-      return 'No se pudo conectar al servidor.';
+    // Un 400 sin mensaje en la tienda casi siempre es una obra que ya no se vende.
+    if (e.response?.statusCode == 400) {
+      return ApiError.extractMessage(e.response?.data) ??
+          'Esta obra no está disponible.';
     }
-    final s = e.response?.statusCode;
-    final d = e.response?.data;
-    if (s == 400) {
-      if (d is Map && d.containsKey('detail')) return d['detail'].toString();
-      return 'Esta obra no está disponible.';
-    }
-    if (s == 403) return 'No tienes permiso para esta acción.';
-    if (s == 404) return 'Elemento no encontrado.';
-    return 'Error inesperado. Intenta de nuevo.';
+    return ApiError.message(e, byStatus: const {404: 'Elemento no encontrado.'});
   }
 }
