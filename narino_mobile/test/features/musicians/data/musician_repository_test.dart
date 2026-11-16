@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:narino_cultura/core/network/api_error.dart';
 import 'package:narino_cultura/features/musicians/data/musician_repository.dart';
 import 'package:narino_cultura/features/musicians/data/musician_service.dart';
 
@@ -104,7 +105,7 @@ void main() {
 
       await expectLater(
         repo.getMusicians(),
-        throwsA('No se pudo conectar al servidor.'),
+        throwsA(ApiError.sinConexion),
       );
     });
 
@@ -165,7 +166,7 @@ void main() {
 
       await expectLater(
         repo.toggleFollow('los-andinos'),
-        throwsA('Tu sesión expiró. Inicia sesión nuevamente.'),
+        throwsA(ApiError.sesionExpirada),
       );
     });
   });
@@ -218,7 +219,7 @@ void main() {
 
       await expectLater(
         repo.getMyProfile(),
-        throwsA('No se pudo conectar al servidor.'),
+        throwsA(ApiError.sinConexion),
       );
     });
   });
@@ -321,7 +322,7 @@ void main() {
 
       await expectLater(
         repo.addWork('los-andinos', {'title': 'Canción 1'}),
-        throwsA('Error inesperado. Intenta de nuevo.'),
+        throwsA(ApiError.errorServidor),
       );
     });
   });

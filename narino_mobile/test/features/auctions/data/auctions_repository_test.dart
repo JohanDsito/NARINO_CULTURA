@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:narino_cultura/core/network/api_error.dart';
 import 'package:narino_cultura/features/auctions/data/auctions_repository.dart';
 import 'package:narino_cultura/features/auctions/data/auctions_service.dart';
 
@@ -91,7 +92,7 @@ void main() {
 
       await expectLater(
         repo.getAuctions(),
-        throwsA('No se pudo conectar al servidor.'),
+        throwsA(ApiError.sinConexion),
       );
     });
 
@@ -102,7 +103,7 @@ void main() {
 
       await expectLater(
         repo.getAuctions(),
-        throwsA('Tu sesión expiró. Inicia sesión nuevamente.'),
+        throwsA(ApiError.sesionExpirada),
       );
     });
   });
@@ -206,7 +207,7 @@ void main() {
           duracionDias: 7,
           fechaInicio: DateTime(2025, 2, 1),
         ),
-        throwsA('Ocurrió un error inesperado.'),
+        throwsA(ApiError.errorServidor),
       );
     });
   });
@@ -258,7 +259,7 @@ void main() {
 
       await expectLater(
         repo.bid(auctionId: 'auction-1', monto: 2000),
-        throwsA('No se pudo conectar al servidor.'),
+        throwsA(ApiError.sinConexion),
       );
     });
   });

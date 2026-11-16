@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:narino_cultura/core/network/api_error.dart';
 import 'package:narino_cultura/features/marketplace/data/marketplace_repository.dart';
 import 'package:narino_cultura/features/marketplace/data/marketplace_service.dart';
 
@@ -76,7 +77,7 @@ void main() {
 
       await expectLater(
         repo.getCart(),
-        throwsA('No se pudo conectar al servidor.'),
+        throwsA(ApiError.tiempoAgotado),
       );
     });
 
@@ -104,7 +105,7 @@ void main() {
 
       await expectLater(
         repo.getCart(),
-        throwsA('No tienes permiso para esta acción.'),
+        throwsA(ApiError.sinPermiso),
       );
     });
 
@@ -122,7 +123,7 @@ void main() {
 
       await expectLater(
         repo.getCart(),
-        throwsA('Error inesperado. Intenta de nuevo.'),
+        throwsA(ApiError.errorServidor),
       );
     });
   });
@@ -179,7 +180,7 @@ void main() {
 
       await expectLater(
         repo.clearCart(),
-        throwsA('No se pudo conectar al servidor.'),
+        throwsA(ApiError.tiempoAgotado),
       );
     });
   });
@@ -202,7 +203,7 @@ void main() {
 
       await expectLater(
         repo.getFavorites(),
-        throwsA('Error inesperado. Intenta de nuevo.'),
+        throwsA(ApiError.errorServidor),
       );
     });
   });
@@ -221,7 +222,7 @@ void main() {
 
       await expectLater(
         repo.addFavorite('obra-1'),
-        throwsA('No tienes permiso para esta acción.'),
+        throwsA(ApiError.sinPermiso),
       );
     });
   });
@@ -284,7 +285,7 @@ void main() {
 
       await expectLater(
         repo.getOrders(),
-        throwsA('No se pudo conectar al servidor.'),
+        throwsA(ApiError.tiempoAgotado),
       );
     });
   });
@@ -374,7 +375,7 @@ void main() {
 
       await expectLater(
         repo.getPaymentStatus('order-1'),
-        throwsA('No tienes permiso para esta acción.'),
+        throwsA(ApiError.sinPermiso),
       );
     });
   });
@@ -396,7 +397,7 @@ void main() {
 
       await expectLater(
         repo.getPurchaseHistory(),
-        throwsA('Error inesperado. Intenta de nuevo.'),
+        throwsA(ApiError.errorServidor),
       );
     });
   });
@@ -417,7 +418,7 @@ void main() {
 
       await expectLater(
         repo.getSalesHistory(),
-        throwsA('No se pudo conectar al servidor.'),
+        throwsA(ApiError.tiempoAgotado),
       );
     });
   });

@@ -23,6 +23,7 @@ class ApiClient {
         connectTimeout:
             const Duration(milliseconds: ApiConstants.connectTimeout),
         receiveTimeout: const Duration(milliseconds: ApiConstants.receiveTimeout),
+        sendTimeout: const Duration(milliseconds: ApiConstants.sendTimeout),
         headers: const {'Content-Type': 'application/json'},
       ),
     );

@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../core/constants/api_constants.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_error.dart';
 import '../../../core/utils/storage_utils.dart';
 import '../domain/user_model.dart';
 import 'auth_service.dart';
@@ -110,72 +111,37 @@ class AuthRepository {
   }
 
   String _parseAuthError(DioException e, {bool isRegister = false}) {
-    if (e.type == DioExceptionType.connectionTimeout ||
-        e.type == DioExceptionType.receiveTimeout ||
-        e.type == DioExceptionType.sendTimeout ||
-        e.type == DioExceptionType.connectionError) {
-      return 'No se pudo conectar al servidor. Verifica tu conexión.';
-    }
-
     final code = e.response?.statusCode;
     final body = e.response?.data;
 
-    if (code == 401) return 'Correo o contraseña incorrectos.';
     if (code == 403 || code == 429) {
-      return 'Cuenta bloqueada temporalmente. Intenta en 15 minutos.';
+      return 'Hiciste demasiados intentos. Tu cuenta quedó bloqueada 15 minutos; intenta después.';
     }
-
-    if (isRegister && code == 400 && body is Map) {
-      if (body.containsKey('email')) {
-        return 'Ya existe una cuenta con este correo electrónico.';
-      }
+    if (isRegister && code == 400 && body is Map && body.containsKey('email')) {
+      return 'Ya existe una cuenta con este correo. Inicia sesión o recupera tu contraseña.';
     }
-
-    final extracted = _extractMessage(body);
-    if (extracted != null && extracted.isNotEmpty) return extracted;
-
-    return 'Error inesperado. Intenta de nuevo.';
+    if (!isRegister && (code == 400 || code == 401)) {
+      return friendlyLoginMessage(ApiError.extractMessage(body));
+    }
+    return ApiError.message(e);
   }
 
-  String _parseDioError(DioException e) {
-    if (e.type == DioExceptionType.connectionTimeout ||
-        e.type == DioExceptionType.receiveTimeout ||
-        e.type == DioExceptionType.connectionError) {
-      return 'No se pudo conectar al servidor.';
+  /// Traduce los mensajes del `LoginSerializer` del backend a textos que dicen
+  /// qué hacer. Lo que no reconoce se muestra tal cual (ya viene de DRF, en español).
+  static String friendlyLoginMessage(String? backend) {
+    final text = backend?.toLowerCase() ?? '';
+    if (text.isEmpty || text.contains('credenciales')) {
+      return 'Correo o contraseña incorrectos. Revísalos o toca «¿Olvidaste tu contraseña?».';
     }
-
-    final code = e.response?.statusCode;
-    final body = e.response?.data;
-
-    if (code == 400) {
-      final msg = _extractMessage(body);
-      if (msg != null && msg.isNotEmpty) return msg;
-      return 'Solicitud inválida.';
+    if (text.contains('verificar')) {
+      return 'Primero confirma tu correo: abre el enlace que te enviamos al registrarte.';
     }
-    if (code == 401) return 'Tu sesión expiró. Inicia sesión nuevamente.';
-    if (code == 403) return 'No tienes permiso para realizar esta acción.';
-    if (code == 404) return 'Recurso no encontrado.';
-
-    final extracted = _extractMessage(body);
-    if (extracted != null && extracted.isNotEmpty) return extracted;
-
-    return 'Error inesperado. Intenta de nuevo.';
+    if (text.contains('inactivo')) {
+      return 'Tu cuenta está desactivada. Escribe al equipo de Nariño Cultura para reactivarla.';
+    }
+    return backend!;
   }
 
-  String? _extractMessage(Object? data) {
-    if (data is Map) {
-      final detail = data['detail']?.toString();
-      if (detail != null && detail.isNotEmpty) return detail;
-
-      for (final entry in data.entries) {
-        final value = entry.value;
-        if (value is List && value.isNotEmpty) {
-          final msg = value.first?.toString();
-          if (msg != null && msg.isNotEmpty) return msg;
-        }
-      }
-    }
-    if (data is String && data.isNotEmpty) return data;
-    return null;
-  }
+  String _parseDioError(DioException e) =>
+      ApiError.message(e, fallback: 'Solicitud inválida.');
 }

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:narino_cultura/core/network/api_error.dart';
 import 'package:narino_cultura/features/profile/data/account_security_repository.dart';
 import 'package:narino_cultura/features/profile/data/account_security_service.dart';
 
@@ -109,7 +110,7 @@ void main() {
 
       await expectLater(
         repo.getActiveSessions(),
-        throwsA('No se pudo conectar al servidor.'),
+        throwsA(ApiError.sinConexion),
       );
     });
   });
@@ -128,7 +129,7 @@ void main() {
 
       await expectLater(
         repo.revokeSession('99'),
-        throwsA('Recurso no encontrado.'),
+        throwsA(ApiError.noEncontrado),
       );
     });
   });
@@ -147,7 +148,7 @@ void main() {
 
       await expectLater(
         repo.revokeOtherSessions(),
-        throwsA('Tu sesión expiró. Inicia sesión nuevamente.'),
+        throwsA(ApiError.sesionExpirada),
       );
     });
   });
@@ -178,7 +179,7 @@ void main() {
 
       await expectLater(
         repo.deleteAccount(password: '1234'),
-        throwsA('Error inesperado. Intenta de nuevo.'),
+        throwsA(ApiError.errorServidor),
       );
     });
   });

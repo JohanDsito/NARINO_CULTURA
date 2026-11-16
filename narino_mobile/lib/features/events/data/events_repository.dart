@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../../../core/network/api_error.dart';
 import '../domain/event_model.dart';
 import 'events_service.dart';
 
@@ -74,24 +75,8 @@ class EventsRepository {
     }
   }
 
-  String _parseError(DioException e) {
-    if (e.type == DioExceptionType.connectionTimeout ||
-        e.type == DioExceptionType.receiveTimeout ||
-        e.type == DioExceptionType.connectionError) {
-      return 'Sin conexión al servidor.';
-    }
-    if (e.response?.statusCode == 401) {
-      return 'Inicia sesión para continuar.';
-    }
-    if (e.response?.statusCode == 403) {
-      return 'Solo artistas y gestores culturales pueden publicar eventos.';
-    }
-    if (e.response?.statusCode == 400) {
-      final data = e.response?.data;
-      if (data is Map && data.containsKey('detail')) {
-        return data['detail'].toString();
-      }
-    }
-    return 'Ocurrió un error inesperado.';
-  }
+  String _parseError(DioException e) => ApiError.message(e, byStatus: const {
+        401: 'Inicia sesión para continuar.',
+        403: 'Solo artistas y gestores culturales pueden publicar eventos.',
+      });
 }

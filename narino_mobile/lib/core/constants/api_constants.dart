@@ -105,4 +105,7 @@ class ApiConstants {
   // Timeouts
   static const int connectTimeout = 15000;
   static const int receiveTimeout = 15000;
+  // Subir una foto de obra por una red lenta puede tardar; sin límite, la
+  // petición podía quedarse colgada para siempre (MO-DISP-03).
+  static const int sendTimeout = 60000;
 }

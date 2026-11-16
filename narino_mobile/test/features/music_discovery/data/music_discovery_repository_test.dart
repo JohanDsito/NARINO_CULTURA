@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:narino_cultura/core/network/api_error.dart';
 import 'package:narino_cultura/features/music_discovery/data/music_discovery_repository.dart';
 import 'package:narino_cultura/features/music_discovery/data/music_discovery_service.dart';
 
@@ -72,7 +73,7 @@ void main() {
 
       await expectLater(
         repo.getRecommendations('salsa'),
-        throwsA('No se pudo conectar al servidor.'),
+        throwsA(ApiError.sinConexion),
       );
     });
 
@@ -96,7 +97,7 @@ void main() {
 
       await expectLater(
         repo.getRecommendations('salsa'),
-        throwsA('Error al obtener recomendaciones.'),
+        throwsA(ApiError.errorServidor),
       );
     });
   });
