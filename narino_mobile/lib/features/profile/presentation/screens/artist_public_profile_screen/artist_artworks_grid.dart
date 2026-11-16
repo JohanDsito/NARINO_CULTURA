@@ -33,12 +33,7 @@ class ArtistArtworksGrid extends StatelessWidget {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               padding: EdgeInsets.zero,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 14,
-                childAspectRatio: 0.64,
-              ),
+              gridDelegate: ncArtworkGridDelegate,
               itemCount: list.length,
               itemBuilder: (_, i) => CatalogArtworkCard(artwork: list[i]),
             ),
