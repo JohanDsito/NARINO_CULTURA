@@ -71,6 +71,9 @@ class CatalogArtworkCard extends ConsumerWidget {
                     CachedNetworkImage(
                       imageUrl: image,
                       fit: BoxFit.cover,
+                      // Decodifica a tamaño de tarjeta, no la foto completa:
+                      // con cientos de obras la memoria no se dispara.
+                      memCacheWidth: 480,
                       placeholder: (_, __) => fallback,
                       errorWidget: (_, __, ___) => fallback,
                     )

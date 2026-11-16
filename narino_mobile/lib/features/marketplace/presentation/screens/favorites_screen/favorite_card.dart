@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -81,17 +80,15 @@ class FavoriteCard extends StatelessWidget {
                         onTap: onRemove,
                         pressedScale: 0.85,
                         child: NcTapTarget(
-                          child: ClipOval(
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                              child: Container(
-                                width: 40,
-                                height: 40,
-                                color: Colors.black.withValues(alpha: 0.32),
-                                child: Icon(Icons.favorite_rounded,
-                                    size: 20, color: nc.magenta),
-                              ),
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.45),
+                              shape: BoxShape.circle,
                             ),
+                            child: Icon(Icons.favorite_rounded,
+                                size: 20, color: nc.magenta),
                           ),
                         ),
                       ),
