@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../constants/api_constants.dart';
 import '../../utils/storage_utils.dart';
+import '../session_expiry.dart';
 
 /// Interceptor de autenticación que adjunta el JWT a cada request y gestiona
 /// el refresh automático del token cuando el backend responde 401.
@@ -49,6 +50,7 @@ class AuthInterceptor extends Interceptor {
         !alreadyRetried &&
         !skipAuthRefresh &&
         !isRefreshCall) {
+      final hadSession = await StorageUtils.hasToken();
       final refreshed =
           await (_renovando ??= _tryRefreshToken().whenComplete(() {
         _renovando = null;
@@ -63,12 +65,19 @@ class AuthInterceptor extends Interceptor {
           try {
             final response = await _dio.fetch(opts);
             handler.resolve(response);
-            return;
-          } catch (_) {}
+          } on DioException catch (retryError) {
+            // La sesión sigue siendo válida: el reintento falló por otra causa
+            // (p. ej. tiempo agotado). Antes se borraban los tokens y la
+            // persona quedaba fuera sin motivo (MO-LOAD-02).
+            handler.next(retryError);
+          }
+          return;
         }
       }
 
+      // La renovación falló: la sesión terminó de verdad.
       await StorageUtils.clearTokens();
+      if (hadSession) SessionExpiry.expire();
     }
 
     handler.next(err);

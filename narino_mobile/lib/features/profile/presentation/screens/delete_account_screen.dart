@@ -5,10 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/nc_theme.dart';
 import '../../../../shared/widgets/design/design.dart';
-import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../auth/presentation/providers/session_reset.dart';
 import '../../../auth/presentation/widgets/auth_fields.dart';
 import '../providers/account_security_provider.dart';
-import '../providers/profile_provider.dart';
 import '../widgets/cuenta_ui.dart';
 
 /// Eliminación permanente de la cuenta (`DELETE auth/delete-account/`).
@@ -64,8 +63,8 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
         .submit(password: _passwordCtrl.text);
     if (!mounted || ref.read(deleteAccountProvider).hasError) return;
 
-    ref.read(myProfileProvider.notifier).reset();
-    ref.read(authProvider.notifier).forceSignOut();
+    // La cuenta ya no existe: no debe quedar nada suyo en memoria.
+    resetUserSession(ref.invalidate);
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text('Tu cuenta fue eliminada. Gracias por ser parte.')));
     context.go('/login');

@@ -9,6 +9,7 @@ import '../../../../core/theme/nc_theme.dart';
 import '../../../../shared/widgets/design/design.dart';
 import '../../../../shared/widgets/dialogs/confirmar_accion.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../auth/presentation/providers/session_reset.dart';
 import '../../../marketplace/presentation/providers/favorites_provider.dart';
 import '../providers/profile_provider.dart';
 import '../widgets/disciplinas.dart';
@@ -51,7 +52,8 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
     try {
       await ref.read(authProvider.notifier).logout();
     } catch (_) {}
-    ref.read(myProfileProvider.notifier).reset();
+    // Todo lo del usuario (carrito, favoritos, perfil...), no solo el perfil.
+    resetUserSession(ref.invalidate);
     if (mounted) context.go('/login');
   }
 
