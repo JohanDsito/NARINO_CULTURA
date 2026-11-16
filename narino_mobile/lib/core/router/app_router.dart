@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/network/session_expiry.dart';
 import '../../core/utils/storage_utils.dart';
 import '../../features/auctions/presentation/screens/auctions_screen.dart';
 import '../../features/auctions/presentation/screens/auction_detail_screen.dart';
@@ -60,6 +61,9 @@ const kPublicRoutes = [
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/login',
+    // Al expirar la sesión, el redirect manda al login sin esperar a que la
+    // persona navegue (MO-SEG-04).
+    refreshListenable: SessionExpiry.notifier,
     redirect: (context, state) async {
       try {
         final isAuth = await StorageUtils.hasToken();

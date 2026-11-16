@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/network/session_expiry.dart';
+import '../../../../core/theme/nc_theme.dart';
 import '../../../../shared/widgets/design/design.dart';
 import '../../domain/auth_state.dart';
 import '../providers/auth_provider.dart';
@@ -22,6 +24,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _passwordFocus = FocusNode();
 
   late final ProviderSubscription<AuthState> _authSub;
+
+  /// Llegó aquí porque la sesión expiró (no porque cerró sesión).
+  final bool _sessionExpired = SessionExpiry.consumeMessage();
 
   @override
   void initState() {
@@ -87,6 +92,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             children: [
               const AuthCardTitle('Inicia sesión'),
               const SizedBox(height: 20),
+              if (_sessionExpired && !auth.hasError) ...[
+                NcBanner(
+                  message: 'Tu sesión expiró. Inicia sesión de nuevo para '
+                      'continuar donde ibas.',
+                  accent: context.nc.azulA,
+                  icon: Icons.lock_clock_outlined,
+                ),
+                const SizedBox(height: 16),
+              ],
               TextFormField(
                 controller: _emailCtrl,
                 keyboardType: TextInputType.emailAddress,
