@@ -9,13 +9,24 @@ class NcBanner extends StatelessWidget {
     required this.message,
     required this.accent,
     this.icon = Icons.info_outline_rounded,
+    this.actionLabel,
+    this.onAction,
   });
 
-  /// Atajo para errores (tomate).
-  factory NcBanner.error(BuildContext context, String message) => NcBanner(
+  /// Atajo para errores (tomate). [actionLabel]/[onAction] agregan un botón
+  /// (p. ej. "Reintentar").
+  factory NcBanner.error(
+    BuildContext context,
+    String message, {
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) =>
+      NcBanner(
         message: message,
         accent: context.nc.tomateA,
         icon: Icons.error_outline_rounded,
+        actionLabel: actionLabel,
+        onAction: onAction,
       );
 
   /// Atajo para confirmaciones (verde).
@@ -28,6 +39,8 @@ class NcBanner extends StatelessWidget {
   final String message;
   final NcAccent accent;
   final IconData icon;
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +55,9 @@ class NcBanner extends StatelessWidget {
           border: Border.all(color: accent.fill.withValues(alpha: 0.45)),
         ),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: actionLabel == null
+              ? CrossAxisAlignment.start
+              : CrossAxisAlignment.center,
           children: [
             Icon(icon, color: accent.ink, size: 20),
             const SizedBox(width: 10),
@@ -53,6 +68,14 @@ class NcBanner extends StatelessWidget {
                     .copyWith(fontSize: 13.5, height: 1.45),
               ),
             ),
+            if (actionLabel != null && onAction != null) ...[
+              const SizedBox(width: 8),
+              TextButton(
+                onPressed: onAction,
+                style: TextButton.styleFrom(foregroundColor: accent.ink),
+                child: Text(actionLabel!),
+              ),
+            ],
           ],
         ),
       ),

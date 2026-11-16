@@ -12,6 +12,7 @@ import 'home_screen/agenda_section.dart';
 import 'home_screen/disciplines_carousel.dart';
 import 'home_screen/featured_strip.dart';
 import 'home_screen/hero_section.dart';
+import 'home_screen/home_connection_banner.dart';
 import 'home_screen/home_header_actions.dart';
 
 // ─── Providers ────────────────────────────────────────────────────────────────
@@ -108,6 +109,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         child: ListView(
           padding: EdgeInsets.only(top: topInset + headerHeight + 28, bottom: 32),
           children: [
+            HomeConnectionBanner(onRetry: _refresh),
             HeroSection(onSecondaryFallback: _scrollToAgenda),
             const SizedBox(height: 44),
             const DisciplinesCarousel(),
