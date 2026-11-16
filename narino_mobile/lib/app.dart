@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/constants/app_constants.dart';
+import 'core/network/connectivity_provider.dart';
+import 'core/network/reconnect_refresh.dart';
 import 'core/network/session_expiry.dart';
 import 'core/providers/theme_provider.dart';
 import 'core/router/app_router.dart';
@@ -47,6 +49,20 @@ class _NarinoCulturaAppState extends ConsumerState<NarinoCulturaApp> {
         ?..clearSnackBars()
         ..showSnackBar(SnackBar(content: Text(error)));
       ref.read(favoritesProvider.notifier).clearActionError();
+    });
+
+    // Al volver la red se recarga sola lo que falló (MO-DISP-02); antes había
+    // que tocar Reintentar o deslizar en cada pantalla.
+    ref.listen<AsyncValue<bool>>(connectivityProvider, (previous, next) {
+      final volvio = previous?.valueOrNull == false && next.valueOrNull == true;
+      if (!volvio) return;
+      if (refreshAfterReconnect(ref) > 0) {
+        _messenger.currentState
+          ?..clearSnackBars()
+          ..showSnackBar(const SnackBar(
+            content: Text('Conexión recuperada. Actualizando…'),
+          ));
+      }
     });
 
     return MaterialApp.router(
