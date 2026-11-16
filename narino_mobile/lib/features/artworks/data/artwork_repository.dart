@@ -117,18 +117,6 @@ class ArtworkRepository {
     }
   }
 
-  Future<({bool esFavorito, int cantidad})> toggleFavorite(String id) async {
-    try {
-      final data = await _service.toggleFavorite(id);
-      return (
-        esFavorito: data['es_favorito'] as bool? ?? false,
-        cantidad: data['cantidad_favoritos'] as int? ?? 0,
-      );
-    } on DioException catch (e) {
-      throw _parseDioError(e);
-    }
-  }
-
   String _parseDioError(DioException e) =>
       ApiError.message(e, byStatus: const {404: 'Obra no encontrada.'});
 }

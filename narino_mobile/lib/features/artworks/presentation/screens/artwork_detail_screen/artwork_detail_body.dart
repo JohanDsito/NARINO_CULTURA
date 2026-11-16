@@ -7,6 +7,7 @@ import '../../../../../core/providers/user_role_provider.dart';
 import '../../../../marketplace/domain/marketplace_state.dart';
 import '../../../../marketplace/presentation/providers/favorites_provider.dart';
 import '../../../../profile/presentation/providers/profile_provider.dart';
+import '../../../domain/artwork_as_favorite.dart';
 import '../../../domain/artwork_model.dart';
 import '../../providers/artwork_provider.dart';
 import '../../../../../core/theme/nc_theme.dart';
@@ -36,17 +37,12 @@ class _ArtworkDetailBodyState extends ConsumerState<ArtworkDetailBody>
     with SingleTickerProviderStateMixin {
   int _imagenActiva = 0;
   bool _perfilPedido = false;
-  late bool _esFavorito;
   late final AnimationController _favAnimController;
   late final Animation<double> _favScale;
 
   @override
   void initState() {
     super.initState();
-    // Use the favorites provider as source of truth — the catalog API never
-    // returns es_favorito so artwork.esFavorito is always false.
-    _esFavorito = ref.read(favoritesProvider).isFavorite(widget.artwork.id);
-
     _favAnimController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 200),
@@ -55,20 +51,11 @@ class _ArtworkDetailBodyState extends ConsumerState<ArtworkDetailBody>
       CurvedAnimation(parent: _favAnimController, curve: Curves.easeOutBack),
     );
 
-    // If favorites haven't been fetched yet (e.g. user opened the detail
-    // without visiting the profile tab), load them now so _esFavorito is
-    // correct after the first frame.
+    // El corazón sale de favoritesProvider (el catálogo no trae es_favorito):
+    // si aún no se cargaron los favoritos, se cargan ahora.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final status = ref.read(favoritesProvider).status;
-      if (status == MarketplaceStatus.initial) {
-        ref.read(favoritesProvider.notifier).loadFavorites().then((_) {
-          if (mounted) {
-            setState(() {
-              _esFavorito =
-                  ref.read(favoritesProvider).isFavorite(widget.artwork.id);
-            });
-          }
-        });
+      if (ref.read(favoritesProvider).status == MarketplaceStatus.initial) {
+        ref.read(favoritesProvider.notifier).loadFavorites();
       }
     });
   }
@@ -85,23 +72,11 @@ class _ArtworkDetailBodyState extends ConsumerState<ArtworkDetailBody>
     HapticFeedback.lightImpact();
     _favAnimController.forward().then((_) => _favAnimController.reverse());
 
-    // Optimistic UI update.
-    setState(() => _esFavorito = !_esFavorito);
-
-    // FavoritesNotifier checks local state first (isFav → remove, else add),
-    // so it can never create a duplicate like or silently delete an existing one.
-    ref
-        .read(favoritesProvider.notifier)
-        .toggleFavorite(widget.artwork.id)
-        .then((_) {
-      // Sync displayed state with the authoritative provider result.
-      if (mounted) {
-        setState(() {
-          _esFavorito =
-              ref.read(favoritesProvider).isFavorite(widget.artwork.id);
-        });
-      }
-    });
+    // El provider cambia el corazón al instante y lo revierte si falla.
+    ref.read(favoritesProvider.notifier).toggleFavorite(
+          widget.artwork.id,
+          favorito: widget.artwork.toFavorite(),
+        );
   }
 
   Future<void> _openZoom(BuildContext context) async {
@@ -199,6 +174,7 @@ class _ArtworkDetailBodyState extends ConsumerState<ArtworkDetailBody>
     bool canManage,
   ) {
     final nc = context.nc;
+    final esFavorito = ref.watch(favoritesProvider).isFavorite(artwork.id);
     return SliverAppBar(
       expandedHeight: _kHeaderHeight,
       pinned: true,
@@ -222,12 +198,12 @@ class _ArtworkDetailBodyState extends ConsumerState<ArtworkDetailBody>
         ScaleTransition(
           scale: _favScale,
           child: GlassCircleButton(
-            icon: _esFavorito
+            icon: esFavorito
                 ? Icons.favorite_rounded
                 : Icons.favorite_border_rounded,
-            color: _esFavorito ? nc.magenta : Colors.white,
+            color: esFavorito ? nc.magenta : Colors.white,
             tooltip:
-                _esFavorito ? 'Quitar de favoritos' : 'Agregar a favoritos',
+                esFavorito ? 'Quitar de favoritos' : 'Agregar a favoritos',
             onPressed: _toggleFavorito,
           ),
         ),

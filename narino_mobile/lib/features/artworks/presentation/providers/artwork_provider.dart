@@ -140,41 +140,6 @@ class ArtworkNotifier extends StateNotifier<ArtworkState> {
     loadCatalog();
   }
 
-  Future<void> toggleFavorite(String artworkId) async {
-    final idx = state.artworks.indexWhere((a) => a.id == artworkId);
-    if (idx == -1) return;
-
-    final before = state.artworks[idx];
-    final optimistic = before.copyWith(esFavorito: !before.esFavorito);
-
-    final updated = [...state.artworks];
-    updated[idx] = optimistic;
-    state = state.copyWith(artworks: updated);
-
-    try {
-      final result = await _repo.toggleFavorite(artworkId);
-      final synced = before.copyWith(esFavorito: result.esFavorito);
-
-      final latest = [...state.artworks];
-      final currentIdx = latest.indexWhere((a) => a.id == artworkId);
-      if (currentIdx != -1) {
-        latest[currentIdx] = synced;
-        state = state.copyWith(
-          artworks: state.soloFavoritos
-              ? latest.where((a) => a.esFavorito).toList()
-              : latest,
-        );
-      }
-    } catch (_) {
-      final revert = [...state.artworks];
-      final currentIdx = revert.indexWhere((a) => a.id == artworkId);
-      if (currentIdx != -1) {
-        revert[currentIdx] = before;
-        state = state.copyWith(artworks: revert);
-      }
-    }
-  }
-
   Future<bool> deleteArtwork(String artworkId) async {
     try {
       await _repo.delete(artworkId);

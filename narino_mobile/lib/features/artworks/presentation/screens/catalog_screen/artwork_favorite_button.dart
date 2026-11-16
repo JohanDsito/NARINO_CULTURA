@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/theme/nc_theme.dart';
 import '../../../../../shared/widgets/design/design.dart';
 import '../../../../marketplace/presentation/providers/favorites_provider.dart';
+import '../../../domain/artwork_as_favorite.dart';
 import '../../../domain/artwork_model.dart';
 
 class ArtworkFavoriteButton extends ConsumerWidget {
@@ -21,8 +22,9 @@ class ArtworkFavoriteButton extends ConsumerWidget {
       label: isFav ? 'Quitar de favoritos' : 'Agregar a favoritos',
       excludeSemantics: true,
       child: NcPressable(
-        onTap: () =>
-            ref.read(favoritesProvider.notifier).toggleFavorite(artwork.id),
+        onTap: () => ref
+            .read(favoritesProvider.notifier)
+            .toggleFavorite(artwork.id, favorito: artwork.toFavorite()),
         pressedScale: 0.85,
         child: ClipOval(
           child: BackdropFilter(
