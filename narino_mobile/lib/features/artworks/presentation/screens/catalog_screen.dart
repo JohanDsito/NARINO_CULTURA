@@ -11,6 +11,7 @@ import '../../../marketplace/presentation/providers/favorites_provider.dart';
 import '../../domain/artwork_state.dart';
 import '../providers/artwork_provider.dart';
 import 'catalog_screen/catalog_body.dart';
+import 'catalog_screen/catalog_load_more_footer.dart';
 import 'catalog_screen/catalog_search_field.dart';
 import 'catalog_screen/category_chips.dart';
 import 'catalog_screen/filtros_sheet.dart';
@@ -107,44 +108,55 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
       body: RefreshIndicator(
         edgeOffset: top,
         onRefresh: () => ref.read(artworkProvider.notifier).loadCatalog(),
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          slivers: [
-            SliverToBoxAdapter(child: SizedBox(height: top + 14)),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: CatalogSearchField(
-                  controller: _searchCtrl,
-                  onChanged: _onSearchChanged,
-                  onClear: _clearSearch,
+        child: NotificationListener<ScrollNotification>(
+          // A unas 2 filas del final se pide la página siguiente.
+          onNotification: (n) {
+            if (n.metrics.axis == Axis.vertical &&
+                n.metrics.extentAfter < 600) {
+              ref.read(artworkProvider.notifier).loadMore();
+            }
+            return false;
+          },
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            slivers: [
+              SliverToBoxAdapter(child: SizedBox(height: top + 14)),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: CatalogSearchField(
+                    controller: _searchCtrl,
+                    onChanged: _onSearchChanged,
+                    onClear: _clearSearch,
+                  ),
                 ),
               ),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 12)),
-            SliverToBoxAdapter(
-              child: CategoryChips(
-                state: state,
-                onFilterTap: () => _openFilters(state),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
-                child: Text(
-                  state.isLoading
-                      ? 'Buscando obras…'
-                      : state.totalResultados == 1
-                          ? '1 obra'
-                          : '${state.totalResultados} obras',
-                  style: AppTypography.labelMedium(color: nc.textSecondary),
+              const SliverToBoxAdapter(child: SizedBox(height: 12)),
+              SliverToBoxAdapter(
+                child: CategoryChips(
+                  state: state,
+                  onFilterTap: () => _openFilters(state),
                 ),
               ),
-            ),
-            CatalogBody(state: state),
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
-          ],
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
+                  child: Text(
+                    state.isLoading
+                        ? 'Buscando obras…'
+                        : state.totalResultados == 1
+                            ? '1 obra'
+                            : '${state.totalResultados} obras',
+                    style: AppTypography.labelMedium(color: nc.textSecondary),
+                  ),
+                ),
+              ),
+              CatalogBody(state: state),
+              SliverToBoxAdapter(child: CatalogLoadMoreFooter(state: state)),
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            ],
+          ),
         ),
       ),
     );

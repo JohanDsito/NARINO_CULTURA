@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/theme/nc_theme.dart';
@@ -33,31 +32,24 @@ class ArtworkFavoriteButton extends ConsumerWidget {
         onTap: toggle,
         pressedScale: 0.85,
         child: NcTapTarget(
-          child: ClipOval(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.32),
-                  shape: BoxShape.circle,
-                  border:
-                      Border.all(color: Colors.white.withValues(alpha: 0.18)),
-                ),
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 250),
-                  transitionBuilder: (c, a) =>
-                      ScaleTransition(scale: a, child: c),
-                  child: Icon(
-                    isFav
-                        ? Icons.favorite_rounded
-                        : Icons.favorite_border_rounded,
-                    key: ValueKey(isFav),
-                    size: 20,
-                    color: isFav ? nc.magenta : Colors.white,
-                  ),
-                ),
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              // Sin desenfoque: un BackdropFilter por tarjeta era costoso
+              // al hacer scroll (MO-LOAD-01). Más opaco para leerse igual.
+              color: Colors.black.withValues(alpha: 0.45),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+            ),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              transitionBuilder: (c, a) => ScaleTransition(scale: a, child: c),
+              child: Icon(
+                isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                key: ValueKey(isFav),
+                size: 20,
+                color: isFav ? nc.magenta : Colors.white,
               ),
             ),
           ),
