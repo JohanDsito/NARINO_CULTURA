@@ -187,7 +187,9 @@ def build_inbox_items(notification_type: str, payload: dict) -> list[InboxItem]:
     try:
         # Savepoint: en PostgreSQL una consulta fallida invalidaría la transacción del llamador
         with transaction.atomic():
-            return builder(payload or {})
+            items = builder(payload or {})
+        # Un destinatario vacío es una cuenta eliminada (p. ej. el comprador de una orden conservada)
+        return [item for item in items if item.recipient_id]
     except Exception:
         # La bandeja es secundaria: un dato inesperado no puede tumbar la puja o el pago
         logger.exception("No se pudo construir la notificación %s", notification_type)

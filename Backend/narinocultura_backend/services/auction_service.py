@@ -243,7 +243,7 @@ class AuctionService:
                     "AUCTION_PAYMENT_EXPIRED",
                     {
                         "order_id": str(order.id),
-                        "buyer_email": order.buyer.email,
+                        "buyer_email": order.buyer_email,
                         "total_amount": str(order.total_amount),
                     },
                     user=order.buyer,

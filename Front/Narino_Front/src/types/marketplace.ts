@@ -15,7 +15,7 @@ export interface OrderItem {
 
 export interface Order {
   id: string
-  buyer: string                           // User UUID FK
+  buyer: string | null                    // User UUID FK; null si el comprador eliminó su cuenta
   total_amount: string                    // DecimalField → string
   status: OrderStatus
   order_type: OrderType
