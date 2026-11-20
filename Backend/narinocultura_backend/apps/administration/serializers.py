@@ -9,8 +9,20 @@ class AdminUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ("id", "email", "first_name", "last_name", "role", "is_active", "is_verified", "phone", "avatar_url")
-        read_only_fields = ("id", "email")
+        fields = (
+            "id",
+            "email",
+            "first_name",
+            "last_name",
+            "role",
+            "is_active",
+            "is_verified",
+            "phone",
+            "avatar_url",
+            "created_at",
+            "last_login",
+        )
+        read_only_fields = ("id", "email", "created_at", "last_login")
 
     def get_avatar_url(self, obj):
         if not obj.avatar:

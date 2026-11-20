@@ -2,7 +2,7 @@ import logging
 import secrets
 from datetime import timedelta
 
-from django.db.models import ProtectedError, Sum
+from django.db.models import ProtectedError, Q, Sum
 from django.utils import timezone
 from rest_framework import generics, status
 from rest_framework.response import Response
@@ -28,7 +28,19 @@ class AdminCreateUserAPIView(APIView):
     permission_classes = [IsAdmin]
 
     def get(self, request):
+        """Lista de usuarios con búsqueda (`?search=` en correo y nombre) y filtros `?role=`, `?is_active=` y
+        `?is_verified=` (true/false). Sigue siendo una lista sin paginar: la web la consume así."""
         users = User.objects.all().order_by("-created_at")
+        params = request.query_params
+        term = params.get("search", "").strip()
+        if term:
+            users = users.filter(Q(email__icontains=term) | Q(first_name__icontains=term) | Q(last_name__icontains=term))
+        if params.get("role"):
+            users = users.filter(role=params["role"].upper())
+        for flag in ("is_active", "is_verified"):
+            value = params.get(flag, "").lower()
+            if value in {"true", "false"}:
+                users = users.filter(**{flag: value == "true"})
         serializer = AdminUserSerializer(users, many=True, context={"request": request})
         return Response(serializer.data)
 
