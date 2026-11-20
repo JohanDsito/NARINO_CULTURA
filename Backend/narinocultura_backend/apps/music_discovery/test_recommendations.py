@@ -11,7 +11,7 @@ from services import ai_rules
 from tests import llm_fakes
 from tests.factories import MusicGenreFactory, MusicianProfileFactory
 
-LLM_POST = "services.llm.requests.post"
+LLM_POST = "services.llm._session.post"
 
 
 class LocalRecommendationTests(APITestCase):

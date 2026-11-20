@@ -170,7 +170,7 @@ class ArtworkAIEnhanceTests(APITestCase):
         self.assertIn("«Volcán Galeras»", r.data["ai_description"])
 
     @override_settings(**llm_fakes.KEYS)
-    @patch("services.llm.requests.post")
+    @patch("services.llm._session.post")
     def test_model_response_is_saved_on_artwork(self, mock_post):
         mock_post.return_value = llm_fakes.gemini({"tags": ["volcán", "paisaje"], "description": "Paisaje andino"})
         self.client.force_authenticate(user=self.owner)
@@ -183,7 +183,7 @@ class ArtworkAIEnhanceTests(APITestCase):
         self.assertEqual(self.artwork.ai_description, "Paisaje andino")
 
     @override_settings(**llm_fakes.KEYS)
-    @patch("services.llm.requests.post", side_effect=requests.ConnectionError("caído"))
+    @patch("services.llm._session.post", side_effect=requests.ConnectionError("caído"))
     def test_providers_down_still_returns_200_with_rules(self, _mock_post):
         self.client.force_authenticate(user=self.owner)
         r = self.client.post(self.url, {}, format="json")

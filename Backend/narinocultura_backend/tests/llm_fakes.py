@@ -4,7 +4,8 @@ from unittest.mock import MagicMock
 
 import requests
 
-KEYS = {"GEMINI_API_KEY": "gemini-test", "GROQ_API_KEY": "groq-test"}
+# Las pruebas fijan el orden Gemini → Groq; el orden por defecto se prueba aparte
+KEYS = {"GEMINI_API_KEY": "gemini-test", "GROQ_API_KEY": "groq-test", "AI_PROVIDERS": ["gemini", "groq"]}
 
 
 def gemini(payload) -> MagicMock:
