@@ -1,5 +1,4 @@
 """Modelos de músicos: slugs, representación en texto y popularidad."""
-import unittest
 
 from django.test import TestCase
 
@@ -62,10 +61,6 @@ class RecalculatePopularityTests(TestCase):
         profile.refresh_from_db()
         self.assertEqual(profile.popularity_score, 21)
 
-    # BUG: apps/musicians/models.py:102-105 — por precedencia de operadores el `or 0` se aplica a
-    # toda la suma (`followers * 2 + None or 0`), no al agregado. Un músico sin obras hace
-    # `int + None` y lanza TypeError en lugar de obtener popularity_score = followers * 2.
-    @unittest.expectedFailure
     def test_musician_without_works_scores_only_followers(self):
         profile = MusicianProfileFactory(followers_count=4)
 
