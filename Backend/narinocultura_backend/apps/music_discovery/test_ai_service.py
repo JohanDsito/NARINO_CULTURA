@@ -101,6 +101,14 @@ class ChatTests(APITestCase):
             self.assertIn(name, system)
 
     @patch("services.llm.requests.post")
+    def test_markdown_is_removed_from_the_reply(self, post):
+        post.return_value = llm_fakes.gemini("## Te recomiendo\n- **juanmc** si te gusta el rock\n- __Lala__ para boleros")
+        r = self.client.post(self.url, {"message": "¿A quién escucho?"}, format="json")
+        self.assertEqual(r.data["reply"], "Te recomiendo\njuanmc si te gusta el rock\nLala para boleros")
+        system = post.call_args.kwargs["json"]["systemInstruction"]["parts"][0]["text"]
+        self.assertIn("sin Markdown", system)
+
+    @patch("services.llm.requests.post")
     def test_client_history_is_sanitized(self, post):
         post.return_value = llm_fakes.gemini("ok")
         history = [
