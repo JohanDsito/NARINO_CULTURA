@@ -247,7 +247,15 @@ RESEND_FROM_EMAIL = config("RESEND_FROM_EMAIL", default="noreply@narinocultura.u
 BREVO_API_KEY = config("BREVO_API_KEY", default="")
 BREVO_FROM_EMAIL = config("BREVO_FROM_EMAIL", default="noreply@narinocultura.uk")
 
-AI_SERVICE_URL = config("AI_SERVICE_URL", default="")
+# Inteligencia artificial (services/llm.py). Ambas llaves son de capa gratuita: sin facturación
+# activada no generan cobros, al agotar la cuota responden 429 y se usa el siguiente proveedor
+# o las reglas locales. Sin ninguna llave, las funciones de IA responden solo con reglas.
+GEMINI_API_KEY = config("GEMINI_API_KEY", default=config("GOOGLE_API_KEY", default=""))
+# El alias "-latest" apunta siempre al Flash-Lite vigente: no se rompe cuando Google retira una versión
+GEMINI_MODEL = config("GEMINI_MODEL", default="gemini-flash-lite-latest")
+GROQ_API_KEY = config("GROQ_API_KEY", default="")
+GROQ_MODEL = config("GROQ_MODEL", default="llama-3.3-70b-versatile")
+AI_TIMEOUT_SECONDS = config("AI_TIMEOUT_SECONDS", default=12, cast=int)
 FRONTEND_URL = config(
     "FRONTEND_URL",
     default=config("FRONTEND_BASE_URL", default="http://localhost:5173"),

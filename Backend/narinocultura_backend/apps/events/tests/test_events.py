@@ -1,5 +1,5 @@
 from datetime import timedelta
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import requests
 from django.test import override_settings
@@ -8,6 +8,7 @@ from rest_framework.test import APITestCase
 
 from apps.events.models import Event, EventRegistration
 from apps.notifications.models import NotificationLog
+from tests import llm_fakes
 from tests.factories import (
     AdminUserFactory,
     ArtistUserFactory,
@@ -178,12 +179,11 @@ class EventRegistrationTests(EventTestCase):
         self.assertIn("finalizó", r.data["detail"])
 
 
-@override_settings(AI_SERVICE_URL="")
 class EventFlyerExtractionTests(EventTestCase):
     FLYER = "Concierto de música andina\nLugar: Teatro Imperial\n15 de diciembre de 2030 8:00 pm"
     EXTRACT_URL = f"{URL}extract-from-flyer/"
 
-    def test_heuristic_extraction_without_ai_service(self):
+    def test_heuristic_extraction_without_ai(self):
         r = self.as_user(self.manager).post(self.EXTRACT_URL, {"flyer_text": self.FLYER}, format="json")
         self.assertEqual(r.status_code, 200)
         suggested = r.data["suggested_event"]
@@ -223,25 +223,24 @@ class EventFlyerExtractionTests(EventTestCase):
         r = self.as_user(self.buyer).post(self.EXTRACT_URL, {"flyer_text": self.FLYER}, format="json")
         self.assertEqual(r.status_code, 403)
 
-    @override_settings(AI_SERVICE_URL="http://ai.local")
-    @patch("services.event_service.requests.post")
-    def test_uses_ai_service_when_available(self, post):
-        post.return_value = MagicMock(
-            content=b"{}",
-            json=lambda: {"title": "Festival", "event_type": "FERIA", "location": "Pasto", "is_published": True},
+    @override_settings(**llm_fakes.KEYS)
+    @patch("services.llm.requests.post")
+    def test_uses_ai_when_available(self, post):
+        post.return_value = llm_fakes.gemini(
+            {"title": "Festival", "event_type": "FERIA", "location": "Pasto", "start_date": "2030-12-15T20:00:00-05:00"}
         )
         r = self.as_user(self.artist).post(self.EXTRACT_URL, {"flyer_text": self.FLYER}, format="json")
         self.assertEqual(r.status_code, 200)
         suggested = r.data["suggested_event"]
         self.assertEqual(suggested["source"], "ai_service")
-        self.assertEqual(suggested["title"], "Festival")
-        # Un artista nunca recibe una sugerencia publicada, aunque la IA la marque así
+        self.assertEqual((suggested["title"], suggested["event_type"]), ("Festival", "FERIA"))
         self.assertFalse(suggested["is_published"])
-        self.assertEqual(post.call_args.args[0], "http://ai.local/events/extract-from-flyer")
+        self.assertIn("generativelanguage.googleapis.com", post.call_args.args[0])
 
-    @override_settings(AI_SERVICE_URL="http://ai.local")
-    @patch("services.event_service.requests.post", side_effect=requests.ConnectionError)
-    def test_falls_back_to_heuristic_when_ai_service_fails(self, _post):
+    @override_settings(**llm_fakes.KEYS)
+    @patch("services.llm.requests.post", side_effect=requests.ConnectionError)
+    def test_falls_back_to_heuristic_when_ai_fails(self, post):
         r = self.as_user(self.manager).post(self.EXTRACT_URL, {"flyer_text": self.FLYER}, format="json")
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.data["suggested_event"]["source"], "heuristic")
+        self.assertEqual(post.call_count, 2)  # Gemini y luego Groq
