@@ -159,10 +159,14 @@ class AIService:
 
     # --------------------------------------------------------------- eventos
     @staticmethod
-    def extract_event_from_flyer(*, image_url: str = "", flyer_text: str = "") -> dict | None:
-        """Lee un afiche (imagen y/o texto) y propone los datos del evento.
+    def extract_event_from_flyer(
+        *, image_url: str = "", flyer_text: str = "", image: llm.Image | None = None
+    ) -> dict | None:
+        """Lee un afiche (imagen y/o texto) y propone los datos del evento. La imagen puede venir
+        ya leída (archivo subido) o se descarga de ``image_url``.
         Devuelve None si no hay IA disponible; quien llama usa entonces su heurística."""
-        image = _fetch_image(image_url) if image_url else None
+        if image is None and image_url:
+            image = _fetch_image(image_url)
         flyer_text = (flyer_text or "").strip()[:3000]
         if image is None and not flyer_text:
             return None

@@ -2,13 +2,14 @@ import logging
 
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework.throttling import ScopedRateThrottle
+from rest_framework.throttling import AnonRateThrottle, ScopedRateThrottle, UserRateThrottle
 from rest_framework.views import APIView
 
 from apps.musicians.models import MusicianProfile
 from apps.musicians.serializers import MusicianProfileListSerializer
 from services.ai_service import AIService
 from utils.http import client_ip
+from utils.throttling import AIBurstThrottle
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,7 @@ class MusicRecommendationView(APIView):
     """
 
     permission_classes = [AllowAny]
+    throttle_classes = [AIBurstThrottle, AnonRateThrottle, UserRateThrottle]
 
     def post(self, request):
         query = (request.data.get("query") or "").strip()
@@ -78,7 +80,7 @@ class ChatAPIView(APIView):
     """
 
     permission_classes = [AllowAny]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [ScopedRateThrottle, AnonRateThrottle, UserRateThrottle]
     throttle_scope = "chat"
 
     def post(self, request):
