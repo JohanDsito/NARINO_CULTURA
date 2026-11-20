@@ -153,7 +153,7 @@ class AdminTransactionsAPIView(generics.ListAPIView):
             {
                 "id": str(t.id),
                 "order_id": str(t.order_id),
-                "buyer_email": t.order.buyer.email,
+                "buyer_email": t.order.buyer_email,
                 "amount": str(t.amount),
                 "currency": t.currency,
                 "status": t.status,

@@ -56,7 +56,13 @@ class Order(TimeStampedUUIDModel):
         COMPRA_DIRECTA = "COMPRA_DIRECTA", "Compra directa"
         SUBASTA = "SUBASTA", "Subasta"
 
-    buyer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="orders")
+    # Si el comprador elimina su cuenta la orden se conserva (SET_NULL): es el historial de ventas del
+    # artista y el soporte contable del pago. Por eso se guarda una copia del nombre y el correo.
+    buyer = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="orders"
+    )
+    buyer_name = models.CharField(max_length=255, blank=True)
+    buyer_email = models.EmailField(blank=True)
     total_amount = models.DecimalField(max_digits=12, decimal_places=2)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDIENTE)
     order_type = models.CharField(max_length=20, choices=Type.choices, default=Type.COMPRA_DIRECTA)
@@ -76,6 +82,15 @@ class Order(TimeStampedUUIDModel):
 
     def __str__(self):
         return f"Order({self.id}) - {self.status}"
+
+    def save(self, *args, **kwargs):
+        # La copia del comprador se toma al crear la orden y no cambia después
+        if self.buyer_id and not self.buyer_email:
+            self.buyer_name = f"{self.buyer.first_name} {self.buyer.last_name}".strip() or self.buyer.email
+            self.buyer_email = self.buyer.email
+            if kwargs.get("update_fields") is not None:
+                kwargs["update_fields"] = {*kwargs["update_fields"], "buyer_name", "buyer_email"}
+        super().save(*args, **kwargs)
 
 
 class OrderItem(TimeStampedUUIDModel):
