@@ -1,0 +1,165 @@
+import 'package:dio/dio.dart';
+
+import '../../../core/network/api_error.dart';
+import '../domain/cart_item_model.dart';
+import '../domain/favorite_model.dart';
+import '../domain/order_model.dart';
+import 'marketplace_service.dart';
+
+/// Repositorio del marketplace: carrito, favoritos, órdenes e integración de pago.
+class MarketplaceRepository {
+  MarketplaceRepository({MarketplaceService? service})
+      : _service = service ?? MarketplaceService();
+
+  final MarketplaceService _service;
+
+  Future<List<CartItemModel>> getCart() async {
+    try {
+      return (await _service.getCart())
+          .map((e) => CartItemModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw _err(e);
+    }
+  }
+
+  Future<void> addToCart(String obraId) async {
+    try {
+      await _service.addToCart(obraId);
+    } on DioException catch (e) {
+      throw _err(e);
+    }
+  }
+
+  Future<void> removeFromCart(String obraId) async {
+    try {
+      await _service.removeFromCart(obraId);
+    } on DioException catch (e) {
+      throw _err(e);
+    }
+  }
+
+  Future<void> clearCart() async {
+    try {
+      await _service.clearCart();
+    } on DioException catch (e) {
+      throw _err(e);
+    }
+  }
+
+  Future<List<FavoriteModel>> getFavorites() async {
+    try {
+      return (await _service.getFavorites())
+          .map((e) => FavoriteModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw _err(e);
+    }
+  }
+
+  Future<void> addFavorite(String obraId) async {
+    try {
+      await _service.addFavorite(obraId);
+    } on DioException catch (e) {
+      throw _err(e);
+    }
+  }
+
+  Future<void> removeFavorite(String obraId) async {
+    try {
+      await _service.removeFavorite(obraId);
+    } on DioException catch (e) {
+      throw _err(e);
+    }
+  }
+
+  Future<OrderModel> createOrder() async {
+    try {
+      return OrderModel.fromJson(await _service.createOrder());
+    } on DioException catch (e) {
+      throw _err(e);
+    }
+  }
+
+  Future<List<OrderModel>> getOrders() async {
+    try {
+      return (await _service.getOrders())
+          .map((e) => OrderModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw _err(e);
+    }
+  }
+
+  Future<OrderModel> getOrderDetail(String id) async {
+    try {
+      return OrderModel.fromJson(await _service.getOrderDetail(id));
+    } on DioException catch (e) {
+      throw _err(e);
+    }
+  }
+
+  Future<String> initiatePayment(String orderId) async {
+    try {
+      final data = await _service.initiatePayment(orderId);
+      // Backend returns Wompi payment initialization data, not a pre-built URL.
+      // Construct the Wompi checkout URL from the response fields.
+      final publicKey = data['public_key']?.toString() ?? '';
+      final reference = data['reference']?.toString() ?? '';
+      final amountInCents = data['amount_in_cents']?.toString() ?? '0';
+      final currency = data['currency']?.toString() ?? 'COP';
+      final integrity = data['integrity_signature']?.toString() ?? '';
+
+      if (publicKey.isEmpty || reference.isEmpty) return '';
+
+      // signature:integrity has a colon in the key — build manually to avoid
+      // percent-encoding the colon in the parameter name.
+      return 'https://checkout.wompi.co/p/'
+          '?public-key=${Uri.encodeComponent(publicKey)}'
+          '&currency=${Uri.encodeComponent(currency)}'
+          '&amount-in-cents=$amountInCents'
+          '&reference=${Uri.encodeComponent(reference)}'
+          '&signature:integrity=${Uri.encodeComponent(integrity)}';
+    } on DioException catch (e) {
+      throw _err(e);
+    }
+  }
+
+  Future<String> getPaymentStatus(String orderId) async {
+    try {
+      return (await _service.getPaymentStatus(orderId))['status']?.toString() ??
+          'unknown';
+    } on DioException catch (e) {
+      throw _err(e);
+    }
+  }
+
+  Future<List<OrderModel>> getPurchaseHistory() async {
+    try {
+      return (await _service.getPurchaseHistory())
+          .map((e) => OrderModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw _err(e);
+    }
+  }
+
+  Future<List<OrderModel>> getSalesHistory() async {
+    try {
+      return (await _service.getSalesHistory())
+          .map((e) => OrderModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw _err(e);
+    }
+  }
+
+  String _err(DioException e) {
+    // Un 400 sin mensaje en la tienda casi siempre es una obra que ya no se vende.
+    if (e.response?.statusCode == 400) {
+      return ApiError.extractMessage(e.response?.data) ??
+          'Esta obra no está disponible.';
+    }
+    return ApiError.message(e, byStatus: const {404: 'Elemento no encontrado.'});
+  }
+}

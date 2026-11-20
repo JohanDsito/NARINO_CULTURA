@@ -1,0 +1,55 @@
+name: narino_cultura
+description: Plataforma digital para el ecosistema artístico de Nariño
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  go_router: ^13.0.0
+
+  flutter_riverpod: ^2.5.0
+  riverpod_annotation: ^2.3.0
+
+  dio: ^5.4.0
+
+  flutter_secure_storage: ^9.0.0
+
+  google_fonts: ^6.2.1
+
+  flutter_svg: ^2.0.9
+
+  cached_network_image: ^3.3.1
+
+  intl: ^0.19.0
+  equatable: ^2.0.5
+
+  image_picker: ^1.1.2
+  photo_view: ^0.15.0
+  share_plus: ^10.0.2
+  url_launcher: ^6.3.0
+  video_player: ^2.8.6
+  web_socket_channel: ^2.4.0
+  flutter_map: ^6.1.0          # Mapa interactivo con OpenStreetMap (gratuito, sin API key)
+  latlong2: ^0.9.0             # Coordenadas para flutter_map
+  table_calendar: ^3.1.0       # Widget de calendario mensual para Flutter
+  connectivity_plus: ^7.3.2    # Detecta cuándo vuelve la red para recargar (MO-DISP-02)
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  build_runner: ^2.4.0
+  riverpod_generator: ^2.3.0
+  mocktail: ^1.0.4
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/

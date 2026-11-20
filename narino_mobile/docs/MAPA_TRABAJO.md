@@ -1,0 +1,282 @@
+# Mapa de trabajo — App móvil Nariño Cultura
+
+> Documento vivo. Se actualiza en cada paso. Última actualización: 2026-11-05.
+> Rama: `mobile-Valery` · Respaldo previo al sync: `backup/mobile-Valery-pre-merge`.
+
+Leyenda: ✅ hecho · 🔧 en curso · ⏳ pendiente · 🚫 bloqueado por backend · 💡 mejora sugerida
+
+---
+
+## Fase 1 — Traer el backend de `main` ✅
+
+- ✅ `git fetch` → `mobile-Valery` estaba 183 commits detrás de `origin/main`.
+- ✅ No se hizo `git merge` completo: genera ~60 conflictos por renombres y metería `Front/` en la
+  rama móvil. Se siguió el patrón ya usado en la rama (commits `ff1d669`, `d6a68a2`):
+  `git checkout origin/main -- Backend .github`.
+- ✅ Se re-aplicó el único cambio propio de mobile sobre el backend (commit `40ae5be`:
+  `is_following`, `average_rating`, `reviews_count` en serializers de músicos + contexto `request`).
+- ✅ Tests backend: **260/260 OK** (`config.settings.test`, SQLite en memoria).
+- ⚠️ **Producción (`narinocultura-production.up.railway.app`) corre `main`, no esta rama.**
+  Lo que se cambie en `Backend/` aquí NO llega a la app hasta que se suba a `main` y se despliegue.
+  Regla: **la app debe funcionar con el contrato actual de `main`** y tolerar campos ausentes.
+  Confirmado en producción: músicos **no** traen `is_following` / `average_rating`.
+
+Novedades del backend que impactan la app:
+| HU | Cambio | Impacto móvil |
+|---|---|---|
+| B09 | API real de notificaciones (`/notifications/`, `/unread-count/`, `/read-all/`, `/{uuid}/read/`) | Antes se tragaban 404; ahora hay datos. IDs son **UUID** |
+| B03/B06 | WebSocket subastas: mensajes `connected`, `snapshot`, `bid_placed`, `auction_closed` | Revisar provider de detalle de subasta |
+| B04 | Orden de pago para el ganador (`payment_order_id` en la subasta, solo lo ve el ganador) | El modelo leía `order_id` → nunca encontraba la orden |
+| B05 | Inscripción a eventos para cualquier usuario autenticado | OK, sin cambios |
+| B02 | Solo se editan/eliminan subastas `PENDIENTE` | Las subastas nuevas quedan `PENDIENTE` hasta aprobación admin |
+| — | `artists/following/`, `musicians/following/`, `followers` | Reemplaza `users/me/following/` (no existe) |
+
+---
+
+## Fase 2 — Bugs e inconsistencias de contrato ✅ (pendientes solo los 🚫 de backend)
+
+### Contrato real del backend (resumen)
+- Paginación: `{count, next, previous, results}` · `page_size` máx 100 · throttle anónimo 200/h.
+- Artistas y músicos se buscan por **slug**, no por UUID.
+- `GET /artworks/{id}/` **incrementa `views_count`** cada vez → no usarlo para "enriquecer" listas.
+- Obras: filtros `status`, `category` (id), `artist` (slug), `mine=true`, `search`;
+  ordering `created_at`, `price`, `views_count`.
+- Subastas: filtro solo `status`. Serializer NO trae título/imagen de obra ni lista de pujas.
+
+### Hallazgos y estado
+| # | Área | Problema | Estado |
+|---|---|---|---|
+| 1 | Notificaciones | `id` y `referenciaId` se parseaban como `int` pero son UUID → `id=0`, marcar leída fallaba | ✅ id String, ruta desde `data`, marcado optimista |
+| 2 | Notificaciones | `?no_leidas=true` funciona; no se usa `unread-count` para el badge | ✅ badge usa `unread-count/` |
+| 3 | Notificaciones | Preferencias de eventos (`event-preferences/`) no existen en backend | 🚫 (dejar local) |
+| 4 | Catálogo | Envía `categoria`, `tecnica`, `precio_min/max` y ordering en español (`precio`, `-creado_en`) → el backend los ignora | ✅ categorías reales del backend (id), ordering `price`/`-created_at`/`-views_count`, técnica y precio filtrados en la app |
+| 5 | Perfil | "Siguiendo" llama `users/me/following/` (404) → usar `artists/following/` + `musicians/following/` | ✅ artistas + músicos, navega a la pantalla correcta |
+| 6 | Perfil | `getMyProfile` recorre TODA la lista de artistas y TODAS las obras para contar | ✅ 1 petición `?mine=true` (count + slug); solo recorre artistas si no tiene obras |
+| 7 | Perfil | Portafolio (`artists/{id}/portfolio/`) no existe en backend | 🚫 |
+| 8 | Perfil/Seguridad | `change-email` y `sessions` no existen; `resend-verification` ya existe en main (#177) | ✅ reenvío con `{email}` · 🚫 correo y sesiones |
+| 9 | Marketplace | Carrito/favoritos hacen 1 `GET /artworks/{id}` por ítem → infla vistas y gasta throttle | ✅ una consulta de lista. Además favoritos leía `artwork_id` (no existe) → nunca mostraba imagen/precio |
+| 10 | Marketplace | `orders/{id}/` no existe (ya hay fallback a la lista) | ✅ (fallback existente) |
+| 11 | Subastas | Tarjetas muestran "Obra"/"Artista" sin imagen: el serializer solo trae el UUID de la obra | ✅ se cruzan con la lista de obras (`EN_SUBASTA` y luego catálogo) |
+| 12 | Subastas | Historial envía `participante=me` / `artista=me` → el backend los ignora y muestra TODAS | ✅ filtro en la app por id de usuario (`seller`, `highest_bidder`, `winner`). Limitación: "participé" = voy ganando o gané (el backend no expone pujas) |
+| 13 | Subastas | Ganador: se leía `order_id`, el backend manda `payment_order_id` | ✅ + ganador/vendedor se comparaban con el slug del artista en vez del id de usuario |
+| 14 | Subastas | WebSocket: revisar que el provider procese `snapshot` / `bid_placed` / `auction_closed` | ✅ puja en vivo se agrega a la lista, snapshot respeta estado, al cerrar se recarga para traer la orden |
+| 15 | Subastas | No había historial de pujas por REST | ✅ `GET /auctions/{id}/bids/` (#174) en el detalle |
+| 16 | Eventos | Cancelar inscripción (DELETE) no existe → 405 | ✅ mensaje claro; "ya inscrito" marca el estado. Falta endpoint en backend |
+| 17 | IA | `/ai/generate-description/` no existe; recomendaciones y artist-stats ya no hacen falta (la app usa datos reales) | 🚫 solo generar descripción (ruta corregida a `/api/v1/ai/…`) |
+| 18 | Músicos | Producción no envía `is_following` → el botón seguir arranca en "Seguir" | ✅ se deduce de `musicians/following/` (`seguidosProvider`) |
+| 19 | Artistas | `ArtistProfileSerializer` no traía `is_following` | ✅ en main (#176) |
+| 20 | Cuenta | Eliminar cuenta se bloqueaba si existía CUALQUIER subasta activa en la plataforma (`artista=me` ignorado) | ✅ solo cuenta las subastas propias |
+| 21 | Eventos | Mensaje 403 decía "solo gestores"; el backend permite artistas, gestores y admin | ✅ |
+| 22 | Roles | El backend manda `ADMINISTRADOR` / `GESTOR_CULTURAL`; la app comparaba con `admin` / `gestor` → gestores no veían "publicar evento" y admin no tenía permisos | ✅ `normalizeRole()` en `user_role_provider` |
+| 23 | Roles | `currentUserIdProvider` parseaba el UUID como `int` → siempre `null` | ✅ ahora `String` |
+| 24 | Obras | Detalle: el artista no veía editar/eliminar en SU obra (comparaba id de usuario con id de perfil) | ✅ compara slug del perfil con `artist_slug` |
+| 25 | Eventos | Botón publicar evento oculto para artistas (el backend sí los deja) | ✅ |
+| 26 | Registro | Siempre enviaba `role: ARTISTA` → nadie podía registrarse como comprador | ✅ elección "Crear y vender" / "Descubrir y comprar" |
+| 27 | Verificar correo | "Reenviar" fallaba en silencio (endpoint no existe) | ✅ aviso claro |
+| 28 | Acceso | En pantallas bajas el contenido se cortaba en vez de desplazarse | ✅ |
+| 29 | Detalle de obra | "Agregar al carrito" solo mostraba "Carrito disponible próximamente" → nadie podía comprar desde el detalle | ✅ agrega de verdad, estado "ya en tu carrito" |
+| 30 | Obras | `categoria` guardaba el id ("1") y se mostraba como nombre; al editar no se recuperaba bien | ✅ `categoriaId` + nombre desde `category_detail` |
+| 31 | Catálogo | La búsqueda hacía 1 petición por letra | ✅ espera 450 ms |
+| 32 | Filtros | "Aplicar" hacía 4 peticiones; no se podía quitar el rango de precio | ✅ `aplicarFiltros()` una sola vez + `clearPrecio` |
+| 33 | Publicar | Permitía elegir varias imágenes pero solo subía la primera | ✅ una sola portada (galería o cámara) |
+| 34 | Publicar | Botones de IA siempre fallaban (endpoints inexistentes) | ✅ ocultos con `_kIaDisponible` |
+| 35 | Obras | Precio 0 (exhibición) se mostraba como "$0" a la venta | ✅ 0 = "En exhibición" |
+| 36 | Tienda | Al abrirla reiniciaba los filtros del Catálogo (estado compartido) y solo veía la 1.ª página | ✅ consulta propia `status=DISPONIBLE` |
+| 37 | Pago | El sondeo de Wompi seguía cada 5 s para siempre al salir de la pantalla | ✅ se detiene al salir y a los 10 min |
+| 38 | Resultado de pago | "Reintentar" llevaba al carrito, que ya está vacío | ✅ vuelve a pagar la misma orden |
+| 39 | Carrito | No avisaba obras vendidas/en subasta y las sumaba al total | ✅ aviso + se excluyen del total y bloquean el pago |
+| 41 | Subastas | La lista redibujaba toda la pantalla cada segundo por la cuenta regresiva | ✅ `NcCountdown` por tarjeta |
+| 42 | Subastas | La app exigía +5 % para pujar; el backend acepta cualquier monto mayor al actual | ✅ regla real + montos sugeridos (+5/+10/+20 %) |
+| 43 | Subastas | Al crear decía "Subasta abierta" pero queda PENDIENTE hasta aprobación | ✅ "Enviada a revisión" |
+| 44 | Subastas | Una subasta pendiente se mostraba como "cerrada" | ✅ fases: en revisión, próximamente, en vivo, finalizada, cancelada |
+| 45 | Historial | Pestañas con texto inactivo fijo en blanco (invisible en modo claro) | ✅ |
+| 46 | Subastas | La tarjeta mostraba el precio base aunque hubiera pujas (`total_pujas` no existe) | ✅ usa `current_price` y el líder |
+| 47 | Eventos | Solo llegaba la 1.ª página (sin `page_size`) → calendario incompleto | ✅ `page_size=100`, orden por fecha |
+| 48 | Eventos | "Convocatoria" no existe en el backend (se guardaba como "Otro"); faltaba "Espectáculo" en preferencias | ✅ tipos reales |
+| 49 | Eventos | El filtro "por artista" nunca encontraba nada (el backend no tiene artistas en eventos) | ✅ búsqueda por nombre, lugar o descripción |
+| 50 | Eventos | Un evento en curso se marcaba como pasado (usaba la fecha de inicio) | ✅ usa `end_date` |
+| 51 | Eventos | Cambiar de calendario a lista mezclaba eventos pasados | ✅ se cargan todos y la vista decide; botón "Ver pasados" |
+| 52 | Publicar evento | Campo "artistas" que nunca se enviaba; duración fija de 2 h; decía "publicado" aunque quedara en borrador | ✅ sin campo, duración elegible, aviso de borrador |
+| 53 | Eventos | Gestores veían borradores mezclados sin distinguir | ✅ insignia "Borrador" |
+| 54 | Músicos | Búsqueda con 1 petición por letra | ✅ espera 450 ms |
+| 55 | Músicos | Las obras mostraban ícono de audio pero no se podían escuchar; enlaces de YouTube/Spotify/SoundCloud sin usar | ✅ botones para abrirlos |
+| 56 | Músicos | No había forma de escribir reseñas (el backend sí lo permite) | ✅ hoja con estrellas y comentario |
+| 57 | Subir obra | Duración en segundos sueltos | ✅ formato min:seg (3:45) |
+| 58 | Perfil | Todos los artistas públicos salían como verificados (se leía `is_public` como verificado) | ✅ solo `is_verified` |
+| 59 | Perfil público | El botón siempre decía "Seguir" aunque ya la siguieras (`ArtistProfileSerializer` no trae `is_following`) | ✅ se deduce de `artists/following/`, conteo optimista |
+| 60 | Perfil público | Podías seguir tu propio perfil | ✅ en tu perfil aparece "Editar perfil" |
+| 61 | Tema | Si el llavero del teléfono fallaba, leer el tema lanzaba una excepción | ✅ se usa el tema por defecto |
+| 62 | Editar perfil | Usaba disciplinas distintas a las del onboarding y la web; con "Pintor", "Artesano"… el desplegable se rompía al abrir | ✅ lista compartida (`disciplinas.dart`), conserva valores desconocidos |
+| 63 | Editar perfil | La foto nueva no se veía: se limpiaba la caché de `NetworkImage` y el avatar usa `CachedNetworkImage` | ✅ |
+| 64 | Editar perfil | No se podía quitar el sitio web; enlaces sin `https://` los rechazaba el backend sin explicar | ✅ se envía vacío; se completa `https://` y se entiende `@usuario` |
+| 65 | Editar perfil | Si fallaba el perfil musical igual decía "actualizado" | ✅ aviso claro |
+| 66 | Editar perfil | El municipio (`city`) no se podía editar | ✅ |
+| 67 | Editar perfil | Salir con cambios sin guardar los perdía sin avisar | ✅ confirmación |
+| 68 | Música | Solo "Música" con tilde exacta contaba como músico ("Musica"/"Músico" de la web no) | ✅ `esDisciplinaMusical` |
+| 69 | Estadísticas | "Visitas este mes" y "Nuevos seguidores" eran 0 fijos en el código, mostrados como datos reales | ✅ solo cifras reales: vistas, seguidores, obras, vendidas |
+| 70 | Estadísticas | Ingresos sumaban el total de la orden, no lo del artista | ✅ usa `montoVenta` (`seller_amount` si viene) |
+| 71 | Estadísticas | Las obras más vistas no abrían (el id UUID se leía como número) | ✅ |
+| 72 | Estadísticas | Un error mostraba todo en cero en vez de avisar | ✅ estado de error con reintento |
+| 73 | Cuenta | El backend permite cambiar la contraseña (`PATCH users/me/password/`) pero la app no tenía cómo | ✅ pantalla nueva en Configuración |
+| 74 | Eliminar cuenta | Tras eliminar, el perfil anterior quedaba en memoria | ✅ se limpia antes de volver al login |
+| 75 | Privacidad | "Ejercer mis derechos" no hacía nada en Android 11+ (`canLaunchUrl(mailto)` da false sin `<queries>`) | ✅ abre el correo directo o copia la dirección |
+| 76 | Privacidad | El texto legal no coincidía con el backend (bcrypt, token de 15 min, bloqueo tras 5 intentos, fecha de aceptación guardada, retención de 5 años, OpenAI, dispositivo y ubicación) y faltaba la Sección 5 | ✅ v1.1 alineada con el backend y secciones 1–9 |
+| 77 | Eliminar cuenta (backend) | Si una artista ya vendió obras, borrar su cuenta da 500: `Artwork` cae en cascada pero `OrderItem.artwork` es `PROTECT` | 🚫 nota al equipo de back |
+| 78 | Chatbot | El historial se enviaba con rol `assistant` y Gemini solo acepta `user`/`model`: desde el 2.º mensaje respondían las reglas de respaldo | ✅ se envía `model` |
+| 79 | Chatbot | Con la IA caída el backend manda una respuesta de respaldo (503 + `reply`) y la app mostraba "No se pudo conectar" | ✅ se muestra el respaldo; 429 con mensaje claro |
+| 80 | Chatbot | Las respuestas mostraban el markdown crudo (`**`, `*`) | ✅ negritas, viñetas y títulos |
+| 81 | Chatbot | Al reintentar, el desplazamiento pasaba del final y bloqueaba los toques un momento | ✅ |
+| 40 | Ventas | Una orden con obras de varios artistas sumaba el total completo | ✅ `seller_amount` e ítems del artista (#173) |
+
+---
+
+## Fase 3 — Nueva interfaz (por pantallas) ✅
+
+Fuente: `narino_cultura_movil_1_design_system.html` y `narino_cultura_movil_2_inicio.html`.
+
+### Tokens del design system
+| Token | Oscuro (por defecto) | Claro |
+|---|---|---|
+| bg | `#050505` | `#F5F5F7` |
+| bg-card | `#121214` | `#FFFFFF` |
+| bg-glass | `rgba(18,18,20,.72)` | `rgba(255,255,255,.78)` |
+| text-primary | `#F5F5F7` | `#1D1D1F` |
+| text-secondary | `#86868B` | `#6E6E73` |
+| border | `rgba(255,255,255,.08)` | `rgba(0,0,0,.06)` |
+| tomate | `#FF3300` | `#FF3300` |
+| naranja-neón | `#FF6600` | `#FF6600` |
+| azul-neón (acción principal) | `#00E5FF` | `#0055FF` |
+| oro-tierra | `#D4AF37` | `#B8860B` |
+| magenta | `#FF0055` | `#E50050` |
+
+- Tipografía **Inter** 300–800; títulos 800 con letter-spacing negativo (-0.04em).
+- Botón primario: píldora, 48 px alto, fondo azul-neón, texto negro (blanco en claro), glow en oscuro.
+- Botón secundario: píldora, borde `border`, fondo blanco 10 % (negro 5 % en claro).
+- Tarjetas: radio 22, borde 1 px; en oscuro **borde degradado azul→naranja**.
+- Ítem de agenda: radio 16, hora en naranja 12/700, título 15/600, desc 13 secundaria.
+- Fondo "carnaval": orbes difuminados (tomate, naranja, azul, magenta) + formas (sol, nota, lente) + partículas de talco, con parallax.
+- Header y tabbar en vidrio (blur 20–24). Tab activa en azul-neón. Toast píldora.
+- Logo: cuadro 34 px radio 10 con "N" sobre degradado naranja→magenta.
+
+### Referencia web (`Front/`, traído de `main`)
+- La web **todavía usa la paleta vieja** (tierra/oro, Playfair Display + DM Sans, `DESIGN_SYSTEM.md`).
+  El diseño nuevo "Carnaval" solo existe en los dos HTML → la app móvil es la primera en adoptarlo.
+- Se usa como referencia de **contenido y flujos**, no de estilo.
+
+Guía completa de color y componentes: **`docs/DISENO_CARNAVAL.md`**.
+
+### Cómo quedó montado
+- `core/theme/app_colors.dart`: paleta nueva + **alias de nombres viejos** (`tierraProfunda`, `oroClaro`…) apuntando a los nuevos colores, para que ninguna pantalla se rompa mientras se migran.
+- `core/theme/nc_theme.dart`: `context.nc` → tokens que cambian claro/oscuro (`nc.azul`, `nc.bgCard`, `nc.border`, `nc.glow`, `nc.borderGradient`…).
+- `core/theme/app_typography.dart`: todo en **Inter** (antes Playfair/DM Sans/Cormorant).
+- `core/theme/app_theme.dart`: botones píldora 48 px, tarjetas radio 22, inputs radio 14, snackbar tipo toast, etc.
+- `shared/widgets/design/`: `CarnavalBackground`, `NcCard` (borde degradado en oscuro), `NcGlassHeader`, `NcBrand`, `NcIconButton`, `NcEventItem`, `NcTabBar`, `NcPressable`, `NcSectionHeader`.
+- Codemod: se quitó el AppBar fijo "oscuro + dorado" de 39 pantallas (ahora toman el tema). Las barras sobre imagen se dejaron igual.
+- Modo por defecto: **oscuro** (como el diseño). Botón ☀️/🌙 en el header de Inicio.
+- `test/_preview/home_preview_test.dart`: genera capturas PNG con la fuente real (se salta en la suite normal).
+
+### Pantallas
+| Pantalla | Estado |
+|---|---|
+| Tema global (colores, tipografía, botones, inputs, tarjetas) | ✅ |
+| Shell: tabbar vidrio + fondo carnaval con parallax | ✅ |
+| Inicio (hero, disciplinas en carrusel, obras destacadas, agenda con calendario) | ✅ datos reales, sin mocks |
+| Tarjeta de obra compartida (`ArtworkCard`) | ✅ |
+| Login / Registro / Recuperar / Verificar correo | ✅ `AuthScaffold` común; registro con elección de rol y medidor de contraseña |
+| Perfil artístico (onboarding del artista) | ✅ disciplinas con color propio, paso 2 musical con chips |
+| Catálogo + filtros + Detalle de obra + Publicar/Editar + Mis obras | ✅ |
+| Tienda / Carrito / Pago / Resultado / Favoritos / Compras / Orden / Ventas | ✅ acento naranja, códigos cortos de orden, estados en lenguaje claro |
+| Subastas (lista, detalle, crear, historial) | ✅ oro + tomate en vivo, cuenta regresiva propia, barra de puja con montos sugeridos |
+| Eventos (lista/calendario, detalle, publicar) | ✅ tomate, color por tipo, calendario compartido con Inicio |
+| Músicos / Detalle / Subir obra / Descubrimiento musical | ✅ azul, seguir confiable, reseñas y enlaces para escuchar |
+| Perfil: Mi perfil, público, editar, siguiendo, estadísticas, contraseña, eliminar cuenta, privacidad | ✅ portafolio, correo y sesiones quedan "Pronto" (sin backend) |
+| Notificaciones | ✅ color por tipo, agrupadas por fecha, filtro sin leer |
+| Chatbot | ✅ bienvenida con sugerencias por color, burbujas, markdown, reintentar y nueva conversación |
+
+---
+
+## Organización del código 🗂️
+Convención (2026-11-14): **una clase por archivo** (un widget va con su `State`).
+
+| Qué | Dónde |
+|---|---|
+| Pantalla | `presentation/screens/x_screen.dart`, solo arma las piezas y maneja el estado |
+| Piezas de una pantalla (secciones, tarjetas, filas) | `presentation/screens/x_screen/<pieza>.dart` |
+| Kits de UI de un módulo (`musica_ui`, `tienda_ui`, `subasta_ui`, `cuenta_ui`, `auth_fields`) | `presentation/widgets/<kit>/<widget>.dart`; `<kit>.dart` es un *barrel* que los exporta |
+| Design system | `shared/widgets/design/nc_*.dart` (uno por componente), todo exportado por `design.dart` |
+| Diálogos comunes | `shared/widgets/dialogs/` (`confirmarAccion`, `elegirOrigenFoto`) |
+| Modelos y estados | `domain/` (uno por archivo; el archivo original reexporta para no romper imports) |
+| Providers | `presentation/providers/`, un notifier por archivo junto a su provider |
+| Rutas y pestañas | `core/router/app_router.dart`, `main_shell.dart`, `shell_tab.dart` |
+
+Resultado: 355 archivos, ninguno con más de una clase, 83 líneas en promedio. Los tres que pasan de 300
+(`edit_profile_screen`, `publish_artwork_screen`, `profile_service`) son lógica de formulario/servicio, no UI.
+
+---
+
+## Inspección final (2026-11-06) 🔍
+| Revisión | Resultado |
+|---|---|
+| `flutter analyze` / pruebas | ✅ sin problemas · 365 pruebas |
+| Código muerto (alcance desde `main.dart`) | ✅ 5 archivos sin uso eliminados |
+| Rutas: cada `push`/`go` tiene su `GoRoute` | ✅ 50 rutas, ninguna rota |
+| Estrés: 320 px + texto al 130 % en todas las capturas | ✅ 6 desbordes corregidos (cabecera, pastillas, orden, evento, sugerencias del chat) |
+| Restos de la paleta vieja | ✅ avisos de eventos y piezas del detalle de obra migrados; quedan solo correo/sesiones/portafolio (ocultos como "Pronto") |
+| Avisos de eventos sin endpoint | ✅ guarda en el teléfono en vez de fallar |
+| Sesión | ✅ una sola renovación concurrente; listo si el backend rota el refresh |
+| Nombre de la app en el teléfono | ✅ "Nariño Cultura" (era `narino_mobile`) |
+| Compilar APK | ⚠️ Android Studio trae **Java 25** y Gradle 8.12 no lo soporta. Con Java 21: `flutter config --jdk-dir "C:\Program Files\Java\jdk-21.0.11"` y luego `flutter build apk` |
+
+---
+
+## Casos de prueba MO-* (2026-11-16) 🧪
+Auditoría de los 23 issues abiertos del hito "Pruebas Testing" contra el código y arreglo de los huecos.
+Detalle por issue en `SEGUIMIENTO/ISSUES_PRUEBAS.md` (fuera del repo).
+
+| Arreglo | Issues | Commit |
+|---|---|---|
+| Mensajes de error: `core/network/api_error.dart` único (tiempo agotado vs sin conexión, nunca HTML/traceback), login y registro dicen qué hacer, `sendTimeout` | #127 #133 | `8928d06` |
+| Aviso "sin conexión" con Reintentar en Inicio; `NcBanner` con acción | #125 | `589dc2a` |
+| Sesión expirada → login automático (`SessionExpiry` + `refreshListenable`), `resetUserSession` limpia todo lo del usuario, el interceptor no cierra sesión por un timeout | #140 #131 | `e2fa4bf` |
+| Rejillas de obras con columnas según ancho (`ncArtworkGridDelegate`) | #136 | `19dd7d1` |
+| Favoritos optimistas con candado por obra, errores visibles, estado de error con Reintentar | #76 #129 #131 | `6a15f0c` |
+| Accesibilidad: acción de toque en 25 `Semantics`, `NcTapTarget` 48×48, contraste AA en ambos modos | #121–#124 | `058751d` |
+| Catálogo con scroll infinito, sin respuestas fuera de orden, sin blur por tarjeta | #130 #131 | `53e7fbb` |
+| Recarga automática al volver la red (`connectivity_plus`) | #126 | `eda28d8` |
+
+Quedan para un celular físico: TalkBack (#122), traceroute (#128), red lenta (#129), interrupciones (#120),
+datos límite (#119), compra sin instrucciones (#132), Android 7 y 14 (#134, #135), y la verificación con
+`adb` de #137–#139 (el código ya cumple). #134 debe corregirse a **API 24** (minSdk real).
+
+---
+
+## Mejoras sugeridas 💡
+- ✅ Hecho en main (#172–#177): músicos, datos de subasta + pujas + filtros, cancelar inscripción, `seller_amount`, `/artists/me/`, filtros del catálogo, detalle de orden y reenvío de verificación. Ya conectado en la app.
+- Pendiente en backend: `ai/generate-description/`, `notifications/event-preferences/`, portafolio, `change-email`, `sessions` (contratos enviados al equipo).
+- Eliminar cuenta de artistas con ventas (ver #77): decidir si se anonimiza o se conserva la orden.
+- Archivos de build trackeados en git (`narino_mobile/android/build/...`) → sacarlos con `.gitignore`.
+
+## Bitácora
+- 2026-11-05 — Sync de backend desde `main` + re-aplicado fix músicos. 260 tests OK. `flutter analyze` sin issues. Auditoría de contrato.
+- 2026-11-05 — Fase 2: arreglados #1, #2, #4, #5, #6, #9, #11–#14, #16, #20, #21. `flutter analyze` limpio, **352/352 tests OK**.
+  Siguiente: Fase 3 (tema global → shell → Inicio).
+- 2026-11-06 — Traída la carpeta `Front/` de `main`. Fase 3 arrancada: tema global, componentes, shell e Inicio.
+  Arreglados además #22–#25 (roles y permisos). `flutter analyze` limpio, 352/352 tests OK.
+  Pendiente visual: las pantallas restantes aún tienen fondo sólido (el carnaval solo se ve en Inicio) y
+  algunos banners oscuros con texto dorado (login, registro, tienda, perfil) que se rehacen pantalla por pantalla.
+- 2026-11-06 — Sistema de color carnaval para claro/oscuro (tintas con contraste ≥ 4.5:1, acento por sección,
+  serpentina) en `nc_theme.dart` + guía `docs/DISENO_CARNAVAL.md`. Rediseñadas las 4 pantallas de acceso.
+  Arreglados #26–#28. 352/352 tests OK.
+- 2026-11-06 — Rediseño módulo de obras: perfil artístico, catálogo, filtros, detalle, publicar/editar, mis obras.
+  Arreglados #29–#35. 352/352 tests OK. Siguiente: Tienda (carrito, checkout, favoritos, compras, ventas).
+- 2026-11-06 — Commits organizados y push a `mobile-Valery`. Rediseño de la Tienda completa (8 pantallas).
+  Arreglados #36–#39. Siguiente: Subastas.
+- 2026-11-06 — Arreglo de backend para ventas por artista (`SaleSerializer`, `seller_amount`, artista e imagen por ítem) probado (262 tests) y entregado como nota; la app ya lo soporta. Rediseño de Subastas. Arreglados #41–#46. Siguiente: Eventos.
+- 2026-11-06 — Rediseño de Eventos (agenda, detalle, publicar) y calendario compartido `NcMonthCalendar`. Arreglados #47–#53. Siguiente: Músicos.
+- 2026-11-06 — Rediseño de Músicos, detalle, subir obra y Descubrimiento musical. Arreglados #18, #54–#57. Siguiente: Perfil.
+- 2026-11-06 — Rediseño del módulo de Perfil completo (8 pantallas) y nueva pantalla Cambiar contraseña. Arreglados #58–#75. Siguiente: Notificaciones y Chatbot.
+- 2026-11-06 — Política de privacidad v1.1 alineada con el backend. Bandeja de Notificaciones rediseñada. Backend sincronizado con main (#171–#177) y conectado en la app: subastas, eventos, catálogo, `/artists/me/`, carrito y favoritos. Siguiente: Chatbot.
+- 2026-11-06 — Rediseño del Chatbot y arreglos #78–#81. Con esto queda rediseñada toda la app.
+- 2026-11-06 — Inspección final: código muerto, rutas, estrés de letra grande, avisos de eventos, sesión y nombre de la app. Ver sección "Inspección final".
+- 2026-11-14 — Reorganización: una clase por archivo en toda la app (pantallas, kits, design system, modelos y providers); secciones grandes de 14 pantallas extraídas; diálogos y listas repetidas centralizados. Sin cambios de comportamiento: 365 pruebas OK.
+- 2026-11-16 — Casos de prueba MO-*: 8 arreglos (errores, sin conexión, sesión expirada, rejillas, favoritos, accesibilidad, paginación, reconexión). `flutter analyze` limpio, **412 pruebas OK** (47 nuevas). Ver sección "Casos de prueba MO-*".

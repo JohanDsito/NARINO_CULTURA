@@ -1,0 +1,154 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
+
+import '../../../core/network/api_error.dart';
+import '../domain/profile_model.dart';
+import '../domain/portfolio_item_model.dart';
+import 'profile_service.dart';
+
+/// Repositorio de perfil: lectura/edición del perfil y manejo de portafolio y seguimientos.
+class ProfileRepository {
+  ProfileRepository({ProfileService? service})
+      : _service = service ?? ProfileService();
+
+  final ProfileService _service;
+
+  Future<ProfileModel?> getMyProfile() async {
+    try {
+      final data = await _service.getMyProfile();
+      return ProfileModel.fromJson(data);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return null;
+      throw _parseDioError(e);
+    }
+  }
+
+  Future<ProfileModel> updateMyProfile({
+    String? nombreArtistico,
+    String? disciplina,
+    String? biografia,
+    File? foto,
+    Map<String, String>? redesSociales,
+    String? artistId,
+    String? ciudad,
+  }) async {
+    try {
+      final data = await _service.updateMyProfile(
+        nombreArtistico: nombreArtistico,
+        disciplina: disciplina,
+        biografia: biografia,
+        foto: foto,
+        redesSociales: redesSociales,
+        artistId: artistId,
+        ciudad: ciudad,
+      );
+      return ProfileModel.fromJson(data);
+    } on DioException catch (e) {
+      throw _parseDioError(e);
+    }
+  }
+
+  Future<ProfileModel> getProfileById(String id) async {
+    try {
+      final data = await _service.getProfileById(id);
+      return ProfileModel.fromJson(data);
+    } on DioException catch (e) {
+      throw _parseDioError(e);
+    }
+  }
+
+  Future<List<PortfolioItemModel>> getPortfolio(String profileId) async {
+    try {
+      final data = await _service.getPortfolio(profileId);
+      return data
+          .whereType<Map>()
+          .map((e) => PortfolioItemModel.fromJson(
+              e.map((k, v) => MapEntry(k.toString(), v))))
+          .toList()
+        ..sort((a, b) => a.orden.compareTo(b.orden));
+    } on DioException catch (e) {
+      throw _parseDioError(e);
+    }
+  }
+
+  Future<PortfolioItemModel> addPortfolioItem({
+    required String profileId,
+    required File file,
+    required String tipo,
+    String? titulo,
+    String? descripcion,
+  }) async {
+    try {
+      final data = await _service.addPortfolioItem(
+        profileId: profileId,
+        file: file,
+        tipo: tipo,
+        titulo: titulo,
+        descripcion: descripcion,
+      );
+      return PortfolioItemModel.fromJson(data);
+    } on DioException catch (e) {
+      throw _parseDioError(e);
+    }
+  }
+
+  Future<PortfolioItemModel> updatePortfolioItemOrder({
+    required String profileId,
+    required String itemId,
+    required int orden,
+  }) async {
+    try {
+      final data = await _service.updatePortfolioItem(
+        profileId,
+        itemId,
+        {'orden': orden},
+      );
+      return PortfolioItemModel.fromJson(data);
+    } on DioException catch (e) {
+      throw _parseDioError(e);
+    }
+  }
+
+  Future<void> deletePortfolioItem(String profileId, String itemId) async {
+    try {
+      await _service.deletePortfolioItem(profileId, itemId);
+    } on DioException catch (e) {
+      throw _parseDioError(e);
+    }
+  }
+
+  Future<ProfileModel> followArtist(String profileId) async {
+    try {
+      final data = await _service.followArtist(profileId);
+      return ProfileModel.fromJson(data);
+    } on DioException catch (e) {
+      throw _parseDioError(e);
+    }
+  }
+
+  Future<ProfileModel> unfollowArtist(String profileId) async {
+    try {
+      final data = await _service.unfollowArtist(profileId);
+      return ProfileModel.fromJson(data);
+    } on DioException catch (e) {
+      throw _parseDioError(e);
+    }
+  }
+
+  Future<List<ProfileModel>> getMyFollowing() async {
+    try {
+      final data = await _service.getMyFollowing();
+      return data
+          .whereType<Map>()
+          .map((e) =>
+              ProfileModel.fromJson(e.map((k, v) => MapEntry(k.toString(), v))))
+          .toList();
+    } on DioException catch (e) {
+      throw _parseDioError(e);
+    }
+  }
+
+  String _parseDioError(DioException e) =>
+      ApiError.message(e);
+}
