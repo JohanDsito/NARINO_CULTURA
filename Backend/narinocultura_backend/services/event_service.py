@@ -179,9 +179,14 @@ class EventService:
             if meridiem == "am" and hour == 12:
                 hour = 0
 
-        candidate = datetime(year, month, day, hour, minute, tzinfo=ZoneInfo(getattr(settings, "TIME_ZONE", "America/Bogota")))
-        if candidate < now and not date_match.group(3):
-            candidate = candidate.replace(year=year + 1)
+        try:
+            candidate = datetime(year, month, day, hour, minute, tzinfo=ZoneInfo(getattr(settings, "TIME_ZONE", "America/Bogota")))
+            if candidate < now and not date_match.group(3):
+                candidate = candidate.replace(year=year + 1)
+        except ValueError:
+            # Fecha u hora imposible en el flyer ("31 de febrero", "30 pm", 29 de febrero del año siguiente):
+            # se deja sin fecha para que el organizador la escriba, en vez de responder 500.
+            return None
         return candidate
 
     @staticmethod

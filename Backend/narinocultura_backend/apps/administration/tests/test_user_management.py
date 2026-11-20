@@ -1,5 +1,4 @@
 """Gestión de usuarios y registros de notificaciones desde el panel de administración."""
-import unittest
 from datetime import timedelta
 from decimal import Decimal
 from unittest.mock import patch
@@ -114,9 +113,6 @@ class AdminUserDetailTests(APITestCase):
         r = self.client.get(f"{USERS_URL}00000000-0000-0000-0000-000000000000/")
         self.assertEqual(r.status_code, 404)
 
-    # BUG: AdminUserDetailAPIView (apps/administration/views.py:74) usa el destroy genérico y no
-    # captura ProtectedError: borrar a un artista con obras vendidas (OrderItem.artwork PROTECT) da 500.
-    @unittest.expectedFailure
     def test_delete_artist_with_sold_artworks_returns_conflict(self):
         artwork = ArtworkFactory(status="VENDIDA")
         order = Order.objects.create(buyer=UserFactory(), total_amount=Decimal("150000.00"))
@@ -124,6 +120,9 @@ class AdminUserDetailTests(APITestCase):
         self.client.raise_request_exception = False
         r = self.client.delete(f"{USERS_URL}{artwork.artist.user_id}/")
         self.assertEqual(r.status_code, 409)
+        self.assertEqual(r.data["code"], "user_has_sales")
+        self.assertTrue(User.objects.filter(id=artwork.artist.user_id).exists())
+        self.assertTrue(OrderItem.objects.filter(order=order).exists())
 
     def test_non_admin_cannot_manage_users(self):
         self.client.force_authenticate(user=self.user)

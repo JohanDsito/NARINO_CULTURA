@@ -1,6 +1,5 @@
 """Ciclo de vida de la cuenta: registro, verificación, tokens, perfil propio, contraseña y baja."""
 import io
-import unittest
 from datetime import timedelta
 from decimal import Decimal
 from unittest.mock import patch
@@ -235,14 +234,24 @@ class DeleteAccountWithSalesTests(APITestCase):
         self.client.force_authenticate(user=self.artist)
 
     def test_account_and_sales_history_are_preserved(self):
-        with self.assertLogs("apps.users.views", level="ERROR"):
+        # Es un caso esperado (409), no una falla del servidor: se registra como INFO, no como ERROR
+        with self.assertLogs("apps.users.views", level="INFO") as logs:
             self.client.delete(self.URL, {"password": PASSWORD}, format="json")
+        self.assertEqual([r.levelname for r in logs.records], ["INFO"])
         self.assertTrue(User.objects.filter(id=self.artist.id).exists())
         self.assertTrue(OrderItem.objects.filter(artwork=self.artwork).exists())
 
-    # BUG: DeleteAccountAPIView (apps/users/views.py:297-302) captura el ProtectedError genérico y
-    # responde 500 "Intenta más tarde", aunque reintentar nunca funcionará; debería ser un 409 explicativo.
-    @unittest.expectedFailure
+    def test_unexpected_error_still_returns_500_and_keeps_the_account(self):
+        with (
+            patch("apps.users.models.User.delete", side_effect=RuntimeError("base de datos caída")),
+            self.assertLogs("apps.users.views", level="ERROR"),
+        ):
+            r = self.client.delete(self.URL, {"password": PASSWORD}, format="json")
+        self.assertEqual(r.status_code, 500)
+        self.assertTrue(User.objects.filter(id=self.artist.id).exists())
+
     def test_delete_account_with_sold_artworks_returns_conflict(self):
         r = self.client.delete(self.URL, {"password": PASSWORD}, format="json")
         self.assertEqual(r.status_code, 409)
+        self.assertEqual(r.data["code"], "account_has_sales")
+        self.assertIn("obras vendidas", r.data["detail"])

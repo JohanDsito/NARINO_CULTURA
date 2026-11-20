@@ -1,5 +1,4 @@
 """Moderación de obras desde el panel de administración: pendientes, aprobar, rechazar y eliminar."""
-import unittest
 from decimal import Decimal
 
 from rest_framework.test import APITestCase
@@ -94,15 +93,14 @@ class ModerateArtworkTests(APITestCase):
     def test_delete_unknown_artwork_returns_404(self):
         self.assertEqual(self.client.delete(moderate_url(UNKNOWN_ID)).status_code, 404)
 
-    # BUG: ModerateArtworkAPIView.delete (apps/administration/views.py:120) no captura ProtectedError
-    # como sí hace ArtworkViewSet.admin_delete; borrar una obra con órdenes responde 500 en vez de 409.
-    @unittest.expectedFailure
     def test_delete_artwork_with_orders_returns_409(self):
         order = Order.objects.create(buyer=UserFactory(), total_amount=Decimal("150000.00"))
         OrderItem.objects.create(order=order, artwork=self.artwork, price=Decimal("150000.00"))
         self.client.raise_request_exception = False
         r = self.client.delete(moderate_url(self.artwork.id))
         self.assertEqual(r.status_code, 409)
+        self.assertIn("órdenes de compra", r.data["detail"])
+        self.assertTrue(Artwork.objects.filter(id=self.artwork.id).exists())
 
     def test_non_admin_cannot_moderate_or_delete(self):
         for user in (self.artwork.artist.user, UserFactory()):

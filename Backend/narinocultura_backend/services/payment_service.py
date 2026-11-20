@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import logging
+import uuid
 from decimal import Decimal
 
 from django.conf import settings
@@ -130,6 +131,12 @@ class PaymentService:
 
         if not reference:
             raise ValueError("Webhook sin referencia de orden.")
+        try:
+            uuid.UUID(str(reference))
+        except ValueError:
+            # Referencias que no generó la plataforma (p. ej. links de pago creados en el panel de Wompi):
+            # filtrar por id con ellas lanzaba ValidationError y el webhook respondía 500.
+            raise ValueError("Orden no encontrada para la referencia recibida.") from None
 
         order = Order.objects.select_for_update().prefetch_related("items", "items__artwork").filter(id=reference).first()
         if not order:

@@ -1,4 +1,3 @@
-import unittest
 import uuid
 
 from django.test import TestCase
@@ -147,13 +146,9 @@ class WompiWebhookEdgeCaseTests(TestCase):
         self._refresh()
         self.assertEqual(self.order.status, Order.Status.PAGADO)
 
-    # BUG: services/payment_service.py:134 filtra Order por `id=reference` sin validar que la
-    # referencia sea un UUID. Un evento firmado con una referencia ajena (p. ej. un link de pago
-    # creado en el panel de Wompi) lanza django.core.exceptions.ValidationError, que la vista no
-    # captura: responde 500 y Wompi reintenta el evento indefinidamente. Debería responder 400.
-    @unittest.expectedFailure
     def test_non_uuid_reference_returns_400(self):
         client = APIClient(raise_request_exception=False)
         with self.assertLogs("django.request", level="WARNING"):
             r = client.post(WEBHOOK_URL, signed_wompi_event(self._transaction(reference="LINK-123")), format="json")
         self.assertEqual(r.status_code, 400)
+        self.assertEqual(r.data["detail"], "Orden no encontrada para la referencia recibida.")
