@@ -209,6 +209,13 @@ class EventFlyerExtractionTests(EventTestCase):
         self.assertEqual(r.status_code, 400)
         self.assertFalse(r.data["draft_created"])
 
+    def test_impossible_date_in_flyer_is_left_empty_instead_of_500(self):
+        flyer = "Concierto de música andina\nLugar: Teatro Imperial\n31 de febrero de 2031 8:00 pm"
+        r = self.as_user(self.manager).post(self.EXTRACT_URL, {"flyer_text": flyer}, format="json")
+        self.assertEqual(r.status_code, 200)
+        self.assertIsNone(r.data["suggested_event"]["start_date"])
+        self.assertEqual(r.data["suggested_event"]["title"], "Concierto de música andina")
+
     def test_empty_request_is_rejected(self):
         self.assertEqual(self.as_user(self.manager).post(self.EXTRACT_URL, {}, format="json").status_code, 400)
 

@@ -2,7 +2,7 @@ import logging
 import secrets
 from datetime import timedelta
 
-from django.db.models import Sum
+from django.db.models import ProtectedError, Sum
 from django.utils import timezone
 from rest_framework import generics, status
 from rest_framework.response import Response
@@ -76,6 +76,21 @@ class AdminUserDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAdmin]
     queryset = User.objects.all()
 
+    def destroy(self, request, *args, **kwargs):
+        try:
+            return super().destroy(request, *args, **kwargs)
+        except ProtectedError:
+            return Response(
+                {
+                    "detail": (
+                        "No se puede eliminar este usuario porque tiene obras vendidas. "
+                        "Suspéndelo (is_active = false) en su lugar."
+                    ),
+                    "code": "user_has_sales",
+                },
+                status=status.HTTP_409_CONFLICT,
+            )
+
 
 class PendingArtworksAPIView(generics.ListAPIView):
     permission_classes = [IsAdmin]
@@ -117,7 +132,14 @@ class ModerateArtworkAPIView(APIView):
         artwork = Artwork.objects.filter(id=pk).first()
         if not artwork:
             return Response({"detail": "Obra no encontrada."}, status=404)
-        artwork.delete()
+        try:
+            artwork.delete()
+        except ProtectedError:
+            # Mismo criterio que ArtworkViewSet.admin_delete: una obra con órdenes no se borra
+            return Response(
+                {"detail": "No se puede eliminar esta obra porque tiene órdenes de compra asociadas. Márcala como INACTIVA en su lugar."},
+                status=status.HTTP_409_CONFLICT,
+            )
         return Response(status=204)
 
 

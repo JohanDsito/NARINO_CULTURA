@@ -99,10 +99,8 @@ class MusicianProfile(TimeStampedUUIDModel):
         return slug
 
     def recalculate_popularity(self):
-        score = (
-            self.followers_count * 2
-            + self.works.aggregate(total_views=models.Sum("views_count"))["total_views"] or 0
-        )
+        total_views = self.works.aggregate(total_views=models.Sum("views_count"))["total_views"] or 0
+        score = self.followers_count * 2 + total_views
         MusicianProfile.objects.filter(pk=self.pk).update(popularity_score=score)
 
 

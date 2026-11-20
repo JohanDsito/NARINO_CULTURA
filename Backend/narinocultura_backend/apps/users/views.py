@@ -1,6 +1,7 @@
 import logging
 
 from django.db import transaction
+from django.db.models import ProtectedError
 from django.http import HttpResponse
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -293,6 +294,20 @@ class DeleteAccountAPIView(APIView):
                     "message": "Los datos asociados a tu perfil también han sido eliminados.",
                 },
                 status=status.HTTP_204_NO_CONTENT,
+            )
+        except ProtectedError:
+            # Las obras vendidas están protegidas por OrderItem: el historial de ventas debe conservarse,
+            # así que reintentar nunca funcionaría (antes respondía 500 "Intenta más tarde").
+            logger.info(f"Usuario {user_email} (ID: {user_id}) no puede eliminar su cuenta: tiene ventas.")
+            return Response(
+                {
+                    "detail": (
+                        "No puedes eliminar tu cuenta porque tienes obras vendidas: el historial de ventas "
+                        "debe conservarse. Escríbele al administrador para desactivarla."
+                    ),
+                    "code": "account_has_sales",
+                },
+                status=status.HTTP_409_CONFLICT,
             )
         except Exception as e:
             logger.error(f"Error al eliminar cuenta del usuario {user_email}: {str(e)}")

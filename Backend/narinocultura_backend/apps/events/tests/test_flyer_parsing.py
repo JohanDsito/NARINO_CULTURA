@@ -1,4 +1,3 @@
-import unittest
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 from zoneinfo import ZoneInfo
@@ -54,10 +53,6 @@ class FlyerDateParsingTests(TestCase):
         start = EventService._extract_start_date("3 de febrero de 2020 8 pm")
         self.assertEqual(start.year, 2020)
 
-    # BUG: services/event_service.py:182 construye datetime() sin validar el día: un flyer con
-    # "31 de febrero" (o una hora como "30 pm") lanza ValueError, que ni el servicio ni la vista
-    # extract_from_flyer capturan, y la API responde 500. Debería ignorar la fecha (None).
-    @unittest.expectedFailure
     def test_impossible_date_is_ignored(self):
         self.assertIsNone(EventService._extract_start_date("31 de febrero de 2031 8 pm"))
 
