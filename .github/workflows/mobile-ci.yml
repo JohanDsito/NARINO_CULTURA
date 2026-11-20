@@ -1,0 +1,72 @@
+name: Mobile CI
+
+# Git Flow: corre en los PR hacia main y develop y en cada push a esas ramas, solo si cambia la app
+# (también a pedido desde la pestaña Actions, una vez esté en main). Además de analizar y probar, compila
+# el APK y lo deja como artefacto: así se puede instalar en un celular Android y probar un PR antes de
+# fusionarlo.
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "narino_mobile/**"
+      - ".github/workflows/mobile-ci.yml"
+  push:
+    branches: [main, develop]
+    paths:
+      - "narino_mobile/**"
+      - ".github/workflows/mobile-ci.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: mobile-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: narino_mobile
+
+env:
+  FLUTTER_VERSION: "3.44.4"
+
+jobs:
+  analyze-test:
+    name: Análisis y tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: flutter analyze
+        run: flutter analyze
+      - name: flutter test
+        # Los generadores de capturas de test/_preview se saltan solos sin --dart-define=OUT
+        run: flutter test
+
+  apk:
+    name: APK de prueba
+    needs: analyze-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: flutter build apk --release
+        # Firmado con la llave de depuración hasta tener un keystore propio: sirve para probar, no para la tienda
+        run: flutter build apk --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: narino-cultura-apk-${{ github.run_number }}
+          path: narino_mobile/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 14

@@ -10,12 +10,6 @@ android {
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
-    externalNativeBuild {
-        cmake {
-            version = "3.31.6"
-        }
-    }
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -37,29 +31,10 @@ android {
     }
 
     buildTypes {
-        debug {
-            externalNativeBuild {
-                cmake {
-                    arguments(
-                        "-DCMAKE_C_COMPILER_FORCED=TRUE",
-                        "-DCMAKE_CXX_COMPILER_FORCED=TRUE",
-                    )
-                }
-            }
-        }
-
         release {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
-            externalNativeBuild {
-                cmake {
-                    arguments(
-                        "-DCMAKE_C_COMPILER_FORCED=TRUE",
-                        "-DCMAKE_CXX_COMPILER_FORCED=TRUE",
-                    )
-                }
-            }
         }
     }
 }
