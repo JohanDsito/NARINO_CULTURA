@@ -90,9 +90,18 @@ Correr lo mismo que corre el CI, en la carpeta del componente que se tocó:
 | Web (`Front/Narino_Front`) | `npm run typecheck` · `npm run lint` · `npm test` · `npm run build` |
 | App (`narino_mobile`) | `flutter analyze` · `flutter test` |
 
-El CI de GitHub Actions cubre el **backend** (`.github/workflows/backend-ci.yml`) y la **web**
-(`.github/workflows/frontend-ci.yml`): corre en los PR hacia `main` y `develop` y en cada push a esas ramas, solo cuando
-cambia su carpeta. La app se verifica localmente con la tabla anterior.
+El CI de GitHub Actions cubre los tres componentes y corre en los PR hacia `main` y `develop` y en cada push a esas
+ramas, solo cuando cambia su carpeta:
+
+| Workflow | Qué revisa |
+|---|---|
+| `backend-ci.yml` | ruff, migraciones, tests y cobertura (95 % global, 90 % por módulo crítico) |
+| `frontend-ci.yml` | typecheck, lint, tests y build de la web |
+| `mobile-ci.yml` | `flutter analyze`, `flutter test` y el **APK** de prueba |
+
+El APK queda como artefacto del run (pestaña *Actions* → el run → *Artifacts*) durante 14 días: sirve para instalarlo
+en un celular Android y probar un PR antes de aprobarlo. Está firmado con la llave de depuración, así que no sirve
+para publicar en la tienda.
 
 > En Windows las rutas no distinguen mayúsculas y en Linux sí: un import `@/pages/auth/...` hacia una carpeta `Auth/`
 > funciona en el equipo y rompe el build del despliegue. Para renombrar solo mayúsculas en Windows se usa un nombre
