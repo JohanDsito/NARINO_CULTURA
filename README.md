@@ -42,7 +42,7 @@ Reúne en un solo lugar a artistas, artesanos, músicos y gestores culturales co
                   canales WS)      vencimiento de órdenes,
                                    envío de notificaciones)
 
-Servicios externos: Wompi (pagos) · Cloudinary (archivos) · Microservicio de IA (FastAPI + Gemini)
+Servicios externos: Wompi (pagos) · Cloudinary (archivos) · Resend (correo) · Google Gemini y Groq (IA)
 ```
 
 | Capa | Tecnología |
@@ -52,7 +52,7 @@ Servicios externos: Wompi (pagos) · Cloudinary (archivos) · Microservicio de I
 | Base de datos | PostgreSQL (producción) · SQLite en memoria (pruebas) |
 | Web | React 19, TypeScript, Vite, Tailwind CSS, TanStack Query, Zustand |
 | Móvil | Flutter (Android), Riverpod, Dio, en la rama `mobile-Valery` |
-| IA | Microservicio FastAPI con Google Gemini y reglas de respaldo |
+| IA | Google Gemini (principal) y Groq (respaldo) por API REST desde Django, con reglas locales si no responden |
 | Integraciones | Wompi (pagos), Resend (correo), Cloudinary (multimedia) |
 | Despliegue | Railway: servicios `web`, `worker`, PostgreSQL y Redis |
 
@@ -69,7 +69,6 @@ NARINO_CULTURA/
 │   │   ├── config/              # settings/{base,production,development,test}.py, celery, asgi
 │   │   ├── templates/emails/    # Plantillas de correo
 │   │   └── tests/               # Factories y utilidades de prueba
-│   ├── ai_service/              # Microservicio de IA (FastAPI)
 │   ├── Dockerfile · Procfile    # Despliegue en Railway
 │   ├── requirements.txt         # Dependencias de producción
 │   └── requirements-dev.txt     # Producción + herramientas de prueba (CI y local)
@@ -118,7 +117,7 @@ ruff check --config ../pyproject.toml .
 | Pagos (Wompi) | `WOMPI_BASE_URL`, `WOMPI_PUBLIC_KEY`, `WOMPI_PRIVATE_KEY`, `WOMPI_INTEGRITY_KEY`, `WOMPI_EVENTS_SECRET` |
 | Correo | `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `EMAIL_FROM_NAME` |
 | Archivos | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` |
-| IA | `AI_SERVICE_URL` |
+| IA | `GEMINI_API_KEY`, `GROQ_API_KEY` (opcionales; sin ellas la IA responde con reglas) |
 | Subastas | `AUCTION_PAYMENT_HOURS` (plazo de pago del ganador, 48 h por defecto) |
 | Administrador inicial | `ADMIN_EMAIL`, `ADMIN_PASSWORD` (solo si el administrador no existe) |
 

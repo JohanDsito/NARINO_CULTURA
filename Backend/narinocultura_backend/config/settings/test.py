@@ -60,7 +60,8 @@ CELERY_TASK_ALWAYS_EAGER = True
 CELERY_TASK_EAGER_PROPAGATES = True
 
 # Las pruebas no dependen del .env local ni llaman a servicios externos reales
-AI_SERVICE_URL = ""
+GEMINI_API_KEY = ""
+GROQ_API_KEY = ""
 RESEND_API_KEY = ""
 BREVO_API_KEY = ""
 WOMPI_PUBLIC_KEY = ""

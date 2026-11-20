@@ -1,31 +1,21 @@
 """Búsqueda de músicos en lenguaje natural: filtros con IA, respaldo local y búsqueda libre."""
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-import httpx
+import requests
 from django.test import override_settings
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from services import ai_rules
+from tests import llm_fakes
 from tests.factories import MusicGenreFactory, MusicianProfileFactory
 
-AI_URL = "http://ai.test"
-
-
-def ai_client_returning(status_code=200, payload=None, error=None):
-    """Simula httpx.Client como gestor de contexto con la respuesta (o el error) indicado."""
-    client_cls = MagicMock()
-    post = client_cls.return_value.__enter__.return_value.post
-    if error is not None:
-        post.side_effect = error
-    else:
-        post.return_value.status_code = status_code
-        post.return_value.json.return_value = payload or {}
-    return client_cls
+LLM_POST = "services.llm.requests.post"
 
 
 class LocalRecommendationTests(APITestCase):
-    """Sin AI_SERVICE_URL la consulta se interpreta con palabras clave."""
+    """Sin llaves de IA la consulta se interpreta con palabras clave."""
 
     def setUp(self):
         self.url = reverse("music-recommendations")
@@ -93,15 +83,13 @@ class LocalRecommendationTests(APITestCase):
         self.assertEqual(self.names(response), ["Sabor Andino"])
 
     def test_parse_locally_maps_accents_and_variants(self):
-        from apps.music_discovery.views import MusicRecommendationView
-
-        filters = MusicRecommendationView()._parse_locally("dúo de chirimia en túquerres")
+        filters = ai_rules.music_filters("dúo de chirimia en túquerres")
         self.assertEqual(filters, {"genres": ["Chirimía"], "city": "Túquerres", "aggregation_type": "DUO"})
 
 
-@override_settings(AI_SERVICE_URL=AI_URL)
+@override_settings(**llm_fakes.KEYS)
 class AIRecommendationTests(APITestCase):
-    """Con AI_SERVICE_URL se delega el análisis al microservicio y, si falla, se usa el local."""
+    """Con IA configurada la consulta la interpreta el modelo y, si falla, se usan las reglas."""
 
     def setUp(self):
         self.url = reverse("music-recommendations")
@@ -112,48 +100,54 @@ class AIRecommendationTests(APITestCase):
         self.rocker = MusicianProfileFactory(artistic_name="Rockero", city="Ipiales")
         self.rocker.genres.add(rock)
 
-    def test_uses_filters_returned_by_ai(self):
+    @patch(LLM_POST)
+    def test_uses_filters_returned_by_ai(self, post):
         ai_filters = {"genres": ["Jazz"], "city": "Pasto", "aggregation_type": "TRIO"}
-        client_cls = ai_client_returning(payload=ai_filters)
-        with patch("apps.music_discovery.views.httpx.Client", client_cls):
-            response = self.client.post(self.url, {"query": "algo suave para la noche"}, format="json")
+        post.return_value = llm_fakes.gemini(ai_filters)
+        response = self.client.post(self.url, {"query": "algo suave para la noche"}, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["filters_applied"], ai_filters)
         self.assertEqual([r["artistic_name"] for r in response.data["results"]], ["Trío Galeras"])
-        client_cls.return_value.__enter__.return_value.post.assert_called_once_with(
-            f"{AI_URL}/music/recommendations", json={"query": "algo suave para la noche"}
-        )
+        prompt = post.call_args.kwargs["json"]["contents"][-1]["parts"][0]["text"]
+        self.assertIn("algo suave para la noche", prompt)
 
-    def test_ai_region_filter_is_applied(self):
+    @patch(LLM_POST)
+    def test_ai_region_filter_is_applied(self, post):
         self.rocker.region = "Putumayo"
         self.rocker.save()
-        with patch("apps.music_discovery.views.httpx.Client", ai_client_returning(payload={"region": "Putumayo"})):
-            response = self.client.post(self.url, {"query": "del sur"}, format="json")
+        post.return_value = llm_fakes.gemini({"region": "Putumayo"})
+        response = self.client.post(self.url, {"query": "del sur"}, format="json")
         self.assertEqual([r["artistic_name"] for r in response.data["results"]], ["Rockero"])
 
-    def test_falls_back_to_keywords_when_ai_answers_with_error_status(self):
-        with patch("apps.music_discovery.views.httpx.Client", ai_client_returning(status_code=500)):
-            response = self.client.post(self.url, {"query": "rock"}, format="json")
+    @patch(LLM_POST)
+    def test_genres_outside_the_catalog_are_discarded(self, post):
+        post.return_value = llm_fakes.gemini({"genres": ["Trap", "rock"], "aggregation_type": "ORQUESTA"})
+        response = self.client.post(self.url, {"query": "algo urbano"}, format="json")
+        self.assertEqual(response.data["filters_applied"], {"genres": ["Rock"]})
+
+    @patch(LLM_POST)
+    def test_falls_back_to_keywords_when_ai_answers_with_error_status(self, post):
+        post.return_value = llm_fakes.http_error(500)
+        response = self.client.post(self.url, {"query": "rock"}, format="json")
         self.assertEqual(response.data["filters_applied"], {"genres": ["Rock"]})
         self.assertEqual([r["artistic_name"] for r in response.data["results"]], ["Rockero"])
 
-    def test_falls_back_to_keywords_when_ai_is_unreachable(self):
-        error = httpx.ConnectError("sin conexión")
-        with patch("apps.music_discovery.views.httpx.Client", ai_client_returning(error=error)):
-            response = self.client.post(self.url, {"query": "jazz en pasto"}, format="json")
+    @patch(LLM_POST, side_effect=requests.ConnectionError("sin conexión"))
+    def test_falls_back_to_keywords_when_ai_is_unreachable(self, _post):
+        response = self.client.post(self.url, {"query": "jazz en pasto"}, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["filters_applied"], {"genres": ["Jazz"], "city": "Pasto"})
 
-    def test_falls_back_when_ai_returns_invalid_json(self):
-        client_cls = ai_client_returning()
-        client_cls.return_value.__enter__.return_value.post.return_value.json.side_effect = ValueError("no JSON")
-        with patch("apps.music_discovery.views.httpx.Client", client_cls):
-            response = self.client.post(self.url, {"query": "rock"}, format="json")
+    @patch(LLM_POST)
+    def test_falls_back_when_ai_returns_invalid_json(self, post):
+        post.return_value = llm_fakes.gemini("no es JSON")
+        response = self.client.post(self.url, {"query": "rock"}, format="json")
         self.assertEqual(response.data["filters_applied"], {"genres": ["Rock"]})
 
-    def test_falls_back_when_ai_returns_no_filters(self):
-        with patch("apps.music_discovery.views.httpx.Client", ai_client_returning(payload={})):
-            response = self.client.post(self.url, {"query": "trio"}, format="json")
+    @patch(LLM_POST)
+    def test_falls_back_when_ai_returns_no_filters(self, post):
+        post.return_value = llm_fakes.gemini({})
+        response = self.client.post(self.url, {"query": "trio"}, format="json")
         self.assertEqual(response.data["filters_applied"], {"aggregation_type": "TRIO"})
         self.assertEqual([r["artistic_name"] for r in response.data["results"]], ["Trío Galeras"])

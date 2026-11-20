@@ -5,10 +5,10 @@ from datetime import datetime, timedelta
 from typing import Any
 from zoneinfo import ZoneInfo
 
-import requests
 from django.conf import settings
 
 from apps.events.models import Event
+from services.ai_service import AIService
 
 
 class EventService:
@@ -44,47 +44,25 @@ class EventService:
 
     @staticmethod
     def extract_from_flyer(*, organizer, image_url: str = "", flyer_text: str = "") -> dict[str, Any]:
-        base_url = getattr(settings, "AI_SERVICE_URL", "").rstrip("/")
-        if base_url:
-            payload = {"image_url": image_url, "flyer_text": flyer_text}
-            try:
-                response = requests.post(
-                    f"{base_url}/events/extract-from-flyer",
-                    json=payload,
-                    timeout=20,
-                )
-                response.raise_for_status()
-                data = EventService._normalize_ai_extraction(response.json() if response.content else {})
-                data.setdefault("source", "ai_service")
-                data.setdefault("image_url", image_url)
-                data.setdefault("raw_text", flyer_text)
-                data["is_published"] = False if getattr(organizer, "role", None) == "ARTISTA" else bool(data.get("is_published", False))
-                return data
-            except requests.RequestException:
-                pass
-
+        """Propone los datos de un evento a partir del afiche. Con IA disponible se lee la imagen
+        y/o el texto; lo que la IA no encuentre (o todo, si no hay IA) se completa con la heurística.
+        La sugerencia nunca sale publicada: el organizador la revisa antes."""
         data = EventService._heuristic_extract(image_url=image_url, flyer_text=flyer_text)
         data["source"] = "heuristic"
-        data["is_published"] = False if getattr(organizer, "role", None) == "ARTISTA" else False
-        return data
 
-    @staticmethod
-    def _normalize_ai_extraction(data: Any) -> dict[str, Any]:
-        """La respuesta del microservicio de IA puede omitir campos o traer un tipo de evento
-        desconocido; se completa para que siempre tenga la forma del resultado heurístico."""
-        data = data if isinstance(data, dict) else {}
-        normalized = {
-            "title": "",
-            "description": "",
-            "event_type": Event.Type.OTRO,
-            "start_date": None,
-            "end_date": None,
-            "location": "",
-        }
-        normalized.update({key: value for key, value in data.items() if value is not None})
-        if normalized["event_type"] not in Event.Type.values:
-            normalized["event_type"] = Event.Type.OTRO
-        return normalized
+        suggestion = AIService.extract_event_from_flyer(image_url=image_url, flyer_text=flyer_text)
+        if suggestion:
+            data["source"] = "ai_service"
+            data["model_used"] = suggestion.pop("model_used")
+            if suggestion.get("event_type") == Event.Type.OTRO:
+                suggestion.pop("event_type")
+            if not suggestion.get("start_date"):
+                suggestion.pop("start_date", None)
+                suggestion.pop("end_date", None)
+            data.update({key: value for key, value in suggestion.items() if value})
+
+        data["is_published"] = False
+        return data
 
     @staticmethod
     def create_draft_from_extraction(*, organizer, extracted_data: dict[str, Any]) -> Event:

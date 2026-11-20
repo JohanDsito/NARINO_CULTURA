@@ -1,6 +1,6 @@
 """Acciones del artista sobre sus obras: catálogo propio, borrado por admin y mejora con IA."""
 from decimal import Decimal
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import requests
 from django.test import override_settings
@@ -8,6 +8,7 @@ from rest_framework.test import APITestCase
 
 from apps.artworks.models import Artwork
 from apps.marketplace.models import Order, OrderItem
+from tests import llm_fakes
 from tests.factories import AdminUserFactory, ArtistProfileFactory, ArtworkFactory, UserFactory
 
 URL = "/api/v1/artworks/"
@@ -159,34 +160,35 @@ class ArtworkAIEnhanceTests(APITestCase):
         self.assertEqual(r.status_code, 400)
         self.assertIn("regenerate_description", r.data)
 
-    def test_service_not_configured_returns_400(self):
-        # En test AI_SERVICE_URL está vacío: el servicio real responde con un error controlado
+    def test_without_providers_rules_answer(self):
+        # En test no hay llaves de IA: responden las reglas locales, sin error
         self.client.force_authenticate(user=self.owner)
-        r = self.client.post(self.url, {}, format="json")
-        self.assertEqual(r.status_code, 400)
-        self.assertEqual(r.data["detail"], "Servicio de IA no configurado.")
+        r = self.client.post(self.url, {"regenerate_description": True}, format="json")
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.data["model_used"], "rule-based")
+        self.assertIn("óleo", r.data["ai_tags"])
+        self.assertIn("«Volcán Galeras»", r.data["ai_description"])
 
-    @override_settings(AI_SERVICE_URL="http://ia.local/")
-    @patch("services.ai_service.requests.post")
-    def test_microservice_response_is_saved_on_artwork(self, mock_post):
-        mock_post.return_value = MagicMock(
-            content=b"{}", json=lambda: {"tags": {"tema": "volcan"}, "ai_description": "Paisaje andino"}
-        )
+    @override_settings(**llm_fakes.KEYS)
+    @patch("services.llm.requests.post")
+    def test_model_response_is_saved_on_artwork(self, mock_post):
+        mock_post.return_value = llm_fakes.gemini({"tags": ["volcán", "paisaje"], "description": "Paisaje andino"})
         self.client.force_authenticate(user=self.owner)
         r = self.client.post(self.url, {}, format="json")
         self.assertEqual(r.status_code, 200)
-        self.assertEqual(r.data, {"ai_tags": {"tema": "volcan"}, "ai_description": "Paisaje andino"})
-        self.assertEqual(mock_post.call_args.args[0], "http://ia.local/artworks/enhance")
+        self.assertEqual(
+            r.data, {"ai_tags": ["volcán", "paisaje"], "ai_description": "Paisaje andino", "model_used": "gemini"}
+        )
         self.artwork.refresh_from_db()
         self.assertEqual(self.artwork.ai_description, "Paisaje andino")
 
-    @override_settings(AI_SERVICE_URL="http://ia.local")
-    @patch("services.ai_service.requests.post", side_effect=requests.ConnectionError("caído"))
-    def test_microservice_down_returns_400(self, _mock_post):
+    @override_settings(**llm_fakes.KEYS)
+    @patch("services.llm.requests.post", side_effect=requests.ConnectionError("caído"))
+    def test_providers_down_still_returns_200_with_rules(self, _mock_post):
         self.client.force_authenticate(user=self.owner)
         r = self.client.post(self.url, {}, format="json")
-        self.assertEqual(r.status_code, 400)
-        self.assertEqual(r.data["detail"], "No fue posible contactar el microservicio de IA.")
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.data["model_used"], "rule-based")
 
     @patch("apps.artworks.views.AIService.enhance_artwork")
     def test_non_owner_gets_403(self, mock_enhance):

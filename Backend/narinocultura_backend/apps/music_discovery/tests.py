@@ -3,44 +3,13 @@ Tests para music_discovery app - Chat conversacional e IA.
 """
 from unittest.mock import patch
 
-import requests
 from django.core.cache import cache
-from django.test import TestCase, override_settings
+from django.test import override_settings
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
-from apps.music_discovery.views import ChatAPIView
 from apps.users.models import User
-from services.ai_client import AIServiceClient
-
-
-class AIServiceClientTests(TestCase):
-    """Tests para el cliente de AI Service."""
-
-    def setUp(self):
-        self.client_ai = AIServiceClient()
-
-    @patch("services.ai_client.requests.get")
-    def test_health_check_success(self, get):
-        """health_check devuelve True cuando el servicio responde {"status": "ok"}."""
-        get.return_value.json.return_value = {"status": "ok"}
-        get.return_value.raise_for_status.return_value = None
-        self.assertTrue(self.client_ai.health_check())
-
-    @patch("services.ai_client.requests.get", side_effect=requests.exceptions.ConnectionError)
-    def test_health_check_returns_false_when_service_is_down(self, _get):
-        self.assertFalse(self.client_ai.health_check())
-
-    def test_chat_with_empty_message_raises_error(self):
-        """Chat con mensaje vacío debe raise ValueError."""
-        with self.assertRaises(ValueError):
-            self.client_ai.chat("", session_id="user-1")
-
-    def test_chat_with_whitespace_only_raises_error(self):
-        """Chat con solo espacios debe raise ValueError."""
-        with self.assertRaises(ValueError):
-            self.client_ai.chat("   ", session_id="user-1")
 
 
 class ChatAPIViewTests(APITestCase):
@@ -67,14 +36,11 @@ class ChatAPIViewTests(APITestCase):
             format="json"
         )
         self.assertNotEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertIn(
-            response.status_code,
-            [status.HTTP_200_OK, status.HTTP_503_SERVICE_UNAVAILABLE]
-        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("reply", response.data)
 
     def test_chat_with_authenticated_user_success(self):
-        """Chat con usuario autenticado debe devolver 200/503 (depende AI Service)."""
+        """Chat con usuario autenticado responde 200 aunque no haya IA configurada."""
         self.client.force_authenticate(user=self.user)
 
         data = {
@@ -84,12 +50,9 @@ class ChatAPIViewTests(APITestCase):
 
         response = self.client.post(self.chat_url, data, format="json")
 
-        # Puede ser 200 (AI Service OK) o 503 (AI Service down)
-        # En ambos casos, la respuesta es válida
-        self.assertIn(
-            response.status_code,
-            [status.HTTP_200_OK, status.HTTP_503_SERVICE_UNAVAILABLE]
-        )
+        # Sin llaves de IA (settings de test) responde con reglas, nunca 503
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["model_used"], "rule-based")
 
     def test_chat_with_empty_message_fails(self):
         """Chat con mensaje vacío debe devolver 400."""
@@ -209,7 +172,7 @@ class ChatThrottleTests(APITestCase):
     def tearDown(self):
         cache.clear()
 
-    @patch.object(ChatAPIView.ai_client, "chat", return_value={"reply": "ok", "session_id": "anon", "model_used": "test"})
+    @patch("apps.music_discovery.views.AIService.chat", return_value={"reply": "ok", "session_id": "anon", "model_used": "test"})
     def test_eleventh_message_in_a_minute_is_throttled(self, _mock_chat):
         url = reverse("chat")
         for _ in range(10):
