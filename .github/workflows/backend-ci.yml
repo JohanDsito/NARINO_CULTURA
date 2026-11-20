@@ -1,13 +1,15 @@
 name: Backend CI
 
+# Git Flow: corre en los PR hacia main (release/* y hotfix/*) y hacia develop (feature/*),
+# y en cada push a esas dos ramas. Ver docs/FLUJO_GIT.md.
 on:
   pull_request:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - "Backend/**"
       - ".github/workflows/backend-ci.yml"
   push:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - "Backend/**"
       - ".github/workflows/backend-ci.yml"
