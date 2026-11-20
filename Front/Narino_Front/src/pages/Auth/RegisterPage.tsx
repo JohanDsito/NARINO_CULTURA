@@ -6,7 +6,7 @@ import { RegisterForm } from '@/components/auth/register-form'
 
 export default function RegisterPage() {
   return (
-    <div className="min-h-screen flex bg-background">
+    <div className="min-h-screen flex bg-bg">
       {/* Left Section - Welcome */}
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-center px-16 py-20 bg-gradient-to-br from-[#F7F3EE] via-[#F2F0EB] to-[#EDE8E1] dark:from-[#2A2016] dark:via-[#221C14] dark:to-[#1A1208]">
         <div className="flex items-center gap-3 mb-16">

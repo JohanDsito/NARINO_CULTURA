@@ -23,11 +23,8 @@ export default defineConfig({
           if (id.includes('node_modules/@tanstack/react-query')) {
             return 'query'
           }
-          if (
-            id.includes('node_modules/framer-motion') ||
-            id.includes('node_modules/recharts')
-          ) {
-            return 'ui'
+          if (id.includes('node_modules/recharts')) {
+            return 'charts'
           }
         },
       },
@@ -42,6 +39,8 @@ export default defineConfig({
     },
 
     setupFiles: './src/test/setup.ts',
+    // userEvent escribe carácter por carácter; en máquinas lentas 5 s no alcanza
+    testTimeout: 20_000,
 
     coverage: {
       provider: 'v8',

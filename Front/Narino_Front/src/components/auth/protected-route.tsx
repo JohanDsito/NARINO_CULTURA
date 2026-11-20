@@ -3,7 +3,7 @@ import { useLocation, Navigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 
 import { me } from '@/api/auth.api'
-import type { Role } from '@/types/auth'
+import type { Role } from '@/types'
 import { useAuthStore } from '@/store/authStore'
 import { PageLoader } from '@/components/layout/page-loader'
 
@@ -22,7 +22,7 @@ export function ProtectedRoute({
 
   const meQuery = useQuery({
     queryKey: ['auth', 'me'],
-    queryFn: me,
+    queryFn: () => me(),
     enabled: !!accessToken && !user,
     retry: false,
   })

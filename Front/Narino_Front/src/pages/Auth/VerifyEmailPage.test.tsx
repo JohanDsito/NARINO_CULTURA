@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 
 import { verifyEmail } from '@/api/auth.api'
-import VerifyEmailPage from '@/pages/Auth/VerifyEmailPage'
+import VerifyEmailPage from '@/pages/auth/VerifyEmailPage'
 
 vi.mock('@/api/auth.api', () => ({
   verifyEmail: vi.fn(),

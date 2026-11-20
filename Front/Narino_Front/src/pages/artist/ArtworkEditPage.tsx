@@ -33,7 +33,7 @@ export default function ArtworkEditPage() {
 
   const { data: categories = [] } = useQuery({
     queryKey: ['artwork-categories'],
-    queryFn: getArtworkCategories,
+    queryFn: () => getArtworkCategories(),
     staleTime: 60 * 60 * 1000,
   })
 
@@ -124,7 +124,7 @@ export default function ArtworkEditPage() {
               <select
                 id="category"
                 {...register('category')}
-                className="w-full rounded-input border border-border bg-surface px-3 py-2 font-body text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-oro/50"
+                className="w-full rounded-input border border-border bg-bg-card px-3 py-2 font-body text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-oro/50"
               >
                 <option value="">Sin categoría</option>
                 {categories.map((cat) => (

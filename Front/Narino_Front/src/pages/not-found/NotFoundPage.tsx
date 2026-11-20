@@ -10,7 +10,7 @@ export default function NotFoundPage() {
       description="La ruta que intentas abrir no existe o fue movida."
     >
       <div className="space-y-4">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-text-secondary">
           Revisa la URL o vuelve al inicio para continuar explorando Nariño Cultura.
         </p>
         <div className="flex flex-wrap gap-3">

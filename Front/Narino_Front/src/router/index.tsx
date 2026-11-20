@@ -26,29 +26,29 @@ export const router = createBrowserRouter([
       // ── Inicio ───────────────────────────────────────────────────────────
       {
         index: true,
-        element: lazyPage(() => import('@/pages/Home/HomePage'), 'Cargando inicio…'),
+        element: lazyPage(() => import('@/pages/home/HomePage'), 'Cargando inicio…'),
       },
 
       // ── Auth ─────────────────────────────────────────────────────────────
       {
         path: 'login',
-        element: lazyPage(() => import('@/pages/Auth/LoginPage'), 'Cargando login…'),
+        element: lazyPage(() => import('@/pages/auth/LoginPage'), 'Cargando login…'),
       },
       {
         path: 'register',
-        element: lazyPage(() => import('@/pages/Auth/RegisterPage'), 'Cargando registro…'),
+        element: lazyPage(() => import('@/pages/auth/RegisterPage'), 'Cargando registro…'),
       },
       {
         path: 'verify-email',
-        element: lazyPage(() => import('@/pages/Auth/VerifyEmailPage'), 'Verificando correo…'),
+        element: lazyPage(() => import('@/pages/auth/VerifyEmailPage'), 'Verificando correo…'),
       },
       {
         path: 'forgot-password',
-        element: lazyPage(() => import('@/pages/Auth/ForgotPasswordPage'), 'Cargando recuperación…'),
+        element: lazyPage(() => import('@/pages/auth/ForgotPasswordPage'), 'Cargando recuperación…'),
       },
       {
         path: 'reset-password',
-        element: lazyPage(() => import('@/pages/Auth/ResetPasswordPage'), 'Restableciendo contraseña…'),
+        element: lazyPage(() => import('@/pages/auth/ResetPasswordPage'), 'Restableciendo contraseña…'),
       },
 
       // ── Artistas ──────────────────────────────────────────────────────────
@@ -324,7 +324,7 @@ export const router = createBrowserRouter([
       },
 
       // ── 404 ───────────────────────────────────────────────────────────────
-      { path: '*', element: lazyPage(() => import('@/pages/NotFound/NotFoundPage')) },
+      { path: '*', element: lazyPage(() => import('@/pages/not-found/NotFoundPage')) },
     ],
   },
 ])

@@ -18,7 +18,7 @@ export default function HomePage() {
   })()
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-bg">
       <PageShell
         title="Nariño Cultura"
         description="Conecta con artistas, compra obras únicas, participa en subastas y descubre la agenda cultural de Nariño."
@@ -28,7 +28,7 @@ export default function HomePage() {
             <h2 className="text-5xl font-semibold leading-tight tracking-tight">
               Arte y tradición desde el corazón de Nariño
             </h2>
-            <p className="max-w-2xl text-lg text-muted-foreground">
+            <p className="max-w-2xl text-lg text-text-secondary">
               Descubre artistas locales, explora obras originales, participa en subastas y sumérgete en la oferta cultural del departamento.
             </p>
             <div className="flex flex-wrap items-center gap-3">
@@ -51,7 +51,7 @@ export default function HomePage() {
               <Link to="/artworks">Explorar obras</Link>
             </Button>
           </div>
-          <div className="relative overflow-hidden rounded-xl border bg-card">
+          <div className="relative overflow-hidden rounded-xl border bg-bg-card">
             <img
               src={carnavalimg}
               alt="Carnaval de Negros y Blancos: máscara y colores tradicionales"
@@ -67,7 +67,7 @@ export default function HomePage() {
               <CardTitle>Marketplace</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-text-secondary">
                 Compra obras y artesanías con un flujo de pago claro.
               </p>
               <Button variant="outline" asChild aria-label="Ir a marketplace">
@@ -80,7 +80,7 @@ export default function HomePage() {
               <CardTitle>Subastas</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-text-secondary">
                 Sigue subastas en tiempo real y participa con pujas.
               </p>
               <Button variant="outline" asChild aria-label="Ir a subastas">
@@ -93,7 +93,7 @@ export default function HomePage() {
               <CardTitle>Eventos</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-text-secondary">
                 Descubre agenda cultural: conciertos, exposiciones y talleres.
               </p>
               <Button variant="outline" asChild aria-label="Ir a eventos">

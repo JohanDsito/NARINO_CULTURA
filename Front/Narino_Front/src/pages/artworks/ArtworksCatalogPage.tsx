@@ -7,19 +7,8 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { PageShell } from '@/components/layout/page-shell'
 import { ROUTES } from '@/constants/routes'
-
-function formatPrice(n: number) {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency', currency: 'COP', maximumFractionDigits: 0,
-  }).format(n)
-}
-
-const STATUS_LABELS: Record<string, string> = {
-  DISPONIBLE: 'Disponible',
-  EN_SUBASTA: 'En subasta',
-  VENDIDA: 'Vendida',
-  INACTIVA: 'Inactiva',
-}
+import { formatCurrency } from '@/utils'
+import { artworkStatus } from '@/constants/labels'
 
 export default function ArtworksCatalogPage() {
   const [search, setSearch] = useState('')
@@ -28,7 +17,7 @@ export default function ArtworksCatalogPage() {
 
   const { data: categoriesData = [] } = useQuery({
     queryKey: ['artwork-categories'],
-    queryFn: getArtworkCategories,
+    queryFn: () => getArtworkCategories(),
     staleTime: 60 * 60 * 1000,
   })
 
@@ -66,13 +55,13 @@ export default function ArtworksCatalogPage() {
               placeholder="Buscar obras…"
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-              className="w-full rounded-input border border-border bg-surface pl-9 pr-4 py-2.5 font-body text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-oro/50"
+              className="w-full rounded-input border border-border bg-bg-card pl-9 pr-4 py-2.5 font-body text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-oro/50"
             />
           </div>
           <select
             value={categoryId}
             onChange={(e) => { setCategoryId(e.target.value); setPage(1) }}
-            className="rounded-input border border-border bg-surface px-3 py-2.5 font-body text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-oro/50"
+            className="rounded-input border border-border bg-bg-card px-3 py-2.5 font-body text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-oro/50"
           >
             <option value="">Todas las categorías</option>
             {categoriesData.map((cat) => (
@@ -92,12 +81,12 @@ export default function ArtworksCatalogPage() {
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="rounded-card border border-border bg-surface animate-pulse">
-                <div className="aspect-[4/3] bg-muted rounded-t-card" />
+              <div key={i} className="rounded-card border border-border bg-bg-card animate-pulse">
+                <div className="aspect-[4/3] bg-bg-subtle rounded-t-card" />
                 <div className="p-4 space-y-2">
-                  <div className="h-4 bg-muted rounded w-3/4" />
-                  <div className="h-3 bg-muted rounded w-1/2" />
-                  <div className="h-5 bg-muted rounded w-1/3" />
+                  <div className="h-4 bg-bg-subtle rounded w-3/4" />
+                  <div className="h-3 bg-bg-subtle rounded w-1/2" />
+                  <div className="h-5 bg-bg-subtle rounded w-1/3" />
                 </div>
               </div>
             ))}
@@ -128,7 +117,7 @@ export default function ArtworksCatalogPage() {
                       {artwork.status !== 'DISPONIBLE' && (
                         <div className="absolute top-2 right-2">
                           <Badge variant={artwork.status === 'EN_SUBASTA' ? 'indigo' : 'tierra'}>
-                            {STATUS_LABELS[artwork.status] ?? artwork.status}
+                            {artworkStatus(artwork.status).label}
                           </Badge>
                         </div>
                       )}
@@ -143,7 +132,7 @@ export default function ArtworksCatalogPage() {
                         </p>
                       )}
                       <p className="font-body font-bold text-oro text-[15px]">
-                        {formatPrice(parseFloat(artwork.price))}
+                        {formatCurrency(parseFloat(artwork.price))}
                       </p>
                     </div>
                   </Card>
@@ -159,7 +148,7 @@ export default function ArtworksCatalogPage() {
             <button
               onClick={() => setPage((p) => p - 1)}
               disabled={!hasPrev}
-              className="rounded-btn border border-border px-4 py-2 font-body text-sm text-text-primary hover:bg-surface disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="rounded-btn border border-border px-4 py-2 font-body text-sm text-text-primary hover:bg-bg-card disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               ← Anterior
             </button>
@@ -167,7 +156,7 @@ export default function ArtworksCatalogPage() {
             <button
               onClick={() => setPage((p) => p + 1)}
               disabled={!hasNext}
-              className="rounded-btn border border-border px-4 py-2 font-body text-sm text-text-primary hover:bg-surface disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="rounded-btn border border-border px-4 py-2 font-body text-sm text-text-primary hover:bg-bg-card disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               Siguiente →
             </button>

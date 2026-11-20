@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 interface ProfileImageUploadProps {
   currentUrl?: string
   name: string
-  onUpload: (file: File) => Promise<void>
+  onUpload: (file: File) => Promise<unknown>
   isPending: boolean
   disabled?: boolean
 }
@@ -61,7 +61,7 @@ export function ProfileImageUpload({
             {displayUrl ? (
               <img src={displayUrl} alt={name} className="h-full w-full object-cover" />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-primary/10 text-3xl font-bold text-primary">
+              <div className="flex h-full w-full items-center justify-center bg-tierra/10 text-3xl font-bold text-tierra">
                 {initial}
               </div>
             )}
@@ -70,7 +70,7 @@ export function ProfileImageUpload({
             type="button"
             disabled={disabled || isPending}
             onClick={() => inputRef.current?.click()}
-            className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full border border-border bg-background shadow-sm transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+            className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full border border-border bg-bg shadow-sm transition-colors hover:bg-bg-subtle disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Camera size={13} />
           </button>

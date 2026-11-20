@@ -71,14 +71,14 @@ export function ChatbotWidget() {
     <div className="fixed bottom-16 right-5 z-50 md:bottom-20 md:right-8">
       {open ? (
         <div
-          className="flex w-[92vw] max-w-sm flex-col overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-xl"
+          className="flex w-[92vw] max-w-sm flex-col overflow-hidden rounded-xl border border-border bg-bg-card text-text-primary shadow-xl"
           role="dialog"
           aria-label="Chat de ayuda"
         >
-          <div className="flex items-center justify-between border-b border-border bg-muted px-4 py-3">
+          <div className="flex items-center justify-between border-b border-border bg-bg-subtle px-4 py-3">
             <div className="space-y-0.5">
-              <p className="font-medium text-foreground">Asistente</p>
-              <p className="text-xs text-muted-foreground">Nariño Cultura</p>
+              <p className="font-medium text-text-primary">Asistente</p>
+              <p className="text-xs text-text-secondary">Nariño Cultura</p>
             </div>
             <Button
               variant="ghost"
@@ -97,8 +97,8 @@ export function ChatbotWidget() {
                 className={cn(
                   'max-w-[90%] rounded-lg px-3 py-2 text-sm',
                   m.role === 'user'
-                    ? 'ml-auto bg-primary text-primary-foreground'
-                    : 'bg-muted text-foreground',
+                    ? 'ml-auto bg-tierra text-white'
+                    : 'bg-bg-subtle text-text-primary',
                 )}
               >
                 {m.text}
@@ -106,7 +106,7 @@ export function ChatbotWidget() {
             ))}
 
             {isSending && (
-              <div className="flex items-center gap-2 rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2 rounded-lg bg-bg-subtle px-3 py-2 text-sm text-text-secondary">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Pensando…
               </div>
@@ -118,7 +118,7 @@ export function ChatbotWidget() {
                   <button
                     key={s}
                     type="button"
-                    className="rounded-full border border-border bg-background px-3 py-1 text-xs text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                    className="rounded-full border border-border bg-bg px-3 py-1 text-xs text-text-primary transition-colors hover:bg-bg-subtle hover:text-text-primary"
                     onClick={() => send(s)}
                   >
                     {s}
@@ -129,7 +129,7 @@ export function ChatbotWidget() {
           </div>
 
           <form
-            className="flex items-center gap-2 border-t border-border bg-background p-3"
+            className="flex items-center gap-2 border-t border-border bg-bg p-3"
             onSubmit={(e) => {
               e.preventDefault()
               send(text)

@@ -7,12 +7,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ROUTES } from '@/constants/routes'
-
-function formatPrice(n: number) {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency', currency: 'COP', maximumFractionDigits: 0,
-  }).format(n)
-}
+import { formatCurrency } from '@/utils'
 
 export default function MarketplacePage() {
   const { data: artworksData } = useQuery({
@@ -64,7 +59,7 @@ export default function MarketplacePage() {
       </section>
 
       {/* Stats */}
-      <section className="px-6 md:px-16 py-10 bg-surface border-b border-border">
+      <section className="px-6 md:px-16 py-10 bg-bg-card border-b border-border">
         <div className="max-w-5xl mx-auto grid grid-cols-3 gap-6 text-center">
           <div>
             <p className="font-display font-bold text-oro text-[32px]">{artworksData?.count ?? '+'}</p>
@@ -111,7 +106,7 @@ export default function MarketplacePage() {
                         <p className="font-body text-text-muted text-[12px] mt-0.5">{artwork.category_detail.name}</p>
                       )}
                       <p className="font-display font-bold text-oro text-[16px] mt-2">
-                        {formatPrice(parseFloat(artwork.price))}
+                        {formatCurrency(parseFloat(artwork.price))}
                       </p>
                     </div>
                   </Card>
@@ -141,7 +136,7 @@ export default function MarketplacePage() {
                   </div>
                   <p className="font-body text-text-muted text-[11px] uppercase tracking-widest mb-1">Puja actual</p>
                   <p className="font-display font-bold text-oro text-[22px]">
-                    {formatPrice(parseFloat(auction.current_price))}
+                    {formatCurrency(parseFloat(auction.current_price))}
                   </p>
                 </Card>
               </Link>

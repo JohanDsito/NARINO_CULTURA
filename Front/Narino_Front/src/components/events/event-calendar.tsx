@@ -117,9 +117,9 @@ export function EventCalendar({ showCreateButton = false }: EventCalendarProps) 
       )}
 
       {isError && (
-        <Card className="border-destructive/40">
+        <Card className="border-error/40">
           <CardContent className="pt-6">
-            <p className="text-center text-sm text-destructive">
+            <p className="text-center text-sm text-error">
               No se pudieron cargar los eventos. Intenta de nuevo más tarde.
             </p>
           </CardContent>
@@ -147,7 +147,7 @@ export function EventCalendar({ showCreateButton = false }: EventCalendarProps) 
             {selectedDayEvents.length === 0 ? (
               <Card>
                 <CardContent className="pt-6">
-                  <p className="text-center text-muted-foreground">
+                  <p className="text-center text-text-secondary">
                     No hay eventos para este día
                   </p>
                 </CardContent>
@@ -190,7 +190,7 @@ export function EventCalendar({ showCreateButton = false }: EventCalendarProps) 
 
                       <CardContent className="space-y-3">
                         {event.description && (
-                          <p className="text-sm text-muted-foreground line-clamp-2">
+                          <p className="text-sm text-text-secondary line-clamp-2">
                             {event.description}
                           </p>
                         )}
@@ -198,7 +198,7 @@ export function EventCalendar({ showCreateButton = false }: EventCalendarProps) 
                         {event.location && (
                           <div className="text-sm">
                             <p className="font-medium">Ubicación:</p>
-                            <p className="text-muted-foreground">
+                            <p className="text-text-secondary">
                               {event.location}
                             </p>
                           </div>
@@ -206,7 +206,7 @@ export function EventCalendar({ showCreateButton = false }: EventCalendarProps) 
 
                         <div className="text-sm">
                           <p className="font-medium">Horario:</p>
-                          <p className="text-muted-foreground">
+                          <p className="text-text-secondary">
                             {format(new Date(event.start_date), 'HH:mm')} -{' '}
                             {format(new Date(event.end_date), 'HH:mm')}
                           </p>
@@ -215,7 +215,7 @@ export function EventCalendar({ showCreateButton = false }: EventCalendarProps) 
                         {event.organizer && (
                           <div className="text-sm border-t pt-3">
                             <p className="font-medium">Organizador:</p>
-                            <p className="text-muted-foreground">
+                            <p className="text-text-secondary">
                               {event.organizer.first_name}{' '}
                               {event.organizer.last_name}
                             </p>

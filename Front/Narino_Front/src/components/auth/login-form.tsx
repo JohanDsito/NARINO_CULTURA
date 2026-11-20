@@ -96,7 +96,7 @@ export function LoginForm() {
       <div className="space-y-1">
         <Label htmlFor="email" className="text-xs font-medium">Email</Label>
         <Input id="email" type="email" autoComplete="email" {...register('email')} />
-        {errors.email ? <p className="text-xs text-destructive">{errors.email.message}</p> : null}
+        {errors.email ? <p className="text-xs text-error">{errors.email.message}</p> : null}
       </div>
 
       <div className="space-y-1">
@@ -108,7 +108,7 @@ export function LoginForm() {
           {...register('password')}
         />
         {errors.password ? (
-          <p className="text-xs text-destructive">{errors.password.message}</p>
+          <p className="text-xs text-error">{errors.password.message}</p>
         ) : null}
       </div>
 

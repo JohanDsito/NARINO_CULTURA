@@ -6,8 +6,9 @@ import { musicDiscovery } from '@/api/musicians.api'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
-import { ROUTES, AGGREGATION_TYPE_LABELS } from '@/constants/routes'
-import type { MusicDiscoveryResult } from '@/types/auth'
+import { ROUTES } from '@/constants/routes'
+import { AGGREGATION_TYPE_LABELS } from '@/constants/labels'
+import type { MusicDiscoveryResult } from '@/types'
 
 const EXAMPLES = [
   'Banda de rock alternativo en Pasto',
@@ -159,7 +160,7 @@ export default function MusicDiscoveryPage() {
                           {musician.genres.slice(0, 3).map((g) => (
                             <span
                               key={g.id}
-                              className="rounded-tag bg-surface border border-border px-2 py-0.5 font-body text-[10px] text-text-muted"
+                              className="rounded-tag bg-bg-card border border-border px-2 py-0.5 font-body text-[10px] text-text-muted"
                             >
                               {g.name}
                             </span>

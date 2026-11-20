@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -30,6 +30,7 @@ type FormValues = z.infer<typeof schema>
 
 export default function ArtworkCreatePage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
   const {
     register,
@@ -51,7 +52,7 @@ export default function ArtworkCreatePage() {
 
   const { data: categories = [], isLoading: isLoadingCategories } = useQuery({
     queryKey: ['artwork-categories'],
-    queryFn: getArtworkCategories,
+    queryFn: () => getArtworkCategories(),
   })
 
   const mutation = useMutation({
@@ -67,6 +68,7 @@ export default function ArtworkCreatePage() {
         main_image: values.main_image?.[0],
       }),
     onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['artist-artworks'] })
       toast.success('Obra creada correctamente.')
       navigate('/dashboard/artworks')
     },
@@ -76,12 +78,12 @@ export default function ArtworkCreatePage() {
   })
 
   return (
-    <div className="min-h-screen bg-background pt-16">
+    <div className="min-h-screen bg-bg pt-16">
       <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 py-8 md:px-10">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm font-medium text-muted-foreground">Panel de artista</p>
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground">Nueva obra</h1>
+            <p className="text-sm font-medium text-text-secondary">Panel de artista</p>
+            <h1 className="text-3xl font-semibold tracking-tight text-text-primary">Nueva obra</h1>
           </div>
           <Button asChild variant="outline">
             <Link to="/dashboard/artworks" className="gap-2">
@@ -106,14 +108,14 @@ export default function ArtworkCreatePage() {
               <div className="space-y-1 md:col-span-2">
                 <Label htmlFor="title">Título *</Label>
                 <Input id="title" {...register('title')} />
-                {errors.title && <p className="text-xs text-destructive">{errors.title.message}</p>}
+                {errors.title && <p className="text-xs text-error">{errors.title.message}</p>}
               </div>
 
               <div className="space-y-1 md:col-span-2">
                 <Label htmlFor="description">Descripción *</Label>
                 <Textarea id="description" rows={5} {...register('description')} />
                 {errors.description && (
-                  <p className="text-xs text-destructive">{errors.description.message}</p>
+                  <p className="text-xs text-error">{errors.description.message}</p>
                 )}
               </div>
 
@@ -134,7 +136,7 @@ export default function ArtworkCreatePage() {
               <div className="space-y-1">
                 <Label htmlFor="price">Precio (COP)</Label>
                 <Input id="price" type="number" min="0" step="1000" {...register('price', { setValueAs: (v: string) => v === '' ? undefined : Number(v) })} />
-                {errors.price && <p className="text-xs text-destructive">{errors.price.message}</p>}
+                {errors.price && <p className="text-xs text-error">{errors.price.message}</p>}
               </div>
 
               <div className="space-y-1">

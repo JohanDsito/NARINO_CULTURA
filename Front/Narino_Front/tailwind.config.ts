@@ -1,5 +1,13 @@
 import type { Config } from 'tailwindcss'
 
+/**
+ * Los colores del design system viven como variables CSS en `src/index.css`
+ * (modo claro y `.dark`). Se envuelven en `color-mix` para que Tailwind pueda
+ * aplicar modificadores de opacidad (`bg-tierra/10`, `border-error/30`, ...).
+ */
+const token = (name: string) =>
+  `color-mix(in srgb, var(--${name}) calc(<alpha-value> * 100%), transparent)`
+
 export default {
   darkMode: 'class',
   content: ['./index.html', './src/**/*.{ts,tsx}'],
@@ -7,49 +15,49 @@ export default {
     extend: {
       fontFamily: {
         display: ['"Playfair Display"', 'serif'],
-        body:    ['"DM Sans"', 'sans-serif'],
-        accent:  ['"Cormorant Garamond"', 'serif'],
+        body: ['"DM Sans"', 'sans-serif'],
+        accent: ['"Cormorant Garamond"', 'serif'],
       },
       colors: {
-        bg:           'var(--bg)',
-        'bg-card':    'var(--bg-card)',
-        'bg-subtle':  'var(--bg-subtle)',
-        border:       'var(--border)',
+        bg: token('bg'),
+        'bg-card': token('bg-card'),
+        'bg-subtle': token('bg-subtle'),
+        border: token('border'),
 
-        tierra:       'var(--tierra)',
-        'tierra-light': 'var(--tierra-light)',
-        'tierra-pale':  'var(--tierra-pale)',
+        tierra: token('tierra'),
+        'tierra-light': token('tierra-light'),
+        'tierra-pale': token('tierra-pale'),
 
-        volcan:       'var(--volcan)',
-        'volcan-mid': 'var(--volcan-mid)',
+        volcan: token('volcan'),
+        'volcan-mid': token('volcan-mid'),
 
-        oro:          'var(--oro)',
-        'oro-light':  'var(--oro-light)',
-        'oro-pale':   'var(--oro-pale)',
+        oro: token('oro'),
+        'oro-light': token('oro-light'),
+        'oro-pale': token('oro-pale'),
 
-        selva:        'var(--selva)',
-        'selva-light':'var(--selva-light)',
-        'selva-pale': 'var(--selva-pale)',
+        selva: token('selva'),
+        'selva-light': token('selva-light'),
+        'selva-pale': token('selva-pale'),
 
-        indigo:       'var(--indigo)',
-        'indigo-light':'var(--indigo-light)',
-        'indigo-pale': 'var(--indigo-pale)',
+        indigo: token('indigo'),
+        'indigo-light': token('indigo-light'),
+        'indigo-pale': token('indigo-pale'),
 
-        error:        'var(--error)',
-        success:      'var(--success)',
+        error: token('error'),
+        success: token('success'),
 
         text: {
-          primary:   'var(--text-primary)',
-          secondary: 'var(--text-secondary)',
-          muted:     'var(--text-muted)',
+          primary: token('text-primary'),
+          secondary: token('text-secondary'),
+          muted: token('text-muted'),
         },
       },
       borderRadius: {
-        card:   '12px',
+        card: '12px',
         'card-lg': '14px',
-        btn:    '7px',
-        tag:    '99px',
-        input:  '8px',
+        btn: '7px',
+        tag: '99px',
+        input: '8px',
       },
       boxShadow: {
         card: '0 12px 28px rgba(0,0,0,0.18)',

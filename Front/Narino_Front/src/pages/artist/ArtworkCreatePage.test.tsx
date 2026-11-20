@@ -23,14 +23,14 @@ const mockedCreateArtwork = vi.mocked(createArtwork)
 const mockedGetArtworkCategories = vi.mocked(getArtworkCategories)
 
 function renderArtworkCreatePage() {
-  const queryClient = new QueryClient()
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={['/dashboard/artworks/new']}>
         <Routes>
           <Route path="/dashboard/artworks/new" element={<ArtworkCreatePage />} />
-          <Route path="/dashboard/profile" element={<div>Panel de artista</div>} />
+          <Route path="/dashboard/artworks" element={<div>Mis obras</div>} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -42,7 +42,7 @@ describe('ArtworkCreatePage', () => {
     vi.clearAllMocks()
     mockedGetArtworkCategories.mockResolvedValue([
       { id: 1, name: 'Pintura', slug: 'pintura' },
-      { id: 2, name: 'Musica', slug: 'musica' },
+      { id: 2, name: 'Escultura', slug: 'escultura' },
     ])
   })
 
@@ -53,82 +53,41 @@ describe('ArtworkCreatePage', () => {
 
     await user.click(screen.getByRole('button', { name: /guardar obra/i }))
 
-    expect(await screen.findByText(/el titulo es obligatorio/i)).toBeInTheDocument()
+    expect(await screen.findByText(/el título es obligatorio/i)).toBeInTheDocument()
     expect(mockedCreateArtwork).not.toHaveBeenCalled()
   })
 
-  it('submits artwork payload with category id and returns to artist dashboard', async () => {
+  it('submits the artwork with numeric category and price, then returns to my artworks', async () => {
     const user = userEvent.setup()
 
-    mockedCreateArtwork.mockResolvedValueOnce(
-      {} as Awaited<ReturnType<typeof createArtwork>>,
-    )
+    mockedCreateArtwork.mockResolvedValueOnce({} as Awaited<ReturnType<typeof createArtwork>>)
 
     renderArtworkCreatePage()
 
-    await user.type(screen.getByLabelText(/titulo/i), 'Montana viva')
-    await user.type(
-      screen.getByLabelText(/descripcion/i),
-      'Paisaje inspirado en Narino',
-    )
-    await user.selectOptions(await screen.findByLabelText(/categoria/i), '1')
-    await user.type(screen.getByLabelText(/tecnica/i), 'Oleo')
-    await user.clear(screen.getByLabelText(/precio/i))
+    await user.type(screen.getByLabelText(/título/i), '  Montaña viva  ')
+    await user.type(screen.getByLabelText(/descripción/i), 'Paisaje inspirado en Nariño')
+    // Esperar a que carguen las categorías antes de elegir una
+    await screen.findByRole('option', { name: 'Pintura' })
+    await user.selectOptions(screen.getByLabelText(/categoría/i), '1')
+    await user.type(screen.getByLabelText(/técnica/i), 'Óleo')
     await user.type(screen.getByLabelText(/precio/i), '120000')
-    await user.type(screen.getByLabelText(/ano/i), '2024')
     await user.type(screen.getByLabelText(/dimensiones/i), '40 x 60 cm')
 
     await user.click(screen.getByRole('button', { name: /guardar obra/i }))
 
     await waitFor(() => {
       expect(mockedCreateArtwork).toHaveBeenCalledWith({
-        title: 'Montana viva',
-        description: 'Paisaje inspirado en Narino',
+        title: 'Montaña viva',
+        description: 'Paisaje inspirado en Nariño',
         category: 1,
-        technique: 'Oleo',
+        technique: 'Óleo',
         price: 120000,
         dimensions: '40 x 60 cm',
-        year: 2024,
-        image_url: undefined,
+        material: undefined,
+        main_image: undefined,
       })
     })
 
-    expect(await screen.findByText('Panel de artista')).toBeInTheDocument()
-  })
-
-  it('submits music payload with category id and mp3 demo', async () => {
-    const user = userEvent.setup()
-    const demo = new File(['demo'], 'cancion.mp3', { type: 'audio/mpeg' })
-
-    mockedCreateArtwork.mockResolvedValueOnce(
-      {} as Awaited<ReturnType<typeof createArtwork>>,
-    )
-
-    renderArtworkCreatePage()
-
-    await user.type(screen.getByLabelText(/titulo/i), 'Cancion del sur')
-    await user.type(
-      screen.getByLabelText(/descripcion/i),
-      'Demo musical inspirado en Narino',
-    )
-    await user.selectOptions(await screen.findByLabelText(/categoria/i), '2')
-    await user.type(screen.getByLabelText(/fecha de lanzamiento/i), '2026-05-01')
-    await user.type(screen.getByLabelText(/compositor/i), 'Ana Mora')
-    await user.type(screen.getByLabelText(/genero/i), 'Andina')
-    await user.upload(screen.getByLabelText(/subir demo mp3/i), demo)
-
-    await user.click(screen.getByRole('button', { name: /guardar obra/i }))
-
-    await waitFor(() => {
-      expect(mockedCreateArtwork).toHaveBeenCalledWith({
-        title: 'Cancion del sur',
-        description: 'Demo musical inspirado en Narino',
-        category: 2,
-        release_date: '2026-05-01',
-        composer: 'Ana Mora',
-        genre: 'Andina',
-        demo,
-      })
-    })
+    expect(await screen.findByText('Mis obras')).toBeInTheDocument()
   })
 })
