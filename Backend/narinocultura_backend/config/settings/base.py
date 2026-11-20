@@ -161,6 +161,7 @@ REST_FRAMEWORK = {
         "password_reset": "3/hour",
         "resend_verification": "3/hour",
         "chat": "10/minute",
+        "ai": "20/minute",
     },
 }
 

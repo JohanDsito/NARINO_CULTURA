@@ -3,12 +3,18 @@ from __future__ import annotations
 import re
 from datetime import datetime, timedelta
 from typing import Any
+from urllib.parse import urljoin, urlparse
+from uuid import uuid4
 from zoneinfo import ZoneInfo
 
 from django.conf import settings
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 
 from apps.events.models import Event
+from services import llm
 from services.ai_service import AIService
+from utils.media import IMAGE_EXTENSIONS
 
 
 class EventService:
@@ -40,17 +46,32 @@ class EventService:
     def create_event(*, organizer, validated_data: dict[str, Any]) -> Event:
         if getattr(organizer, "role", None) == "ARTISTA":
             validated_data["is_published"] = False
+        flyer = validated_data.pop("flyer", None)
+        if flyer is not None:
+            validated_data["image_url"] = EventService.store_flyer(flyer)
         return Event.objects.create(organizer=organizer, **validated_data)
 
     @staticmethod
-    def extract_from_flyer(*, organizer, image_url: str = "", flyer_text: str = "") -> dict[str, Any]:
-        """Propone los datos de un evento a partir del afiche. Con IA disponible se lee la imagen
-        y/o el texto; lo que la IA no encuentre (o todo, si no hay IA) se completa con la heurística.
-        La sugerencia nunca sale publicada: el organizador la revisa antes."""
+    def store_flyer(image: llm.Image) -> str:
+        """Guarda el afiche subido (Cloudinary en producción) y devuelve su URL absoluta."""
+        name = default_storage.save(f"events/flyers/{uuid4().hex}{IMAGE_EXTENSIONS[image.mime_type]}", ContentFile(image.data))
+        url = default_storage.url(name)
+        return url if urlparse(url).scheme else urljoin(settings.API_BASE_URL, url)
+
+    @staticmethod
+    def extract_from_flyer(
+        *, organizer, image_url: str = "", flyer_text: str = "", flyer: llm.Image | None = None
+    ) -> dict[str, Any]:
+        """Propone los datos de un evento a partir del afiche (URL, archivo subido y/o texto).
+        Con IA disponible se lee la imagen y el texto; lo que la IA no encuentre (o todo, si no hay
+        IA) se completa con la heurística. Un archivo subido se guarda y su URL queda en image_url,
+        para que el formulario o el borrador lo usen. La sugerencia nunca sale publicada."""
+        if flyer is not None:
+            image_url = EventService.store_flyer(flyer)
         data = EventService._heuristic_extract(image_url=image_url, flyer_text=flyer_text)
         data["source"] = "heuristic"
 
-        suggestion = AIService.extract_event_from_flyer(image_url=image_url, flyer_text=flyer_text)
+        suggestion = AIService.extract_event_from_flyer(image_url=image_url, flyer_text=flyer_text, image=flyer)
         if suggestion:
             data["source"] = "ai_service"
             data["model_used"] = suggestion.pop("model_used")

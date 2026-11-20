@@ -9,6 +9,7 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework.throttling import UserRateThrottle
 
 from apps.artists.models import ArtistProfile
 from apps.artworks.filters import ArtworkFilter
@@ -22,6 +23,7 @@ from apps.artworks.serializers import (
 from services.ai_service import AIService
 from utils.http import client_ip
 from utils.permissions import IsAdmin
+from utils.throttling import AIBurstThrottle
 
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
@@ -99,7 +101,10 @@ class ArtworkViewSet(viewsets.ModelViewSet):
             )
         return Response(status=204)
 
-    @action(detail=True, methods=["post"], url_path="ai-enhance")
+    @action(
+        detail=True, methods=["post"], url_path="ai-enhance",
+        throttle_classes=[AIBurstThrottle, UserRateThrottle],
+    )
     @transaction.atomic
     def ai_enhance(self, request, pk=None):
         artwork = self.get_object()

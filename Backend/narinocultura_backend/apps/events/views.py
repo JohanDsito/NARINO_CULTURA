@@ -5,6 +5,7 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import UserRateThrottle
 
 from apps.events.models import Event, EventRegistration
 from apps.events.permissions import IsEventManagerOrReadOnly
@@ -16,6 +17,7 @@ from apps.events.serializers import (
 from services.event_service import EventService
 from services.notification_service import NotificationService
 from utils.permissions import IsAdmin
+from utils.throttling import AIBurstThrottle
 
 
 class EventViewSet(viewsets.ModelViewSet):
@@ -62,8 +64,12 @@ class EventViewSet(viewsets.ModelViewSet):
                 user=self.request.user,
             )
 
-    @action(detail=False, methods=["post"], url_path="extract-from-flyer")
+    @action(
+        detail=False, methods=["post"], url_path="extract-from-flyer",
+        throttle_classes=[AIBurstThrottle, UserRateThrottle],
+    )
     def extract_from_flyer(self, request):
+        """Lee un afiche con IA: JSON con ``image_url``/``flyer_text`` o multipart con ``flyer``."""
         serializer = EventFlyerExtractSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -71,6 +77,7 @@ class EventViewSet(viewsets.ModelViewSet):
             organizer=request.user,
             image_url=serializer.validated_data.get("image_url", ""),
             flyer_text=serializer.validated_data.get("flyer_text", ""),
+            flyer=serializer.validated_data.get("flyer"),
         )
 
         response_data = {
