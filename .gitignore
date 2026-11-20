@@ -5,8 +5,18 @@
 # Volcados de código generados por herramientas
 repomix-output.xml
 
+# Variables de entorno: nunca se versionan (en mayo se filtraron credenciales por un .env)
+.env
+.env.*
+!.env.example
+
+# Estáticos que genera collectstatic al arrancar el contenedor
+staticfiles/
+
 # Cachés y reportes
 .coverage
+.coverage.*
+coverage.json
 coverage/
 .ruff_cache/
 __pycache__/
