@@ -38,4 +38,5 @@ X_FRAME_OPTIONS = "DENY"
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+# Los estáticos usan STORAGES["staticfiles"] de base.py (WhiteNoise con manifiesto): el contenedor
+# corre collectstatic al arrancar, si no, el admin responde 500 por falta del manifiesto.

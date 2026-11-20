@@ -99,7 +99,9 @@ class AuctionViewSet(viewsets.ModelViewSet):
     def bids(self, request, pk=None):
         """Historial de pujas, de la más reciente a la más antigua."""
         auction = self.get_object()
-        qs = auction.bids.select_related("bidder").order_by("-created_at")
+        # Desempate por monto: dos pujas pueden quedar con la misma marca de tiempo, y como cada
+        # puja supera a la anterior, la de mayor monto es siempre la más reciente.
+        qs = auction.bids.select_related("bidder").order_by("-created_at", "-amount")
         page = self.paginate_queryset(qs)
         serializer = BidHistorySerializer(page if page is not None else qs, many=True, context={"request": request})
         return self.get_paginated_response(serializer.data) if page is not None else Response(serializer.data)
