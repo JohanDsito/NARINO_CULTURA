@@ -1,5 +1,5 @@
 import axiosInstance from './axiosInstance'
-import type { Order, PaginatedResponse } from '@/types/auth'
+import type { Order, PaginatedResponse, Sale } from '@/types'
 
 // ─── Cart ─────────────────────────────────────────────────────────────────────
 // Backend: GET /api/v1/marketplace/cart/ → { id, user, items: [], created_at, updated_at }
@@ -9,7 +9,9 @@ export interface ServerCartItem {
   artwork_title?: string
   artwork_price?: string
   artwork_status?: string
-  artwork_main_image_url?: string
+  artwork_image_url?: string
+  artist_name?: string
+  artist_slug?: string
   created_at: string
 }
 
@@ -46,10 +48,18 @@ export async function removeCartItem(artworkId: string): Promise<{ detail: strin
 }
 
 // ─── Favorites ────────────────────────────────────────────────────────────────
-import type { Artwork } from '@/types/auth'
+/** Fila de favoritos: la obra resumida, no un Artwork completo. */
+export interface FavoriteItem {
+  id: string
+  artwork_id: string
+  title: string
+  artwork_price: string
+  artwork_image_url: string
+  created_at?: string
+}
 
-export async function getFavorites(): Promise<Artwork[]> {
-  const { data } = await axiosInstance.get<Artwork[] | { results: Artwork[] }>(
+export async function getFavorites(): Promise<FavoriteItem[]> {
+  const { data } = await axiosInstance.get<FavoriteItem[] | { results: FavoriteItem[] }>(
     '/api/v1/marketplace/favorites/',
   )
   return Array.isArray(data) ? data : data.results ?? []
@@ -91,8 +101,8 @@ export async function getOrders(): Promise<Order[]> {
   return Array.isArray(data) ? data : data.results ?? []
 }
 
-export async function getSales(): Promise<Order[]> {
-  const { data } = await axiosInstance.get<Order[] | PaginatedResponse<Order>>(
+export async function getSales(): Promise<Sale[]> {
+  const { data } = await axiosInstance.get<Sale[] | PaginatedResponse<Sale>>(
     '/api/v1/marketplace/sales/',
   )
   return Array.isArray(data) ? data : data.results ?? []

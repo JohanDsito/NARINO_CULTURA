@@ -1,0 +1,75 @@
+{
+  "name": "Narino Cultura - Auth Emails",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "narinocultura",
+        "responseMode": "responseNode",
+        "httpMethod": "POST",
+        "options": {}
+      },
+      "id": "1",
+      "name": "Auth Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "narinocultura-auth"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body || $json;\nconst type = body.type;\nconst payload = body.payload || {};\nconst user = body.user || {};\n\nconst firstName = (user.first_name || '').trim().split(/\\s+/).filter(Boolean)[0] || '';\nconst firstLastName = (user.last_name || '').trim().split(/\\s+/).filter(Boolean)[0] || '';\nconst greetingName = [firstName, firstLastName].filter(Boolean).join(' ') || 'usuario';\n\nif (type === 'EMAIL_VERIFICATION') {\n  const verificationUrl = payload.verification_url || '';\n  const verificationApiUrl = payload.verification_api_url || '';\n  const token = payload.token || '';\n\n  return [\n    {\n      json: {\n        to: payload.email || '',\n        subject: 'Confirma tu cuenta en Narino Cultura',\n        html: [\n          '<div style=\"font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; color: #1f2937; line-height: 1.6;\">',\n          '<h2 style=\"color: #7c2d12; margin-bottom: 16px;\">Bienvenido a Narino Cultura</h2>',\n          '<p>Hola ' + greetingName + ', gracias por registrarte.</p>',\n          '<p>Para activar tu cuenta, haz clic en el siguiente boton:</p>',\n          '<p style=\"margin: 24px 0;\">',\n          '<a href=\"' + verificationUrl + '\" style=\"display:inline-block;padding:12px 20px;background:#7c2d12;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600;\">Verificar correo</a>',\n          '</p>',\n          '<p>Si el boton no funciona, copia y pega este enlace completo en tu navegador:</p>',\n          '<p style=\"word-break: break-word;\"><a href=\"' + verificationUrl + '\">' + verificationUrl + '</a></p>',\n          token ? '<p>Tambien puedes verificar manualmente enviando este token desde la aplicacion o Postman:</p>' : '',\n          token ? '<p><strong>' + token + '</strong></p>' : '',\n          verificationApiUrl ? '<p>Endpoint de verificacion manual: <strong>' + verificationApiUrl + '</strong></p>' : '',\n          '<p style=\"margin-top: 24px; color: #6b7280; font-size: 14px;\">Si no creaste esta cuenta, puedes ignorar este mensaje.</p>',\n          '</div>'\n        ].filter(Boolean).join('')\n      }\n    }\n  ];\n}\n\nif (type === 'PASSWORD_RESET') {\n  const resetUrl = payload.reset_url || '';\n  const token = payload.token || '';\n\n  return [\n    {\n      json: {\n        to: payload.email || '',\n        subject: 'Restablece tu contrasena en Narino Cultura',\n        html: [\n          '<div style=\"font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; color: #1f2937; line-height: 1.6;\">',\n          '<h2 style=\"color: #7c2d12; margin-bottom: 16px;\">Recuperacion de contrasena</h2>',\n          '<p>Hola ' + greetingName + ', recibimos una solicitud para cambiar tu contrasena.</p>',\n          '<p>Puedes continuar desde este enlace:</p>',\n          '<p style=\"margin: 24px 0;\">',\n          '<a href=\"' + resetUrl + '\" style=\"display:inline-block;padding:12px 20px;background:#7c2d12;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600;\">Restablecer contrasena</a>',\n          '</p>',\n          '<p>Si el boton no funciona, copia y pega este enlace completo en tu navegador:</p>',\n          '<p style=\"word-break: break-word;\"><a href=\"' + resetUrl + '\">' + resetUrl + '</a></p>',\n          token ? '<p>Token de respaldo: <strong>' + token + '</strong></p>' : '',\n          '<p style=\"margin-top: 24px; color: #6b7280; font-size: 14px;\">Si no solicitaste este cambio, ignora este mensaje.</p>',\n          '</div>'\n        ].filter(Boolean).join('')\n      }\n    }\n  ];\n}\n\nreturn [\n  {\n    json: {\n      to: payload.email || '',\n      subject: 'Evento no manejado: ' + (type || 'SIN_TIPO'),\n      html: '<pre>' + JSON.stringify(body, null, 2) + '</pre>'\n    }\n  }\n];"
+      },
+      "id": "2",
+      "name": "Build Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [520, 300]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": {}
+      },
+      "id": "3",
+      "name": "Send Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [800, 300],
+      "credentials": {
+        "smtp": {
+          "id": "",
+          "name": ""
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"ok\": true, \"message\": \"Workflow procesado\"}",
+        "options": {}
+      },
+      "id": "4",
+      "name": "Respond OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1060, 300]
+    }
+  ],
+  "connections": {
+    "Auth Webhook": {
+      "main": [[{ "node": "Build Email", "type": "main", "index": 0 }]]
+    },
+    "Build Email": {
+      "main": [[{ "node": "Send Email", "type": "main", "index": 0 }]]
+    },
+    "Send Email": {
+      "main": [[{ "node": "Respond OK", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "2"
+}

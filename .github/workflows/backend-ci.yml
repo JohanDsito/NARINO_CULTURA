@@ -1,13 +1,15 @@
 name: Backend CI
 
+# Git Flow: corre en los PR hacia main (release/* y hotfix/*) y hacia develop (feature/*),
+# y en cada push a esas dos ramas. Ver docs/FLUJO_GIT.md.
 on:
   pull_request:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - "Backend/**"
       - ".github/workflows/backend-ci.yml"
   push:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - "Backend/**"
       - ".github/workflows/backend-ci.yml"
@@ -22,32 +24,17 @@ defaults:
 
 jobs:
   lint:
-    name: Lint (ruff en archivos modificados)
+    name: Lint (ruff)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - run: pip install ruff==0.4.9
-      # Definición de terminado: ruff sin advertencias en los archivos tocados.
-      # Las advertencias heredadas del resto del código se eliminan en HU-B12.
+      # El backend completo está en cero advertencias (HU-B12): cualquier advertencia nueva falla el CI.
       - name: ruff check
-        run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            base="origin/${{ github.base_ref }}"
-          else
-            base="${{ github.event.before }}"
-          fi
-          files=$(git diff --name-only --diff-filter=ACMR "$base"...HEAD -- . | grep '\.py$' | sed 's#^Backend/narinocultura_backend/##' || true)
-          if [ -z "$files" ]; then
-            echo "No hay archivos Python modificados."
-            exit 0
-          fi
-          echo "$files"
-          ruff check --config ../pyproject.toml $files
+        run: ruff check --config ../pyproject.toml .
 
   test:
     name: Tests + cobertura
@@ -58,12 +45,24 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: Backend/narinocultura_backend/requirements.txt
-      - run: pip install -r requirements.txt
+          cache-dependency-path: |
+            Backend/requirements.txt
+            Backend/requirements-dev.txt
+      - run: pip install -r ../requirements-dev.txt
+      - name: Migraciones al día
+        # Si falta una migración, el contenedor de producción arrancaría con el esquema viejo
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings.test
+          SECRET_KEY: ci-only-secret-key-not-for-production
+        run: python manage.py makemigrations --check --dry-run
       - name: Ejecutar pruebas
         env:
           DJANGO_SETTINGS_MODULE: config.settings.test
           SECRET_KEY: ci-only-secret-key-not-for-production
         run: python -m coverage run --rcfile=../pyproject.toml --source=. manage.py test apps
-      - name: Cobertura (meta RNF13 >= 80 %)
-        run: python -m coverage report --rcfile=../pyproject.toml --fail-under=80
+      - name: Cobertura global (líneas + ramas >= 95 %)
+        run: python -m coverage report --rcfile=../pyproject.toml --fail-under=95
+      - name: Cobertura de módulos críticos (>= 90 % cada uno)
+        run: |
+          python -m coverage json --rcfile=../pyproject.toml -o coverage.json
+          python ../scripts/coverage_criticos.py coverage.json

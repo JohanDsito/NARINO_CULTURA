@@ -94,11 +94,12 @@ describe('LoginForm', () => {
         refresh: 'refresh-token',
       },
       user: {
-        id: 1,
+        id: '1',
         email: 'buyer@test.com',
         first_name: 'Bea',
         last_name: 'Rios',
         role: 'buyer',
+        is_verified: true,
       },
     })
 
@@ -131,6 +132,7 @@ describe('LoginForm', () => {
       isAuthenticated: true,
       user: {
         role: 'buyer',
+        is_verified: true,
       },
     })
   })
@@ -149,11 +151,12 @@ describe('LoginForm', () => {
         refresh: 'refresh-token',
       },
       user: {
-        id: 2,
+        id: '2',
         email: 'artist@test.com',
         first_name: 'Ana',
         last_name: 'Mora',
         role: 'artist',
+        is_verified: true,
       },
     })
 

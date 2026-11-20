@@ -1,36 +1,36 @@
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { ShoppingCart, CreditCard } from 'lucide-react'
 import { toast } from 'sonner'
 import { getServerCart, checkout } from '@/api/marketplace.api'
 import { Button } from '@/components/ui/button'
+import { useStartPayment } from '@/hooks/useStartPayment'
 import { PageShell } from '@/components/layout/page-shell'
 import { ROUTES } from '@/constants/routes'
-
-function formatPrice(n: number) {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency', currency: 'COP', maximumFractionDigits: 0,
-  }).format(n)
-}
+import { formatCurrency } from '@/utils'
+import { getApiErrorMessage } from '@/utils/apiError'
 
 export default function CheckoutPage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const startPayment = useStartPayment()
 
   const { data: cart, isLoading } = useQuery({
     queryKey: ['server-cart'],
-    queryFn: getServerCart,
+    queryFn: () => getServerCart(),
     staleTime: 30 * 1000,
   })
 
   const checkoutMutation = useMutation({
     mutationFn: () => checkout('COMPRA_DIRECTA'),
     onSuccess: (data) => {
+      // La orden queda PENDIENTE y el carrito vacío; el pago se hace en Wompi
+      void queryClient.invalidateQueries({ queryKey: ['server-cart'] })
+      void queryClient.invalidateQueries({ queryKey: ['orders'] })
       toast.success(`Orden #${data.order_id.slice(0, 8).toUpperCase()} creada`)
-      navigate(ROUTES.PAYMENT_SUCCESS, { state: { orderId: data.order_id, total: data.total_amount } })
+      startPayment.mutate(data.order_id)
     },
-    onError: () => {
-      toast.error('No se pudo procesar la orden. Intenta de nuevo.')
-    },
+    onError: (error) => toast.error(getApiErrorMessage(error)),
   })
 
   const items = cart?.items ?? []
@@ -38,6 +38,7 @@ export default function CheckoutPage() {
     (acc, item) => acc + parseFloat(item.artwork_price ?? '0'),
     0,
   )
+  const isProcessing = checkoutMutation.isPending || startPayment.isPending
 
   return (
     <div className="min-h-screen bg-bg pt-16">
@@ -47,7 +48,7 @@ export default function CheckoutPage() {
         {isLoading ? (
           <div className="space-y-4">
             {Array.from({ length: 2 }).map((_, i) => (
-              <div key={i} className="rounded-card border border-border bg-surface animate-pulse h-20" />
+              <div key={i} className="rounded-card border border-border bg-bg-card animate-pulse h-20" />
             ))}
           </div>
         ) : items.length === 0 ? (
@@ -68,47 +69,52 @@ export default function CheckoutPage() {
               {items.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center gap-4 rounded-card border border-border bg-surface p-4"
+                  className="flex items-center gap-4 rounded-card border border-border bg-bg-card p-4"
                 >
-                  {item.artwork_main_image_url && (
+                  {item.artwork_image_url && (
                     <img
-                      src={item.artwork_main_image_url}
+                      src={item.artwork_image_url}
                       alt=""
                       className="w-16 h-16 rounded-md object-cover flex-none"
                     />
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="font-body font-semibold text-text-primary text-sm line-clamp-1">
-                      {item.artwork_title ?? item.artwork}
+                      {item.artwork_title ?? 'Obra'}
                     </p>
+                    {item.artist_name && (
+                      <p className="font-body text-text-muted text-[12px] line-clamp-1">
+                        {item.artist_name}
+                      </p>
+                    )}
                   </div>
                   <p className="font-body font-bold text-oro flex-none">
-                    {formatPrice(parseFloat(item.artwork_price ?? '0'))}
+                    {formatCurrency(item.artwork_price)}
                   </p>
                 </div>
               ))}
             </div>
 
             {/* Resumen */}
-            <div className="rounded-card border border-border bg-surface p-6 h-fit space-y-4">
+            <div className="rounded-card border border-border bg-bg-card p-6 h-fit space-y-4">
               <h3 className="font-display font-bold text-text-primary text-[16px]">Resumen</h3>
               <div className="flex justify-between items-center py-3 border-t border-border">
                 <span className="font-body text-text-muted text-sm">Total</span>
                 <span className="font-display font-bold text-oro text-[22px]">
-                  {formatPrice(total)}
+                  {formatCurrency(total)}
                 </span>
               </div>
               <Button
                 variant="primary"
                 className="w-full gap-2"
                 onClick={() => checkoutMutation.mutate()}
-                disabled={checkoutMutation.isPending}
+                disabled={isProcessing}
               >
                 <CreditCard size={18} />
-                {checkoutMutation.isPending ? 'Procesando…' : 'Confirmar compra'}
+                {isProcessing ? 'Procesando…' : 'Pagar con Wompi'}
               </Button>
               <p className="font-body text-[11px] text-text-muted text-center">
-                Al confirmar, aceptas los términos de la plataforma.
+                Serás redirigido a Wompi para completar el pago de forma segura.
               </p>
             </div>
           </div>

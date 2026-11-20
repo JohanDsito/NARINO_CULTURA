@@ -12,9 +12,11 @@ import { ROUTES } from '@/constants/routes'
 export default function ArtistsPage() {
   const [search, setSearch] = useState('')
 
+  // El backend aún no tiene `search_fields` en ArtistProfileViewSet: se ignora `?search=`,
+  // así que se filtra en el cliente (y no se vuelve a pedir la lista en cada tecla).
   const { data: artists = [], isLoading } = useQuery({
-    queryKey: ['artists', search],
-    queryFn: () => listArtistProfiles({ search: search || undefined }),
+    queryKey: ['artists'],
+    queryFn: () => listArtistProfiles(),
     staleTime: 2 * 60 * 1000,
   })
 
@@ -30,15 +32,16 @@ export default function ArtistsPage() {
     return ids
   }, [musiciansData])
 
-  const visualArtists = useMemo(
-    () =>
-      artists.filter(
-        (a) =>
-          Boolean(a.discipline?.trim()) &&
-          !musicianUserIds.has(a.user_id),
-      ),
-    [artists, musicianUserIds],
-  )
+  const visualArtists = useMemo(() => {
+    const term = search.trim().toLowerCase()
+    return artists.filter(
+      (a) =>
+        Boolean(a.discipline?.trim()) &&
+        !musicianUserIds.has(a.user_id) &&
+        (!term ||
+          [a.artistic_name, a.city, a.discipline].some((v) => v?.toLowerCase().includes(term))),
+    )
+  }, [artists, musicianUserIds, search])
 
   return (
     <div className="min-h-screen bg-bg pt-16">
@@ -59,7 +62,7 @@ export default function ArtistsPage() {
             placeholder="Buscar por nombre artístico o disciplina…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-input border border-border bg-surface pl-9 pr-4 py-2.5 font-body text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-oro/50"
+            className="w-full rounded-input border border-border bg-bg-card pl-9 pr-4 py-2.5 font-body text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-oro/50"
           />
         </div>
 
@@ -67,11 +70,11 @@ export default function ArtistsPage() {
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="rounded-card border border-border bg-surface animate-pulse">
-                <div className="h-40 bg-muted rounded-t-card" />
+              <div key={i} className="rounded-card border border-border bg-bg-card animate-pulse">
+                <div className="h-40 bg-bg-subtle rounded-t-card" />
                 <div className="p-5 space-y-2">
-                  <div className="h-4 bg-muted rounded w-3/4" />
-                  <div className="h-3 bg-muted rounded w-1/2" />
+                  <div className="h-4 bg-bg-subtle rounded w-3/4" />
+                  <div className="h-3 bg-bg-subtle rounded w-1/2" />
                 </div>
               </div>
             ))}

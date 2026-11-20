@@ -5,7 +5,7 @@ import {
   type LoginCredentials,
   type RegisterData,
   type User,
-} from '@/types/auth'
+} from '@/types'
 
 export async function login(
   credentials: LoginCredentials,
@@ -43,9 +43,14 @@ export async function me(): Promise<User> {
   return normalizeUser(data) as User
 }
 
+/** El backend responde `{ detail }` en unos endpoints y `{ message }` en otros. */
+function toMessage(data: { message?: string; detail?: string } | undefined, fallback: string) {
+  return { message: data?.message ?? data?.detail ?? fallback }
+}
+
 export async function requestPasswordReset(email: string): Promise<{ message: string }> {
   const { data } = await axiosInstance.post('/api/v1/auth/password-reset/', { email })
-  return data
+  return toMessage(data, 'Si el correo existe, te enviamos instrucciones.')
 }
 
 export async function confirmPasswordReset(
@@ -56,7 +61,7 @@ export async function confirmPasswordReset(
     token,
     new_password: password,
   })
-  return data
+  return toMessage(data, 'Contraseña actualizada.')
 }
 
 export async function changePassword(currentPassword: string, newPassword: string): Promise<{ message: string }> {
@@ -64,7 +69,26 @@ export async function changePassword(currentPassword: string, newPassword: strin
     current_password: currentPassword,
     new_password: newPassword,
   })
-  return data
+  return toMessage(data, 'Contraseña actualizada.')
+}
+
+export interface UpdateMePayload {
+  first_name?: string
+  last_name?: string
+  phone?: string
+}
+
+export async function updateMe(payload: UpdateMePayload): Promise<User> {
+  const { data } = await axiosInstance.patch('/api/v1/users/me/', payload)
+  return normalizeUser(data) as User
+}
+
+/** `avatar_url` es de solo lectura: la foto se sube como archivo en el campo `avatar`. */
+export async function uploadAvatar(file: File): Promise<User> {
+  const formData = new FormData()
+  formData.append('avatar', file)
+  const { data } = await axiosInstance.patch('/api/v1/users/me/', formData)
+  return normalizeUser(data) as User
 }
 
 export async function logout(): Promise<void> {
@@ -82,5 +106,7 @@ export const authApi = {
   forgotPassword: requestPasswordReset,
   resetPassword: confirmPasswordReset,
   changePassword,
+  updateMe,
+  uploadAvatar,
   logout,
 }

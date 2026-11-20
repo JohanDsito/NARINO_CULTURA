@@ -1,22 +1,30 @@
-# Entorno Virtual
-venv/
-env/
-ENV/
+# Archivos que genera Postman al abrir esta carpeta ("Work with Git")
+/.postman/
+/postman/
 
-# Variables de entorno (¡MUY IMPORTANTE!)
+# Volcados de código generados por herramientas
+repomix-output.xml
+
+# Variables de entorno: nunca se versionan (en mayo se filtraron credenciales por un .env)
 .env
+.env.*
+!.env.example
 
-# Base de datos local
-db.sqlite3
+# Estáticos que genera collectstatic al arrancar el contenedor
+staticfiles/
 
-# Archivos de Python (Caché)
-**/__pycache__/
-*.pyc
+# Cachés y reportes
+.coverage
+.coverage.*
+coverage.json
+coverage/
+.ruff_cache/
+__pycache__/
 
-# Frontend (Node modules y builds)
-node_modules/
-dist/
-.eslintcache
+# Sistema operativo y editores
+.DS_Store
+Thumbs.db
+.idea/
 
-# Docker
-.dockerignore
+# Informes y documentos de trabajo locales (no se versionan)
+/docs/informes/

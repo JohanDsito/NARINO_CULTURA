@@ -7,8 +7,9 @@ import { listMusicians } from '@/api/musicians.api'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { PageShell } from '@/components/layout/page-shell'
-import { ROUTES, AGGREGATION_TYPE_LABELS } from '@/constants/routes'
-import type { AggregationType } from '@/types/auth'
+import { ROUTES } from '@/constants/routes'
+import { AGGREGATION_TYPE_LABELS } from '@/constants/labels'
+import type { AggregationType } from '@/types'
 
 const AGGREGATION_OPTIONS: { value: AggregationType | ''; label: string }[] = [
   { value: '', label: 'Todos' },
@@ -54,7 +55,7 @@ export default function MusicianDirectoryPage() {
               placeholder="Buscar por nombre artístico, género, ciudad…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-input border border-border bg-surface pl-9 pr-4 py-2.5 font-body text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-oro/50"
+              className="w-full rounded-input border border-border bg-bg-card pl-9 pr-4 py-2.5 font-body text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-oro/50"
             />
           </div>
           <div className="flex gap-2 flex-wrap">
@@ -96,7 +97,7 @@ export default function MusicianDirectoryPage() {
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: 9 }).map((_, i) => (
-              <div key={i} className="rounded-card border border-border bg-surface animate-pulse h-52" />
+              <div key={i} className="rounded-card border border-border bg-bg-card animate-pulse h-52" />
             ))}
           </div>
         ) : musicians.length === 0 ? (
@@ -146,7 +147,7 @@ export default function MusicianDirectoryPage() {
                       {musician.genres.slice(0, 3).map((genre) => (
                         <span
                           key={genre.id}
-                          className="rounded-tag bg-surface border border-border px-2 py-0.5 font-body text-[10px] text-text-muted"
+                          className="rounded-tag bg-bg-card border border-border px-2 py-0.5 font-body text-[10px] text-text-muted"
                         >
                           {genre.name}
                         </span>

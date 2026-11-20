@@ -1,3 +1,4 @@
+import axios from 'axios'
 import axiosInstance from './axiosInstance'
 import type {
   MusicianProfile,
@@ -7,7 +8,7 @@ import type {
   MusicianReview,
   PaginatedResponse,
   AggregationType,
-} from '@/types/auth'
+} from '@/types'
 import type { FollowItem } from '@/api/artists.api'
 
 export interface GetMusiciansParams {
@@ -58,9 +59,15 @@ export async function getMusicianBySlug(slug: string): Promise<MusicianProfile> 
   return data
 }
 
-export async function getMyMusicianProfile(): Promise<MusicianProfile> {
-  const { data } = await axiosInstance.get<MusicianProfile>('/api/v1/musicians/me/')
-  return data
+/** Perfil de músico del usuario autenticado, o `null` si todavía no lo ha creado. */
+export async function getMyMusicianProfile(): Promise<MusicianProfile | null> {
+  try {
+    const { data } = await axiosInstance.get<MusicianProfile>('/api/v1/musicians/me/')
+    return data
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 404) return null
+    throw error
+  }
 }
 
 export async function createMusicianProfile(

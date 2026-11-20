@@ -61,7 +61,7 @@ export default function VerifyEmailPage() {
           <CardTitle>{title}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">{message}</p>
+          <p className="text-sm text-text-secondary">{message}</p>
           <div className="flex flex-wrap gap-3">
             <Button asChild aria-label="Ir a iniciar sesión">
               <Link to="/login">Ir a iniciar sesión</Link>

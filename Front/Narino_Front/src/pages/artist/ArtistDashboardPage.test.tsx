@@ -6,7 +6,7 @@ import { MemoryRouter } from 'react-router-dom'
 
 import {
   createArtistProfile,
-  listArtistProfiles,
+  getMyArtistProfile,
   updateArtistProfile,
 } from '@/api/artists.api'
 
@@ -15,8 +15,11 @@ import { useAuthStore } from '@/store/authStore'
 
 vi.mock('@/api/artists.api', () => ({
   createArtistProfile: vi.fn(),
-  listArtistProfiles: vi.fn(),
+  getMyArtistProfile: vi.fn(),
   updateArtistProfile: vi.fn(),
+  uploadArtistProfileImage: vi.fn(),
+  getArtistFollowers: vi.fn(),
+  getMyFollowing: vi.fn(),
 }))
 
 vi.mock('sonner', () => ({
@@ -30,8 +33,8 @@ const mockedCreateArtistProfile = vi.mocked(
   createArtistProfile,
 )
 
-const mockedListArtistProfiles = vi.mocked(
-  listArtistProfiles,
+const mockedGetMyArtistProfile = vi.mocked(
+  getMyArtistProfile,
 )
 
 const mockedUpdateArtistProfile = vi.mocked(
@@ -80,9 +83,7 @@ describe('ArtistDashboardPage', () => {
   it('creates an artist profile when no profile exists', async () => {
     const user = userEvent.setup()
 
-    mockedListArtistProfiles.mockResolvedValueOnce(
-      [],
-    )
+    mockedGetMyArtistProfile.mockResolvedValueOnce(null)
 
     mockedCreateArtistProfile.mockResolvedValueOnce(
       {} as Awaited<
@@ -134,7 +135,7 @@ describe('ArtistDashboardPage', () => {
   it('updates an existing artist profile by slug', async () => {
     const user = userEvent.setup()
 
-    mockedListArtistProfiles.mockResolvedValueOnce([
+    mockedGetMyArtistProfile.mockResolvedValueOnce(
       {
         id: '1',
         user_id: '7',
@@ -153,7 +154,7 @@ describe('ArtistDashboardPage', () => {
         created_at: '',
         updated_at: '',
       },
-    ])
+    )
 
     mockedUpdateArtistProfile.mockResolvedValueOnce(
       {} as Awaited<

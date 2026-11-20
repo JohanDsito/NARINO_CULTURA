@@ -84,11 +84,12 @@ describe('ProtectedRoute', () => {
     useAuthStore.setState({
       accessToken: 'access-token',
       user: {
-        id: 1,
+        id: '1',
         email: 'artist@test.com',
         first_name: 'Ana',
         last_name: 'Mora',
         role: 'artist',
+        is_verified: true,
       },
       refreshToken: 'refresh-token',
       isAuthenticated: true,
@@ -105,11 +106,12 @@ describe('ProtectedRoute', () => {
     useAuthStore.setState({
       accessToken: 'access-token',
       user: {
-        id: 1,
+        id: '1',
         email: 'buyer@test.com',
         first_name: 'Bea',
         last_name: 'Rios',
         role: 'buyer',
+        is_verified: true,
       },
       refreshToken: 'refresh-token',
       isAuthenticated: true,
@@ -131,11 +133,12 @@ describe('ProtectedRoute', () => {
     })
 
     mockedMe.mockResolvedValueOnce({
-      id: 1,
+      id: '1',
       email: 'artist@test.com',
       first_name: 'Ana',
       last_name: 'Mora',
       role: 'artist',
+      is_verified: true,
     })
 
     renderProtectedRoute(['artist'])
