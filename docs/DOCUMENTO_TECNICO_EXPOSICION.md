@@ -190,12 +190,14 @@ Algunas operaciones no deben ejecutarse durante el ciclo petición-respuesta HTT
 | Tarea | Mecanismo | Frecuencia |
 |-------|-----------|-----------|
 | Cerrar subastas vencidas | Celery Beat (cron) | Cada 60 segundos |
+| Cancelar órdenes de subasta sin pagar (plazo de 48 h) | Celery Beat (cron) | Cada 15 minutos |
+| Recordar eventos a los inscritos 24 h antes (RF33) | Celery Beat (cron) | Cada 15 minutos |
 | Envío de notificaciones | Cola Celery | En demanda |
 | Emails de confirmación | Cola Celery | En demanda |
 
 **Redis como broker:** Django encola una tarea escribiéndola en Redis. Los **workers de Celery** (procesos separados) leen la cola y ejecutan las tareas de forma independiente. El servidor principal responde al usuario inmediatamente sin esperar que la tarea termine.
 
-**Celery Beat** es el planificador: ejecuta tareas periódicas según una agenda (similar a cron en Unix). El cierre de subastas se verifica cada minuto de forma automática.
+**Celery Beat** es el planificador: ejecuta tareas periódicas según una agenda (similar a cron en Unix). El cierre de subastas se verifica cada minuto; el vencimiento de órdenes de subasta y los recordatorios de eventos, cada 15 minutos. Cada recordatorio se envía una sola vez: la inscripción guarda `reminder_sent_at` y se reclama con una actualización condicional antes de enviar.
 
 ### 3.6 Caché con Redis
 
