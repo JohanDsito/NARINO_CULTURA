@@ -90,8 +90,13 @@ Correr lo mismo que corre el CI, en la carpeta del componente que se tocó:
 | Web (`Front/Narino_Front`) | `npm run typecheck` · `npm run lint` · `npm test` · `npm run build` |
 | App (`narino_mobile`) | `flutter analyze` · `flutter test` |
 
-Hoy el CI de GitHub Actions cubre el **backend** (`.github/workflows/backend-ci.yml`): corre en los PR hacia `main` y
-`develop` y en cada push a esas ramas. La web y la app se verifican localmente con la tabla anterior.
+El CI de GitHub Actions cubre el **backend** (`.github/workflows/backend-ci.yml`) y la **web**
+(`.github/workflows/frontend-ci.yml`): corre en los PR hacia `main` y `develop` y en cada push a esas ramas, solo cuando
+cambia su carpeta. La app se verifica localmente con la tabla anterior.
+
+> En Windows las rutas no distinguen mayúsculas y en Linux sí: un import `@/pages/auth/...` hacia una carpeta `Auth/`
+> funciona en el equipo y rompe el build del despliegue. Para renombrar solo mayúsculas en Windows se usa un nombre
+> intermedio: `git mv Auth auth_tmp && git mv auth_tmp auth`.
 
 ## Configuración del repositorio (la hace un administrador)
 
