@@ -23,9 +23,42 @@ from tests.factories import (
 LOCMEM = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache", "LOCATION": "ai-tests"}}
 
 
+@override_settings(GEMINI_API_KEY="gemini-test", GROQ_API_KEY="groq-test")
+class DefaultProviderOrderTests(TestCase):
+    """Por defecto el texto va primero a Groq (más rápido y estable) y las imágenes a Gemini."""
+
+    @patch("services.llm._session.post")
+    def test_text_goes_to_groq_first_with_short_reasoning(self, post):
+        post.return_value = llm_fakes.groq("Hola desde Groq")
+        result = llm.generate("Hola")
+        self.assertEqual(result.provider, "groq")
+        body = post.call_args.kwargs["json"]
+        self.assertEqual((body["model"], body["reasoning_effort"]), ("openai/gpt-oss-120b", "low"))
+        self.assertEqual(post.call_args.kwargs["timeout"], 8)
+
+    @patch("services.llm._session.post")
+    def test_gemini_answers_when_groq_fails(self, post):
+        post.side_effect = [requests.Timeout(), llm_fakes.gemini("Hola desde Gemini")]
+        self.assertEqual(llm.generate("Hola").provider, "gemini")
+
+    @patch("services.llm._session.post")
+    def test_images_skip_groq(self, post):
+        post.return_value = llm_fakes.gemini("afiche")
+        llm.generate("x", image=llm.Image("image/png", b"png"))
+        self.assertEqual(post.call_count, 1)
+        self.assertIn("generativelanguage.googleapis.com", post.call_args.args[0])
+
+    @override_settings(GROQ_MODEL="qwen/qwen3.8-27b", AI_PROVIDERS=["groq"])
+    @patch("services.llm._session.post")
+    def test_reasoning_effort_only_for_gpt_oss_and_unlisted_providers_still_run(self, post):
+        post.side_effect = [llm_fakes.http_error(429), llm_fakes.gemini("ok")]
+        self.assertEqual(llm.generate("Hola").provider, "gemini")
+        self.assertNotIn("reasoning_effort", post.call_args_list[0].kwargs["json"])
+
+
 @override_settings(**llm_fakes.KEYS)
 class ProviderCascadeTests(TestCase):
-    @patch("services.llm.requests.post")
+    @patch("services.llm._session.post")
     def test_gemini_answers_first(self, post):
         post.return_value = llm_fakes.gemini("Hola desde Gemini")
         result = llm.generate("Hola", system="Eres amable")
@@ -35,7 +68,7 @@ class ProviderCascadeTests(TestCase):
         self.assertEqual(post.call_args.kwargs["headers"], {"x-goog-api-key": "gemini-test"})
         self.assertEqual(body["systemInstruction"]["parts"][0]["text"], "Eres amable")
 
-    @patch("services.llm.requests.post")
+    @patch("services.llm._session.post")
     def test_groq_answers_when_gemini_quota_is_exhausted(self, post):
         post.side_effect = [llm_fakes.http_error(429), llm_fakes.groq("Hola desde Groq")]
         result = llm.generate("Hola", history=[{"role": "user", "text": "a"}, {"role": "model", "text": "b"}])
@@ -44,14 +77,14 @@ class ProviderCascadeTests(TestCase):
         self.assertEqual([m["role"] for m in messages], ["user", "assistant", "user"])
         self.assertEqual(post.call_args.kwargs["headers"], {"Authorization": "Bearer groq-test"})
 
-    @patch("services.llm.requests.post")
+    @patch("services.llm._session.post")
     def test_json_output_is_parsed_even_inside_markdown(self, post):
         post.return_value = llm_fakes.gemini('```json\n{"tags": ["óleo"]}\n```')
         result = llm.generate("x", json_output=True)
         self.assertEqual(result.data, {"tags": ["óleo"]})
         self.assertEqual(post.call_args.kwargs["json"]["generationConfig"]["responseMimeType"], "application/json")
 
-    @patch("services.llm.requests.post")
+    @patch("services.llm._session.post")
     def test_images_only_go_to_gemini(self, post):
         post.return_value = llm_fakes.http_error(503)
         with self.assertRaises(llm.LLMUnavailableError):
@@ -60,7 +93,7 @@ class ProviderCascadeTests(TestCase):
         part = post.call_args.kwargs["json"]["contents"][-1]["parts"][1]
         self.assertEqual(part["inline_data"], {"mime_type": "image/png", "data": "cG5n"})
 
-    @patch("services.llm.requests.post", side_effect=requests.Timeout)
+    @patch("services.llm._session.post", side_effect=requests.Timeout)
     def test_unavailable_when_every_provider_fails(self, post):
         with self.assertLogs("services.llm", "WARNING") as logs, self.assertRaises(llm.LLMUnavailableError):
             llm.generate("x")
@@ -68,7 +101,7 @@ class ProviderCascadeTests(TestCase):
         self.assertNotIn("gemini-test", "".join(logs.output))  # la llave nunca va al log
 
     @override_settings(GEMINI_API_KEY="", GROQ_API_KEY="")
-    @patch("services.llm.requests.post")
+    @patch("services.llm._session.post")
     def test_without_keys_nothing_is_called(self, post):
         self.assertFalse(llm.is_configured())
         with self.assertRaises(llm.LLMUnavailableError):
@@ -85,7 +118,7 @@ class ChatTests(APITestCase):
     def tearDown(self):
         cache.clear()
 
-    @patch("services.llm.requests.post")
+    @patch("services.llm._session.post")
     def test_reply_comes_from_the_model_with_platform_context(self, post):
         EventFactory(title="Carnaval de Negros y Blancos", is_published=True, start_date=timezone.now() + timedelta(days=3))
         MusicianProfileFactory(artistic_name="Bambuco Sur")
@@ -100,7 +133,7 @@ class ChatTests(APITestCase):
         for name in ("Carnaval de Negros y Blancos", "Bambuco Sur", "Galeras al atardecer"):
             self.assertIn(name, system)
 
-    @patch("services.llm.requests.post")
+    @patch("services.llm._session.post")
     def test_markdown_is_removed_from_the_reply(self, post):
         post.return_value = llm_fakes.gemini("## Te recomiendo\n- **juanmc** si te gusta el rock\n- __Lala__ para boleros")
         r = self.client.post(self.url, {"message": "¿A quién escucho?"}, format="json")
@@ -108,7 +141,7 @@ class ChatTests(APITestCase):
         system = post.call_args.kwargs["json"]["systemInstruction"]["parts"][0]["text"]
         self.assertIn("sin Markdown", system)
 
-    @patch("services.llm.requests.post")
+    @patch("services.llm._session.post")
     def test_client_history_is_sanitized(self, post):
         post.return_value = llm_fakes.gemini("ok")
         history = [
@@ -123,7 +156,7 @@ class ChatTests(APITestCase):
         self.assertEqual([c["role"] for c in contents], ["user", "model", "user", "user"])
         self.assertEqual(len(contents[2]["parts"][0]["text"]), 1000)
 
-    @patch("services.llm.requests.post")
+    @patch("services.llm._session.post")
     def test_history_is_kept_server_side_when_the_client_sends_none(self, post):
         post.return_value = llm_fakes.gemini("Hay dos bandas de rock.")
         self.client.post(self.url, {"message": "Busco rock"}, format="json")
@@ -131,7 +164,7 @@ class ChatTests(APITestCase):
         roles = [c["role"] for c in post.call_args.kwargs["json"]["contents"]]
         self.assertEqual(roles, ["user", "model", "user"])
 
-    @patch("services.llm.requests.post", side_effect=requests.ConnectionError)
+    @patch("services.llm._session.post", side_effect=requests.ConnectionError)
     def test_rules_answer_when_no_provider_responds(self, _post):
         r = self.client.post(self.url, {"message": "Quiero ir a un evento"}, format="json")
         self.assertEqual(r.status_code, 200)
@@ -148,7 +181,7 @@ class EnhanceArtworkTests(APITestCase):
     def setUp(self):
         self.artwork = ArtworkFactory(title="Volcán Galeras", technique="Óleo", material="Lienzo", description="Paisaje andino")
 
-    @patch("services.llm.requests.post")
+    @patch("services.llm._session.post")
     def test_model_tags_and_description_are_cleaned_and_saved(self, post):
         post.return_value = llm_fakes.gemini({"tags": ["#Paisaje Andino", "óleo", "óleo", ""], "description": "Una obra luminosa."})
         result = AIService.enhance_artwork(self.artwork)
@@ -181,7 +214,7 @@ class MusicFiltersTests(APITestCase):
         band.genres.add(self.rock)
         MusicianProfileFactory(artistic_name="Solista de Ipiales", city="Ipiales", aggregation_type="SOLISTA")
 
-    @patch("services.llm.requests.post")
+    @patch("services.llm._session.post")
     def test_model_filters_are_validated_against_the_catalog(self, post):
         post.return_value = llm_fakes.gemini(
             {"genres": ["rock", "Trap"], "city": "Pasto", "region": "", "aggregation_type": "banda"}
@@ -191,7 +224,7 @@ class MusicFiltersTests(APITestCase):
         self.assertEqual([m["artistic_name"] for m in r.data["results"]], ["Los del Galeras"])
         self.assertIn("Rock", post.call_args.kwargs["json"]["contents"][-1]["parts"][0]["text"])
 
-    @patch("services.llm.requests.post", side_effect=requests.ConnectionError)
+    @patch("services.llm._session.post", side_effect=requests.ConnectionError)
     def test_keyword_rules_when_no_provider_responds(self, _post):
         r = self.client.post(reverse("music-recommendations"), {"query": "solista de ipiales"}, format="json")
         self.assertEqual(r.data["filters_applied"], {"city": "Ipiales", "aggregation_type": "SOLISTA"})

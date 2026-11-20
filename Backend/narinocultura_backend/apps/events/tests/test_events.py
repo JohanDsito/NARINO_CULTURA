@@ -224,7 +224,7 @@ class EventFlyerExtractionTests(EventTestCase):
         self.assertEqual(r.status_code, 403)
 
     @override_settings(**llm_fakes.KEYS)
-    @patch("services.llm.requests.post")
+    @patch("services.llm._session.post")
     def test_uses_ai_when_available(self, post):
         post.return_value = llm_fakes.gemini(
             {"title": "Festival", "event_type": "FERIA", "location": "Pasto", "start_date": "2030-12-15T20:00:00-05:00"}
@@ -238,7 +238,7 @@ class EventFlyerExtractionTests(EventTestCase):
         self.assertIn("generativelanguage.googleapis.com", post.call_args.args[0])
 
     @override_settings(**llm_fakes.KEYS)
-    @patch("services.llm.requests.post", side_effect=requests.ConnectionError)
+    @patch("services.llm._session.post", side_effect=requests.ConnectionError)
     def test_falls_back_to_heuristic_when_ai_fails(self, post):
         r = self.as_user(self.manager).post(self.EXTRACT_URL, {"flyer_text": self.FLYER}, format="json")
         self.assertEqual(r.status_code, 200)

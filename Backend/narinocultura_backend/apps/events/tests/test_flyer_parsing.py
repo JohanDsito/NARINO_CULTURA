@@ -86,7 +86,7 @@ class AiExtractionNormalizationTests(TestCase):
     def setUp(self):
         self.manager = CulturalManagerFactory()
 
-    @patch("services.llm.requests.post")
+    @patch("services.llm._session.post")
     def test_unknown_event_type_and_missing_fields_fall_back_to_heuristic(self, post):
         post.return_value = llm_fakes.gemini({"title": "Rave", "event_type": "RAVE", "location": None})
         data = EventService.extract_from_flyer(organizer=self.manager, flyer_text="Concierto andino\nLugar: Teatro Imperial")
@@ -96,7 +96,7 @@ class AiExtractionNormalizationTests(TestCase):
         self.assertEqual(data["event_type"], Event.Type.CONCIERTO)  # de la heurística
         self.assertIn("Teatro Imperial", data["location"])
 
-    @patch("services.llm.requests.post")
+    @patch("services.llm._session.post")
     def test_ai_dates_are_parsed_and_impossible_ones_dropped(self, post):
         post.return_value = llm_fakes.gemini({"title": "Feria", "start_date": "2031-03-05T19:30:00-05:00", "end_date": None})
         data = EventService.extract_from_flyer(organizer=self.manager, flyer_text="Feria")
@@ -108,13 +108,13 @@ class AiExtractionNormalizationTests(TestCase):
         self.assertIsNone(data["start_date"])
         self.assertIsNone(data["end_date"])
 
-    @patch("services.llm.requests.post")
+    @patch("services.llm._session.post")
     def test_suggestion_is_never_published(self, post):
         post.return_value = llm_fakes.gemini({"title": "Feria", "is_published": True})
         data = EventService.extract_from_flyer(organizer=self.manager, flyer_text="Feria")
         self.assertFalse(data["is_published"])
 
-    @patch("services.llm.requests.post")
+    @patch("services.llm._session.post")
     def test_non_json_answer_from_every_provider_uses_heuristic(self, post):
         post.side_effect = [llm_fakes.gemini("No puedo leer el afiche"), llm_fakes.groq(["no", "dict"])]
         data = EventService.extract_from_flyer(organizer=self.manager, flyer_text="Taller de cerámica")

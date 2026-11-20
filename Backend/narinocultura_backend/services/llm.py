@@ -1,7 +1,8 @@
-"""Acceso a modelos de lenguaje por HTTPS: Gemini (principal) y Groq (respaldo).
+"""Acceso a modelos de lenguaje por HTTPS: Groq y Gemini (orden en ``settings.AI_PROVIDERS``).
 
 Se llama a las API REST con ``requests`` en lugar de los SDK para no sumar dependencias
-ni memoria al proceso web. Cada proveedor configurado se prueba en orden; si ninguno
+ni memoria al proceso web, y con una sesión compartida que reutiliza las conexiones HTTPS
+(ahorra el saludo TLS, ~0,4 s por llamada). Cada proveedor configurado se prueba en orden; si ninguno
 responde (sin llave, cuota agotada con 429, caída o respuesta inválida) se lanza
 ``LLMUnavailableError`` y quien llama usa sus reglas locales. Las dos llaves de capa gratuita
 no generan cobros: al agotar la cuota del día la API solo responde 429.
@@ -23,6 +24,9 @@ logger = logging.getLogger(__name__)
 
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
+
+# Conexiones keep-alive compartidas entre peticiones (el pool de urllib3 es seguro entre hilos)
+_session = requests.Session()
 
 
 class LLMUnavailableError(Exception):
@@ -97,13 +101,15 @@ def parse_json_object(text: str) -> dict | None:
 
 
 def _providers(*, needs_vision: bool) -> list[tuple[str, Callable[..., str]]]:
-    providers = []
+    available = {}
     if settings.GEMINI_API_KEY:
-        providers.append(("gemini", _call_gemini))
+        available["gemini"] = _call_gemini
     # Los modelos de texto de Groq no leen imágenes: el afiche solo se analiza con Gemini
     if settings.GROQ_API_KEY and not needs_vision:
-        providers.append(("groq", _call_groq))
-    return providers
+        available["groq"] = _call_groq
+    order = [name for name in settings.AI_PROVIDERS if name in available]
+    order += [name for name in available if name not in order]
+    return [(name, available[name]) for name in order]
 
 
 def _call_gemini(prompt, *, system, history, json_output, image, max_tokens) -> str:
@@ -122,7 +128,7 @@ def _call_gemini(prompt, *, system, history, json_output, image, max_tokens) -> 
     if json_output:
         body["generationConfig"]["responseMimeType"] = "application/json"
 
-    response = requests.post(
+    response = _session.post(
         GEMINI_URL.format(model=settings.GEMINI_MODEL),
         headers={"x-goog-api-key": settings.GEMINI_API_KEY},
         json=body,
@@ -148,8 +154,11 @@ def _call_groq(prompt, *, system, history, json_output, image, max_tokens) -> st
     }
     if json_output:
         body["response_format"] = {"type": "json_object"}
+    if settings.GROQ_MODEL.startswith("openai/gpt-oss"):
+        # Razonamiento corto: responde en ~0,5-1 s y, sin esto, a veces falla al generar JSON
+        body["reasoning_effort"] = "low"
 
-    response = requests.post(
+    response = _session.post(
         GROQ_URL,
         headers={"Authorization": f"Bearer {settings.GROQ_API_KEY}"},
         json=body,
