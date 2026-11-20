@@ -157,6 +157,19 @@ def _event_registration(payload):
     return [InboxItem(user_id, "Inscripción confirmada", body, {"event_id": str(event.id), "url": f"/events/{event.id}"})]
 
 
+def _event_reminder(payload):
+    from apps.events.models import Event
+
+    event = _get(Event.objects, payload.get("event_id"))
+    if not event or not payload.get("user_id"):
+        return []
+    when = _when(event.start_date)
+    body = f"«{event.title}» empieza" + (f" el {when}" if when else " pronto")
+    body += f" en {event.location}." if event.location else "."
+    data = {"event_id": str(event.id), "url": f"/events/{event.id}"}
+    return [InboxItem(payload["user_id"], "Tu evento está por empezar", body, data)]
+
+
 def _event_published(payload):
     from apps.events.models import Event
 
@@ -176,6 +189,7 @@ BUILDERS = {
     "AUCTION_PAYMENT_EXPIRED": _auction_payment_expired,
     "PAYMENT_WEBHOOK": _payment_webhook,
     "EVENT_REGISTRATION": _event_registration,
+    "EVENT_REMINDER": _event_reminder,
     "EVENT_PUBLISHED": _event_published,
 }
 

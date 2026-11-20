@@ -1,0 +1,10 @@
+{% extends "emails/layout.html" %}
+{% block title %}Tu evento está por empezar{% endblock %}
+{% block preheader %}«{{ event_title }}» empieza pronto.{% endblock %}
+{% block heading %}Tu evento está por empezar{% endblock %}
+{% block content %}
+<p style="margin:0 0 16px;">Te recordamos que estás inscrito en <strong style="color:#1A1208;">{{ event_title }}</strong>.</p>
+{% include "emails/partials/details.html" with rows=details %}
+<p style="margin:0 0 16px;">¡Te esperamos!</p>
+{% include "emails/partials/button.html" with url=event_url label="Ver el evento" %}
+{% endblock %}
