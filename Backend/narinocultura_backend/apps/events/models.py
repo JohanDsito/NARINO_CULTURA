@@ -44,6 +44,8 @@ class Event(TimeStampedUUIDModel):
 class EventRegistration(TimeStampedUUIDModel):
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="registrations")
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    # Cuándo se envió el recordatorio previo al evento (RF33). Vacío = pendiente; garantiza un solo envío.
+    reminder_sent_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ["-created_at"]

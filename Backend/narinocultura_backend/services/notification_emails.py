@@ -141,6 +141,21 @@ def _event_registration(payload, log):
     )
 
 
+def _event_reminder(payload, log):
+    return NotificationEmail(
+        to=payload.get("user_email", ""),
+        subject=f"Recordatorio: {payload.get('event_title', '')}",
+        template="emails/notifications/event_reminder.html",
+        context={
+            "name": first_name(payload.get("user_name")),
+            "event_title": payload.get("event_title"),
+            "details": [("Evento", payload.get("event_title")), ("Fecha", format_date(payload.get("event_date"))),
+                        ("Lugar", payload.get("event_location"))],
+            "event_url": _frontend(f"/events/{payload.get('event_id', '')}"),
+        },
+    )
+
+
 BUILDERS = {
     "AUCTION_OPENED": _auction_opened,
     "AUCTION_REJECTED": _auction_rejected,
@@ -148,6 +163,7 @@ BUILDERS = {
     "AUCTION_PAYMENT_EXPIRED": _auction_payment_expired,
     "PAYMENT_WEBHOOK": _payment_webhook,
     "EVENT_REGISTRATION": _event_registration,
+    "EVENT_REMINDER": _event_reminder,
 }
 
 

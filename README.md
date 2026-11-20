@@ -120,6 +120,7 @@ ruff check --config ../pyproject.toml .
 | Archivos | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` |
 | IA | `AI_SERVICE_URL` |
 | Subastas | `AUCTION_PAYMENT_HOURS` (plazo de pago del ganador, 48 h por defecto) |
+| Eventos | `EVENT_REMINDER_HOURS` (anticipación del recordatorio a los inscritos, 24 h por defecto) |
 | Administrador inicial | `ADMIN_EMAIL`, `ADMIN_PASSWORD` (solo si el administrador no existe) |
 
 En producción el servidor no arranca sin `SECRET_KEY`, `ALLOWED_HOSTS` y `WOMPI_EVENTS_SECRET`.
