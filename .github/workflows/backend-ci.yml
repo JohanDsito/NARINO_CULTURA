@@ -47,10 +47,20 @@ jobs:
             Backend/requirements.txt
             Backend/requirements-dev.txt
       - run: pip install -r ../requirements-dev.txt
+      - name: Migraciones al día
+        # Si falta una migración, el contenedor de producción arrancaría con el esquema viejo
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings.test
+          SECRET_KEY: ci-only-secret-key-not-for-production
+        run: python manage.py makemigrations --check --dry-run
       - name: Ejecutar pruebas
         env:
           DJANGO_SETTINGS_MODULE: config.settings.test
           SECRET_KEY: ci-only-secret-key-not-for-production
         run: python -m coverage run --rcfile=../pyproject.toml --source=. manage.py test apps
-      - name: Cobertura (meta RNF13 >= 80 %)
-        run: python -m coverage report --rcfile=../pyproject.toml --fail-under=80
+      - name: Cobertura global (líneas + ramas >= 95 %)
+        run: python -m coverage report --rcfile=../pyproject.toml --fail-under=95
+      - name: Cobertura de módulos críticos (>= 90 % cada uno)
+        run: |
+          python -m coverage json --rcfile=../pyproject.toml -o coverage.json
+          python ../scripts/coverage_criticos.py coverage.json

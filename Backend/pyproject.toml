@@ -21,10 +21,14 @@ ignore = [
 
 [tool.coverage.run]
 source = ["narinocultura_backend"]
+# Se miden también las ramas (if/else): el porcentaje solo de líneas inflaba la cobertura real
+branch = true
 omit = [
     "*/migrations/*",
     "*/tests/*",
     "*/test_*",
+    "*/tests.py",
+    "config/settings/test.py",
     "manage.py",
     "config/asgi.py",
     "config/wsgi.py",
