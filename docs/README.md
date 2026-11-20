@@ -2,6 +2,7 @@
 
 | Documento | Contenido |
 |---|---|
+| [FLUJO_GIT.md](FLUJO_GIT.md) | Flujo de trabajo con Git Flow: ramas, PR, versiones y despliegue |
 | [DOCUMENTO_TECNICO_EXPOSICION.md](DOCUMENTO_TECNICO_EXPOSICION.md) | Documento técnico para la exposición de grado: arquitectura, módulos y decisiones |
 | [api/postman/](api/postman/README.md) | Colección de Postman para la **prueba de humo** de punta a punta contra el backend desplegado |
 | [frontend/REVISION_RUTAS_FRONTEND.md](frontend/REVISION_RUTAS_FRONTEND.md) | Revisión de rutas de la aplicación web |
