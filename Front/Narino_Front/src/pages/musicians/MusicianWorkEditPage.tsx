@@ -45,7 +45,7 @@ export default function MusicianWorkEditPage() {
 
   if (isError || !work) {
     return (
-      <div className="min-h-screen bg-bg pt-24 flex flex-col items-center gap-4">
+      <div className="min-h-screen pt-24 flex flex-col items-center gap-4">
         <p className="text-text-secondary">No se encontró la obra.</p>
         <Link to={ROUTES.DASHBOARD.MUSICIAN.WORKS} className="text-sm hover:underline">
           ← Volver a mis obras
@@ -97,7 +97,7 @@ function MusicianWorkEditForm({ work }: { work: MusicalWork }) {
   }
 
   return (
-    <div className="min-h-screen bg-bg pt-16">
+    <div className="min-h-screen pt-16">
       <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-8 md:px-10">
         <section className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>

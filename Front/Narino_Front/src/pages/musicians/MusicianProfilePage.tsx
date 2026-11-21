@@ -45,7 +45,7 @@ export default function MusicianProfilePage() {
 
   if (isError || !musician) {
     return (
-      <div className="min-h-screen bg-bg pt-24 flex flex-col items-center gap-4">
+      <div className="min-h-screen pt-24 flex flex-col items-center gap-4">
         <p className="text-text-muted font-body">No se encontró este perfil.</p>
         <Link to={ROUTES.MUSICIANS} className="text-oro hover:underline font-body text-sm">
           ← Volver a músicos
@@ -99,28 +99,20 @@ export default function MusicianProfilePage() {
   }[]
 
   return (
-    <div className="min-h-screen bg-bg pt-16">
+    <div className="min-h-screen pt-16">
       {/* Breadcrumb */}
-      <div className="px-6 md:px-16 pt-6" style={{ background: '#2D1B00' }}>
+      <div className="px-6 md:px-16 pt-6">
         <Link
           to={ROUTES.MUSICIANS}
-          className="inline-flex items-center gap-1.5 text-oro/60 hover:text-oro font-body text-sm no-underline transition-colors pb-4"
+          className="inline-flex items-center gap-1.5 text-text-secondary hover:text-text-primary font-body text-sm no-underline transition-colors pb-4"
         >
           <ArrowLeft size={14} /> Músicos
         </Link>
       </div>
 
       {/* Hero */}
-      <section className="relative overflow-hidden px-6 md:px-16 pb-14 pt-8" style={{ background: '#2D1B00' }}>
+      <section className="relative overflow-hidden px-6 md:px-16 pb-14 pt-8">
         {/* Decorative glow */}
-        <div
-          className="pointer-events-none absolute -top-20 -right-20 w-96 h-96 rounded-full opacity-60"
-          style={{ background: 'radial-gradient(circle, rgba(201,146,26,0.18) 0%, transparent 70%)' }}
-        />
-        <div
-          className="pointer-events-none absolute bottom-0 left-0 right-0 h-20"
-          style={{ background: 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.25))' }}
-        />
 
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row gap-10 items-start relative z-10">
           {/* Avatar */}
@@ -148,7 +140,7 @@ export default function MusicianProfilePage() {
 
             {/* Name */}
             <h1
-              className="font-display font-black text-oro-light leading-tight mb-2"
+              className="font-display font-extrabold text-text-primary leading-tight mb-2"
               style={{ fontSize: 'clamp(28px, 5vw, 44px)' }}
             >
               {musician.artistic_name}
@@ -166,7 +158,7 @@ export default function MusicianProfilePage() {
                 {musician.genres.map((g) => (
                   <span
                     key={g.id}
-                    className="rounded-tag bg-white/10 text-oro-light font-body text-[12px] px-2.5 py-0.5"
+                    className="rounded-tag bg-azul-tint text-azul font-body text-[12px] font-semibold px-2.5 py-0.5"
                   >
                     {g.icon} {g.name}
                   </span>
@@ -177,8 +169,7 @@ export default function MusicianProfilePage() {
             {/* Bio */}
             {musician.bio && (
               <p
-                className="font-body text-[14px] leading-[1.7] mb-6 max-w-2xl"
-                style={{ color: 'rgba(245,239,229,0.78)' }}
+                className="font-body text-[14px] leading-[1.7] mb-6 max-w-2xl text-text-secondary"
               >
                 {musician.bio}
               </p>
@@ -193,7 +184,7 @@ export default function MusicianProfilePage() {
                     href={link.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`flex items-center gap-1.5 no-underline text-oro-light font-body text-[13px] transition-colors ${link.hover}`}
+                    className={`flex items-center gap-1.5 no-underline text-text-secondary font-body text-[13px] transition-colors ${link.hover}`}
                   >
                     {link.icon}
                     {link.label}
@@ -243,7 +234,7 @@ export default function MusicianProfilePage() {
       </section>
 
       {/* Gold separator */}
-      <div className="h-[3px] w-full" style={{ background: 'linear-gradient(90deg, #2D1B00 0%, var(--oro) 40%, var(--oro) 60%, #2D1B00 100%)' }} />
+      <div className="nc-serpentina h-[3px] w-full" aria-hidden />
 
       {/* Content */}
       <div className="max-w-5xl mx-auto px-6 md:px-16 py-12">

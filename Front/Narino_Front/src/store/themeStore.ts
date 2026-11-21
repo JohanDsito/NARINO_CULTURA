@@ -18,8 +18,9 @@ interface ThemeStore {
 export const useThemeStore = create<ThemeStore>()(
   persist(
     (set) => ({
-      theme: 'light',
-      systemPreference: 'light',
+      // Sin elección guardada se sigue el modo del sistema (el script de index.html lo aplica antes de dibujar)
+      theme: getSystemTheme(),
+      systemPreference: getSystemTheme(),
 
       toggle: () =>
         set((state) => {
@@ -37,9 +38,7 @@ export const useThemeStore = create<ThemeStore>()(
       name: 'nc-theme-store',
       partialize: (state) => ({ theme: state.theme }),
       onRehydrateStorage: () => (state) => {
-        if (state) {
-          applyTheme(state.theme)
-        }
+        applyTheme(state?.theme ?? getSystemTheme())
       },
     }
   )

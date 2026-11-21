@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { Search, Image } from 'lucide-react'
 import { getArtworks, getArtworkCategories } from '@/api/artworks.api'
 import { Card } from '@/components/ui/card'
+import { ArtworkImage } from '@/components/artworks/artwork-image'
 import { Badge } from '@/components/ui/badge'
 import { PageShell } from '@/components/layout/page-shell'
 import { ROUTES } from '@/constants/routes'
@@ -39,7 +40,7 @@ export default function ArtworksCatalogPage() {
   const hasPrev = Boolean(paginatedArtworks?.previous)
 
   return (
-    <div className="min-h-screen bg-bg pt-16">
+    <div className="min-h-screen pt-16">
       <PageShell
         title="Catálogo de Obras"
         subtitle="Arte nariñense disponible para adquirir o subastar"
@@ -102,17 +103,17 @@ export default function ArtworksCatalogPage() {
               const mainImage =
                 artwork.main_image_url ||
                 artwork.images[0]?.image_url ||
-                `https://placehold.co/400x300/2D1B00/F0C060?text=${encodeURIComponent(artwork.title)}`
+                ''
 
               return (
                 <Link key={artwork.id} to={ROUTES.ARTWORK_DETAIL(artwork.id)} className="no-underline">
                   <Card className="p-0 overflow-hidden group hover:shadow-card transition-shadow cursor-pointer">
                     <div className="relative aspect-[4/3] overflow-hidden rounded-t-card">
-                      <img
+                      <ArtworkImage
                         src={mainImage}
                         alt={artwork.title}
-                        loading="lazy"
-                        className="w-full h-full object-cover transition-transform duration-[350ms] group-hover:scale-105"
+                        accent="magenta"
+                        className="transition-transform duration-[350ms] group-hover:scale-105"
                       />
                       {artwork.status !== 'DISPONIBLE' && (
                         <div className="absolute top-2 right-2">

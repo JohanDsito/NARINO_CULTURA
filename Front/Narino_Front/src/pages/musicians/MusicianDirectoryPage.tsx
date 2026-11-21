@@ -39,7 +39,7 @@ export default function MusicianDirectoryPage() {
   const musicians = data?.results ?? []
 
   return (
-    <div className="min-h-screen bg-bg pt-16">
+    <div className="min-h-screen pt-16">
       <PageShell
         title="Músicos de Nariño"
         subtitle="Artistas sonoros del departamento — solos, bandas, colectivos y más"
@@ -65,7 +65,7 @@ export default function MusicianDirectoryPage() {
                 onClick={() => setAggregationType(opt.value as AggregationType | '')}
                 className={`rounded-btn px-3 py-1.5 font-body text-[13px] transition-colors ${
                   aggregationType === opt.value
-                    ? 'bg-oro text-[#2D1B00] font-semibold'
+                    ? 'bg-oro-fill text-on-oro font-semibold'
                     : 'border border-border text-text-muted hover:text-text-primary hover:border-oro/50'
                 }`}
               >
@@ -87,7 +87,7 @@ export default function MusicianDirectoryPage() {
           </div>
           <Link
             to={ROUTES.MUSIC_DISCOVERY}
-            className="rounded-btn bg-oro text-[#2D1B00] font-body text-sm font-semibold px-4 py-2 no-underline hover:bg-oro-light transition-colors flex-none"
+            className="rounded-btn bg-oro-fill text-on-oro font-body text-sm font-semibold px-4 py-2 no-underline hover:bg-oro-light transition-colors flex-none"
           >
             Probar →
           </Link>

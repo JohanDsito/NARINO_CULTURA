@@ -80,7 +80,7 @@ export default function AuctionRoomPage() {
 
   if (isError || !auction) {
     return (
-      <div className="min-h-screen bg-bg pt-24 flex flex-col items-center gap-4">
+      <div className="min-h-screen pt-24 flex flex-col items-center gap-4">
         <p className="text-text-muted font-body">No se encontró esta subasta.</p>
         <Link to={ROUTES.AUCTIONS} className="text-oro hover:underline font-body text-sm">
           ← Volver a subastas
@@ -93,7 +93,7 @@ export default function AuctionRoomPage() {
   const isActive = auction.status === 'ACTIVA'
 
   return (
-    <div className="min-h-screen bg-bg pt-16">
+    <div className="min-h-screen pt-16">
       <div className="mx-auto max-w-5xl px-6 py-8">
         {/* Breadcrumb */}
         <Link

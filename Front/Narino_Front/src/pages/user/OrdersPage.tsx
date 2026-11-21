@@ -22,7 +22,7 @@ export default function OrdersPage() {
   const [now] = useState(() => Date.now())
 
   return (
-    <div className="min-h-screen bg-bg pt-16">
+    <div className="min-h-screen pt-16">
       <PageShell title="Mis pedidos" subtitle="Historial de órdenes y estados de compra" />
 
       <main className="mx-auto max-w-4xl px-6 py-8">

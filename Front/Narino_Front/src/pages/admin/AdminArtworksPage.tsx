@@ -148,7 +148,7 @@ export default function AdminArtworksPage() {
   const isLoading = tab === 'pending' ? isLoadingPending : isLoadingAll
 
   return (
-    <div className="min-h-screen bg-bg pt-16">
+    <div className="min-h-screen pt-16">
       <PageShell
         title="Gestión de Obras"
         subtitle={
@@ -171,7 +171,7 @@ export default function AdminArtworksPage() {
           >
             Pendientes de moderación
             {pendingArtworks.length > 0 && (
-              <span className="ml-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-bold text-white">
+              <span className="ml-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-oro-fill px-1 text-[10px] font-bold text-on-oro">
                 {pendingArtworks.length}
               </span>
             )}

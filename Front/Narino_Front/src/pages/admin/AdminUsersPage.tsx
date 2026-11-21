@@ -57,7 +57,7 @@ export default function AdminUsersPage() {
   )
 
   return (
-    <div className="min-h-screen bg-bg pt-16">
+    <div className="min-h-screen pt-16">
       <PageShell
         title="Gestión de Usuarios"
         subtitle={`${users.length} usuario${users.length === 1 ? '' : 's'} registrado${users.length === 1 ? '' : 's'}`}

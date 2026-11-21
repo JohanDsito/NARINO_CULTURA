@@ -63,7 +63,7 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-bg pt-16">
+    <div className="min-h-screen pt-16">
       <PageShell title="Notificaciones" subtitle="Pujas, ventas, pagos y eventos de tu cuenta" />
 
       <main className="mx-auto max-w-2xl px-6 py-8">
@@ -79,7 +79,7 @@ export default function NotificationsPage() {
                 className={cn(
                   'rounded-tag px-4 py-1.5 font-body text-[13px] font-semibold transition-colors',
                   filter === value
-                    ? 'bg-tierra text-white'
+                    ? 'bg-tierra text-on-tierra'
                     : 'bg-bg-card text-text-muted hover:bg-bg-subtle',
                 )}
               >

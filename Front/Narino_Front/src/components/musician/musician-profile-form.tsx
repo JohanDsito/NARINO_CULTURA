@@ -224,7 +224,7 @@ export function MusicianProfileForm({ profile, user }: MusicianProfileFormProps)
                       className={[
                         'flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors',
                         selected
-                          ? 'border-tierra bg-tierra text-white'
+                          ? 'border-tierra bg-tierra text-on-tierra'
                           : 'border-border bg-bg text-text-primary hover:border-tierra/60 hover:bg-tierra/5',
                       ].join(' ')}
                     >

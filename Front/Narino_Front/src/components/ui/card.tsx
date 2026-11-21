@@ -5,7 +5,7 @@ export function Card({ className, children, ...props }: HTMLAttributes<HTMLDivEl
   return (
     <div
       className={cn(
-        'bg-bg-card border border-border rounded-card p-5 md:p-6',
+        'nc-card bg-bg-card border border-border rounded-card p-5 md:p-6',
         'transition-all duration-[350ms] ease-smooth',
         'hover:-translate-y-1 hover:shadow-card',
         className
@@ -27,7 +27,7 @@ export function CardHeader({ className, children, ...props }: HTMLAttributes<HTM
 
 export function CardTitle({ className, children, ...props }: HTMLAttributes<HTMLHeadingElement>) {
   return (
-    <h3 className={cn('text-2xl font-semibold leading-none tracking-tight', className)} {...props}>
+    <h3 className={cn('text-2xl font-bold leading-none', className)} {...props}>
       {children}
     </h3>
   )

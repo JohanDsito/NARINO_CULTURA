@@ -15,7 +15,7 @@ export default function FavoritesPage() {
   const saved = favorites.filter((f) => !f.id.startsWith('pendiente-'))
 
   return (
-    <div className="min-h-screen bg-bg pt-16">
+    <div className="min-h-screen pt-16">
       <PageShell title="Mis favoritos" subtitle="Las obras que guardaste para ver después" />
 
       <main className="mx-auto max-w-6xl px-6 py-8">

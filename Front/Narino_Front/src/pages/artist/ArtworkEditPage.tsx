@@ -98,7 +98,7 @@ export default function ArtworkEditPage() {
   if (isLoading) return <PageLoader label="Cargando obra…" />
 
   return (
-    <div className="min-h-screen bg-bg pt-16">
+    <div className="min-h-screen pt-16">
       <PageShell
         title="Editar obra"
         subtitle={artwork?.title ?? ''}

@@ -18,7 +18,7 @@ export default function HomePage() {
   })()
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen">
       <PageShell
         title="Nariño Cultura"
         description="Conecta con artistas, compra obras únicas, participa en subastas y descubre la agenda cultural de Nariño."

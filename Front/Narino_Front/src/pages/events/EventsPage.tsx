@@ -6,7 +6,7 @@ export default function EventsPage() {
   const canCreate = user?.role === 'admin' || user?.role === 'cultural_manager'
 
   return (
-    <div className="min-h-screen bg-bg pt-16">
+    <div className="min-h-screen pt-16">
       <main className="mx-auto max-w-6xl px-6 py-8">
         <EventCalendar showCreateButton={canCreate} />
       </main>

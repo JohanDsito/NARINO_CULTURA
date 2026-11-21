@@ -5,6 +5,7 @@ import { ShoppingCart, Gavel, Eye, ArrowLeft, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import { getArtworkById, aiEnhanceArtwork } from '@/api/artworks.api'
 import { addCartItem } from '@/api/marketplace.api'
+import { ArtworkImage } from '@/components/artworks/artwork-image'
 import { FavoriteButton } from '@/components/artworks/favorite-button'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -75,7 +76,7 @@ export default function ArtworkDetailPage() {
 
   if (isError || !artwork) {
     return (
-      <div className="min-h-screen bg-bg pt-24 flex flex-col items-center gap-4">
+      <div className="min-h-screen pt-24 flex flex-col items-center gap-4">
         <p className="text-text-muted font-body">No se encontró esta obra.</p>
         <Link to={ROUTES.ARTWORKS} className="text-oro hover:underline font-body text-sm">
           ← Volver al catálogo
@@ -90,14 +91,10 @@ export default function ArtworkDetailPage() {
     ...[...(artwork.images ?? [])].sort((a, b) => a.order - b.order).map((img) => img.image_url),
   ].filter(Boolean)
 
-  if (images.length === 0) {
-    images.push(`https://placehold.co/800x600/2D1B00/F0C060?text=${encodeURIComponent(artwork.title)}`)
-  }
-
   const status = artworkStatus(artwork.status)
 
   return (
-    <div className="min-h-screen bg-bg pt-16">
+    <div className="min-h-screen pt-16">
       <div className="mx-auto max-w-6xl px-6 py-8">
         {/* Breadcrumb */}
         <Link
@@ -111,11 +108,7 @@ export default function ArtworkDetailPage() {
           {/* Galería */}
           <div className="space-y-3">
             <div className="aspect-[4/3] overflow-hidden rounded-card bg-bg-card">
-              <img
-                src={images[selectedImage]}
-                alt={artwork.title}
-                className="w-full h-full object-cover"
-              />
+              <ArtworkImage src={images[selectedImage]} alt={artwork.title} accent="magenta" iconSize={56} />
             </div>
             {images.length > 1 && (
               <div className="flex gap-2 overflow-x-auto pb-1">

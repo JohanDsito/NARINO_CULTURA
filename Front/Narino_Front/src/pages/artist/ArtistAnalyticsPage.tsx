@@ -39,7 +39,7 @@ export default function ArtistAnalyticsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-bg pt-16">
+      <div className="min-h-screen pt-16">
         <PageShell title="Analíticas" subtitle="Resumen de ventas y rendimiento" />
         <main className="mx-auto max-w-5xl px-6 py-8 space-y-6">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -51,7 +51,7 @@ export default function ArtistAnalyticsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-bg pt-16">
+    <div className="min-h-screen pt-16">
       <PageShell title="Analíticas" subtitle="Resumen de ventas y rendimiento" />
 
       <main className="mx-auto max-w-5xl px-6 py-8 space-y-6">

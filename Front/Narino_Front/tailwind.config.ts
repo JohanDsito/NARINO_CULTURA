@@ -1,12 +1,19 @@
 import type { Config } from 'tailwindcss'
 
 /**
- * Los colores del design system viven como variables CSS en `src/index.css`
- * (modo claro y `.dark`). Se envuelven en `color-mix` para que Tailwind pueda
- * aplicar modificadores de opacidad (`bg-tierra/10`, `border-error/30`, ...).
+ * Design system "Carnaval": los colores viven como variables CSS en `src/index.css` (modo claro y `.dark`).
+ * Se envuelven en `color-mix` para que Tailwind pueda aplicar opacidad (`bg-azul/10`, `border-error/30`, ...).
  */
 const token = (name: string) =>
   `color-mix(in srgb, var(--${name}) calc(<alpha-value> * 100%), transparent)`
+
+/** Cada acento: tinta (texto), relleno, texto encima del relleno y tinte. */
+const accent = (name: string) => ({
+  [name]: token(name),
+  [`${name}-fill`]: token(`${name}-fill`),
+  [`on-${name}`]: token(`on-${name}`),
+  [`${name}-tint`]: token(`${name}-tint`),
+})
 
 export default {
   darkMode: 'class',
@@ -14,24 +21,33 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        display: ['"Playfair Display"', 'serif'],
-        body: ['"DM Sans"', 'sans-serif'],
-        accent: ['"Cormorant Garamond"', 'serif'],
+        display: ['Inter', 'system-ui', 'sans-serif'],
+        body: ['Inter', 'system-ui', 'sans-serif'],
+        accent: ['Inter', 'system-ui', 'sans-serif'],
       },
       colors: {
         bg: token('bg'),
         'bg-card': token('bg-card'),
         'bg-subtle': token('bg-subtle'),
         border: token('border'),
+        'border-strong': token('border-strong'),
 
+        ...accent('azul'),
+        ...accent('tomate'),
+        ...accent('naranja'),
+        ...accent('oro'),
+        ...accent('magenta'),
+        ...accent('verde'),
+
+        // Alias de los tokens anteriores (ver index.css)
         tierra: token('tierra'),
         'tierra-light': token('tierra-light'),
         'tierra-pale': token('tierra-pale'),
+        'on-tierra': token('on-tierra'),
 
         volcan: token('volcan'),
         'volcan-mid': token('volcan-mid'),
 
-        oro: token('oro'),
         'oro-light': token('oro-light'),
         'oro-pale': token('oro-pale'),
 
@@ -52,18 +68,23 @@ export default {
           muted: token('text-muted'),
         },
       },
+      // `border` sin color usa el borde del tema (antes caía en el gris de Tailwind, muy claro en oscuro)
+      borderColor: {
+        DEFAULT: token('border'),
+      },
       borderRadius: {
-        card: '12px',
-        'card-lg': '14px',
-        btn: '7px',
-        tag: '99px',
-        input: '8px',
+        card: '22px',
+        'card-lg': '22px',
+        btn: '9999px',
+        tag: '9999px',
+        input: '14px',
       },
       boxShadow: {
-        card: '0 12px 28px rgba(0,0,0,0.18)',
+        card: 'var(--shadow-card)',
       },
       transitionTimingFunction: {
         smooth: 'cubic-bezier(0.4, 0, 0.2, 1)',
+        spring: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
       },
     },
   },
