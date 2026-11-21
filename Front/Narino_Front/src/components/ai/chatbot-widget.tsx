@@ -97,7 +97,7 @@ export function ChatbotWidget() {
                 className={cn(
                   'max-w-[90%] rounded-lg px-3 py-2 text-sm',
                   m.role === 'user'
-                    ? 'ml-auto bg-tierra text-white'
+                    ? 'ml-auto bg-tierra text-on-tierra'
                     : 'bg-bg-subtle text-text-primary',
                 )}
               >

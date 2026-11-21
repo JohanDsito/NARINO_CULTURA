@@ -133,7 +133,7 @@ export default function ArtistArtworksPage() {
   const isLoading = artworksQuery.isLoading || profilesQuery.isLoading
 
   return (
-    <div className="min-h-screen bg-bg pt-16">
+    <div className="min-h-screen pt-16">
       <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-8 md:px-10">
         <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>

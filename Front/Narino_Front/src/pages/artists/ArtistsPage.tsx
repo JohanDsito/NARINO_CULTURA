@@ -46,7 +46,7 @@ export default function ArtistsPage() {
   )
 
   return (
-    <div className="min-h-screen bg-bg pt-16">
+    <div className="min-h-screen pt-16">
       <PageShell
         title="Artistas de Nariño"
         subtitle="Descubre los creadores visuales del departamento"
@@ -99,11 +99,8 @@ export default function ArtistsPage() {
               >
                 <Card className="p-0 overflow-hidden group cursor-pointer hover:shadow-card transition-shadow h-full flex flex-col">
                   {/* Avatar */}
-                  <div
-                    className="h-44 flex-none flex items-center justify-center"
-                    style={{ background: '#2D1B00' }}
-                  >
-                    <span className="font-display text-oro font-bold text-5xl">
+                  <div className="h-44 flex-none flex items-center justify-center bg-gradient-to-br from-magenta-tint to-naranja-tint">
+                    <span className="font-display text-magenta font-extrabold text-5xl">
                       {artist.artistic_name.charAt(0)}
                     </span>
                   </div>

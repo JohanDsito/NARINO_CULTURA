@@ -45,7 +45,7 @@ export class ErrorBoundary extends Component<Props, State> {
           )}
           <button
             onClick={this.handleReset}
-            className="rounded-input bg-oro px-4 py-2 font-body text-sm font-medium text-white hover:bg-oro/90 transition-colors"
+            className="rounded-input bg-oro-fill px-4 py-2 font-body text-sm font-medium text-on-oro hover:bg-oro/90 transition-colors"
           >
             Recargar página
           </button>

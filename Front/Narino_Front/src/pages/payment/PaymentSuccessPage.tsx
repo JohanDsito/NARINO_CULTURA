@@ -7,7 +7,7 @@ export default function PaymentSuccessPage() {
   const { state } = useLocation() as { state?: { orderId?: string; total?: string } }
 
   return (
-    <div className="min-h-screen bg-bg pt-16 flex items-center justify-center px-6">
+    <div className="min-h-screen pt-16 flex items-center justify-center px-6">
       <div className="max-w-md w-full text-center space-y-6">
         <CheckCircle size={64} className="text-selva mx-auto" />
         <h1 className="font-display font-bold text-text-primary text-[32px]">

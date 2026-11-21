@@ -80,7 +80,7 @@ export default function AdminEventsPage() {
   const isPending = approveMutation.isPending || rejectMutation.isPending
 
   return (
-    <div className="min-h-screen bg-bg pt-16">
+    <div className="min-h-screen pt-16">
       <PageShell
         title="Gestión de Eventos"
         subtitle="Aprueba, rechaza y supervisa todos los eventos de la plataforma"
@@ -91,12 +91,12 @@ export default function AdminEventsPage() {
         {/* Pending queue */}
         <section>
           <div className="mb-4 flex items-center gap-2">
-            <CalendarClock size={18} className="text-amber-500" />
+            <CalendarClock size={18} className="text-oro" />
             <h2 className="text-lg font-semibold text-text-primary">
               Eventos pendientes de aprobación
             </h2>
             {pendingEvents.length > 0 && (
-              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white">
+              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-oro-fill px-1.5 text-[10px] font-bold text-on-oro">
                 {pendingEvents.length}
               </span>
             )}
@@ -111,7 +111,7 @@ export default function AdminEventsPage() {
           ) : pendingEvents.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-                <CheckCircle size={36} className="text-emerald-500 opacity-60" />
+                <CheckCircle size={36} className="text-verde opacity-60" />
                 <p className="font-medium text-text-primary">Todo al día</p>
                 <p className="text-sm text-text-secondary">
                   No hay eventos pendientes de aprobación.
@@ -163,7 +163,7 @@ export default function AdminEventsPage() {
                     <div className="flex flex-none items-center gap-2">
                       <Button
                         size="sm"
-                        className="gap-1.5 bg-emerald-600 text-white hover:bg-emerald-700"
+                        className="gap-1.5 bg-verde-fill text-on-verde hover:bg-verde-fill/90"
                         disabled={isPending}
                         onClick={() => approveMutation.mutate(ev.id)}
                       >

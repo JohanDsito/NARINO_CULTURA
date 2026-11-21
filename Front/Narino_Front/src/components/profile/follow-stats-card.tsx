@@ -81,7 +81,7 @@ function FollowList({
             </div>
           )}
           {isError && (
-            <p className="text-xs text-amber-600 dark:text-amber-400">
+            <p className="text-xs text-oro">
               El servidor aún no tiene este endpoint activo. Contacta al administrador.
             </p>
           )}

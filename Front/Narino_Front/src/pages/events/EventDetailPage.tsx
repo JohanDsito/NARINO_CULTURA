@@ -63,7 +63,7 @@ export default function EventDetailPage() {
 
   if (isError || !event) {
     return (
-      <div className="min-h-screen bg-bg pt-24 flex flex-col items-center gap-4">
+      <div className="min-h-screen pt-24 flex flex-col items-center gap-4">
         <p className="text-text-muted font-body">No se encontró este evento.</p>
         <Link to={ROUTES.EVENTS} className="text-oro hover:underline font-body text-sm">
           ← Volver a eventos
@@ -79,7 +79,7 @@ export default function EventDetailPage() {
   const busy = registerMutation.isPending || unregisterMutation.isPending
 
   return (
-    <div className="min-h-screen bg-bg pt-16">
+    <div className="min-h-screen pt-16">
       <div className="mx-auto max-w-4xl px-6 py-8">
         {/* Breadcrumb */}
         <Link

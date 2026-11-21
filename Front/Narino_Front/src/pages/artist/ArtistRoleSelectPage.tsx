@@ -52,7 +52,7 @@ export default function ArtistRoleSelectPage() {
   }
 
   return (
-    <div className="min-h-screen bg-bg pt-16">
+    <div className="min-h-screen pt-16">
       <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-6 py-12 md:px-10">
         <section>
           <p className="text-sm font-medium text-text-secondary">Panel de artista</p>

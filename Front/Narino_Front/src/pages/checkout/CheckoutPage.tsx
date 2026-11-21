@@ -50,7 +50,7 @@ export default function CheckoutPage() {
   const isProcessing = checkoutMutation.isPending || startPayment.isPending
 
   return (
-    <div className="min-h-screen bg-bg pt-16">
+    <div className="min-h-screen pt-16">
       <PageShell title="Checkout" subtitle="Revisa tu orden antes de confirmar" />
 
       <main className="mx-auto max-w-3xl px-6 py-8">

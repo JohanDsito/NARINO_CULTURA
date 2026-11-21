@@ -213,7 +213,7 @@ describe('RegisterForm', () => {
     await waitFor(() => {
       expect(screen.getAllByText(/las contraseñas no coinciden/i).length).toBeGreaterThan(0)
     })
-    expect(screen.getByRole('alert')).toHaveClass('text-red-700')
+    expect(screen.getByRole('alert')).toHaveClass('text-tomate')
     expect(mockedToast.error).toHaveBeenCalledWith('Las contraseñas no coinciden.')
     expect(mockedRegister).not.toHaveBeenCalled()
   })
