@@ -15,6 +15,7 @@ import {
 import { useLogout } from '@/hooks/useAuth'
 import { useAuthStore } from '@/store/authStore'
 import { useCartCount } from '@/hooks/useCartCount'
+import { useUnreadNotifications } from '@/hooks/useUnreadNotifications'
 import { useThemeStore } from '@/store/themeStore'
 import { getArtistDashboardPath } from '@/utils/artistDiscipline'
 
@@ -32,6 +33,7 @@ export function Navbar() {
   const { pathname } = useLocation()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const cartCount = useCartCount()
+  const unreadCount = useUnreadNotifications()
   const user = useAuthStore((s) => s.user)
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const logout = useLogout()
@@ -98,10 +100,15 @@ export function Navbar() {
 
           <Link
             to="/notifications"
-            aria-label="Notificaciones"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors duration-300 hover:bg-white/10"
+            aria-label={`Notificaciones${unreadCount > 0 ? `, ${unreadCount} sin leer` : ''}`}
+            className="relative inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors duration-300 hover:bg-white/10"
           >
             <Bell size={20} className="text-[#f5efe5bf]" />
+            {unreadCount > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-tierra px-1 text-[10px] font-bold text-white">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
           </Link>
 
           <button

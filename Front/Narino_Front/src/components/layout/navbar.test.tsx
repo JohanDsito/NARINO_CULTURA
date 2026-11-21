@@ -12,6 +12,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 
 import { getServerCart } from '@/api/marketplace.api'
+import { getUnreadNotificationsCount } from '@/api/notifications.api'
 import { Navbar } from '@/components/layout/navbar'
 import { useAuthStore } from '@/store/authStore'
 import { useCartStore } from '@/store/cartStore'
@@ -26,7 +27,12 @@ vi.mock('@/api/marketplace.api', () => ({
   getServerCart: vi.fn(),
 }))
 
+vi.mock('@/api/notifications.api', () => ({
+  getUnreadNotificationsCount: vi.fn(),
+}))
+
 const mockedGetServerCart = vi.mocked(getServerCart)
+const mockedUnread = vi.mocked(getUnreadNotificationsCount)
 
 function renderNavbar(initialPath = '/') {
   const queryClient = new QueryClient({
@@ -59,6 +65,13 @@ describe('Navbar', () => {
       items: [],
       isOpen: false,
     })
+  })
+
+  it('does not ask for notifications without a session', () => {
+    renderNavbar()
+
+    expect(screen.getByRole('link', { name: 'Notificaciones' })).toBeInTheDocument()
+    expect(mockedUnread).not.toHaveBeenCalled()
   })
 
   it('renders public navigation and login link for guests', () => {
@@ -133,11 +146,16 @@ describe('Navbar', () => {
       updated_at: '',
     })
 
+    mockedUnread.mockResolvedValue(3)
+
     renderNavbar()
 
     expect(
       await screen.findByRole('link', { name: /carrito de compras, 1 productos/i }),
     ).toBeInTheDocument()
+    expect(
+      await screen.findByRole('link', { name: /notificaciones, 3 sin leer/i }),
+    ).toHaveAttribute('href', '/notifications')
 
     // Sin disciplina elegida el artista va primero al selector de panel
     expect(screen.getByRole('link', { name: /mi panel/i })).toHaveAttribute(
