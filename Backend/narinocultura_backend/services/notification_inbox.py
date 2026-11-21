@@ -121,6 +121,16 @@ def _auction_payment_expired(payload):
     return [InboxItem(order.buyer_id, "Venció el plazo de pago", body, {"order_id": str(order.id), "url": "/orders"})]
 
 
+def _order_reservation_expired(payload):
+    from apps.marketplace.models import Order
+
+    order = _get(Order.objects, payload.get("order_id"))
+    if not order:
+        return []
+    body = "No se completó el pago a tiempo y las obras de tu pedido volvieron al catálogo."
+    return [InboxItem(order.buyer_id, "Tu reserva venció", body, {"order_id": str(order.id), "url": "/orders"})]
+
+
 def _payment_webhook(payload):
     if payload.get("status") != "APROBADO":
         return []
@@ -190,6 +200,7 @@ BUILDERS = {
     "PAYMENT_WEBHOOK": _payment_webhook,
     "EVENT_REGISTRATION": _event_registration,
     "EVENT_REMINDER": _event_reminder,
+    "ORDER_RESERVATION_EXPIRED": _order_reservation_expired,
     "EVENT_PUBLISHED": _event_published,
 }
 

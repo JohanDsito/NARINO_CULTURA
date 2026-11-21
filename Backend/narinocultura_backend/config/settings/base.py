@@ -301,6 +301,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.auctions.tasks.expire_unpaid_auction_orders",
         "schedule": 900.0,
     },
+    "expire-unpaid-direct-orders": {
+        "task": "apps.marketplace.tasks.expire_unpaid_direct_orders",
+        "schedule": 300.0,
+    },
     "send-event-reminders": {
         "task": "apps.events.tasks.send_event_reminders",
         "schedule": 900.0,
@@ -309,6 +313,9 @@ CELERY_BEAT_SCHEDULE = {
 
 # Con cuántas horas de anticipación se recuerda un evento a sus inscritos (RF33)
 EVENT_REMINDER_HOURS = config("EVENT_REMINDER_HOURS", default=24, cast=int)
+
+# Horas que una compra directa reserva sus obras mientras se paga; después vuelven al catálogo
+DIRECT_ORDER_PAYMENT_HOURS = config("DIRECT_ORDER_PAYMENT_HOURS", default=2, cast=int)
 
 # Horas que tiene el ganador de una subasta para pagar antes de que la obra se libere
 AUCTION_PAYMENT_HOURS = config("AUCTION_PAYMENT_HOURS", default=48, cast=int)
