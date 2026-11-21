@@ -1,12 +1,13 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { CreditCard, ShoppingBag } from 'lucide-react'
+import { CreditCard, FileText, ShoppingBag } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { getOrders } from '@/api/marketplace.api'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { PageShell } from '@/components/layout/page-shell'
-import { ORDER_STATUS_LABELS, ORDER_TYPE_LABELS } from '@/constants/labels'
+import { ORDER_STATUS_LABELS, ORDER_TYPE_LABELS, PAYMENT_METHOD_LABELS } from '@/constants/labels'
 import { useStartPayment } from '@/hooks/useStartPayment'
 import { formatCurrency } from '@/utils'
 
@@ -17,6 +18,8 @@ export default function OrdersPage() {
     staleTime: 2 * 60 * 1000,
   })
   const startPayment = useStartPayment()
+  // Hora de referencia para los plazos, tomada al abrir la página (el render debe ser puro)
+  const [now] = useState(() => Date.now())
 
   return (
     <div className="min-h-screen bg-bg pt-16">
@@ -41,6 +44,12 @@ export default function OrdersPage() {
                 label: order.status,
                 color: 'bg-bg-subtle text-text-muted',
               }
+              const dueAt = order.payment_due_at ? new Date(order.payment_due_at) : null
+              const isPending = order.status === 'PENDIENTE'
+              // La tarea del servidor cancela la orden unos minutos después; mientras tanto no se puede pagar
+              const dueExpired = isPending && dueAt !== null && dueAt.getTime() <= now
+              const method = order.payment?.payment_method
+              const receiptUrl = order.status === 'PAGADO' ? order.payment?.receipt_url : ''
 
               return (
                 <Card key={order.id} className="p-5">
@@ -72,7 +81,36 @@ export default function OrdersPage() {
                     </div>
                   </div>
 
-                  {order.status === 'PENDIENTE' && (
+                  {isPending && dueAt && (
+                    <p className="mt-3 font-body text-[12px] text-text-muted">
+                      {dueExpired
+                        ? 'El plazo para pagar venció: las obras volvieron al catálogo.'
+                        : `Paga antes del ${format(dueAt, "d 'de' MMMM, h:mm a", { locale: es })} o las obras volverán al catálogo.`}
+                    </p>
+                  )}
+
+                  {(method || receiptUrl) && (
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                      {method && order.status === 'PAGADO' && (
+                        <p className="font-body text-[12px] text-text-muted">
+                          Pagado con {PAYMENT_METHOD_LABELS[method] ?? method}
+                        </p>
+                      )}
+                      {receiptUrl && (
+                        <a
+                          href={receiptUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 font-body text-[13px] font-semibold text-tierra hover:underline"
+                        >
+                          <FileText size={14} />
+                          Ver comprobante
+                        </a>
+                      )}
+                    </div>
+                  )}
+
+                  {isPending && !dueExpired && (
                     <div className="mt-4 flex justify-end">
                       <Button
                         size="sm"

@@ -98,8 +98,10 @@ export async function checkout(
 
 // ─── Orders & Sales ───────────────────────────────────────────────────────────
 export async function getOrders(): Promise<Order[]> {
+  // page_size máximo del backend: antes solo llegaban los 20 pedidos más recientes
   const { data } = await axiosInstance.get<Order[] | PaginatedResponse<Order>>(
     '/api/v1/marketplace/orders/',
+    { params: { page_size: 100 } },
   )
   return Array.isArray(data) ? data : data.results ?? []
 }
