@@ -75,7 +75,7 @@ export function Calendar({
   const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sab']
 
   return (
-    <div className="w-full bg-bg-card rounded-lg border p-6">
+    <div className="nc-card w-full bg-bg-card rounded-card border border-border p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -135,9 +135,9 @@ export function Calendar({
               key={dateStr}
               onClick={() => onSelectDate?.(day)}
               className={`
-                min-h-[80px] p-2 rounded-lg border cursor-pointer transition-colors
-                ${!isCurrentMonth ? 'bg-bg-subtle/30 text-text-secondary' : 'bg-bg'}
-                ${isSelected ? 'border-tierra bg-tierra/10' : 'border-border hover:border-tierra/50'}
+                min-h-[80px] p-2 rounded-[14px] border cursor-pointer transition-colors
+                ${!isCurrentMonth ? 'bg-transparent text-text-muted' : 'bg-bg-subtle/70'}
+                ${isSelected ? 'border-azul bg-azul-tint' : 'border-border hover:border-azul/50'}
               `}
             >
               <div className="text-sm font-medium mb-1">
@@ -147,7 +147,7 @@ export function Calendar({
                 {dayEvents.slice(0, 2).map((event) => (
                   <div
                     key={event.id}
-                    className="text-xs px-1.5 py-0.5 rounded bg-tierra/10 text-tierra truncate hover:bg-tierra/20"
+                    className="text-xs font-semibold px-1.5 py-0.5 rounded-md bg-tomate-tint text-tomate truncate hover:bg-tomate/20"
                     title={event.title}
                   >
                     {event.title}

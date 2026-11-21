@@ -2,8 +2,22 @@ import type { ReactNode } from 'react'
 
 import { cn } from '@/utils'
 
+/** Acento de cada sección (como en la app): catálogo magenta, tienda naranja, subastas oro, eventos tomate, música azul. */
+export type SectionAccent = 'azul' | 'tomate' | 'naranja' | 'oro' | 'magenta' | 'verde'
+
+const EYEBROW_COLOR: Record<SectionAccent, string> = {
+  azul: 'text-azul',
+  tomate: 'text-tomate',
+  naranja: 'text-naranja',
+  oro: 'text-oro',
+  magenta: 'text-magenta',
+  verde: 'text-verde',
+}
+
 export function PageShell({
   title,
+  eyebrow,
+  accent = 'azul',
   description,
   subtitle,
   actions,
@@ -11,6 +25,9 @@ export function PageShell({
   className,
 }: {
   title: string
+  /** Etiqueta corta sobre el título, en el color de la sección ("ARTES PLÁSTICAS") */
+  eyebrow?: string
+  accent?: SectionAccent
   description?: string
   subtitle?: string
   actions?: ReactNode
@@ -24,7 +41,8 @@ export function PageShell({
       <header className="mb-6 flex flex-col gap-2">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
-            <h1 className="text-3xl font-semibold">{title}</h1>
+            {eyebrow ? <p className={cn('nc-eyebrow', EYEBROW_COLOR[accent])}>{eyebrow}</p> : null}
+            <h1 className="text-3xl font-extrabold text-text-primary md:text-4xl">{title}</h1>
             {sub ? (
               <p className="text-sm text-text-secondary">{sub}</p>
             ) : null}
