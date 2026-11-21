@@ -191,6 +191,7 @@ Algunas operaciones no deben ejecutarse durante el ciclo petición-respuesta HTT
 |-------|-----------|-----------|
 | Cerrar subastas vencidas | Celery Beat (cron) | Cada 60 segundos |
 | Cancelar órdenes de subasta sin pagar (plazo de 48 h) | Celery Beat (cron) | Cada 15 minutos |
+| Liberar las obras de compras directas sin pagar (plazo de 2 h) | Celery Beat (cron) | Cada 5 minutos |
 | Recordar eventos a los inscritos 24 h antes (RF33) | Celery Beat (cron) | Cada 15 minutos |
 | Envío de notificaciones | Cola Celery | En demanda |
 | Emails de confirmación | Cola Celery | En demanda |
