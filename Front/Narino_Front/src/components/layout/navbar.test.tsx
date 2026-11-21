@@ -6,10 +6,13 @@ import {
   vi,
 } from 'vitest'
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 
+import { getServerCart } from '@/api/marketplace.api'
+import { getUnreadNotificationsCount } from '@/api/notifications.api'
 import { Navbar } from '@/components/layout/navbar'
 import { useAuthStore } from '@/store/authStore'
 import { useCartStore } from '@/store/cartStore'
@@ -20,13 +23,28 @@ vi.mock('@/hooks/useAuth', () => ({
   useLogout: () => mockLogout,
 }))
 
+vi.mock('@/api/marketplace.api', () => ({
+  getServerCart: vi.fn(),
+}))
+
+vi.mock('@/api/notifications.api', () => ({
+  getUnreadNotificationsCount: vi.fn(),
+}))
+
+const mockedGetServerCart = vi.mocked(getServerCart)
+const mockedUnread = vi.mocked(getUnreadNotificationsCount)
+
 function renderNavbar(initialPath = '/') {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
+
   return render(
-    <MemoryRouter
-      initialEntries={[initialPath]}
-    >
-      <Navbar />
-    </MemoryRouter>,
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter initialEntries={[initialPath]}>
+        <Navbar />
+      </MemoryRouter>
+    </QueryClientProvider>,
   )
 }
 
@@ -47,6 +65,13 @@ describe('Navbar', () => {
       items: [],
       isOpen: false,
     })
+  })
+
+  it('does not ask for notifications without a session', () => {
+    renderNavbar()
+
+    expect(screen.getByRole('link', { name: 'Notificaciones' })).toBeInTheDocument()
+    expect(mockedUnread).not.toHaveBeenCalled()
   })
 
   it('renders public navigation and login link for guests', () => {
@@ -75,21 +100,7 @@ describe('Navbar', () => {
     )
   })
 
-  it('shows cart count and account link for authenticated artists', () => {
-    useAuthStore.setState({
-      isAuthenticated: true,
-      accessToken: 'access-token',
-      refreshToken: 'refresh-token',
-      user: {
-        id: '1',
-        email: 'artist@test.com',
-        first_name: 'Ana',
-        last_name: 'Mora',
-        role: 'artist',
-        is_verified: true,
-      },
-    })
-
+  it('shows the guest cart count from the local cart', () => {
     useCartStore.setState({
       items: [
         {
@@ -108,19 +119,48 @@ describe('Navbar', () => {
     renderNavbar()
 
     expect(
-      screen.getByRole('link', {
-        name:
-          /carrito de compras, 1 productos/i,
-      }),
+      screen.getByRole('link', { name: /carrito de compras, 1 productos/i }),
     ).toBeInTheDocument()
+  })
+
+  it('shows server cart count and account link for authenticated artists', async () => {
+    useAuthStore.setState({
+      isAuthenticated: true,
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+      user: {
+        id: '1',
+        email: 'artist@test.com',
+        first_name: 'Ana',
+        last_name: 'Mora',
+        role: 'artist',
+        is_verified: true,
+      },
+    })
+
+    mockedGetServerCart.mockResolvedValue({
+      id: 'cart',
+      user: '1',
+      items: [{ id: 'i1', artwork: '10', created_at: '' }],
+      created_at: '',
+      updated_at: '',
+    })
+
+    mockedUnread.mockResolvedValue(3)
+
+    renderNavbar()
 
     expect(
-      screen.getByRole('link', {
-        name: /mi panel/i,
-      }),
-    ).toHaveAttribute(
+      await screen.findByRole('link', { name: /carrito de compras, 1 productos/i }),
+    ).toBeInTheDocument()
+    expect(
+      await screen.findByRole('link', { name: /notificaciones, 3 sin leer/i }),
+    ).toHaveAttribute('href', '/notifications')
+
+    // Sin disciplina elegida el artista va primero al selector de panel
+    expect(screen.getByRole('link', { name: /mi panel/i })).toHaveAttribute(
       'href',
-      '/dashboard/profile',
+      '/dashboard',
     )
   })
 

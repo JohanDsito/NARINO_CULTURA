@@ -60,14 +60,14 @@ export function ResetPasswordForm({ initialToken }: { initialToken?: string }) {
       <div className="space-y-2">
         <Label htmlFor="token">Token</Label>
         <Input id="token" autoComplete="one-time-code" {...register('token')} />
-        {errors.token ? <p className="text-sm text-destructive">{errors.token.message}</p> : null}
+        {errors.token ? <p className="text-sm text-error">{errors.token.message}</p> : null}
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="newPassword">Nueva contraseña</Label>
         <Input id="newPassword" type="password" autoComplete="new-password" {...register('newPassword')} />
         {errors.newPassword ? (
-          <p className="text-sm text-destructive">{errors.newPassword.message}</p>
+          <p className="text-sm text-error">{errors.newPassword.message}</p>
         ) : null}
       </div>
 
@@ -80,7 +80,7 @@ export function ResetPasswordForm({ initialToken }: { initialToken?: string }) {
           {...register('confirmPassword')}
         />
         {errors.confirmPassword ? (
-          <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
+          <p className="text-sm text-error">{errors.confirmPassword.message}</p>
         ) : null}
       </div>
 

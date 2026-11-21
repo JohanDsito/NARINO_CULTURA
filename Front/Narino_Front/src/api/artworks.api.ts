@@ -1,5 +1,5 @@
 import axiosInstance from './axiosInstance'
-import type { Artwork, PaginatedResponse } from '@/types/auth'
+import type { Artwork, PaginatedResponse } from '@/types'
 
 export interface ArtworkCategoryItem {
   id: number
@@ -84,8 +84,10 @@ export async function updateArtwork(
   return data
 }
 
+/** Borra una obra propia (destroy del ViewSet, protegido por IsArtworkOwnerOrReadOnly).
+ * `/artworks/{id}/delete/` es exclusivo de administradores: ver `deleteAdminArtwork`. */
 export async function deleteArtwork(id: string | number): Promise<void> {
-  await axiosInstance.delete(`/api/v1/artworks/${id}/delete/`)
+  await axiosInstance.delete(`/api/v1/artworks/${id}/`)
 }
 
 export async function aiEnhanceArtwork(

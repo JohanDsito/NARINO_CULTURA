@@ -1,0 +1,45 @@
+name: Frontend CI
+
+# Git Flow: corre en los PR hacia main y develop, y en cada push a esas ramas, solo si cambia la web.
+# Corre en Linux, que distingue mayúsculas en las rutas (Windows no): así se detectan imports que
+# funcionan en el equipo de desarrollo pero rompen el build del despliegue.
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "Front/Narino_Front/**"
+      - ".github/workflows/frontend-ci.yml"
+  push:
+    branches: [main, develop]
+    paths:
+      - "Front/Narino_Front/**"
+      - ".github/workflows/frontend-ci.yml"
+
+concurrency:
+  group: frontend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: Front/Narino_Front
+
+jobs:
+  build:
+    name: Tipos, lint, tests y build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: Front/Narino_Front/package-lock.json
+      - run: npm ci
+      - name: Tipos (tsc)
+        run: npm run typecheck
+      - name: Lint (eslint)
+        run: npm run lint
+      - name: Tests (vitest)
+        run: npm test
+      - name: Build de producción
+        run: npm run build

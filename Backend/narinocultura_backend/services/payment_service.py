@@ -116,6 +116,26 @@ class PaymentService:
         return hmac.compare_digest(expected.upper(), str(received).upper())
 
     @staticmethod
+    def _notify_artists_of_sale(order) -> None:
+        """Un correo por artista con sus obras de la orden y su subtotal (la bandeja ya lo avisa)."""
+        by_artist = {}
+        # Orden alfabético: el correo lista las obras siempre igual
+        for item in order.items.select_related("artwork__artist__user").order_by("artwork__title"):
+            by_artist.setdefault(item.artwork.artist.user, []).append(item)
+        for user, items in by_artist.items():
+            NotificationService.send(
+                "ARTWORK_SOLD",
+                {
+                    "order_id": str(order.id),
+                    "artist_email": user.email,
+                    "artist_name": f"{user.first_name} {user.last_name}".strip() or user.email,
+                    "artworks": [item.artwork.title for item in items],
+                    "seller_amount": str(sum(item.price for item in items)),
+                },
+                user=user,
+            )
+
+    @staticmethod
     @transaction.atomic
     def process_wompi_webhook(*, payload: dict) -> bool:
         """Aplica un evento `transaction.updated` ya verificado. Devuelve True si cambió la orden."""
@@ -194,6 +214,7 @@ class PaymentService:
             for item in order.items.all():
                 item.artwork.status = Artwork.Status.VENDIDA
                 item.artwork.save(update_fields=["status", "updated_at"])
+            PaymentService._notify_artists_of_sale(order)
         elif new_order_status == Order.Status.CANCELADO:
             for item in order.items.all():
                 if item.artwork.status == Artwork.Status.INACTIVA:

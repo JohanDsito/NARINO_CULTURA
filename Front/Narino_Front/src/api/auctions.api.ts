@@ -1,8 +1,8 @@
 import axiosInstance from './axiosInstance'
-import type { Auction, Bid, PaginatedResponse } from '@/types/auth'
+import type { Auction, AuctionStatus, PaginatedResponse } from '@/types'
 
 export interface GetAuctionsParams {
-  status?: 'ACTIVA' | 'CERRADA' | 'CANCELADA'
+  status?: AuctionStatus
   page?: number
   page_size?: number
 }
@@ -17,10 +17,8 @@ export async function getAuctions(
   return data
 }
 
-export async function getAuctionById(id: string | number): Promise<Auction & { bids?: Bid[] }> {
-  const { data } = await axiosInstance.get<Auction & { bids?: Bid[] }>(
-    `/api/v1/auctions/${id}/`,
-  )
+export async function getAuctionById(id: string | number): Promise<Auction> {
+  const { data } = await axiosInstance.get<Auction>(`/api/v1/auctions/${id}/`)
   return data
 }
 

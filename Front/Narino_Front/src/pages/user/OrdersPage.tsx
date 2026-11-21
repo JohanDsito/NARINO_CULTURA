@@ -1,29 +1,25 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { ShoppingBag } from 'lucide-react'
+import { CreditCard, FileText, ShoppingBag } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { getOrders } from '@/api/marketplace.api'
+import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { PageShell } from '@/components/layout/page-shell'
-import { ORDER_STATUS_LABELS } from '@/constants/routes'
-
-function formatPrice(n: number) {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency', currency: 'COP', maximumFractionDigits: 0,
-  }).format(n)
-}
-
-const ORDER_TYPE_LABELS: Record<string, string> = {
-  COMPRA_DIRECTA: 'Compra directa',
-  SUBASTA: 'Subasta',
-}
+import { ORDER_STATUS_LABELS, ORDER_TYPE_LABELS, PAYMENT_METHOD_LABELS } from '@/constants/labels'
+import { useStartPayment } from '@/hooks/useStartPayment'
+import { formatCurrency } from '@/utils'
 
 export default function OrdersPage() {
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['orders'],
-    queryFn: getOrders,
+    queryFn: () => getOrders(),
     staleTime: 2 * 60 * 1000,
   })
+  const startPayment = useStartPayment()
+  // Hora de referencia para los plazos, tomada al abrir la página (el render debe ser puro)
+  const [now] = useState(() => Date.now())
 
   return (
     <div className="min-h-screen bg-bg pt-16">
@@ -33,7 +29,7 @@ export default function OrdersPage() {
         {isLoading ? (
           <div className="space-y-4">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="rounded-card border border-border bg-surface animate-pulse h-28" />
+              <div key={i} className="rounded-card border border-border bg-bg-card animate-pulse h-28" />
             ))}
           </div>
         ) : orders.length === 0 ? (
@@ -46,8 +42,14 @@ export default function OrdersPage() {
             {orders.map((order) => {
               const statusInfo = ORDER_STATUS_LABELS[order.status] ?? {
                 label: order.status,
-                color: 'bg-muted text-text-muted',
+                color: 'bg-bg-subtle text-text-muted',
               }
+              const dueAt = order.payment_due_at ? new Date(order.payment_due_at) : null
+              const isPending = order.status === 'PENDIENTE'
+              // La tarea del servidor cancela la orden unos minutos después; mientras tanto no se puede pagar
+              const dueExpired = isPending && dueAt !== null && dueAt.getTime() <= now
+              const method = order.payment?.payment_method
+              const receiptUrl = order.status === 'PAGADO' ? order.payment?.receipt_url : ''
 
               return (
                 <Card key={order.id} className="p-5">
@@ -66,18 +68,63 @@ export default function OrdersPage() {
 
                     <div className="text-right">
                       <p className="font-display font-bold text-oro text-[20px]">
-                        {formatPrice(parseFloat(order.total_amount))}
+                        {formatCurrency(order.total_amount)}
                       </p>
                       <div className="flex gap-2 mt-1 justify-end">
                         <span className={`rounded-tag px-2.5 py-0.5 font-body text-[11px] font-medium ${statusInfo.color}`}>
                           {statusInfo.label}
                         </span>
-                        <span className="rounded-tag bg-surface border border-border px-2.5 py-0.5 font-body text-[11px] text-text-muted">
+                        <span className="rounded-tag bg-bg-card border border-border px-2.5 py-0.5 font-body text-[11px] text-text-muted">
                           {ORDER_TYPE_LABELS[order.order_type] ?? order.order_type}
                         </span>
                       </div>
                     </div>
                   </div>
+
+                  {isPending && dueAt && (
+                    <p className="mt-3 font-body text-[12px] text-text-muted">
+                      {dueExpired
+                        ? 'El plazo para pagar venció: las obras volvieron al catálogo.'
+                        : `Paga antes del ${format(dueAt, "d 'de' MMMM, h:mm a", { locale: es })} o las obras volverán al catálogo.`}
+                    </p>
+                  )}
+
+                  {(method || receiptUrl) && (
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                      {method && order.status === 'PAGADO' && (
+                        <p className="font-body text-[12px] text-text-muted">
+                          Pagado con {PAYMENT_METHOD_LABELS[method] ?? method}
+                        </p>
+                      )}
+                      {receiptUrl && (
+                        <a
+                          href={receiptUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 font-body text-[13px] font-semibold text-tierra hover:underline"
+                        >
+                          <FileText size={14} />
+                          Ver comprobante
+                        </a>
+                      )}
+                    </div>
+                  )}
+
+                  {isPending && !dueExpired && (
+                    <div className="mt-4 flex justify-end">
+                      <Button
+                        size="sm"
+                        className="gap-1.5"
+                        disabled={startPayment.isPending}
+                        onClick={() => startPayment.mutate(order.id)}
+                      >
+                        <CreditCard size={14} />
+                        {startPayment.isPending && startPayment.variables === order.id
+                          ? 'Abriendo pago…'
+                          : 'Pagar ahora'}
+                      </Button>
+                    </div>
+                  )}
 
                   {order.items.length > 0 && (
                     <div className="mt-4 pt-4 border-t border-border">
@@ -88,10 +135,10 @@ export default function OrdersPage() {
                         {order.items.map((item) => (
                           <div key={item.id} className="flex justify-between items-center">
                             <p className="font-body text-text-primary text-sm line-clamp-1">
-                              {item.artwork}
+                              {item.artwork_title ?? 'Obra'}
                             </p>
                             <p className="font-body font-semibold text-text-primary text-sm flex-none ml-4">
-                              {formatPrice(parseFloat(item.price))}
+                              {formatCurrency(item.price)}
                             </p>
                           </div>
                         ))}

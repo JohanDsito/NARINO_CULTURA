@@ -1,42 +1,18 @@
 import { Link } from 'react-router-dom'
-import { useMemo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Edit, ImageIcon, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { deleteArtwork, getArtworks } from '@/api/artworks.api'
-import { listArtistProfiles } from '@/api/artists.api'
+import { getMyArtistProfile } from '@/api/artists.api'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { ROUTES } from '@/constants/routes'
 import { useAuthStore } from '@/store/authStore'
-import type { Artwork, ArtworkStatus } from '@/types/auth'
-
-function formatPrice(value: string | undefined) {
-  if (!value) return 'Sin precio'
-  const n = parseFloat(value)
-  if (isNaN(n)) return 'Sin precio'
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    maximumFractionDigits: 0,
-  }).format(n)
-}
-
-const STATUS_LABELS: Record<ArtworkStatus, string> = {
-  DISPONIBLE: 'Disponible',
-  EN_SUBASTA: 'En subasta',
-  VENDIDA: 'Vendida',
-  INACTIVA: 'Inactiva',
-}
-
-const STATUS_VARIANT: Record<ArtworkStatus, 'selva' | 'oro' | 'secondary' | 'indigo'> = {
-  DISPONIBLE: 'selva',
-  EN_SUBASTA: 'indigo',
-  VENDIDA: 'secondary',
-  INACTIVA: 'secondary',
-}
+import type { Artwork } from '@/types'
+import { formatCurrency } from '@/utils'
+import { artworkStatus } from '@/constants/labels'
 
 function ArtworkCard({
   artwork,
@@ -52,7 +28,7 @@ function ArtworkCard({
 
   return (
     <Card className="overflow-hidden">
-      <div className="relative aspect-[4/3] bg-muted">
+      <div className="relative aspect-[4/3] bg-bg-subtle">
         {image ? (
           <img
             src={image}
@@ -61,7 +37,7 @@ function ArtworkCard({
             loading="lazy"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+          <div className="flex h-full w-full items-center justify-center text-text-secondary">
             <ImageIcon size={36} />
           </div>
         )}
@@ -69,25 +45,25 @@ function ArtworkCard({
           <Badge variant="tierra">{categoryName}</Badge>
         </div>
         <div className="absolute right-3 top-3">
-          <Badge variant={STATUS_VARIANT[artwork.status] ?? 'secondary'}>
-            {STATUS_LABELS[artwork.status] ?? artwork.status}
+          <Badge variant={artworkStatus(artwork.status).variant}>
+            {artworkStatus(artwork.status).label}
           </Badge>
         </div>
       </div>
 
       <CardContent className="space-y-3 p-4">
         <div className="space-y-0.5">
-          <h2 className="line-clamp-1 text-base font-semibold text-foreground">
+          <h2 className="line-clamp-1 text-base font-semibold text-text-primary">
             {artwork.title}
           </h2>
-          <p className="line-clamp-2 min-h-10 text-sm text-muted-foreground">
+          <p className="line-clamp-2 min-h-10 text-sm text-text-secondary">
             {artwork.description}
           </p>
         </div>
 
         <div className="flex items-center justify-between gap-3">
-          <p className="text-sm font-semibold text-tierra">{formatPrice(artwork.price)}</p>
-          <p className="text-xs text-muted-foreground">{artwork.technique || 'Sin técnica'}</p>
+          <p className="text-sm font-semibold text-tierra">{formatCurrency(artwork.price, 'Sin precio')}</p>
+          <p className="text-xs text-text-secondary">{artwork.technique || 'Sin técnica'}</p>
         </div>
 
         <div className="flex gap-2">
@@ -98,7 +74,7 @@ function ArtworkCard({
             asChild
             variant="ghost"
             size="sm"
-            className="gap-1.5 text-foreground"
+            className="gap-1.5 text-text-primary"
           >
             <Link to={ROUTES.DASHBOARD.ARTWORK_EDIT(artwork.id)}>
               <Edit size={14} />
@@ -108,7 +84,7 @@ function ArtworkCard({
           <Button
             variant="ghost"
             size="sm"
-            className="gap-1.5 text-destructive hover:bg-destructive/10 hover:text-destructive"
+            className="gap-1.5 text-error hover:bg-error/10 hover:text-error"
             disabled={isDeleting}
             onClick={() => onDelete(artwork.id, artwork.title)}
           >
@@ -127,14 +103,10 @@ export default function ArtistArtworksPage() {
 
   const profilesQuery = useQuery({
     queryKey: ['artist-profile', 'me'],
-    queryFn: () => listArtistProfiles(),
+    queryFn: () => getMyArtistProfile(),
     enabled: user?.role === 'artist',
   })
-
-  const profile = useMemo(
-    () => profilesQuery.data?.find((item) => item.user_id === String(user?.id)) ?? null,
-    [profilesQuery.data, user?.id],
-  )
+  const profile = profilesQuery.data ?? null
 
   const artworksQuery = useQuery({
     queryKey: ['artist-artworks', profile?.slug],
@@ -161,14 +133,14 @@ export default function ArtistArtworksPage() {
   const isLoading = artworksQuery.isLoading || profilesQuery.isLoading
 
   return (
-    <div className="min-h-screen bg-background pt-16">
+    <div className="min-h-screen bg-bg pt-16">
       <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-8 md:px-10">
         <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm font-medium text-muted-foreground">Panel de artista</p>
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground">Mis obras</h1>
+            <p className="text-sm font-medium text-text-secondary">Panel de artista</p>
+            <h1 className="text-3xl font-semibold tracking-tight text-text-primary">Mis obras</h1>
             {!isLoading && artworks.length > 0 && (
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1 text-sm text-text-secondary">
                 {artworks.length} obra{artworks.length === 1 ? '' : 's'} registrada{artworks.length === 1 ? '' : 's'}
               </p>
             )}
@@ -184,7 +156,7 @@ export default function ArtistArtworksPage() {
         {artworksQuery.isError && (
           <Card>
             <CardContent className="p-6">
-              <p className="text-sm text-destructive">No fue posible cargar tus obras.</p>
+              <p className="text-sm text-error">No fue posible cargar tus obras.</p>
               <Button
                 type="button"
                 variant="outline"
@@ -203,9 +175,9 @@ export default function ArtistArtworksPage() {
             {Array.from({ length: 3 }).map((_, i) => (
               <Card key={i}>
                 <CardContent className="space-y-4 p-4">
-                  <div className="aspect-[4/3] animate-pulse rounded-md bg-muted" />
-                  <div className="h-4 w-2/3 animate-pulse rounded bg-muted" />
-                  <div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
+                  <div className="aspect-[4/3] animate-pulse rounded-md bg-bg-subtle" />
+                  <div className="h-4 w-2/3 animate-pulse rounded bg-bg-subtle" />
+                  <div className="h-3 w-1/2 animate-pulse rounded bg-bg-subtle" />
                 </CardContent>
               </Card>
             ))}
@@ -219,10 +191,10 @@ export default function ArtistArtworksPage() {
                 <ImageIcon size={22} />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-foreground">
+                <h2 className="text-lg font-semibold text-text-primary">
                   Aún no tienes obras registradas
                 </h2>
-                <p className="mt-1 max-w-xl text-sm text-muted-foreground">
+                <p className="mt-1 max-w-xl text-sm text-text-secondary">
                   Cuando guardes una obra, aparecerá aquí para que puedas revisarla, editarla o eliminarla.
                 </p>
               </div>

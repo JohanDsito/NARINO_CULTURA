@@ -1,5 +1,5 @@
 import axiosInstance from './axiosInstance'
-import type { Artwork, Order, User } from '@/types/auth'
+import { normalizeUser, type Artwork, type User } from '@/types'
 import type { Event } from './events.api'
 
 export interface AdminMetrics {
@@ -11,8 +11,30 @@ export interface AdminMetrics {
 }
 
 export interface AdminUserListItem extends User {
-  date_joined?: string
-  is_active?: boolean
+  is_active: boolean
+}
+
+/** Fila de `GET /admin/artworks/pending/` (la vista no usa ArtworkSerializer). */
+export interface PendingArtwork {
+  id: string
+  title: string
+  artist_slug: string
+  price: string
+  created_at: string
+}
+
+/** Fila de `GET /admin/transactions/`: una transacción con datos de su orden. */
+export interface AdminTransaction {
+  id: string
+  order_id: string
+  buyer_email: string
+  amount: string
+  currency: string
+  status: 'PENDIENTE' | 'APROBADO' | 'RECHAZADO' | 'REEMBOLSADO'
+  total_amount: string
+  order_type: 'COMPRA_DIRECTA' | 'SUBASTA'
+  order_status: string
+  created_at: string
 }
 
 // ── Metrics ───────────────────────────────────────────────────────────────────
@@ -25,33 +47,9 @@ export async function getAdminMetrics() {
 // ── Users ─────────────────────────────────────────────────────────────────────
 
 export async function listAdminUsers(): Promise<AdminUserListItem[]> {
-  // Try detail-compatible list endpoint variants
-  const endpoints = [
-    '/api/v1/admin/users/list/',
-    '/api/v1/users/all/',
-    '/api/v1/admin/list-users/',
-  ]
-
-  for (const url of endpoints) {
-    try {
-      const { data } = await axiosInstance.get<
-        AdminUserListItem[] | { results?: AdminUserListItem[] }
-      >(url)
-      const list = Array.isArray(data)
-        ? data
-        : (data as { results?: AdminUserListItem[] }).results ?? []
-      if (list.length > 0 || Array.isArray(data)) return list
-    } catch {
-      // continue trying
-    }
-  }
-
-  // None worked — let the original endpoint throw so the UI shows the real error
-  const { data } = await axiosInstance.get<
-    AdminUserListItem[] | { results?: AdminUserListItem[] }
-  >('/api/v1/admin/users/')
-  if (Array.isArray(data)) return data
-  return (data as { results?: AdminUserListItem[] }).results ?? []
+  const { data } = await axiosInstance.get<AdminUserListItem[]>('/api/v1/admin/users/')
+  // El backend envía roles en mayúsculas (ARTISTA, ADMINISTRADOR...): se normalizan
+  return data.map((user) => normalizeUser(user) as AdminUserListItem)
 }
 
 export async function getAdminUser(uuid: string) {
@@ -65,8 +63,8 @@ export async function deleteAdminUser(uuid: string): Promise<void> {
 
 // ── Artworks ──────────────────────────────────────────────────────────────────
 
-export async function getPendingArtworks() {
-  const { data } = await axiosInstance.get<Artwork[]>('/api/v1/admin/artworks/pending/')
+export async function getPendingArtworks(): Promise<PendingArtwork[]> {
+  const { data } = await axiosInstance.get<PendingArtwork[]>('/api/v1/admin/artworks/pending/')
   return data
 }
 
@@ -106,21 +104,22 @@ export async function getApprovedEvents(): Promise<Event[]> {
   return Array.isArray(data) ? data : data.results ?? []
 }
 
-export async function approveEvent(id: string): Promise<Event> {
-  const { data } = await axiosInstance.patch<Event>(`/api/v1/events/${id}/`, {
-    is_published: true,
-  })
+// Acciones dedicadas: además de publicar, notifican; y `reject` se niega a borrar
+// eventos ya publicados (el DELETE genérico que se usaba antes sí los borraba).
+export async function approveEvent(id: string): Promise<{ detail: string }> {
+  const { data } = await axiosInstance.post<{ detail: string }>(`/api/v1/events/${id}/approve/`)
   return data
 }
 
-export async function rejectEvent(id: string): Promise<void> {
-  await axiosInstance.delete(`/api/v1/events/${id}/`)
+export async function rejectEvent(id: string): Promise<{ detail: string }> {
+  const { data } = await axiosInstance.post<{ detail: string }>(`/api/v1/events/${id}/reject/`)
+  return data
 }
 
 // ── Transactions ──────────────────────────────────────────────────────────────
 
-export async function getAdminTransactions() {
-  const { data } = await axiosInstance.get<Order[]>('/api/v1/admin/transactions/')
+export async function getAdminTransactions(): Promise<AdminTransaction[]> {
+  const { data } = await axiosInstance.get<AdminTransaction[]>('/api/v1/admin/transactions/')
   return data
 }
 

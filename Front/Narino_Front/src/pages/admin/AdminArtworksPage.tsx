@@ -2,25 +2,18 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { CheckCircle, XCircle, Eye, Trash2, Layers } from 'lucide-react'
 import { toast } from 'sonner'
-import { getPendingArtworks, getAllArtworks, moderateArtwork, deleteAdminArtwork } from '@/api/admin.api'
+import {
+  deleteAdminArtwork,
+  getAllArtworks,
+  getPendingArtworks,
+  moderateArtwork,
+  type PendingArtwork,
+} from '@/api/admin.api'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { PageShell } from '@/components/layout/page-shell'
-import type { Artwork } from '@/types/auth'
-
-const STATUS_BADGE: Record<string, 'tierra' | 'selva' | 'secondary' | 'indigo'> = {
-  PENDIENTE: 'tierra',
-  DISPONIBLE: 'selva',
-  INACTIVA: 'secondary',
-  EN_SUBASTA: 'indigo',
-}
-
-const STATUS_LABEL: Record<string, string> = {
-  PENDIENTE: 'Pendiente',
-  DISPONIBLE: 'Disponible',
-  INACTIVA: 'Inactiva',
-  EN_SUBASTA: 'En subasta',
-}
+import type { Artwork } from '@/types'
+import { artworkStatus } from '@/constants/labels'
 
 function ArtworkRow({
   artwork,
@@ -30,36 +23,39 @@ function ArtworkRow({
   isPending,
   showModerate,
 }: {
-  artwork: Artwork
+  // Las pendientes vienen de una vista resumida (sin imagen, categoría ni estado)
+  artwork: Artwork | PendingArtwork
   onDelete: (id: string, title: string) => void
   onApprove?: (id: string) => void
   onReject?: (id: string) => void
   isPending: boolean
   showModerate: boolean
 }) {
-  const mainImage = artwork.main_image_url || artwork.images?.[0]?.image_url || ''
+  const full = 'status' in artwork ? artwork : null
+  const mainImage = full ? full.main_image_url || full.images?.[0]?.image_url || '' : ''
+  const status = full?.status ?? 'PENDIENTE'
   return (
-    <div className="flex items-center gap-4 rounded-card border border-border bg-surface p-4">
+    <div className="flex items-center gap-4 rounded-card border border-border bg-bg-card p-4">
       {mainImage && (
         <img src={mainImage} alt={artwork.title} className="w-16 h-16 rounded-md object-cover flex-none" />
       )}
       <div className="flex-1 min-w-0">
         <p className="font-body font-semibold text-text-primary text-sm">{artwork.title}</p>
-        {artwork.category_detail && (
-          <p className="font-body text-text-muted text-[12px]">{artwork.category_detail.name}</p>
+        {full?.category_detail && (
+          <p className="font-body text-text-muted text-[12px]">{full.category_detail.name}</p>
         )}
-        <Badge
-          variant={STATUS_BADGE[artwork.status] ?? 'secondary'}
-          className="mt-1 text-[10px]"
-        >
-          {STATUS_LABEL[artwork.status] ?? artwork.status}
+        {!full && 'artist_slug' in artwork && (
+          <p className="font-body text-text-muted text-[12px]">{artwork.artist_slug}</p>
+        )}
+        <Badge variant={artworkStatus(status).variant} className="mt-1 text-[10px]">
+          {artworkStatus(status).label}
         </Badge>
       </div>
       <div className="flex gap-2 flex-none flex-wrap">
         <Button
           variant="secondary"
           className="gap-1.5 text-[13px] px-3 py-1.5"
-          onClick={() => window.open(`/artworks/${artwork.id}`, '_blank')}
+          onClick={() => window.open(`/artworks/${artwork.id}`, '_blank', 'noopener')}
         >
           <Eye size={14} />
           Ver
@@ -88,7 +84,7 @@ function ArtworkRow({
         )}
         <Button
           variant="secondary"
-          className="gap-1.5 text-[13px] px-3 py-1.5 text-destructive border-destructive/30 hover:bg-destructive/5"
+          className="gap-1.5 text-[13px] px-3 py-1.5 text-error border-error/30 hover:bg-error/5"
           disabled={isPending}
           onClick={() => onDelete(artwork.id, artwork.title)}
         >
@@ -108,13 +104,13 @@ export default function AdminArtworksPage() {
 
   const { data: pendingArtworks = [], isLoading: isLoadingPending } = useQuery({
     queryKey: ['admin-pending-artworks'],
-    queryFn: getPendingArtworks,
+    queryFn: () => getPendingArtworks(),
     staleTime: 60 * 1000,
   })
 
   const { data: allArtworks = [], isLoading: isLoadingAll } = useQuery({
     queryKey: ['admin-all-artworks'],
-    queryFn: getAllArtworks,
+    queryFn: () => getAllArtworks(),
     staleTime: 60 * 1000,
   })
 
@@ -148,7 +144,7 @@ export default function AdminArtworksPage() {
 
   const isActionPending = moderateMutation.isPending || deleteMutation.isPending
 
-  const artworks = tab === 'pending' ? pendingArtworks : allArtworks
+  const artworks: (Artwork | PendingArtwork)[] = tab === 'pending' ? pendingArtworks : allArtworks
   const isLoading = tab === 'pending' ? isLoadingPending : isLoadingAll
 
   return (
@@ -168,7 +164,7 @@ export default function AdminArtworksPage() {
           <button
             className={`pb-2 px-3 text-sm font-medium transition-colors border-b-2 -mb-px ${
               tab === 'pending'
-                ? 'border-primary text-primary'
+                ? 'border-tierra text-tierra'
                 : 'border-transparent text-text-muted hover:text-text-primary'
             }`}
             onClick={() => setTab('pending')}
@@ -183,7 +179,7 @@ export default function AdminArtworksPage() {
           <button
             className={`pb-2 px-3 text-sm font-medium transition-colors border-b-2 -mb-px flex items-center gap-1.5 ${
               tab === 'all'
-                ? 'border-primary text-primary'
+                ? 'border-tierra text-tierra'
                 : 'border-transparent text-text-muted hover:text-text-primary'
             }`}
             onClick={() => setTab('all')}
@@ -196,7 +192,7 @@ export default function AdminArtworksPage() {
         {isLoading ? (
           <div className="space-y-4">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="rounded-card border border-border bg-surface animate-pulse h-24" />
+              <div key={i} className="rounded-card border border-border bg-bg-card animate-pulse h-24" />
             ))}
           </div>
         ) : artworks.length === 0 ? (

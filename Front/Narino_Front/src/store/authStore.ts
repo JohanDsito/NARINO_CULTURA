@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { normalizeUser, normalizeUserRole, type User as AuthUser, type UserRole } from '@/types/auth'
+import { normalizeUser, normalizeUserRole, type User as AuthUser, type UserRole } from '@/types'
 
 export type { UserRole }
 export type User = AuthUser

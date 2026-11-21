@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { ROUTES } from '@/constants/routes'
-import { MUSICAL_WORK_TYPE_LABELS } from '@/constants/routes'
+import { MUSICAL_WORK_TYPE_LABELS } from '@/constants/labels'
 
 type WorkType = CreateMusicalWorkPayload['work_type']
 
@@ -65,12 +65,12 @@ export default function MusicianWorkCreatePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pt-16">
+    <div className="min-h-screen bg-bg pt-16">
       <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-8 md:px-10">
         <section className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="text-sm font-medium text-muted-foreground">Panel del músico</p>
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+            <p className="text-sm font-medium text-text-secondary">Panel del músico</p>
+            <h1 className="text-3xl font-semibold tracking-tight text-text-primary">
               Añadir obra musical
             </h1>
           </div>

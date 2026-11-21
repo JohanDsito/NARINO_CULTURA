@@ -4,20 +4,21 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 
 import { getArtworks } from '@/api/artworks.api'
-import { listArtistProfiles } from '@/api/artists.api'
+import { getMyArtistProfile } from '@/api/artists.api'
 import ArtistArtworksPage from '@/pages/artist/ArtistArtworksPage'
 import { useAuthStore } from '@/store/authStore'
 
 vi.mock('@/api/artworks.api', () => ({
   getArtworks: vi.fn(),
+  deleteArtwork: vi.fn(),
 }))
 
 vi.mock('@/api/artists.api', () => ({
-  listArtistProfiles: vi.fn(),
+  getMyArtistProfile: vi.fn(),
 }))
 
 const mockedGetArtworks = vi.mocked(getArtworks)
-const mockedListArtistProfiles = vi.mocked(listArtistProfiles)
+const mockedGetMyArtistProfile = vi.mocked(getMyArtistProfile)
 
 function renderArtistArtworksPage() {
   const queryClient = new QueryClient({
@@ -52,7 +53,7 @@ describe('ArtistArtworksPage', () => {
       },
     })
 
-    mockedListArtistProfiles.mockResolvedValue([
+    mockedGetMyArtistProfile.mockResolvedValue(
       {
         id: '3',
         user_id: '7',
@@ -71,7 +72,7 @@ describe('ArtistArtworksPage', () => {
         created_at: '',
         updated_at: '',
       },
-    ])
+    )
   })
 
   it('renders artworks returned by the server for this artist', async () => {
@@ -85,7 +86,8 @@ describe('ArtistArtworksPage', () => {
           title: 'Pintura del sur',
           description: 'Obra inspirada en Nariño',
           price: '150000',
-          category: { id: 1, name: 'Pintura', slug: 'pintura' },
+          category: 1,
+          category_detail: { id: 1, name: 'Pintura', slug: 'pintura' },
           technique: 'Óleo',
           dimensions: '',
           material: '',

@@ -1,5 +1,7 @@
+import axios from 'axios'
+
 import axiosInstance from '@/api/axiosInstance'
-import type { ArtistProfile, PaginatedResponse } from '@/types/auth'
+import type { ArtistProfile, PaginatedResponse } from '@/types'
 
 export interface CreateArtistProfilePayload {
   artistic_name: string
@@ -26,6 +28,17 @@ export async function listArtistProfiles(
     ArtistProfile[] | PaginatedResponse<ArtistProfile>
   >('/api/v1/artists/', { params })
   return Array.isArray(data) ? data : data.results ?? []
+}
+
+/** Perfil de artista del usuario autenticado, o `null` si todavía no lo ha creado. */
+export async function getMyArtistProfile(): Promise<ArtistProfile | null> {
+  try {
+    const { data } = await axiosInstance.get<ArtistProfile>('/api/v1/artists/me/')
+    return data
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 404) return null
+    throw error
+  }
 }
 
 export async function getArtistBySlug(slug: string): Promise<ArtistProfile> {

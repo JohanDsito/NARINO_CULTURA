@@ -109,16 +109,16 @@ def _payment_webhook(payload, log):
     from apps.marketplace.models import Order
 
     order = Order.objects.select_related("buyer").prefetch_related("items__artwork").filter(id=payload.get("order_id")).first()
-    if not order:
+    if not order or not order.buyer_email:
         return None
     titles = ", ".join(item.artwork.title for item in order.items.all())
     amount = format_price(order.total_amount)
     return NotificationEmail(
-        to=order.buyer.email,
+        to=order.buyer_email,
         subject="Pago confirmado — Nariño Cultura",
         template="emails/notifications/payment_approved.html",
         context={
-            "name": order.buyer.first_name,
+            "name": order.buyer.first_name if order.buyer else order.buyer_name,
             "amount": amount,
             "details": [("Obra", titles), ("Valor pagado", amount), ("Referencia", str(order.id)[:8].upper())],
             "orders_url": _frontend("/orders"),
@@ -141,6 +141,38 @@ def _event_registration(payload, log):
     )
 
 
+def _event_reminder(payload, log):
+    return NotificationEmail(
+        to=payload.get("user_email", ""),
+        subject=f"Recordatorio: {payload.get('event_title', '')}",
+        template="emails/notifications/event_reminder.html",
+        context={
+            "name": first_name(payload.get("user_name")),
+            "event_title": payload.get("event_title"),
+            "details": [("Evento", payload.get("event_title")), ("Fecha", format_date(payload.get("event_date"))),
+                        ("Lugar", payload.get("event_location"))],
+            "event_url": _frontend(f"/events/{payload.get('event_id', '')}"),
+        },
+    )
+
+
+def _artwork_sold(payload, log):
+    artworks = ", ".join(payload.get("artworks") or [])
+    amount = format_price(payload.get("seller_amount"))
+    return NotificationEmail(
+        to=payload.get("artist_email", ""),
+        subject="¡Vendiste una obra! — Nariño Cultura",
+        template="emails/notifications/artwork_sold.html",
+        context={
+            "name": first_name(payload.get("artist_name")),
+            "artworks": artworks,
+            "details": [("Obra", artworks), ("Te corresponde", amount),
+                        ("Referencia", str(payload.get("order_id", ""))[:8].upper())],
+            "sales_url": _frontend("/dashboard/sales"),
+        },
+    )
+
+
 BUILDERS = {
     "AUCTION_OPENED": _auction_opened,
     "AUCTION_REJECTED": _auction_rejected,
@@ -148,6 +180,8 @@ BUILDERS = {
     "AUCTION_PAYMENT_EXPIRED": _auction_payment_expired,
     "PAYMENT_WEBHOOK": _payment_webhook,
     "EVENT_REGISTRATION": _event_registration,
+    "EVENT_REMINDER": _event_reminder,
+    "ARTWORK_SOLD": _artwork_sold,
 }
 
 

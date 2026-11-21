@@ -1,0 +1,119 @@
+import 'package:dio/dio.dart';
+
+import '../../constants/api_constants.dart';
+import '../../utils/storage_utils.dart';
+import '../session_expiry.dart';
+
+/// Interceptor de autenticación que adjunta el JWT a cada request y gestiona
+/// el refresh automático del token cuando el backend responde 401.
+class AuthInterceptor extends Interceptor {
+  AuthInterceptor(this._dio);
+
+  final Dio _dio;
+
+  /// Renovación en curso: si varias peticiones vencen a la vez (Inicio lanza
+  /// varias), todas esperan la misma en vez de pedir un token cada una.
+  Future<bool>? _renovando;
+
+  @override
+  Future<void> onRequest(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) async {
+    final skipAuth = options.extra['__skipAuth'] == true;
+    final isRefreshCall = options.path == ApiConstants.refreshToken;
+
+    if (skipAuth || isRefreshCall) {
+      handler.next(options);
+      return;
+    }
+
+    final token = await StorageUtils.getAccessToken();
+    if (token != null && token.isNotEmpty) {
+      options.headers['Authorization'] = 'Bearer $token';
+    }
+    handler.next(options);
+  }
+
+  @override
+  Future<void> onError(
+    DioException err,
+    ErrorInterceptorHandler handler,
+  ) async {
+    final status = err.response?.statusCode;
+    final alreadyRetried = err.requestOptions.extra['__retried'] == true;
+    final skipAuthRefresh =
+        err.requestOptions.extra['__skipAuthRefresh'] == true;
+    final isRefreshCall = err.requestOptions.path == ApiConstants.refreshToken;
+
+    if (status == 401 &&
+        !alreadyRetried &&
+        !skipAuthRefresh &&
+        !isRefreshCall) {
+      final hadSession = await StorageUtils.hasToken();
+      final refreshed =
+          await (_renovando ??= _tryRefreshToken().whenComplete(() {
+        _renovando = null;
+      }));
+      if (refreshed) {
+        final newToken = await StorageUtils.getAccessToken();
+        if (newToken != null && newToken.isNotEmpty) {
+          final opts = err.requestOptions;
+          opts.extra['__retried'] = true;
+          opts.headers['Authorization'] = 'Bearer $newToken';
+
+          try {
+            final response = await _dio.fetch(opts);
+            handler.resolve(response);
+          } on DioException catch (retryError) {
+            // La sesión sigue siendo válida: el reintento falló por otra causa
+            // (p. ej. tiempo agotado). Antes se borraban los tokens y la
+            // persona quedaba fuera sin motivo (MO-LOAD-02).
+            handler.next(retryError);
+          }
+          return;
+        }
+      }
+
+      // La renovación falló: la sesión terminó de verdad.
+      await StorageUtils.clearTokens();
+      if (hadSession) SessionExpiry.expire();
+    }
+
+    handler.next(err);
+  }
+
+  Future<bool> _tryRefreshToken() async {
+    try {
+      final refreshToken = await StorageUtils.getRefreshToken();
+      if (refreshToken == null || refreshToken.isEmpty) return false;
+
+      final response = await _dio.post(
+        ApiConstants.refreshToken,
+        data: {'refresh': refreshToken},
+        options: Options(
+          extra: const {'__skipAuth': true, '__skipAuthRefresh': true},
+        ),
+      );
+
+      final data = response.data;
+      if (data is! Map) return false;
+
+      final newAccess = data['access']?.toString();
+      if (newAccess == null || newAccess.isEmpty) return false;
+
+      // Si el backend rota el refresh (ROTATE_REFRESH_TOKENS), hay que
+      // guardar el nuevo: el anterior queda en lista negra.
+      final newRefresh = data['refresh']?.toString();
+      await StorageUtils.saveTokens(
+        accessToken: newAccess,
+        refreshToken: (newRefresh != null && newRefresh.isNotEmpty)
+            ? newRefresh
+            : refreshToken,
+      );
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+}

@@ -39,7 +39,7 @@ export class ErrorBoundary extends Component<Props, State> {
             Ocurrió un error inesperado. Intenta recargar la página.
           </p>
           {this.state.error && (
-            <pre className="max-w-sm overflow-auto rounded-card border border-border bg-surface px-4 py-2 text-left font-mono text-[11px] text-text-muted">
+            <pre className="max-w-sm overflow-auto rounded-card border border-border bg-bg-card px-4 py-2 text-left font-mono text-[11px] text-text-muted">
               {this.state.error.message}
             </pre>
           )}

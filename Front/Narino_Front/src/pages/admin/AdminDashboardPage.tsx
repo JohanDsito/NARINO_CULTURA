@@ -25,17 +25,10 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ORDER_STATUS_LABELS } from '@/constants/routes'
+import { ORDER_STATUS_LABELS } from '@/constants/labels'
+import { formatCurrency } from '@/utils'
 
 const REFETCH_INTERVAL = 30_000
-
-function formatCOP(n: number) {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    maximumFractionDigits: 0,
-  }).format(n)
-}
 
 function StatCard({
   icon: Icon,
@@ -57,13 +50,13 @@ function StatCard({
           <div className={`flex h-11 w-11 flex-none items-center justify-center rounded-xl ${color}`}>
             <Icon size={20} className="text-white" />
           </div>
-          {href && <ArrowRight size={15} className="text-muted-foreground" />}
+          {href && <ArrowRight size={15} className="text-text-secondary" />}
         </div>
         <div>
-          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-text-secondary">
             {label}
           </p>
-          <p className="mt-0.5 text-2xl font-bold text-foreground leading-none">{value}</p>
+          <p className="mt-0.5 text-2xl font-bold text-text-primary leading-none">{value}</p>
         </div>
       </CardContent>
     </Card>
@@ -74,28 +67,28 @@ function StatCard({
 export default function AdminDashboardPage() {
   const metricsQuery = useQuery({
     queryKey: ['admin-metrics'],
-    queryFn: getAdminMetrics,
+    queryFn: () => getAdminMetrics(),
     staleTime: 0,
     refetchInterval: REFETCH_INTERVAL,
   })
 
   const pendingArtworksQuery = useQuery({
     queryKey: ['admin-pending-artworks'],
-    queryFn: getPendingArtworks,
+    queryFn: () => getPendingArtworks(),
     staleTime: 0,
     refetchInterval: REFETCH_INTERVAL,
   })
 
   const pendingEventsQuery = useQuery({
     queryKey: ['admin-pending-events'],
-    queryFn: getPendingEvents,
+    queryFn: () => getPendingEvents(),
     staleTime: 0,
     refetchInterval: REFETCH_INTERVAL,
   })
 
   const transactionsQuery = useQuery({
     queryKey: ['admin-transactions'],
-    queryFn: getAdminTransactions,
+    queryFn: () => getAdminTransactions(),
     staleTime: 0,
     refetchInterval: REFETCH_INTERVAL,
   })
@@ -120,17 +113,17 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pt-16">
+    <div className="min-h-screen bg-bg pt-16">
       <main className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-6 py-8 md:px-10">
 
         {/* Header */}
         <section className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm font-medium text-muted-foreground">Sistema</p>
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+            <p className="text-sm font-medium text-text-secondary">Sistema</p>
+            <h1 className="text-3xl font-semibold tracking-tight text-text-primary">
               Panel de Administración
             </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 text-sm text-text-secondary">
               Control y supervisión de la plataforma en tiempo real
             </p>
           </div>
@@ -174,7 +167,7 @@ export default function AdminDashboardPage() {
             label="Ingresos (30d)"
             value={
               m?.revenue_last_30_days != null && !isNaN(Number(m.revenue_last_30_days))
-                ? formatCOP(Number(m.revenue_last_30_days))
+                ? formatCurrency(Number(m.revenue_last_30_days))
                 : '—'
             }
             color="bg-emerald-600"
@@ -208,7 +201,7 @@ export default function AdminDashboardPage() {
               {/* Pending events */}
               <div>
                 <div className="mb-2 flex items-center justify-between">
-                  <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+                  <p className="text-sm font-semibold text-text-primary flex items-center gap-1.5">
                     <CalendarClock size={14} className="text-amber-500" />
                     Eventos por aprobar
                     <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700 dark:bg-amber-950 dark:text-amber-300">
@@ -217,13 +210,13 @@ export default function AdminDashboardPage() {
                   </p>
                   <Link
                     to="/admin/events"
-                    className="text-xs text-primary hover:underline flex items-center gap-1"
+                    className="text-xs text-tierra hover:underline flex items-center gap-1"
                   >
                     Gestionar <ArrowRight size={11} />
                   </Link>
                 </div>
                 {pendingEvents.length === 0 ? (
-                  <p className="rounded-lg bg-muted/40 py-3 text-center text-xs text-muted-foreground">
+                  <p className="rounded-lg bg-bg-subtle/40 py-3 text-center text-xs text-text-secondary">
                     No hay eventos pendientes
                   </p>
                 ) : (
@@ -231,11 +224,11 @@ export default function AdminDashboardPage() {
                     {pendingEvents.slice(0, 3).map((ev) => (
                       <div
                         key={ev.id}
-                        className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 px-3 py-2.5"
+                        className="flex items-center gap-3 rounded-lg border border-border bg-bg-subtle/30 px-3 py-2.5"
                       >
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium text-foreground">{ev.title}</p>
-                          <p className="text-[11px] text-muted-foreground">
+                          <p className="truncate text-sm font-medium text-text-primary">{ev.title}</p>
+                          <p className="text-[11px] text-text-secondary">
                             {ev.location} ·{' '}
                             {format(new Date(ev.start_date), 'd MMM yyyy', { locale: es })}
                           </p>
@@ -248,7 +241,7 @@ export default function AdminDashboardPage() {
                     {pendingEvents.length > 3 && (
                       <Link
                         to="/admin/events"
-                        className="block text-center text-xs text-primary hover:underline pt-1"
+                        className="block text-center text-xs text-tierra hover:underline pt-1"
                       >
                         Ver {pendingEvents.length - 3} más →
                       </Link>
@@ -262,7 +255,7 @@ export default function AdminDashboardPage() {
               {/* Pending artworks */}
               <div>
                 <div className="mb-2 flex items-center justify-between">
-                  <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+                  <p className="text-sm font-semibold text-text-primary flex items-center gap-1.5">
                     <Image size={14} className="text-tierra" />
                     Obras por moderar
                     <span className="rounded-full bg-orange-100 px-2 py-0.5 text-[11px] font-bold text-orange-700 dark:bg-orange-950 dark:text-orange-300">
@@ -271,13 +264,13 @@ export default function AdminDashboardPage() {
                   </p>
                   <Link
                     to="/admin/artworks"
-                    className="text-xs text-primary hover:underline flex items-center gap-1"
+                    className="text-xs text-tierra hover:underline flex items-center gap-1"
                   >
                     Gestionar <ArrowRight size={11} />
                   </Link>
                 </div>
                 {pendingArtworks.length === 0 ? (
-                  <p className="rounded-lg bg-muted/40 py-3 text-center text-xs text-muted-foreground">
+                  <p className="rounded-lg bg-bg-subtle/40 py-3 text-center text-xs text-text-secondary">
                     No hay obras pendientes
                   </p>
                 ) : (
@@ -285,30 +278,21 @@ export default function AdminDashboardPage() {
                     {pendingArtworks.slice(0, 3).map((art) => (
                       <div
                         key={art.id}
-                        className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 px-3 py-2.5"
+                        className="flex items-center gap-3 rounded-lg border border-border bg-bg-subtle/30 px-3 py-2.5"
                       >
-                        {(art.main_image_url || art.images?.[0]?.image_url) && (
-                          <img
-                            src={art.main_image_url || art.images?.[0]?.image_url}
-                            alt={art.title}
-                            className="h-9 w-9 flex-none rounded object-cover"
-                          />
-                        )}
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium text-foreground">{art.title}</p>
-                          <p className="text-[11px] text-muted-foreground">
-                            {art.category_detail?.name ?? 'Sin categoría'}
-                          </p>
+                          <p className="truncate text-sm font-medium text-text-primary">{art.title}</p>
+                          <p className="text-[11px] text-text-secondary">{art.artist_slug}</p>
                         </div>
-                        <Badge variant="tierra" className="text-[10px] flex-none">
-                          {art.status}
-                        </Badge>
+                        <span className="flex-none text-xs font-semibold text-oro">
+                          {formatCurrency(parseFloat(art.price))}
+                        </span>
                       </div>
                     ))}
                     {pendingArtworks.length > 3 && (
                       <Link
                         to="/admin/artworks"
-                        className="block text-center text-xs text-primary hover:underline pt-1"
+                        className="block text-center text-xs text-tierra hover:underline pt-1"
                       >
                         Ver {pendingArtworks.length - 3} más →
                       </Link>
@@ -335,16 +319,16 @@ export default function AdminDashboardPage() {
                   <Link
                     key={to}
                     to={to}
-                    className="flex items-center gap-3 rounded-lg border border-border px-3 py-2.5 transition-colors hover:bg-muted/50"
+                    className="flex items-center gap-3 rounded-lg border border-border px-3 py-2.5 transition-colors hover:bg-bg-subtle/50"
                   >
                     <Icon size={16} className={color} />
-                    <span className="flex-1 text-sm font-medium text-foreground">{label}</span>
+                    <span className="flex-1 text-sm font-medium text-text-primary">{label}</span>
                     {badge ? (
                       <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-bold text-white">
                         {badge}
                       </span>
                     ) : (
-                      <ArrowRight size={14} className="text-muted-foreground" />
+                      <ArrowRight size={14} className="text-text-secondary" />
                     )}
                   </Link>
                 ))}
@@ -363,8 +347,8 @@ export default function AdminDashboardPage() {
                   { label: 'Almacenamiento', ok: true },
                 ].map(({ label, ok }) => (
                   <div key={label} className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">{label}</span>
-                    <span className={`flex items-center gap-1 text-xs font-medium ${ok ? 'text-emerald-600' : 'text-destructive'}`}>
+                    <span className="text-text-secondary">{label}</span>
+                    <span className={`flex items-center gap-1 text-xs font-medium ${ok ? 'text-emerald-600' : 'text-error'}`}>
                       <CheckCircle2 size={12} />
                       {ok ? 'Operativo' : 'Error'}
                     </span>
@@ -385,14 +369,14 @@ export default function AdminDashboardPage() {
               </CardTitle>
               <Link
                 to="/admin/transactions"
-                className="text-xs text-primary hover:underline flex items-center gap-1"
+                className="text-xs text-tierra hover:underline flex items-center gap-1"
               >
                 Ver todas <ArrowRight size={11} />
               </Link>
             </CardHeader>
             <CardContent>
               {transactions.length === 0 ? (
-                <p className="py-6 text-center text-sm text-muted-foreground">
+                <p className="py-6 text-center text-sm text-text-secondary">
                   No hay transacciones registradas.
                 </p>
               ) : (
@@ -403,7 +387,7 @@ export default function AdminDashboardPage() {
                         {['Orden', 'Tipo', 'Total', 'Estado', 'Fecha'].map((h) => (
                           <th
                             key={h}
-                            className="pb-2 pr-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+                            className="pb-2 pr-4 text-[11px] font-semibold uppercase tracking-wider text-text-secondary"
                           >
                             {h}
                           </th>
@@ -417,15 +401,15 @@ export default function AdminDashboardPage() {
                           color: '',
                         }
                         return (
-                          <tr key={order.id} className="hover:bg-muted/30 transition-colors">
-                            <td className="py-2.5 pr-4 font-mono text-xs text-foreground">
+                          <tr key={order.id} className="hover:bg-bg-subtle/30 transition-colors">
+                            <td className="py-2.5 pr-4 font-mono text-xs text-text-primary">
                               #{(order.id ?? '').slice(0, 8).toUpperCase()}
                             </td>
-                            <td className="py-2.5 pr-4 text-xs text-muted-foreground">
+                            <td className="py-2.5 pr-4 text-xs text-text-secondary">
                               {order.order_type === 'COMPRA_DIRECTA' ? 'Directa' : 'Subasta'}
                             </td>
-                            <td className="py-2.5 pr-4 text-xs font-semibold text-foreground">
-                              {order.total_amount ? formatCOP(parseFloat(order.total_amount)) : '—'}
+                            <td className="py-2.5 pr-4 text-xs font-semibold text-text-primary">
+                              {order.total_amount ? formatCurrency(parseFloat(order.total_amount)) : '—'}
                             </td>
                             <td className="py-2.5 pr-4">
                               <span
@@ -434,7 +418,7 @@ export default function AdminDashboardPage() {
                                 {statusInfo.label}
                               </span>
                             </td>
-                            <td className="py-2.5 text-xs text-muted-foreground">
+                            <td className="py-2.5 text-xs text-text-secondary">
                               {order.created_at
                                 ? format(new Date(order.created_at), 'd MMM yyyy', { locale: es })
                                 : '—'}

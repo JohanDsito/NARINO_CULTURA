@@ -257,7 +257,8 @@ class DeleteAccountAPIView(APIView):
 
     def delete(self, request):
         """
-        Elimina la cuenta del usuario actual y todos sus datos asociados.
+        Elimina la cuenta del usuario actual. Sus compras se conservan (Order.buyer queda en NULL con
+        una copia del nombre y el correo) porque son el historial de ventas de los artistas.
 
         Request body:
         {
@@ -291,7 +292,10 @@ class DeleteAccountAPIView(APIView):
             return Response(
                 {
                     "detail": "Tu cuenta ha sido eliminada permanentemente.",
-                    "message": "Los datos asociados a tu perfil también han sido eliminados.",
+                    "message": (
+                        "Los datos de tu perfil fueron eliminados. Tus compras se conservan en el historial "
+                        "de ventas de los artistas, con tu nombre y correo, como soporte de los pagos."
+                    ),
                 },
                 status=status.HTTP_204_NO_CONTENT,
             )

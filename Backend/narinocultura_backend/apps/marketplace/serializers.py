@@ -77,11 +77,30 @@ class OrderItemSerializer(ArtworkSummaryFieldsMixin, serializers.ModelSerializer
 
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
+    payment = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
-        fields = ("id", "buyer", "total_amount", "status", "order_type", "payment_due_at", "items", "created_at")
+        fields = (
+            "id", "buyer", "total_amount", "status", "order_type", "payment_due_at", "items", "payment", "created_at",
+        )
         read_only_fields = fields
+
+    def get_payment(self, obj) -> dict | None:
+        """Último intento de pago de la orden con su comprobante de Wompi (si ya lo hay).
+
+        La web y la app tienen el id de la orden, no el de la transacción: así no necesitan otra consulta."""
+        transactions = sorted(obj.transactions.all(), key=lambda t: t.created_at, reverse=True)
+        if not transactions:
+            return None
+        tx = transactions[0]
+        return {
+            "transaction_id": str(tx.id),
+            "status": tx.status,
+            "payment_method": tx.payment_method,
+            "receipt_url": tx.receipt_url,
+            "updated_at": tx.updated_at,
+        }
 
 
 class SaleSerializer(serializers.ModelSerializer):

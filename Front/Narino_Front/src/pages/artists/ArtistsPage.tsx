@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { Search, Users } from 'lucide-react'
 import { listArtistProfiles } from '@/api/artists.api'
@@ -8,13 +8,22 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { PageShell } from '@/components/layout/page-shell'
 import { ROUTES } from '@/constants/routes'
+import { useDebouncedValue } from '@/hooks/useDebouncedValue'
+
+/** Máximo que acepta el backend por página (`max_page_size`). */
+const ARTISTS_PAGE_SIZE = 100
 
 export default function ArtistsPage() {
   const [search, setSearch] = useState('')
+  const term = useDebouncedValue(search.trim(), 300)
 
+  // La búsqueda la hace el servidor (?search= en nombre artístico, nombre real, disciplina, ciudad y
+  // biografía): encuentra artistas que no están en la primera página. Se espera a que la persona deje de
+  // escribir y se mantiene la lista anterior mientras llega la nueva.
   const { data: artists = [], isLoading } = useQuery({
-    queryKey: ['artists', search],
-    queryFn: () => listArtistProfiles({ search: search || undefined }),
+    queryKey: ['artists', term],
+    queryFn: () => listArtistProfiles({ search: term || undefined, page_size: ARTISTS_PAGE_SIZE }),
+    placeholderData: keepPreviousData,
     staleTime: 2 * 60 * 1000,
   })
 
@@ -30,13 +39,9 @@ export default function ArtistsPage() {
     return ids
   }, [musiciansData])
 
+  // Este directorio es de artistas visuales: se dejan fuera los perfiles sin disciplina y los músicos
   const visualArtists = useMemo(
-    () =>
-      artists.filter(
-        (a) =>
-          Boolean(a.discipline?.trim()) &&
-          !musicianUserIds.has(a.user_id),
-      ),
+    () => artists.filter((a) => Boolean(a.discipline?.trim()) && !musicianUserIds.has(a.user_id)),
     [artists, musicianUserIds],
   )
 
@@ -56,10 +61,11 @@ export default function ArtistsPage() {
           />
           <input
             type="search"
-            placeholder="Buscar por nombre artístico o disciplina…"
+            placeholder="Buscar por nombre, disciplina o ciudad…"
+            aria-label="Buscar artistas"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-input border border-border bg-surface pl-9 pr-4 py-2.5 font-body text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-oro/50"
+            className="w-full rounded-input border border-border bg-bg-card pl-9 pr-4 py-2.5 font-body text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-oro/50"
           />
         </div>
 
@@ -67,11 +73,11 @@ export default function ArtistsPage() {
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="rounded-card border border-border bg-surface animate-pulse">
-                <div className="h-40 bg-muted rounded-t-card" />
+              <div key={i} className="rounded-card border border-border bg-bg-card animate-pulse">
+                <div className="h-40 bg-bg-subtle rounded-t-card" />
                 <div className="p-5 space-y-2">
-                  <div className="h-4 bg-muted rounded w-3/4" />
-                  <div className="h-3 bg-muted rounded w-1/2" />
+                  <div className="h-4 bg-bg-subtle rounded w-3/4" />
+                  <div className="h-3 bg-bg-subtle rounded w-1/2" />
                 </div>
               </div>
             ))}

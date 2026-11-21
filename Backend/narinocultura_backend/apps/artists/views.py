@@ -14,6 +14,9 @@ from apps.users.serializers import PublicUserSummarySerializer
 class ArtistProfileViewSet(viewsets.ModelViewSet):
     serializer_class = ArtistProfileSerializer
     lookup_field = "slug"
+    # ?search= en el directorio de artistas (la web filtraba en el cliente porque se ignoraba)
+    search_fields = ("artistic_name", "user__first_name", "user__last_name", "discipline", "city", "bio")
+    ordering_fields = ("artistic_name", "followers_count", "created_at")
 
     def get_permissions(self):
         if self.action in {"list", "retrieve"}:

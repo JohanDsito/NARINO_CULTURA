@@ -83,7 +83,7 @@ export function EventFormModal({ open, onOpenChange, onSuccess }: EventFormModal
           <CardTitle>Crear nuevo evento</CardTitle>
           <button
             onClick={() => onOpenChange(false)}
-            className="text-muted-foreground hover:text-foreground"
+            className="text-text-secondary hover:text-text-primary"
           >
             <X className="h-5 w-5" />
           </button>
@@ -101,7 +101,7 @@ export function EventFormModal({ open, onOpenChange, onSuccess }: EventFormModal
                 disabled={isSubmitting}
               />
               {errors.title && (
-                <p className="text-sm text-destructive">{errors.title.message}</p>
+                <p className="text-sm text-error">{errors.title.message}</p>
               )}
             </div>
 
@@ -116,7 +116,7 @@ export function EventFormModal({ open, onOpenChange, onSuccess }: EventFormModal
                 {...register('description')}
               />
               {errors.description && (
-                <p className="text-sm text-destructive">{errors.description.message}</p>
+                <p className="text-sm text-error">{errors.description.message}</p>
               )}
             </div>
 
@@ -138,7 +138,7 @@ export function EventFormModal({ open, onOpenChange, onSuccess }: EventFormModal
                 <option value="OTRO">Otro</option>
               </select>
               {errors.event_type && (
-                <p className="text-sm text-destructive">{errors.event_type.message}</p>
+                <p className="text-sm text-error">{errors.event_type.message}</p>
               )}
             </div>
 
@@ -152,7 +152,7 @@ export function EventFormModal({ open, onOpenChange, onSuccess }: EventFormModal
                 disabled={isSubmitting}
               />
               {errors.location && (
-                <p className="text-sm text-destructive">{errors.location.message}</p>
+                <p className="text-sm text-error">{errors.location.message}</p>
               )}
             </div>
 
@@ -166,7 +166,7 @@ export function EventFormModal({ open, onOpenChange, onSuccess }: EventFormModal
                 disabled={isSubmitting}
               />
               {errors.start_date && (
-                <p className="text-sm text-destructive">{errors.start_date.message}</p>
+                <p className="text-sm text-error">{errors.start_date.message}</p>
               )}
             </div>
 
@@ -180,7 +180,7 @@ export function EventFormModal({ open, onOpenChange, onSuccess }: EventFormModal
                 disabled={isSubmitting}
               />
               {errors.end_date && (
-                <p className="text-sm text-destructive">{errors.end_date.message}</p>
+                <p className="text-sm text-error">{errors.end_date.message}</p>
               )}
             </div>
 
@@ -195,7 +195,7 @@ export function EventFormModal({ open, onOpenChange, onSuccess }: EventFormModal
                 disabled={isSubmitting}
               />
               {errors.image_url && (
-                <p className="text-sm text-destructive">{errors.image_url.message}</p>
+                <p className="text-sm text-error">{errors.image_url.message}</p>
               )}
             </div>
 

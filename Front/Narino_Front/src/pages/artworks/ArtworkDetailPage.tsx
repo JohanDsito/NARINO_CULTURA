@@ -5,25 +5,16 @@ import { ShoppingCart, Gavel, Eye, ArrowLeft, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import { getArtworkById, aiEnhanceArtwork } from '@/api/artworks.api'
 import { addCartItem } from '@/api/marketplace.api'
+import { FavoriteButton } from '@/components/artworks/favorite-button'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { PageLoader } from '@/components/layout/page-loader'
 import { useAuthStore } from '@/store/authStore'
 import { useCartStore } from '@/store/cartStore'
 import { ROUTES } from '@/constants/routes'
-
-function formatPrice(n: number) {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency', currency: 'COP', maximumFractionDigits: 0,
-  }).format(n)
-}
-
-const STATUS_LABELS: Record<string, { label: string; variant: 'selva' | 'indigo' | 'tierra' | 'oro' }> = {
-  DISPONIBLE: { label: 'Disponible', variant: 'selva' },
-  EN_SUBASTA: { label: 'En subasta', variant: 'indigo' },
-  VENDIDA: { label: 'Vendida', variant: 'tierra' },
-  INACTIVA: { label: 'Inactiva', variant: 'oro' },
-}
+import { formatCurrency } from '@/utils'
+import { getApiErrorMessage } from '@/utils/apiError'
+import { artworkStatus } from '@/constants/labels'
 
 export default function ArtworkDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -43,10 +34,9 @@ export default function ArtworkDetailPage() {
     mutationFn: () => addCartItem(id!),
     onSuccess: () => {
       toast.success('Obra agregada al carrito')
+      void queryClient.invalidateQueries({ queryKey: ['server-cart'] })
     },
-    onError: () => {
-      toast.error('No se pudo agregar al carrito. Intenta de nuevo.')
-    },
+    onError: (error) => toast.error(getApiErrorMessage(error)),
   })
 
   const aiEnhanceMutation = useMutation({
@@ -67,13 +57,13 @@ export default function ArtworkDetailPage() {
     } else {
       const mainImage =
         artwork.main_image_url ||
-        artwork.images[0]?.image_url ||
+        artwork.images?.[0]?.image_url ||
         ''
       addLocalItem({
         id: artwork.id,
         artwork_id: artwork.id,
         title: artwork.title,
-        artist_name: artwork.artist,
+        artist_name: artwork.artist_slug ?? '',
         price: parseFloat(artwork.price),
         image: mainImage,
       })
@@ -96,14 +86,15 @@ export default function ArtworkDetailPage() {
 
   const images = [
     ...(artwork.main_image_url ? [artwork.main_image_url] : []),
-    ...artwork.images.sort((a, b) => a.order - b.order).map((img) => img.image_url),
+    // copia antes de ordenar: sort() mutaría los datos en caché de React Query
+    ...[...(artwork.images ?? [])].sort((a, b) => a.order - b.order).map((img) => img.image_url),
   ].filter(Boolean)
 
   if (images.length === 0) {
     images.push(`https://placehold.co/800x600/2D1B00/F0C060?text=${encodeURIComponent(artwork.title)}`)
   }
 
-  const status = STATUS_LABELS[artwork.status] ?? { label: artwork.status, variant: 'oro' as const }
+  const status = artworkStatus(artwork.status)
 
   return (
     <div className="min-h-screen bg-bg pt-16">
@@ -119,7 +110,7 @@ export default function ArtworkDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Galería */}
           <div className="space-y-3">
-            <div className="aspect-[4/3] overflow-hidden rounded-card bg-surface">
+            <div className="aspect-[4/3] overflow-hidden rounded-card bg-bg-card">
               <img
                 src={images[selectedImage]}
                 alt={artwork.title}
@@ -164,7 +155,7 @@ export default function ArtworkDetailPage() {
 
             {/* Precio */}
             <p className="font-display font-bold text-oro text-[36px]">
-              {formatPrice(parseFloat(artwork.price))}
+              {formatCurrency(parseFloat(artwork.price))}
             </p>
 
             {/* Descripción */}
@@ -221,6 +212,7 @@ export default function ArtworkDetailPage() {
                   Ver subastas activas
                 </Button>
               )}
+              <FavoriteButton artworkId={artwork.id} />
               {isAuthenticated && artwork.status === 'DISPONIBLE' && (
                 <Button
                   variant="secondary"

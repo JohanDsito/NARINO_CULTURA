@@ -1,21 +1,26 @@
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { authApi } from '@/api/auth.api'
 import { syncCartToServer } from '@/hooks/useCartSync'
 import { useAuthStore } from '@/store/authStore'
-import type { LoginCredentials, RegisterData } from '@/types/auth'
+import type { LoginCredentials, RegisterData } from '@/types'
 import { getArtistDashboardPath } from '@/utils/artistDiscipline'
 
 export function useLogin() {
   const { setAuth } = useAuthStore()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: (credentials: LoginCredentials) => authApi.login(credentials),
     onSuccess: ({ tokens, user }) => {
+      // Nada de la sesión anterior (perfil "me", carrito...) debe sobrevivir
+      queryClient.clear()
       setAuth(user, tokens.access, tokens.refresh)
-      void syncCartToServer()
+      void syncCartToServer().then(() =>
+        queryClient.invalidateQueries({ queryKey: ['server-cart'] }),
+      )
       toast.success(`Bienvenido, ${user.first_name}`)
 
       const roleRoutes: Record<string, string> = {
@@ -50,10 +55,12 @@ export function useRegister() {
 export function useLogout() {
   const { logout } = useAuthStore()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
   return async () => {
     await authApi.logout()
     logout()
+    queryClient.clear()
     toast.success('Sesión cerrada exitosamente')
     navigate('/login')
   }

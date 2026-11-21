@@ -7,6 +7,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 
+from apps.events.filters import EventFilter
 from apps.events.models import Event, EventRegistration
 from apps.events.permissions import IsEventManagerOrReadOnly
 from apps.events.serializers import (
@@ -23,7 +24,7 @@ from utils.throttling import AIBurstThrottle
 class EventViewSet(viewsets.ModelViewSet):
     serializer_class = EventSerializer
     permission_classes = [IsEventManagerOrReadOnly]
-    filterset_fields = ("event_type", "is_published")
+    filterset_class = EventFilter
     search_fields = ("title", "description", "location")
     ordering_fields = ("start_date", "created_at")
 
