@@ -75,3 +75,13 @@ export const MUSICAL_WORK_TYPE_LABELS: Record<string, string> = {
   COVER: 'Cover',
   PODCAST: 'Podcast',
 }
+
+/** Medio de pago que reporta Wompi (Transaction.payment_method). */
+export const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  CARD: 'tarjeta',
+  PSE: 'PSE',
+  NEQUI: 'Nequi',
+  BANCOLOMBIA_TRANSFER: 'transferencia Bancolombia',
+  BANCOLOMBIA_QR: 'QR Bancolombia',
+  DAVIPLATA: 'Daviplata',
+}

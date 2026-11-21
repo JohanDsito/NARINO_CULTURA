@@ -1,6 +1,7 @@
-import { useParams, Link } from 'react-router-dom'
-import { useQuery, useMutation } from '@tanstack/react-query'
-import { Calendar, MapPin, ArrowLeft, UserPlus } from 'lucide-react'
+import { useState } from 'react'
+import { useParams, Link, useLocation } from 'react-router-dom'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Calendar, MapPin, ArrowLeft, UserPlus, CalendarCheck, UserMinus } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { toast } from 'sonner'
@@ -10,6 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { PageLoader } from '@/components/layout/page-loader'
 import { useAuthStore } from '@/store/authStore'
 import { ROUTES } from '@/constants/routes'
+import { getApiErrorMessage } from '@/utils/apiError'
 
 const EVENT_TYPE_LABELS: Record<string, string> = {
   CONCIERTO: 'Concierto',
@@ -23,6 +25,9 @@ const EVENT_TYPE_LABELS: Record<string, string> = {
 export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const location = useLocation()
+  const queryClient = useQueryClient()
+  const [now] = useState(() => Date.now())
 
   const { data: event, isLoading, isError } = useQuery({
     queryKey: ['event', id],
@@ -33,10 +38,25 @@ export default function EventDetailPage() {
     enabled: Boolean(id),
   })
 
+  // Tras inscribirse o cancelar se vuelve a pedir el evento: is_registered lo decide el servidor
+  const refreshEvent = () => queryClient.invalidateQueries({ queryKey: ['event', id] })
+
   const registerMutation = useMutation({
     mutationFn: async () => eventsApi.registerToEvent(id!),
-    onSuccess: () => toast.success('Te has registrado en el evento'),
-    onError: () => toast.error('No se pudo completar el registro'),
+    onSuccess: () => {
+      toast.success('¡Listo! Te inscribiste. Te recordaremos el evento un día antes.')
+      return refreshEvent()
+    },
+    onError: (error) => toast.error(getApiErrorMessage(error)),
+  })
+
+  const unregisterMutation = useMutation({
+    mutationFn: async () => eventsApi.unregisterFromEvent(id!),
+    onSuccess: () => {
+      toast.success('Cancelaste tu inscripción')
+      return refreshEvent()
+    },
+    onError: (error) => toast.error(getApiErrorMessage(error)),
   })
 
   if (isLoading) return <PageLoader label="Cargando evento…" />
@@ -55,6 +75,8 @@ export default function EventDetailPage() {
   const startDate = new Date(event.start_date)
   const endDate = new Date(event.end_date)
   const typeLabel = EVENT_TYPE_LABELS[event.event_type] ?? event.event_type
+  const hasEnded = endDate.getTime() < now
+  const busy = registerMutation.isPending || unregisterMutation.isPending
 
   return (
     <div className="min-h-screen bg-bg pt-16">
@@ -90,17 +112,44 @@ export default function EventDetailPage() {
               <p className="font-body text-text-primary leading-relaxed">{event.description}</p>
             )}
 
-            {isAuthenticated && event.is_published && (
-              <Button
-                variant="primary"
-                className="gap-2"
-                onClick={() => registerMutation.mutate()}
-                disabled={registerMutation.isPending}
-              >
-                <UserPlus size={16} />
-                {registerMutation.isPending ? 'Registrando…' : 'Registrarme en este evento'}
-              </Button>
-            )}
+            {event.is_published &&
+              (hasEnded ? (
+                <p className="font-body text-sm text-text-muted">Este evento ya terminó.</p>
+              ) : !isAuthenticated ? (
+                <Button asChild variant="primary" className="gap-2">
+                  <Link to={ROUTES.LOGIN} state={{ from: location.pathname }} className="no-underline">
+                    <UserPlus size={16} />
+                    Inicia sesión para inscribirte
+                  </Link>
+                </Button>
+              ) : event.is_registered ? (
+                <div className="flex flex-wrap items-center gap-3">
+                  <p className="inline-flex items-center gap-2 rounded-tag bg-selva-pale px-3 py-1.5 font-body text-sm font-semibold text-selva">
+                    <CalendarCheck size={16} />
+                    Ya estás inscrito
+                  </p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => unregisterMutation.mutate()}
+                    disabled={busy}
+                  >
+                    <UserMinus size={14} />
+                    {unregisterMutation.isPending ? 'Cancelando…' : 'Cancelar inscripción'}
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  variant="primary"
+                  className="gap-2"
+                  onClick={() => registerMutation.mutate()}
+                  disabled={busy}
+                >
+                  <UserPlus size={16} />
+                  {registerMutation.isPending ? 'Inscribiendo…' : 'Inscribirme en este evento'}
+                </Button>
+              ))}
           </div>
 
           {/* Detalles */}

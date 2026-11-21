@@ -13,14 +13,24 @@ export interface OrderItem {
   // No quantity — backend enforces one unit per artwork in an order
 }
 
+/** Último intento de pago de la orden (backend: OrderSerializer.payment). */
+export interface OrderPayment {
+  transaction_id: string
+  status: TransactionStatus
+  payment_method: string
+  receipt_url: string                     // comprobante de Wompi; vacío hasta que Wompi lo envía
+  updated_at: string
+}
+
 export interface Order {
   id: string
   buyer: string | null                    // User UUID FK; null si el comprador eliminó su cuenta
   total_amount: string                    // DecimalField → string
   status: OrderStatus
   order_type: OrderType
-  payment_due_at?: string | null
+  payment_due_at?: string | null          // plazo para pagar (compra directa: la reserva vence; subasta: 48 h)
   items: OrderItem[]
+  payment?: OrderPayment | null
   created_at: string
 }
 

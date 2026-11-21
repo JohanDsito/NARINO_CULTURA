@@ -12,6 +12,7 @@ export interface Event {
   longitude?: number
   image_url?: string
   is_published: boolean
+  is_registered?: boolean            // solo con sesión: si el usuario ya está inscrito
   organizer: {
     id: number
     email: string
@@ -136,6 +137,11 @@ export const eventsApi = {
   // Registrarse en un evento
   registerToEvent: (id: string) => {
     return axiosInstance.post(`/api/v1/events/${id}/register/`, {})
+  },
+
+  // Cancelar la inscripción a un evento
+  unregisterFromEvent: (id: string) => {
+    return axiosInstance.delete(`/api/v1/events/${id}/register/`)
   },
 
   // Obtener eventos por mes (para el calendario)

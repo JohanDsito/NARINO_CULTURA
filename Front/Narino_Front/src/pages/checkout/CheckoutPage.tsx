@@ -1,8 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { ShoppingCart, CreditCard } from 'lucide-react'
+import { ShoppingCart, CreditCard, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { getServerCart, checkout } from '@/api/marketplace.api'
+import { getServerCart, checkout, removeCartItem } from '@/api/marketplace.api'
 import { Button } from '@/components/ui/button'
 import { useStartPayment } from '@/hooks/useStartPayment'
 import { PageShell } from '@/components/layout/page-shell'
@@ -29,6 +29,15 @@ export default function CheckoutPage() {
       void queryClient.invalidateQueries({ queryKey: ['orders'] })
       toast.success(`Orden #${data.order_id.slice(0, 8).toUpperCase()} creada`)
       startPayment.mutate(data.order_id)
+    },
+    onError: (error) => toast.error(getApiErrorMessage(error)),
+  })
+
+  const removeMutation = useMutation({
+    mutationFn: (artworkId: string) => removeCartItem(artworkId),
+    onSuccess: () => {
+      toast.success('Obra quitada del carrito')
+      return queryClient.invalidateQueries({ queryKey: ['server-cart'] })
     },
     onError: (error) => toast.error(getApiErrorMessage(error)),
   })
@@ -91,6 +100,16 @@ export default function CheckoutPage() {
                   <p className="font-body font-bold text-oro flex-none">
                     {formatCurrency(item.artwork_price)}
                   </p>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="flex-none"
+                    onClick={() => removeMutation.mutate(item.artwork)}
+                    disabled={isProcessing || (removeMutation.isPending && removeMutation.variables === item.artwork)}
+                    aria-label={`Quitar «${item.artwork_title ?? 'obra'}» del carrito`}
+                  >
+                    <Trash2 size={16} />
+                  </Button>
                 </div>
               ))}
             </div>
@@ -114,7 +133,8 @@ export default function CheckoutPage() {
                 {isProcessing ? 'Procesando…' : 'Pagar con Wompi'}
               </Button>
               <p className="font-body text-[11px] text-text-muted text-center">
-                Serás redirigido a Wompi para completar el pago de forma segura.
+                Serás redirigido a Wompi para completar el pago de forma segura. Las obras quedan
+                reservadas para ti durante el plazo de pago.
               </p>
             </div>
           </div>
