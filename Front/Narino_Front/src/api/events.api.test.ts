@@ -111,4 +111,12 @@ describe('events.api', () => {
       },
     )
   })
+
+  it('registers to and unregisters from an event', () => {
+    eventsApi.registerToEvent('e1')
+    expect(mockedAxios.post).toHaveBeenCalledWith('/api/v1/events/e1/register/', {})
+
+    eventsApi.unregisterFromEvent('e1')
+    expect(mockedAxios.delete).toHaveBeenCalledWith('/api/v1/events/e1/register/')
+  })
 })
