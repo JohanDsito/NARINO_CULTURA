@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import {
   Bell,
+  Heart,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -85,6 +86,16 @@ export function Navbar() {
         <div className="hidden items-center gap-7 md:flex">{renderLinks('')}</div>
 
         <div className="flex items-center gap-2 md:gap-4">
+          {isAuthenticated && (
+            <Link
+              to="/favorites"
+              aria-label="Mis favoritos"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors duration-300 hover:bg-white/10"
+            >
+              <Heart size={20} className="text-[#f5efe5bf]" />
+            </Link>
+          )}
+
           <Link
             to="/checkout"
             aria-label={`Carrito de compras${cartCount > 0 ? `, ${cartCount} productos` : ''}`}

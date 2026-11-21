@@ -54,7 +54,10 @@ export interface FavoriteItem {
   artwork_id: string
   title: string
   artwork_price: string
+  artwork_status?: string
   artwork_image_url: string
+  artist_name?: string
+  artist_slug?: string
   created_at?: string
 }
 

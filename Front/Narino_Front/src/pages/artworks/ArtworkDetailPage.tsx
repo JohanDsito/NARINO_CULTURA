@@ -5,6 +5,7 @@ import { ShoppingCart, Gavel, Eye, ArrowLeft, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import { getArtworkById, aiEnhanceArtwork } from '@/api/artworks.api'
 import { addCartItem } from '@/api/marketplace.api'
+import { FavoriteButton } from '@/components/artworks/favorite-button'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { PageLoader } from '@/components/layout/page-loader'
@@ -211,6 +212,7 @@ export default function ArtworkDetailPage() {
                   Ver subastas activas
                 </Button>
               )}
+              <FavoriteButton artworkId={artwork.id} />
               {isAuthenticated && artwork.status === 'DISPONIBLE' && (
                 <Button
                   variant="secondary"

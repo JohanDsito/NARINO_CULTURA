@@ -133,6 +133,14 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: 'favorites',
+        element: (
+          <ProtectedRoute allowedRoles={ANY_AUTH}>
+            {lazyPage(() => import('@/pages/user/FavoritesPage'), 'Cargando favoritos…')}
+          </ProtectedRoute>
+        ),
+      },
+      {
         path: 'notifications',
         element: (
           <ProtectedRoute allowedRoles={ANY_AUTH}>
