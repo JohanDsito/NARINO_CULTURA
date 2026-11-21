@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { Search, Users } from 'lucide-react'
 import { listArtistProfiles } from '@/api/artists.api'
@@ -8,15 +8,22 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { PageShell } from '@/components/layout/page-shell'
 import { ROUTES } from '@/constants/routes'
+import { useDebouncedValue } from '@/hooks/useDebouncedValue'
+
+/** Máximo que acepta el backend por página (`max_page_size`). */
+const ARTISTS_PAGE_SIZE = 100
 
 export default function ArtistsPage() {
   const [search, setSearch] = useState('')
+  const term = useDebouncedValue(search.trim(), 300)
 
-  // El backend aún no tiene `search_fields` en ArtistProfileViewSet: se ignora `?search=`,
-  // así que se filtra en el cliente (y no se vuelve a pedir la lista en cada tecla).
+  // La búsqueda la hace el servidor (?search= en nombre artístico, nombre real, disciplina, ciudad y
+  // biografía): encuentra artistas que no están en la primera página. Se espera a que la persona deje de
+  // escribir y se mantiene la lista anterior mientras llega la nueva.
   const { data: artists = [], isLoading } = useQuery({
-    queryKey: ['artists'],
-    queryFn: () => listArtistProfiles(),
+    queryKey: ['artists', term],
+    queryFn: () => listArtistProfiles({ search: term || undefined, page_size: ARTISTS_PAGE_SIZE }),
+    placeholderData: keepPreviousData,
     staleTime: 2 * 60 * 1000,
   })
 
@@ -32,16 +39,11 @@ export default function ArtistsPage() {
     return ids
   }, [musiciansData])
 
-  const visualArtists = useMemo(() => {
-    const term = search.trim().toLowerCase()
-    return artists.filter(
-      (a) =>
-        Boolean(a.discipline?.trim()) &&
-        !musicianUserIds.has(a.user_id) &&
-        (!term ||
-          [a.artistic_name, a.city, a.discipline].some((v) => v?.toLowerCase().includes(term))),
-    )
-  }, [artists, musicianUserIds, search])
+  // Este directorio es de artistas visuales: se dejan fuera los perfiles sin disciplina y los músicos
+  const visualArtists = useMemo(
+    () => artists.filter((a) => Boolean(a.discipline?.trim()) && !musicianUserIds.has(a.user_id)),
+    [artists, musicianUserIds],
+  )
 
   return (
     <div className="min-h-screen bg-bg pt-16">
@@ -59,7 +61,8 @@ export default function ArtistsPage() {
           />
           <input
             type="search"
-            placeholder="Buscar por nombre artístico o disciplina…"
+            placeholder="Buscar por nombre, disciplina o ciudad…"
+            aria-label="Buscar artistas"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full rounded-input border border-border bg-bg-card pl-9 pr-4 py-2.5 font-body text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-oro/50"
