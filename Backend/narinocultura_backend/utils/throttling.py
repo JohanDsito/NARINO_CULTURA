@@ -19,3 +19,12 @@ class StrictUserThrottle(UserRateThrottle):
 class ResendVerificationThrottle(AnonRateThrottle):
     """3 reenvíos de verificación por hora y por IP."""
     scope = "resend_verification"
+
+
+class AIBurstThrottle(UserRateThrottle):
+    """Límite por minuto de los endpoints que llaman a la IA (por usuario o, si es anónimo, por IP).
+
+    Protege la cuota gratuita de Gemini y Groq: sin él, una sola persona podría agotar la cuota
+    del día y la IA quedaría respondiendo solo con reglas. Se suma a los límites globales por hora.
+    """
+    scope = "ai"

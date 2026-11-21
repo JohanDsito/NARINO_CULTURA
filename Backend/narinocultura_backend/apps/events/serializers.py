@@ -1,6 +1,22 @@
 from rest_framework import serializers
 
 from apps.events.models import Event, EventRegistration
+from services import llm
+from services.event_service import EventService
+from utils.media import sniff_image_type
+
+FLYER_MAX_BYTES = 5 * 1024 * 1024
+
+
+def read_flyer_upload(upload) -> llm.Image:
+    """Valida el afiche subido (JPEG, PNG, WebP o HEIC de hasta 5 MB) y lo devuelve leído."""
+    if upload.size > FLYER_MAX_BYTES:
+        raise serializers.ValidationError("El afiche no puede pesar más de 5 MB.")
+    data = upload.read()
+    mime_type = sniff_image_type(data)
+    if mime_type is None:
+        raise serializers.ValidationError("El afiche debe ser una imagen JPEG, PNG, WebP o HEIC.")
+    return llm.Image(mime_type=mime_type, data=data)
 
 
 class UserBasicSerializer(serializers.Serializer):
@@ -13,6 +29,8 @@ class UserBasicSerializer(serializers.Serializer):
 class EventSerializer(serializers.ModelSerializer):
     organizer = UserBasicSerializer(read_only=True)
     is_registered = serializers.SerializerMethodField()
+    # Archivo opcional (multipart): se guarda y su URL queda en image_url
+    flyer = serializers.FileField(write_only=True, required=False)
 
     class Meta:
         model = Event
@@ -28,12 +46,22 @@ class EventSerializer(serializers.ModelSerializer):
             "latitude",
             "longitude",
             "image_url",
+            "flyer",
             "is_published",
             "is_registered",
             "created_at",
             "updated_at",
         )
         read_only_fields = ("id", "organizer", "created_at", "updated_at")
+
+    def validate_flyer(self, upload):
+        return read_flyer_upload(upload)
+
+    def update(self, instance, validated_data):
+        flyer = validated_data.pop("flyer", None)
+        if flyer is not None:
+            validated_data["image_url"] = EventService.store_flyer(flyer)
+        return super().update(instance, validated_data)
 
     def get_is_registered(self, obj) -> bool:
         # Anotado en EventViewSet.get_queryset; si el evento no viene anotado se consulta aquí
@@ -69,16 +97,20 @@ class EventRegistrationSerializer(serializers.ModelSerializer):
 
 class EventFlyerExtractSerializer(serializers.Serializer):
     image_url = serializers.URLField(required=False, allow_blank=True)
+    flyer = serializers.FileField(required=False)
     flyer_text = serializers.CharField(required=False, allow_blank=True)
     create_draft = serializers.BooleanField(default=False)
+
+    def validate_flyer(self, upload):
+        return read_flyer_upload(upload)
 
     def validate(self, attrs):
         image_url = attrs.get("image_url", "").strip()
         flyer_text = attrs.get("flyer_text", "").strip()
 
-        if not image_url and not flyer_text:
+        if not image_url and not flyer_text and not attrs.get("flyer"):
             raise serializers.ValidationError(
-                "Debes enviar al menos una URL del flyer o texto extraido del flyer."
+                "Debes enviar el afiche (archivo o URL) o el texto del afiche."
             )
         return attrs
 

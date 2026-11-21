@@ -161,6 +161,7 @@ REST_FRAMEWORK = {
         "password_reset": "3/hour",
         "resend_verification": "3/hour",
         "chat": "10/minute",
+        "ai": "20/minute",
     },
 }
 
@@ -247,7 +248,20 @@ RESEND_FROM_EMAIL = config("RESEND_FROM_EMAIL", default="noreply@narinocultura.u
 BREVO_API_KEY = config("BREVO_API_KEY", default="")
 BREVO_FROM_EMAIL = config("BREVO_FROM_EMAIL", default="noreply@narinocultura.uk")
 
-AI_SERVICE_URL = config("AI_SERVICE_URL", default="")
+# Inteligencia artificial (services/llm.py). Ambas llaves son de capa gratuita: sin facturación
+# activada no generan cobros, al agotar la cuota responden 429 y se usa el siguiente proveedor
+# o las reglas locales. Sin ninguna llave, las funciones de IA responden solo con reglas.
+GEMINI_API_KEY = config("GEMINI_API_KEY", default=config("GOOGLE_API_KEY", default=""))
+# El alias "-latest" apunta siempre al Flash-Lite vigente: no se rompe cuando Google retira una versión
+GEMINI_MODEL = config("GEMINI_MODEL", default="gemini-flash-lite-latest")
+GROQ_API_KEY = config("GROQ_API_KEY", default="")
+GROQ_MODEL = config("GROQ_MODEL", default="openai/gpt-oss-120b")
+# Orden en que se prueban los proveedores para texto. Groq va primero porque responde en ~1 s
+# de forma estable, mientras que la capa gratuita de Gemini tiene picos de 5-15 s. Las imágenes
+# (afiches) siempre van a Gemini, el único con visión.
+AI_PROVIDERS = config("AI_PROVIDERS", default="groq,gemini", cast=lambda v: [p.strip() for p in v.split(",") if p.strip()])
+# Si un proveedor tarda más que esto se pasa al siguiente: acota los picos de latencia
+AI_TIMEOUT_SECONDS = config("AI_TIMEOUT_SECONDS", default=8, cast=int)
 FRONTEND_URL = config(
     "FRONTEND_URL",
     default=config("FRONTEND_BASE_URL", default="http://localhost:5173"),

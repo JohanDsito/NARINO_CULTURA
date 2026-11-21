@@ -1,5 +1,5 @@
 from datetime import datetime
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 from zoneinfo import ZoneInfo
 
 from django.test import TestCase, override_settings
@@ -7,6 +7,7 @@ from rest_framework.test import APIClient
 
 from apps.events.models import Event, EventRegistration
 from services.event_service import EventService
+from tests import llm_fakes
 from tests.factories import CulturalManagerFactory, EventFactory, UserFactory
 
 BOGOTA = ZoneInfo("America/Bogota")
@@ -78,37 +79,48 @@ class FlyerTextParsingTests(TestCase):
         self.assertEqual(data["image_url"], "https://img.test/f.png")
 
 
-@override_settings(AI_SERVICE_URL="http://ai.local")
+@override_settings(**llm_fakes.KEYS)
 class AiExtractionNormalizationTests(TestCase):
-    """La respuesta del microservicio de IA se completa y se sanea antes de llegar al cliente."""
+    """La respuesta de la IA se sanea y se completa con la heurística antes de llegar al cliente."""
 
     def setUp(self):
         self.manager = CulturalManagerFactory()
 
-    @patch("services.event_service.requests.post")
-    def test_unknown_event_type_becomes_otro(self, post):
-        post.return_value = MagicMock(content=b"{}", json=lambda: {"title": "Rave", "event_type": "RAVE", "location": None})
-        data = EventService.extract_from_flyer(organizer=self.manager, flyer_text="Rave")
-        self.assertEqual(data["event_type"], Event.Type.OTRO)
-        self.assertEqual(data["location"], "")
+    @patch("services.llm._session.post")
+    def test_unknown_event_type_and_missing_fields_fall_back_to_heuristic(self, post):
+        post.return_value = llm_fakes.gemini({"title": "Rave", "event_type": "RAVE", "location": None})
+        data = EventService.extract_from_flyer(organizer=self.manager, flyer_text="Concierto andino\nLugar: Teatro Imperial")
         self.assertEqual(data["source"], "ai_service")
+        self.assertEqual(data["model_used"], "gemini")
+        self.assertEqual(data["title"], "Rave")
+        self.assertEqual(data["event_type"], Event.Type.CONCIERTO)  # de la heurística
+        self.assertIn("Teatro Imperial", data["location"])
 
-    @patch("services.event_service.requests.post")
-    def test_empty_ai_response_yields_blank_suggestion(self, post):
-        post.return_value = MagicMock(content=b"")
-        data = EventService.extract_from_flyer(organizer=self.manager, flyer_text="Texto")
-        self.assertEqual(data["title"], "")
-        self.assertEqual(data["raw_text"], "Texto")
+    @patch("services.llm._session.post")
+    def test_ai_dates_are_parsed_and_impossible_ones_dropped(self, post):
+        post.return_value = llm_fakes.gemini({"title": "Feria", "start_date": "2031-03-05T19:30:00-05:00", "end_date": None})
+        data = EventService.extract_from_flyer(organizer=self.manager, flyer_text="Feria")
+        self.assertEqual(data["start_date"], datetime(2031, 3, 5, 19, 30, tzinfo=BOGOTA))
+        self.assertEqual(data["end_date"], datetime(2031, 3, 5, 21, 30, tzinfo=BOGOTA))
+
+        post.return_value = llm_fakes.gemini({"title": "Feria", "start_date": "2031-02-31T19:30:00", "end_date": "mañana"})
+        data = EventService.extract_from_flyer(organizer=self.manager, flyer_text="Feria")
+        self.assertIsNone(data["start_date"])
+        self.assertIsNone(data["end_date"])
+
+    @patch("services.llm._session.post")
+    def test_suggestion_is_never_published(self, post):
+        post.return_value = llm_fakes.gemini({"title": "Feria", "is_published": True})
+        data = EventService.extract_from_flyer(organizer=self.manager, flyer_text="Feria")
         self.assertFalse(data["is_published"])
 
-    @patch("services.event_service.requests.post")
-    def test_manager_keeps_published_flag_from_ai(self, post):
-        post.return_value = MagicMock(content=b"{}", json=lambda: {"title": "Feria", "is_published": True})
-        data = EventService.extract_from_flyer(organizer=self.manager, flyer_text="Feria")
-        self.assertTrue(data["is_published"])
-
-    def test_non_dict_ai_payload_is_normalized(self):
-        self.assertEqual(EventService._normalize_ai_extraction(["no", "dict"])["event_type"], Event.Type.OTRO)
+    @patch("services.llm._session.post")
+    def test_non_json_answer_from_every_provider_uses_heuristic(self, post):
+        post.side_effect = [llm_fakes.gemini("No puedo leer el afiche"), llm_fakes.groq(["no", "dict"])]
+        data = EventService.extract_from_flyer(organizer=self.manager, flyer_text="Taller de cerámica")
+        self.assertEqual(data["source"], "heuristic")
+        self.assertEqual(data["event_type"], Event.Type.TALLER)
+        self.assertEqual(post.call_count, 2)
 
 
 class EventRegistrationsApiTests(TestCase):

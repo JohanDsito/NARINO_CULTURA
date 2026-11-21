@@ -3,12 +3,18 @@ from __future__ import annotations
 import re
 from datetime import datetime, timedelta
 from typing import Any
+from urllib.parse import urljoin, urlparse
+from uuid import uuid4
 from zoneinfo import ZoneInfo
 
-import requests
 from django.conf import settings
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 
 from apps.events.models import Event
+from services import llm
+from services.ai_service import AIService
+from utils.media import IMAGE_EXTENSIONS
 
 
 class EventService:
@@ -40,51 +46,44 @@ class EventService:
     def create_event(*, organizer, validated_data: dict[str, Any]) -> Event:
         if getattr(organizer, "role", None) == "ARTISTA":
             validated_data["is_published"] = False
+        flyer = validated_data.pop("flyer", None)
+        if flyer is not None:
+            validated_data["image_url"] = EventService.store_flyer(flyer)
         return Event.objects.create(organizer=organizer, **validated_data)
 
     @staticmethod
-    def extract_from_flyer(*, organizer, image_url: str = "", flyer_text: str = "") -> dict[str, Any]:
-        base_url = getattr(settings, "AI_SERVICE_URL", "").rstrip("/")
-        if base_url:
-            payload = {"image_url": image_url, "flyer_text": flyer_text}
-            try:
-                response = requests.post(
-                    f"{base_url}/events/extract-from-flyer",
-                    json=payload,
-                    timeout=20,
-                )
-                response.raise_for_status()
-                data = EventService._normalize_ai_extraction(response.json() if response.content else {})
-                data.setdefault("source", "ai_service")
-                data.setdefault("image_url", image_url)
-                data.setdefault("raw_text", flyer_text)
-                data["is_published"] = False if getattr(organizer, "role", None) == "ARTISTA" else bool(data.get("is_published", False))
-                return data
-            except requests.RequestException:
-                pass
-
-        data = EventService._heuristic_extract(image_url=image_url, flyer_text=flyer_text)
-        data["source"] = "heuristic"
-        data["is_published"] = False if getattr(organizer, "role", None) == "ARTISTA" else False
-        return data
+    def store_flyer(image: llm.Image) -> str:
+        """Guarda el afiche subido (Cloudinary en producción) y devuelve su URL absoluta."""
+        name = default_storage.save(f"events/flyers/{uuid4().hex}{IMAGE_EXTENSIONS[image.mime_type]}", ContentFile(image.data))
+        url = default_storage.url(name)
+        return url if urlparse(url).scheme else urljoin(settings.API_BASE_URL, url)
 
     @staticmethod
-    def _normalize_ai_extraction(data: Any) -> dict[str, Any]:
-        """La respuesta del microservicio de IA puede omitir campos o traer un tipo de evento
-        desconocido; se completa para que siempre tenga la forma del resultado heurístico."""
-        data = data if isinstance(data, dict) else {}
-        normalized = {
-            "title": "",
-            "description": "",
-            "event_type": Event.Type.OTRO,
-            "start_date": None,
-            "end_date": None,
-            "location": "",
-        }
-        normalized.update({key: value for key, value in data.items() if value is not None})
-        if normalized["event_type"] not in Event.Type.values:
-            normalized["event_type"] = Event.Type.OTRO
-        return normalized
+    def extract_from_flyer(
+        *, organizer, image_url: str = "", flyer_text: str = "", flyer: llm.Image | None = None
+    ) -> dict[str, Any]:
+        """Propone los datos de un evento a partir del afiche (URL, archivo subido y/o texto).
+        Con IA disponible se lee la imagen y el texto; lo que la IA no encuentre (o todo, si no hay
+        IA) se completa con la heurística. Un archivo subido se guarda y su URL queda en image_url,
+        para que el formulario o el borrador lo usen. La sugerencia nunca sale publicada."""
+        if flyer is not None:
+            image_url = EventService.store_flyer(flyer)
+        data = EventService._heuristic_extract(image_url=image_url, flyer_text=flyer_text)
+        data["source"] = "heuristic"
+
+        suggestion = AIService.extract_event_from_flyer(image_url=image_url, flyer_text=flyer_text, image=flyer)
+        if suggestion:
+            data["source"] = "ai_service"
+            data["model_used"] = suggestion.pop("model_used")
+            if suggestion.get("event_type") == Event.Type.OTRO:
+                suggestion.pop("event_type")
+            if not suggestion.get("start_date"):
+                suggestion.pop("start_date", None)
+                suggestion.pop("end_date", None)
+            data.update({key: value for key, value in suggestion.items() if value})
+
+        data["is_published"] = False
+        return data
 
     @staticmethod
     def create_draft_from_extraction(*, organizer, extracted_data: dict[str, Any]) -> Event:
