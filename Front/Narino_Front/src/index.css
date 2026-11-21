@@ -1,77 +1,102 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=DM+Sans:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,600;1,300&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 @import "tailwindcss/base";
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 
+/*
+ * Design system "Carnaval" — el mismo de la app móvil (narino_mobile/docs/DISENO_CARNAVAL.md).
+ *
+ * Cada acento tiene cuatro usos:
+ *   --x       tinta: texto de color legible (en claro es más oscura para pasar AA)
+ *   --x-fill  relleno de botones, chips activos e insignias
+ *   --on-x    texto encima del relleno
+ *   --x-tint  fondo suave de estados y selección
+ *
+ * Los nombres anteriores (tierra, oro, selva, indigo…) siguen existiendo como alias para no romper las pantallas:
+ *   tierra → azul (acción principal) · selva → verde · indigo → magenta · error → tomate · success → verde
+ */
 
-
-/* ── MODO CLARO (por defecto) ── */
+/* ── MODO CLARO: día de desfile ── */
 :root {
-  --bg:             #F7F3EE;
+  color-scheme: light;
+
+  --bg:             #F5F5F7;
   --bg-card:        #FFFFFF;
-  --bg-subtle:      #EDE8E1;
-  --text-primary:   #1A1208;
-  --text-secondary: #5C4F3A;
-  --text-muted:     #9C8E78;
-  --border:         #DDD6CA;
+  --bg-subtle:      #EBEBF0;
+  --glass:          rgba(255, 255, 255, 0.78);
+  --text-primary:   #1D1D1F;
+  --text-secondary: #6E6E73;
+  --text-muted:     #74747A;
+  --border:         rgba(0, 0, 0, 0.08);
+  --border-strong:  rgba(0, 0, 0, 0.16);
+  --shadow-card:    0 10px 30px rgba(0, 0, 0, 0.08);
+  --orb-opacity:    0.28;
 
-  --tierra:         #8B4513;
-  --tierra-light:   #C1763A;
-  --tierra-pale:    #F0DCC8;
+  --azul:           #0055FF;  --azul-fill:    #0055FF;  --on-azul:    #FFFFFF;  --azul-tint:    rgba(0, 85, 255, 0.10);
+  --tomate:         #C82800;  --tomate-fill:  #FF3300;  --on-tomate:  #000000;  --tomate-tint:  rgba(255, 51, 0, 0.10);
+  --naranja:        #B34700;  --naranja-fill: #FF6600;  --on-naranja: #000000;  --naranja-tint: rgba(255, 102, 0, 0.10);
+  --oro:            #8A6400;  --oro-fill:     #D4AF37;  --on-oro:     #000000;  --oro-tint:     rgba(212, 175, 55, 0.12);
+  --magenta:        #C8004A;  --magenta-fill: #E50050;  --on-magenta: #FFFFFF;  --magenta-tint: rgba(229, 0, 80, 0.10);
+  --verde:          #007A47;  --verde-fill:   #00C46A;  --on-verde:   #000000;  --verde-tint:   rgba(0, 196, 106, 0.10);
 
-  --volcan:         #2D1B00;
-  --volcan-mid:     #4A3320;
-
-  --oro:            #C9921A;
-  --oro-light:      #F0C060;
-  --oro-pale:       #FBF0D5;
-
-  --selva:          #2E5E30;
-  --selva-light:    #5A9B5C;
-  --selva-pale:     #D4EBD5;
-
-  --indigo:         #3B3580;
-  --indigo-light:   #6B65C0;
-  --indigo-pale:    #E1E0F5;
-
-  --error:          #C0392B;
-  --success:        #27AE60;
-
-  --transition: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  --azul-hover:     #2E6BFF;
+  --oro-hover:      #A67A00;
 }
 
-/* ── MODO OSCURO ── */
+/* ── MODO OSCURO: noche de carnaval ── */
 .dark {
-  --bg:             #141008;
-  --bg-card:        #1E1710;
-  --bg-subtle:      #2A2016;
-  --text-primary:   #F5EFE5;
-  --text-secondary: #C4B89E;
-  --text-muted:     #7A6E5E;
-  --border:         #352A1E;
+  color-scheme: dark;
 
-  --tierra:         #D4763E;
-  --tierra-light:   #E8A06A;
-  --tierra-pale:    #3A2010;
+  --bg:             #050505;
+  --bg-card:        #121214;
+  --bg-subtle:      #1C1C1F;
+  --glass:          rgba(18, 18, 20, 0.72);
+  --text-primary:   #F5F5F7;
+  --text-secondary: #86868B;
+  --text-muted:     #7C7C82;
+  --border:         rgba(255, 255, 255, 0.08);
+  --border-strong:  rgba(255, 255, 255, 0.16);
+  --shadow-card:    0 18px 40px rgba(0, 0, 0, 0.55);
+  --orb-opacity:    0.45;
 
-  --volcan:         #F0E8D8;
-  --volcan-mid:     #C4B89E;
+  --azul:           #00E5FF;  --azul-fill:    #00E5FF;  --on-azul:    #000000;  --azul-tint:    rgba(0, 229, 255, 0.14);
+  --tomate:         #FF3300;  --tomate-fill:  #FF3300;  --on-tomate:  #000000;  --tomate-tint:  rgba(255, 51, 0, 0.16);
+  --naranja:        #FF6600;  --naranja-fill: #FF6600;  --on-naranja: #000000;  --naranja-tint: rgba(255, 102, 0, 0.16);
+  --oro:            #D4AF37;  --oro-fill:     #D4AF37;  --on-oro:     #000000;  --oro-tint:     rgba(212, 175, 55, 0.16);
+  --magenta:        #FF0055;  --magenta-fill: #E50050;  --on-magenta: #FFFFFF;  --magenta-tint: rgba(229, 0, 80, 0.16);
+  --verde:          #00C46A;  --verde-fill:   #00C46A;  --on-verde:   #000000;  --verde-tint:   rgba(0, 196, 106, 0.16);
 
-  --oro:            #E8B030;
-  --oro-light:      #F5CC6A;
-  --oro-pale:       #2E2000;
+  --azul-hover:     #66F0FF;
+  --oro-hover:      #E8CB6A;
+}
 
-  --selva:          #4A9E4C;
-  --selva-light:    #7EC880;
-  --selva-pale:     #0E2010;
+/* Alias de los tokens anteriores (las pantallas los siguen usando) */
+:root,
+.dark {
+  --tierra:         var(--azul);
+  --tierra-light:   var(--azul-hover);
+  --tierra-pale:    var(--azul-tint);
+  --on-tierra:      var(--on-azul);
 
-  --indigo:         #7B75D8;
-  --indigo-light:   #A8A4E8;
-  --indigo-pale:    #181630;
+  --oro-light:      var(--oro-hover);
+  --oro-pale:       var(--oro-tint);
 
-  --error:          #E55A4A;
-  --success:        #4CC870;
+  --selva:          var(--verde);
+  --selva-light:    var(--verde);
+  --selva-pale:     var(--verde-tint);
+
+  --indigo:         var(--magenta);
+  --indigo-light:   var(--magenta);
+  --indigo-pale:    var(--magenta-tint);
+
+  --volcan:         var(--bg-card);
+  --volcan-mid:     var(--bg-subtle);
+
+  --error:          var(--tomate);
+  --success:        var(--verde);
+
+  --transition: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ── BASE GLOBAL ── */
@@ -82,16 +107,83 @@
 }
 
 body {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   background: var(--bg);
   color: var(--text-primary);
   transition: background var(--transition), color var(--transition);
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/*
+ * Fondo carnaval: orbes de color fijos detrás del contenido (en oscuro 45 %, en claro 28 %).
+ * Es solo decoración: no se anima, así que no hace falta pausarlo con "reducir movimiento".
+ */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: var(--orb-opacity);
+  background:
+    radial-gradient(38rem 38rem at 0% 0%, var(--tomate-fill), transparent 60%),
+    radial-gradient(34rem 34rem at 100% 30%, var(--magenta-fill), transparent 60%),
+    radial-gradient(40rem 40rem at 10% 100%, var(--azul-fill), transparent 60%),
+    radial-gradient(36rem 36rem at 95% 100%, var(--naranja-fill), transparent 60%);
+  filter: blur(40px);
+}
+
+h1, h2, h3, .font-display {
+  letter-spacing: -0.02em;
 }
 
 /* Focus visible accesible */
 *:focus-visible {
-  outline: 2px solid var(--tierra);
+  outline: 2px solid var(--azul);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: 6px;
+}
+
+@layer components {
+  /* Tarjeta: en oscuro, borde con degradado azul → naranja (en claro, borde sutil) */
+  .dark .nc-card {
+    border-color: transparent;
+    background:
+      linear-gradient(var(--bg-card), var(--bg-card)) padding-box,
+      linear-gradient(135deg,
+        color-mix(in srgb, var(--azul-fill) 45%, transparent),
+        color-mix(in srgb, var(--naranja-fill) 45%, transparent)) border-box;
+  }
+
+  /* Cabecera de vidrio */
+  .nc-glass {
+    background: var(--glass);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+  }
+
+  /* Etiqueta de sección sobre los títulos ("ARTES PLÁSTICAS") */
+  .nc-eyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* Serpentina: tomate → naranja → oro → magenta → azul. Nunca detrás de texto. */
+  .nc-serpentina {
+    background: linear-gradient(90deg,
+      var(--tomate-fill), var(--naranja-fill), var(--oro-fill), var(--magenta-fill), var(--azul-fill));
+  }
+
+  /* Degradado de fiesta para héroes con texto blanco grande */
+  .nc-fiesta {
+    background: linear-gradient(135deg, var(--tomate-fill), var(--magenta-fill));
+  }
+
+  /* Marca: la "N" del logo */
+  .nc-brand {
+    background: linear-gradient(135deg, var(--naranja-fill), var(--magenta-fill));
+  }
 }
