@@ -18,6 +18,7 @@ export const ROUTES = {
   MUSIC_DISCOVERY: '/music-discovery',
   CHECKOUT: '/checkout',
   ORDERS: '/orders',
+  FAVORITES: '/favorites',
   NOTIFICATIONS: '/notifications',
   PROFILE: '/profile',
   PAYMENT_SUCCESS: '/payment/success',
