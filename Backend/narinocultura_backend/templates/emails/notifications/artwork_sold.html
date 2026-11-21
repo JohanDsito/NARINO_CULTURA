@@ -1,0 +1,9 @@
+{% extends "emails/layout.html" %}
+{% block title %}¡Vendiste una obra!{% endblock %}
+{% block preheader %}Se confirmó el pago de {{ artworks }}.{% endblock %}
+{% block heading %}¡Vendiste una obra!{% endblock %}
+{% block content %}
+<p style="margin:0 0 16px;">Se confirmó el pago de <strong style="color:#1A1208;">{{ artworks }}</strong>. Prepara la entrega de tu obra.</p>
+{% include "emails/partials/details.html" with rows=details %}
+{% include "emails/partials/button.html" with url=sales_url label="Ver mis ventas" %}
+{% endblock %}

@@ -156,6 +156,23 @@ def _event_reminder(payload, log):
     )
 
 
+def _artwork_sold(payload, log):
+    artworks = ", ".join(payload.get("artworks") or [])
+    amount = format_price(payload.get("seller_amount"))
+    return NotificationEmail(
+        to=payload.get("artist_email", ""),
+        subject="¡Vendiste una obra! — Nariño Cultura",
+        template="emails/notifications/artwork_sold.html",
+        context={
+            "name": first_name(payload.get("artist_name")),
+            "artworks": artworks,
+            "details": [("Obra", artworks), ("Te corresponde", amount),
+                        ("Referencia", str(payload.get("order_id", ""))[:8].upper())],
+            "sales_url": _frontend("/dashboard/sales"),
+        },
+    )
+
+
 BUILDERS = {
     "AUCTION_OPENED": _auction_opened,
     "AUCTION_REJECTED": _auction_rejected,
@@ -164,6 +181,7 @@ BUILDERS = {
     "PAYMENT_WEBHOOK": _payment_webhook,
     "EVENT_REGISTRATION": _event_registration,
     "EVENT_REMINDER": _event_reminder,
+    "ARTWORK_SOLD": _artwork_sold,
 }
 
 

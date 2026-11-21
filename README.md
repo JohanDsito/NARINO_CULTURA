@@ -119,6 +119,7 @@ ruff check --config ../pyproject.toml .
 | Archivos | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` |
 | IA | `GEMINI_API_KEY`, `GROQ_API_KEY` (opcionales; sin ellas la IA responde con reglas) |
 | Subastas | `AUCTION_PAYMENT_HOURS` (plazo de pago del ganador, 48 h por defecto) |
+| Compras | `DIRECT_ORDER_PAYMENT_HOURS` (cuánto reserva una compra directa sus obras mientras se paga, 2 h por defecto) |
 | Eventos | `EVENT_REMINDER_HOURS` (anticipación del recordatorio a los inscritos, 24 h por defecto) |
 | Administrador inicial | `ADMIN_EMAIL`, `ADMIN_PASSWORD` (solo si el administrador no existe) |
 
