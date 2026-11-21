@@ -21,7 +21,7 @@ CRITICOS = {
     "eventos": ("apps/events/", "services/event_service.py"),
     "usuarios": ("apps/users/",),
     "tienda": ("apps/marketplace/", "services/marketplace_service.py"),
-    "ia": ("services/ai_client.py", "services/ai_service.py"),
+    "ia": ("services/llm.py", "services/ai_service.py", "services/ai_rules.py"),
 }
 
 
