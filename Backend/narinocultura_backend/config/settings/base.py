@@ -172,7 +172,7 @@ SPECTACULAR_SETTINGS = {
         "Permite a artistas exhibir y subastar obras, gestores culturales organizar eventos "
         "y compradores adquirir arte de forma segura."
     ),
-    "VERSION": "1.0.0",
+    "VERSION": "1.2.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
     "TAGS": [
