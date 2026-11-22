@@ -52,7 +52,7 @@ export default function ArtistProfilePage() {
     return (
       <div className="min-h-screen pt-24 flex flex-col items-center gap-4">
         <p className="text-text-muted font-body">No se encontró este perfil de artista.</p>
-        <Link to={ROUTES.ARTISTS} className="text-oro hover:underline font-body text-sm">
+        <Link to={ROUTES.ARTISTS} className="text-magenta hover:underline font-body text-sm">
           ← Volver al directorio
         </Link>
       </div>
@@ -85,7 +85,7 @@ export default function ArtistProfilePage() {
       href: artist.website_url,
       label: 'Sitio web',
       icon: <Globe size={15} />,
-      hover: 'hover:text-oro',
+      hover: 'hover:text-magenta',
       extra: <ExternalLink size={11} className="opacity-60" />,
     },
   ].filter(Boolean) as {
@@ -117,7 +117,7 @@ export default function ArtistProfilePage() {
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row gap-10 items-start relative z-10">
           {/* Avatar */}
           <div className="flex-none">
-            <div className="w-28 h-28 md:w-36 md:h-36 rounded-full ring-2 ring-oro/30 overflow-hidden bg-oro/20 flex items-center justify-center shadow-xl">
+            <div className="w-28 h-28 md:w-36 md:h-36 rounded-full ring-2 ring-magenta/40 overflow-hidden bg-magenta-tint flex items-center justify-center shadow-xl">
               {artist.profile_image_url ? (
                 <img
                   src={artist.profile_image_url}
@@ -125,7 +125,7 @@ export default function ArtistProfilePage() {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <span className="font-display font-bold text-oro text-5xl">
+                <span className="font-display font-bold text-magenta text-5xl">
                   {artist.artistic_name.charAt(0)}
                 </span>
               )}
@@ -136,7 +136,7 @@ export default function ArtistProfilePage() {
           <div className="flex-1 min-w-0">
             {/* Badge */}
             <div className="flex flex-wrap gap-2 mb-3">
-              {artist.is_public && <Badge variant="indigo">Perfil público</Badge>}
+              {artist.is_public && <Badge variant="magenta">Perfil público</Badge>}
             </div>
 
             {/* Nombre */}
@@ -214,7 +214,7 @@ export default function ArtistProfilePage() {
           {/* Stats */}
           <div className="flex md:flex-col gap-6 md:gap-4 md:text-right text-center flex-none">
             <div>
-              <p className="font-display font-bold text-oro leading-none" style={{ fontSize: '2rem' }}>
+              <p className="font-display font-bold text-magenta leading-none" style={{ fontSize: '2rem' }}>
                 {artist.followers_count}
               </p>
               <p className="font-body text-text-muted text-[11px] mt-0.5 uppercase tracking-wide">
@@ -223,7 +223,7 @@ export default function ArtistProfilePage() {
             </div>
             {artworksCount > 0 && (
               <div>
-                <p className="font-display font-bold text-oro leading-none" style={{ fontSize: '2rem' }}>
+                <p className="font-display font-bold text-magenta leading-none" style={{ fontSize: '2rem' }}>
                   {artworksCount}
                 </p>
                 <p className="font-body text-text-muted text-[11px] mt-0.5 uppercase tracking-wide">
@@ -259,7 +259,7 @@ export default function ArtistProfilePage() {
             </div>
             <Link
               to={ROUTES.ARTISTS}
-              className="font-body text-sm text-oro hover:underline no-underline"
+              className="font-body text-sm text-magenta hover:underline no-underline"
             >
               ← Explorar más artistas
             </Link>
@@ -273,7 +273,7 @@ export default function ArtistProfilePage() {
               >
                 Portafolio
               </h2>
-              <div className="flex-1 h-[2px]" style={{ background: 'var(--oro)' }} />
+              <div className="flex-1 h-[2px]" style={{ background: 'var(--magenta)' }} />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -310,16 +310,16 @@ export default function ArtistProfilePage() {
                           {artist.artistic_name}
                         </p>
                         <div className="flex items-center justify-between">
-                          <p className="font-body font-bold text-oro text-[15px]">
+                          <p className="font-body font-bold text-naranja text-[15px]">
                             {formatCurrency(parseFloat(artwork.price))}
                           </p>
                           <Badge
                             variant={
                               artwork.status === 'DISPONIBLE'
-                                ? 'selva'
+                                ? 'verde'
                                 : artwork.status === 'EN_SUBASTA'
-                                  ? 'indigo'
-                                  : 'tierra'
+                                  ? 'oro'
+                                  : 'secondary'
                             }
                           >
                             {artwork.status === 'DISPONIBLE'

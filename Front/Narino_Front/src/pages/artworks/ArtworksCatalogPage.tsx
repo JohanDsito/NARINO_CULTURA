@@ -42,6 +42,8 @@ export default function ArtworksCatalogPage() {
   return (
     <div className="min-h-screen pt-16">
       <PageShell
+        eyebrow="Artes plásticas"
+        accent="magenta"
         title="Catálogo de Obras"
         subtitle="Arte nariñense disponible para adquirir o subastar"
       />
@@ -56,13 +58,13 @@ export default function ArtworksCatalogPage() {
               placeholder="Buscar obras…"
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-              className="w-full rounded-input border border-border bg-bg-card pl-9 pr-4 py-2.5 font-body text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-oro/50"
+              className="w-full rounded-input border border-border bg-bg-card pl-9 pr-4 py-2.5 font-body text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-azul focus:ring-2 focus:ring-azul/25"
             />
           </div>
           <select
             value={categoryId}
             onChange={(e) => { setCategoryId(e.target.value); setPage(1) }}
-            className="rounded-input border border-border bg-bg-card px-3 py-2.5 font-body text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-oro/50"
+            className="rounded-input border border-border bg-bg-card px-3 py-2.5 font-body text-sm text-text-primary focus:outline-none focus:border-azul focus:ring-2 focus:ring-azul/25"
           >
             <option value="">Todas las categorías</option>
             {categoriesData.map((cat) => (
@@ -117,14 +119,14 @@ export default function ArtworksCatalogPage() {
                       />
                       {artwork.status !== 'DISPONIBLE' && (
                         <div className="absolute top-2 right-2">
-                          <Badge variant={artwork.status === 'EN_SUBASTA' ? 'indigo' : 'tierra'}>
+                          <Badge variant={artwork.status === 'EN_SUBASTA' ? 'oro' : 'secondary'}>
                             {artworkStatus(artwork.status).label}
                           </Badge>
                         </div>
                       )}
                     </div>
                     <div className="p-4">
-                      <h3 className="font-display font-bold text-text-primary text-[14px] mb-1 line-clamp-1 group-hover:text-oro transition-colors">
+                      <h3 className="font-display font-bold text-text-primary text-[14px] mb-1 line-clamp-1 group-hover:text-magenta transition-colors">
                         {artwork.title}
                       </h3>
                       {artwork.category_detail && (
@@ -132,7 +134,7 @@ export default function ArtworksCatalogPage() {
                           {artwork.category_detail.name}
                         </p>
                       )}
-                      <p className="font-body font-bold text-oro text-[15px]">
+                      <p className="font-body font-bold text-naranja text-[15px]">
                         {formatCurrency(parseFloat(artwork.price))}
                       </p>
                     </div>

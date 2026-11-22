@@ -65,6 +65,14 @@ pasa el contraste AA.
 | Música | Azul |
 | Estados | Verde éxito · tomate error · oro aviso |
 
+Aplicado en la web:
+
+- Precios en **naranja** en toda la web, como en la app.
+- Cada página lleva su etiqueta de sección con `PageShell` y los títulos cambian al color de la sección al pasar el mouse.
+- Estados de obra: «en subasta» en oro y «vendida» en neutro. Subasta «en curso» en tomate, con el punto en vivo.
+- La hora de los eventos va en naranja.
+- El inicio muestra las cuatro secciones con su color.
+
 `PageShell` acepta `eyebrow` y `accent`: `<PageShell eyebrow="Artes plásticas" accent="magenta" title="Catálogo de Obras" />`.
 `ArtworkImage` usa el tinte de la sección cuando la obra no tiene foto.
 

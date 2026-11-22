@@ -65,7 +65,7 @@ export default function EventDetailPage() {
     return (
       <div className="min-h-screen pt-24 flex flex-col items-center gap-4">
         <p className="text-text-muted font-body">No se encontró este evento.</p>
-        <Link to={ROUTES.EVENTS} className="text-oro hover:underline font-body text-sm">
+        <Link to={ROUTES.EVENTS} className="text-tomate hover:underline font-body text-sm">
           ← Volver a eventos
         </Link>
       </div>
@@ -84,7 +84,7 @@ export default function EventDetailPage() {
         {/* Breadcrumb */}
         <Link
           to={ROUTES.EVENTS}
-          className="inline-flex items-center gap-1.5 text-text-muted hover:text-oro font-body text-sm no-underline transition-colors mb-8"
+          className="inline-flex items-center gap-1.5 text-text-muted hover:text-tomate font-body text-sm no-underline transition-colors mb-8"
         >
           <ArrowLeft size={14} /> Eventos
         </Link>
@@ -98,8 +98,8 @@ export default function EventDetailPage() {
 
         {/* Header */}
         <div className="flex flex-wrap items-start gap-3 mb-4">
-          <Badge variant="indigo">{typeLabel}</Badge>
-          {!event.is_published && <Badge variant="tierra">Borrador</Badge>}
+          <Badge variant="tomate">{typeLabel}</Badge>
+          {!event.is_published && <Badge variant="secondary">Borrador</Badge>}
         </div>
         <h1 className="font-display font-bold text-text-primary text-[36px] leading-tight mb-6">
           {event.title}
@@ -156,12 +156,12 @@ export default function EventDetailPage() {
           <div className="space-y-4">
             <div className="rounded-card border border-border bg-bg-card p-5 space-y-4">
               <div className="flex items-start gap-3">
-                <Calendar size={18} className="text-oro flex-none mt-0.5" />
+                <Calendar size={18} className="text-tomate flex-none mt-0.5" />
                 <div>
                   <p className="font-body font-semibold text-text-primary text-sm">
                     {format(startDate, "d 'de' MMMM yyyy", { locale: es })}
                   </p>
-                  <p className="font-body text-text-muted text-xs">
+                  <p className="font-body text-naranja font-semibold text-xs">
                     {format(startDate, 'HH:mm')} – {format(endDate, 'HH:mm')}
                   </p>
                 </div>
@@ -169,7 +169,7 @@ export default function EventDetailPage() {
 
               {event.location && (
                 <div className="flex items-start gap-3">
-                  <MapPin size={18} className="text-oro flex-none mt-0.5" />
+                  <MapPin size={18} className="text-tomate flex-none mt-0.5" />
                   <div>
                     <p className="font-body text-text-primary text-sm">{event.location}</p>
                     {event.latitude && event.longitude && (
@@ -177,7 +177,7 @@ export default function EventDetailPage() {
                         href={`https://www.google.com/maps?q=${event.latitude},${event.longitude}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="font-body text-xs text-oro hover:underline"
+                        className="font-body text-xs font-semibold text-tomate hover:underline"
                       >
                         Ver en el mapa →
                       </a>
