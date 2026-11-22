@@ -1,4 +1,4 @@
-package com.example.narino_mobile
+package uk.narinocultura.app
 
 import io.flutter.embedding.android.FlutterActivity
 
