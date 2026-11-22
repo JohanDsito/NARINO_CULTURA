@@ -78,7 +78,8 @@ export function Navbar() {
           <div className="nc-brand flex h-8 w-8 items-center justify-center rounded-[10px]">
             <Mountain size={16} className="text-white" />
           </div>
-          <span className="font-display text-lg font-extrabold text-text-primary">
+          {/* En pantallas angostas solo queda el logo (el nombre sigue disponible para lectores de pantalla) */}
+          <span className="sr-only whitespace-nowrap font-display text-lg font-extrabold text-text-primary min-[430px]:not-sr-only">
             Nariño Cultura
           </span>
         </Link>
