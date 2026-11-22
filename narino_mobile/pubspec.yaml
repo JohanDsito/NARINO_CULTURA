@@ -48,8 +48,43 @@ dev_dependencies:
   build_runner: ^2.4.0
   riverpod_generator: ^2.3.0
   mocktail: ^1.0.4
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.8
 
 flutter:
   uses-material-design: true
   assets:
     - assets/images/
+
+# Íconos de la app (flutter pub run flutter_launcher_icons). Fuentes en assets/branding/, generadas con la marca:
+# montaña blanca sobre el degradado naranja → magenta.
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/branding/icono.png"
+  remove_alpha_ios: true
+  min_sdk_android: 21
+  adaptive_icon_background: "assets/branding/icono_fondo.png"
+  adaptive_icon_foreground: "assets/branding/icono_frente.png"
+  adaptive_icon_monochrome: "assets/branding/icono_monocromo.png"
+  web:
+    generate: false
+  windows:
+    generate: false
+  macos:
+    generate: false
+
+# Pantalla de inicio nativa (dart run flutter_native_splash:create): fondo Carnaval claro u oscuro según el teléfono.
+flutter_native_splash:
+  color: "#F5F5F7"
+  color_dark: "#050505"
+  image: assets/branding/splash.png
+  image_dark: assets/branding/splash.png
+  android_12:
+    image: assets/branding/splash_android12.png
+    image_dark: assets/branding/splash_android12.png
+    icon_background_color: "#E50050"
+    icon_background_color_dark: "#E50050"
+    color: "#F5F5F7"
+    color_dark: "#050505"
+  web: false
