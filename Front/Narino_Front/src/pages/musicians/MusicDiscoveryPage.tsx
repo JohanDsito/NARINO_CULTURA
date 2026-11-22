@@ -97,7 +97,7 @@ export default function MusicDiscoveryPage() {
       <main className="mx-auto max-w-6xl px-6 py-10">
         {discoveryMutation.isPending && (
           <div className="flex items-center justify-center gap-3 py-16 text-text-muted">
-            <Sparkles size={20} className="animate-pulse text-oro" />
+            <Sparkles size={20} className="motion-safe:animate-pulse text-azul" />
             <p className="font-body">Analizando tu búsqueda con IA…</p>
           </div>
         )}
@@ -111,7 +111,7 @@ export default function MusicDiscoveryPage() {
                   Filtros detectados:
                 </span>
                 {filtersApplied.map(([key, value]) => (
-                  <Badge key={key} variant="indigo" className="text-[11px]">
+                  <Badge key={key} variant="azul" className="text-[11px]">
                     {key}: {String(value)}
                   </Badge>
                 ))}
@@ -133,19 +133,19 @@ export default function MusicDiscoveryPage() {
                     className="no-underline"
                   >
                     <Card className="p-5 hover:shadow-card transition-shadow cursor-pointer group">
-                      <div className="w-12 h-12 rounded-full bg-oro/20 flex items-center justify-center mb-3">
+                      <div className="w-12 h-12 rounded-full bg-azul-tint flex items-center justify-center mb-3">
                         {musician.profile_image_url ? (
                           <img src={musician.profile_image_url} alt="" className="w-12 h-12 rounded-full object-cover" />
                         ) : (
-                          <span className="font-display font-bold text-oro text-xl">
+                          <span className="font-display font-bold text-azul text-xl">
                             {musician.artistic_name.charAt(0)}
                           </span>
                         )}
                       </div>
-                      <h3 className="font-display font-bold text-text-primary text-[16px] mb-1 group-hover:text-oro transition-colors">
+                      <h3 className="font-display font-bold text-text-primary text-[16px] mb-1 group-hover:text-azul transition-colors">
                         {musician.artistic_name}
                       </h3>
-                      <Badge variant="indigo" className="text-[10px] mb-2">
+                      <Badge variant="azul" className="text-[10px] mb-2">
                         {AGGREGATION_TYPE_LABELS[musician.aggregation_type] ?? musician.aggregation_type}
                       </Badge>
                       {musician.city && (

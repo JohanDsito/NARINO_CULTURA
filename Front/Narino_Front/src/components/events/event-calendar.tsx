@@ -97,7 +97,10 @@ export function EventCalendar({ showCreateButton = false }: EventCalendarProps) 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-2xl font-bold">Agenda Cultural</h2>
+        <div>
+          <p className="nc-eyebrow text-tomate">Eventos</p>
+          <h2 className="text-2xl font-extrabold text-text-primary">Agenda Cultural</h2>
+        </div>
         {isAdmin && showCreateButton && (
           <Button onClick={() => setShowEventForm(true)}>
             + Agregar evento
