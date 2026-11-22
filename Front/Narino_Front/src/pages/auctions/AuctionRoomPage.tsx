@@ -142,7 +142,7 @@ export default function AuctionRoomPage() {
                 <p className="font-body text-text-muted text-sm">
                   Mínimo: {formatCurrency(minBid)}
                 </p>
-                <div className="flex gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row">
                   <input
                     type="number"
                     min={minBid}
@@ -150,7 +150,7 @@ export default function AuctionRoomPage() {
                     value={bidAmount}
                     onChange={(e) => setBidAmount(e.target.value)}
                     placeholder={`Ej: ${formatCurrency(minBid + 50000)}`}
-                    className="flex-1 rounded-input border border-border-strong bg-bg-card px-4 py-2.5 font-body text-[15px] text-text-primary placeholder:text-text-muted focus:outline-none focus:border-azul focus:ring-2 focus:ring-azul/25"
+                    className="min-w-0 flex-1 rounded-input border border-border-strong bg-bg-card px-4 py-2.5 font-body text-[15px] text-text-primary placeholder:text-text-muted focus:outline-none focus:border-azul focus:ring-2 focus:ring-azul/25"
                   />
                   <Button
                     variant="primary"

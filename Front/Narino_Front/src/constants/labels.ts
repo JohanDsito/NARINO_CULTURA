@@ -13,9 +13,9 @@ export const ROLE_LABELS: Record<UserRole, string> = {
 
 /** Estado de una obra: etiqueta y variante de `Badge`. */
 export const ARTWORK_STATUS: Record<string, { label: string; variant: BadgeVariant }> = {
-  PENDIENTE: { label: 'Pendiente', variant: 'tierra' },
-  DISPONIBLE: { label: 'Disponible', variant: 'selva' },
-  EN_SUBASTA: { label: 'En subasta', variant: 'indigo' },
+  PENDIENTE: { label: 'Pendiente', variant: 'oro' },
+  DISPONIBLE: { label: 'Disponible', variant: 'verde' },
+  EN_SUBASTA: { label: 'En subasta', variant: 'oro' },
   VENDIDA: { label: 'Vendida', variant: 'secondary' },
   INACTIVA: { label: 'Inactiva', variant: 'secondary' },
 }
