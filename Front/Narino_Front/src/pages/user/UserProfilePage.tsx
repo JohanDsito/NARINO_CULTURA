@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 
 import { updateMe, uploadAvatar } from '@/api/auth.api'
 import { PageShell } from '@/components/layout/page-shell'
+import { DeleteAccountSection } from '@/components/profile/delete-account-section'
 import { ProfileImageUpload } from '@/components/profile/profile-image-upload'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -124,6 +125,8 @@ export default function UserProfilePage() {
               {updateMutation.isPending ? 'Guardando…' : 'Guardar cambios'}
             </Button>
           </form>
+
+          <DeleteAccountSection />
         </div>
 
         <ProfileImageUpload
