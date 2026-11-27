@@ -1,5 +1,5 @@
 import axiosInstance from './axiosInstance'
-import { normalizeUser, type Artwork, type User } from '@/types'
+import { mapRoleToBackendRole, normalizeUser, type Artwork, type User, type UserRole } from '@/types'
 import type { Event } from './events.api'
 
 export interface AdminMetrics {
@@ -46,8 +46,17 @@ export async function getAdminMetrics() {
 
 // ── Users ─────────────────────────────────────────────────────────────────────
 
-export async function listAdminUsers(): Promise<AdminUserListItem[]> {
-  const { data } = await axiosInstance.get<AdminUserListItem[]>('/api/v1/admin/users/')
+/** Filtros del listado: el backend acepta `role` (valor del backend), `is_active` y `search`. */
+export interface AdminUserFilters {
+  role?: UserRole
+  is_active?: boolean
+}
+
+export async function listAdminUsers(filters: AdminUserFilters = {}): Promise<AdminUserListItem[]> {
+  const params: Record<string, string> = {}
+  if (filters.role) params.role = mapRoleToBackendRole(filters.role)
+  if (filters.is_active !== undefined) params.is_active = String(filters.is_active)
+  const { data } = await axiosInstance.get<AdminUserListItem[]>('/api/v1/admin/users/', { params })
   // El backend envía roles en mayúsculas (ARTISTA, ADMINISTRADOR...): se normalizan
   return data.map((user) => normalizeUser(user) as AdminUserListItem)
 }
@@ -55,6 +64,18 @@ export async function listAdminUsers(): Promise<AdminUserListItem[]> {
 export async function getAdminUser(uuid: string) {
   const { data } = await axiosInstance.get<User>(`/api/v1/admin/users/${uuid}/`)
   return data
+}
+
+/** Cambia el rol y/o suspende (`is_active: false`) o restaura (`true`) a un usuario. */
+export async function updateAdminUser(
+  uuid: string,
+  payload: { role?: UserRole; is_active?: boolean },
+): Promise<AdminUserListItem> {
+  const body: Record<string, unknown> = {}
+  if (payload.role) body.role = mapRoleToBackendRole(payload.role)
+  if (payload.is_active !== undefined) body.is_active = payload.is_active
+  const { data } = await axiosInstance.patch<AdminUserListItem>(`/api/v1/admin/users/${uuid}/`, body)
+  return normalizeUser(data) as AdminUserListItem
 }
 
 export async function deleteAdminUser(uuid: string): Promise<void> {
