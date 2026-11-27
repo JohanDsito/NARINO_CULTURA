@@ -311,6 +311,17 @@ class AIServiceEdgeCaseTests(TestCase):
         self.assertIn("óleo", result["ai_tags"])
         self.assertEqual(result["ai_description"], "Una obra.")
 
+    @patch("services.llm._session.post")
+    def test_chat_context_lists_musician_genres(self, post):
+        musician = MusicianProfileFactory(artistic_name="Bambuco Sur", is_active=True)
+        musician.genres.add(MusicGenreFactory(name="Bambuco"), MusicGenreFactory(name="Currulao"))
+        post.return_value = llm_fakes.gemini("ok")
+        AIService.chat("¿Qué música hay?", session_id="s3")
+        system = post.call_args.kwargs["json"]["systemInstruction"]["parts"][0]["text"]
+        line = next(line for line in system.splitlines() if "Bambuco Sur" in line)
+        self.assertIn("Bambuco", line.split(":", 1)[1])
+        self.assertIn("Currulao", line.split(":", 1)[1])
+
 
 @override_settings(**llm_fakes.KEYS)
 class ExtractEventFromFlyerTests(TestCase):
