@@ -58,8 +58,13 @@ CORS_ALLOW_ALL_ORIGINS = True
 # Hash rápido: las pruebas crean muchos usuarios
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 
-# Sin límites de peticiones
-REST_FRAMEWORK = {**REST_FRAMEWORK, "DEFAULT_THROTTLE_CLASSES": []}
+# Sin límites de peticiones. Login y registro usan sus propias clases de límite (utils/throttling.py),
+# que no dependen de DEFAULT_THROTTLE_CLASSES: por eso también se suben todas las tasas.
+REST_FRAMEWORK = {
+    **REST_FRAMEWORK,
+    "DEFAULT_THROTTLE_CLASSES": [],
+    "DEFAULT_THROTTLE_RATES": {nombre: "100000/minute" for nombre in REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]},
+}
 
 # Correos en memoria: nada sale a la red
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
