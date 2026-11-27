@@ -7,6 +7,7 @@ from rest_framework.test import APIClient
 
 from apps.musicians.models import MusicalWork, MusicianFollower, MusicianProfile, MusicianReview
 from tests.factories import (
+    AdminUserFactory,
     MusicalWorkFactory,
     MusicGenreFactory,
     MusicianProfileFactory,
@@ -379,3 +380,21 @@ class MusicalWorkCreateWithoutProfileTests(TestCase):
         )
         self.assertEqual(response.status_code, 400)
         self.assertFalse(MusicalWork.objects.filter(title="Sin perfil").exists())
+
+
+class MusicianAdminActionTests(TestCase):
+    def test_verify_action_marks_only_selected_musicians(self):
+        selected = MusicianProfileFactory.create_batch(2, is_verified=False)
+        other = MusicianProfileFactory(is_verified=False)
+        admin_user = AdminUserFactory(is_superuser=True)
+        self.client.force_login(admin_user)
+        response = self.client.post(
+            "/admin/musicians/musicianprofile/",
+            {"action": "verify_musicians", "_selected_action": [str(m.pk) for m in selected]},
+        )
+        self.assertEqual(response.status_code, 302)
+        for m in selected:
+            m.refresh_from_db()
+            self.assertTrue(m.is_verified)
+        other.refresh_from_db()
+        self.assertFalse(other.is_verified)

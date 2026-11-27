@@ -2,6 +2,7 @@
 
 from unittest import mock
 
+from django.test import TestCase
 from rest_framework.test import APITestCase
 
 from apps.system.models import ActivityLog
@@ -44,3 +45,9 @@ class ActivityLogMiddlewareTests(APITestCase):
             respuesta = self.client.post(LOGIN, {"email": "nadie@narino.test", "password": "x"}, format="json")
         self.assertIn(respuesta.status_code, (400, 401))
         self.assertIn("ActivityLog fallback write failed", logs.output[0])
+
+
+class ActivityLogStrTests(TestCase):
+    def test_str_shows_action_and_entity(self):
+        registro = ActivityLog(action="POST /api/v1/x/", entity_type="http_request", entity_id="42")
+        self.assertEqual(str(registro), "POST /api/v1/x/ - http_request:42")
