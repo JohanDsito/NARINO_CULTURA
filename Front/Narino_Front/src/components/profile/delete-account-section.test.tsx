@@ -64,6 +64,36 @@ describe('DeleteAccountSection', () => {
     expect(screen.getByRole('button', { name: 'Eliminar definitivamente' })).toBeDisabled()
   })
 
+  it('enfoca la contraseña al abrir y no pierde el foco al escribir', () => {
+    renderSection()
+    openDialog()
+    const input = screen.getByLabelText('Confirma con tu contraseña')
+    expect(input).toHaveFocus()
+    fireEvent.change(input, { target: { value: 'Sec' } })
+    fireEvent.change(input, { target: { value: 'Secreta' } })
+    expect(input).toHaveFocus()
+  })
+
+  it('Escape cierra el diálogo, Tab no sale de él y el foco vuelve al botón que lo abrió', () => {
+    renderSection()
+    // En el navegador el clic enfoca el botón; fireEvent.click no, así que se enfoca a mano
+    const opener = screen.getByRole('button', { name: 'Eliminar mi cuenta' })
+    opener.focus()
+    openDialog()
+    const input = screen.getByLabelText('Confirma con tu contraseña')
+    fireEvent.change(input, { target: { value: 'x' } })
+    const confirm = screen.getByRole('button', { name: 'Eliminar definitivamente' })
+    confirm.focus()
+    fireEvent.keyDown(document, { key: 'Tab' })
+    expect(input).toHaveFocus()
+    fireEvent.keyDown(document, { key: 'Tab', shiftKey: true })
+    expect(confirm).toHaveFocus()
+
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+    expect(opener).toHaveFocus()
+  })
+
   it('cancelar cierra el diálogo sin llamar al backend', () => {
     renderSection()
     openDialog()

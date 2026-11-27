@@ -37,12 +37,44 @@ export function ConfirmDialog({
   const titleId = useId()
   const descId = useId()
   const cancelRef = useRef<HTMLButtonElement>(null)
+  const dialogRef = useRef<HTMLFormElement>(null)
 
+  // Foco inicial solo al abrir (no en cada render: si no, escribir en un campo devolvería el foco a
+  // "Cancelar"). Va al primer campo si lo hay; si no, a la acción menos destructiva. Al cerrar, vuelve
+  // al elemento que abrió el diálogo.
   useEffect(() => {
     if (!open) return
-    cancelRef.current?.focus()
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    const field = dialogRef.current?.querySelector<HTMLElement>('input, select, textarea')
+    ;(field ?? cancelRef.current)?.focus()
+    return () => opener?.focus()
+  }, [open])
+
+  // Escape cancela y Tab no sale del diálogo (aria-modal)
+  useEffect(() => {
+    if (!open) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !isPending) onCancel()
+      if (e.key === 'Escape' && !isPending) {
+        onCancel()
+        return
+      }
+      if (e.key !== 'Tab' || !dialogRef.current) return
+      const focusables = Array.from(
+        dialogRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
+        ),
+      )
+      if (focusables.length === 0) return
+      const first = focusables[0]
+      const last = focusables[focusables.length - 1]
+      const active = document.activeElement
+      if (e.shiftKey && (active === first || !dialogRef.current.contains(active))) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && (active === last || !dialogRef.current.contains(active))) {
+        e.preventDefault()
+        first.focus()
+      }
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
@@ -58,6 +90,7 @@ export function ConfirmDialog({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
       <form
+        ref={dialogRef}
         role="alertdialog"
         aria-modal="true"
         aria-labelledby={titleId}

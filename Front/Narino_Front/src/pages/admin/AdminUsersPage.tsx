@@ -128,7 +128,7 @@ export default function AdminUsersPage() {
     <div className="min-h-screen pt-16">
       <PageShell
         title="Gestión de Usuarios"
-        subtitle={`${users.length} usuario${users.length === 1 ? '' : 's'} ${hasFilters ? 'encontrado' : 'registrado'}${users.length === 1 ? '' : 's'}`}
+        subtitle={`${filtered.length} usuario${filtered.length === 1 ? '' : 's'} ${hasFilters ? 'encontrado' : 'registrado'}${filtered.length === 1 ? '' : 's'}`}
       />
 
       <main className="mx-auto max-w-6xl px-6 py-8">
