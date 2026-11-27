@@ -4,9 +4,11 @@ from django.db import transaction
 from django.db.models import ProtectedError
 from django.http import HttpResponse
 from rest_framework import generics, status
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.users.models import EmailVerification, PasswordReset, User
@@ -21,6 +23,7 @@ from apps.users.serializers import (
     ResendVerificationSerializer,
     UserMeSerializer,
 )
+from apps.users.token_serializers import ActiveUserTokenRefreshSerializer
 from services.email_service import EmailService
 from utils.throttling import AuthAnonThrottle, PasswordResetThrottle, ResendVerificationThrottle
 
@@ -152,11 +155,14 @@ class TokenRefreshAPIView(APIView):
         refresh = request.data.get("refresh")
         if not refresh:
             return Response({"detail": "El campo refresh es obligatorio."}, status=400)
+        serializer = ActiveUserTokenRefreshSerializer(data={"refresh": refresh})
         try:
-            token = RefreshToken(refresh)
-            return Response({"access": str(token.access_token)})
-        except Exception:
+            serializer.is_valid(raise_exception=True)
+        except (TokenError, ValidationError):
+            # Contrato histórico de los clientes (web y app): 400 con este mensaje
+            # para token inválido, expirado, en lista negra o de usuario inactivo.
             return Response({"detail": "Refresh token invalido."}, status=400)
+        return Response({"access": serializer.validated_data["access"], "refresh": serializer.validated_data["refresh"]})
 
 
 class LogoutAPIView(APIView):
