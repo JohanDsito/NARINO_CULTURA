@@ -8,7 +8,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import timezone
 from PIL import Image
 from rest_framework.test import APITestCase
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 
 from apps.marketplace.models import Order, OrderItem
 from apps.users.models import EmailVerification, PasswordReset, User
@@ -111,6 +111,37 @@ class TokenRefreshTests(APITestCase):
         r = self.client.post(self.URL, {"refresh": refresh}, format="json")
         self.assertEqual(r.status_code, 400)
         self.assertEqual(r.data["detail"], "Refresh token invalido.")
+
+    def test_deleted_user_cannot_refresh(self):
+        user = UserFactory()
+        refresh = str(RefreshToken.for_user(user))
+        User.objects.filter(pk=user.pk).delete()
+        r = self.client.post(self.URL, {"refresh": refresh}, format="json")
+        self.assertEqual(r.status_code, 400)
+        self.assertEqual(r.data["detail"], "Refresh token invalido.")
+
+    def test_rotation_keeps_role_claim_in_access_and_refresh(self):
+        from apps.users.token_serializers import CustomRefreshToken
+
+        user = UserFactory()
+        r = self.client.post(self.URL, {"refresh": str(CustomRefreshToken.for_user(user))}, format="json")
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(AccessToken(r.data["access"])["role"], user.role)
+        rotated = RefreshToken(r.data["refresh"])
+        self.assertEqual(rotated["role"], user.role)
+        self.assertEqual(rotated["user_id"], str(user.pk))
+
+    def test_concurrent_reuse_only_first_rotates(self):
+        """Simula la carrera: la 2.ª petición pasó check_blacklist antes de que la 1.ª
+        escribiera en la lista negra; aun así no debe obtener un refresh nuevo."""
+        old = str(RefreshToken.for_user(UserFactory()))
+        with patch.object(RefreshToken, "check_blacklist", lambda self: None):
+            first = self.client.post(self.URL, {"refresh": old}, format="json")
+            second = self.client.post(self.URL, {"refresh": old}, format="json")
+        self.assertEqual(first.status_code, 200)
+        self.assertEqual(second.status_code, 400)
+        self.assertEqual(second.data["detail"], "Refresh token invalido.")
+        self.assertNotIn("refresh", second.data)
 
     def test_missing_refresh_returns_400(self):
         r = self.client.post(self.URL, {}, format="json")
