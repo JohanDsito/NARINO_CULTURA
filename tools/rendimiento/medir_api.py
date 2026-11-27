@@ -12,6 +12,7 @@ Ejemplos:
 Límites duros contra producción (URL con "railway.app"): concurrencia <= 5, total <= 300 y
 calentamiento <= 10. El script se niega a correr si se superan.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -68,7 +69,11 @@ def validar_limites(args: argparse.Namespace) -> None:
     """Se niega a correr contra producción (railway.app) por encima de los límites."""
     if "railway.app" not in args.base_url.lower():
         return
-    excesos = [f"--{k} {getattr(args, k)} (máximo {v})" for k, v in LIMITE_PROD.items() if getattr(args, k) > v]
+    excesos = [
+        f"--{k} {getattr(args, k)} (máximo {v})"
+        for k, v in LIMITE_PROD.items()
+        if getattr(args, k) > v
+    ]
     if excesos:
         sys.exit(
             "ERROR: contra producción (railway.app) los límites son concurrencia<=5, total<=300 y "
@@ -89,11 +94,19 @@ class Cliente:
         self.libres = [self._nueva() for _ in range(concurrencia)]
 
     def _nueva(self) -> http.client.HTTPConnection:
-        clase = http.client.HTTPSConnection if self.https else http.client.HTTPConnection
+        clase = (
+            http.client.HTTPSConnection if self.https else http.client.HTTPConnection
+        )
         return clase(self.host, timeout=self.timeout)
 
-    def _get(self, conexion: http.client.HTTPConnection, ruta: str) -> tuple[int, bytes]:
-        conexion.request("GET", self.prefijo + ruta, headers={"Accept": "application/json", "User-Agent": "medir_api/1.0"})
+    def _get(
+        self, conexion: http.client.HTTPConnection, ruta: str
+    ) -> tuple[int, bytes]:
+        conexion.request(
+            "GET",
+            self.prefijo + ruta,
+            headers={"Accept": "application/json", "User-Agent": "medir_api/1.0"},
+        )
         resp = conexion.getresponse()
         return resp.status, resp.read()
 
@@ -137,10 +150,21 @@ class Vigilante:
             self.motivo = f"tasa de error {100 * self.err / self.n:.1f} % > {100 * self.tasa_max:.0f} %"
 
 
-async def medir(cliente: Cliente, url: str, plantilla: str, fase: str, t0: float) -> tuple[dict, bytes]:
+async def medir(
+    cliente: Cliente, url: str, plantilla: str, fase: str, t0: float
+) -> tuple[dict, bytes]:
     inicio = time.perf_counter()
-    m = {"fase": fase, "ruta": plantilla, "url": url, "estado": 0, "bytes": 0, "ms": 0.0, "ok": False,
-         "t_inicio_s": round(inicio - t0, 4), "error": ""}
+    m = {
+        "fase": fase,
+        "ruta": plantilla,
+        "url": url,
+        "estado": 0,
+        "bytes": 0,
+        "ms": 0.0,
+        "ok": False,
+        "t_inicio_s": round(inicio - t0, 4),
+        "error": "",
+    }
     cuerpo = b""
     try:
         estado, cuerpo, ms = await cliente.get(url)
@@ -157,7 +181,11 @@ def extraer_ids(cuerpo: bytes, cuantos: int) -> list[str]:
     except ValueError:
         return []
     items = datos.get("results", datos) if isinstance(datos, dict) else datos
-    ids = [str(o.get("slug") or o.get("id")) for o in items if isinstance(o, dict) and (o.get("slug") or o.get("id"))]
+    ids = [
+        str(o.get("slug") or o.get("id"))
+        for o in items
+        if isinstance(o, dict) and (o.get("slug") or o.get("id"))
+    ]
     return ids[:cuantos]
 
 
@@ -184,24 +212,37 @@ async def ejecutar(args: argparse.Namespace) -> tuple[dict, int]:
     # Descubrimiento: los slugs del detalle salen del propio listado del catálogo. Ese GET cuenta en el total.
     if any("{obra}" in p for p in plantillas):
         m, cuerpo = await medir(cliente, RUTA_CATALOGO, RUTA_CATALOGO, "medicion", t0)
-        medidas.append(m); todas.append(m); vigilante.registrar(m)
+        medidas.append(m)
+        todas.append(m)
+        vigilante.registrar(m)
         slugs = extraer_ids(cuerpo, args.detalles)
         if not slugs:
             cliente.cerrar()
-            sys.exit("ERROR: no se pudieron obtener obras del catálogo para medir el detalle.")
+            sys.exit(
+                "ERROR: no se pudieron obtener obras del catálogo para medir el detalle."
+            )
     rutas = expandir(plantillas, slugs)
 
-    async def lote(pares: list[tuple[str, str]], fase: str, destino: list[dict]) -> None:
+    async def lote(
+        pares: list[tuple[str, str]], fase: str, destino: list[dict]
+    ) -> None:
         async def una(url: str, plantilla: str) -> None:
             if vigilante.motivo:
                 return
             m, _ = await medir(cliente, url, plantilla, fase, t0)
-            destino.append(m); todas.append(m); vigilante.registrar(m)
+            destino.append(m)
+            todas.append(m)
+            vigilante.registrar(m)
+
         await asyncio.gather(*(una(u, p) for u, p in pares))
 
     # Calentamiento (no entra en las estadísticas).
     if args.calentamiento:
-        await lote([rutas[i % len(rutas)] for i in range(args.calentamiento)], "calentamiento", [])
+        await lote(
+            [rutas[i % len(rutas)] for i in range(args.calentamiento)],
+            "calentamiento",
+            [],
+        )
 
     pendientes = args.total - len(medidas)
     plan = [rutas[i % len(rutas)] for i in range(max(pendientes, 0))]
@@ -211,21 +252,36 @@ async def ejecutar(args: argparse.Namespace) -> tuple[dict, int]:
     cliente.cerrar()
 
     por_ruta = {}
-    for ruta in dict.fromkeys(m["ruta"] for m in medidas):  # agrupa por plantilla: el detalle de varias obras es una fila
+    for ruta in dict.fromkeys(
+        m["ruta"] for m in medidas
+    ):  # agrupa por plantilla: el detalle de varias obras es una fila
         por_ruta[ruta] = resumir([m for m in medidas if m["ruta"] == ruta])
     resultado = {
         "etiqueta": args.etiqueta,
         "fecha": datetime.now().astimezone().isoformat(timespec="seconds"),
-        "parametros": {"base_url": args.base_url, "concurrencia": args.concurrencia, "total": args.total,
-                       "calentamiento": args.calentamiento, "rutas": args.rutas, "detalles": args.detalles,
-                       "timeout_s": args.timeout, "slugs_detalle": slugs, "solo_metodo": "GET"},
-        "cliente": {"python": platform.python_version(), "sistema": platform.platform()},
+        "parametros": {
+            "base_url": args.base_url,
+            "concurrencia": args.concurrencia,
+            "total": args.total,
+            "calentamiento": args.calentamiento,
+            "rutas": args.rutas,
+            "detalles": args.detalles,
+            "timeout_s": args.timeout,
+            "slugs_detalle": slugs,
+            "solo_metodo": "GET",
+        },
+        "cliente": {
+            "python": platform.python_version(),
+            "sistema": platform.platform(),
+        },
         "duracion_medicion_s": round(duracion, 3),
         "abortada": vigilante.motivo or None,
         "total": resumir(medidas, duracion),
         "por_ruta": por_ruta,
         "umbral_p95_ms": UMBRAL_P95_MS,
-        "cumple_p95": (resumir(medidas)["p95_ms"] or 0) < UMBRAL_P95_MS if medidas else None,
+        "cumple_p95": (resumir(medidas)["p95_ms"] or 0) < UMBRAL_P95_MS
+        if medidas
+        else None,
         "mediciones": todas,
     }
     return resultado, (2 if vigilante.motivo else 0)
@@ -233,10 +289,24 @@ async def ejecutar(args: argparse.Namespace) -> tuple[dict, int]:
 
 def guardar(resultado: dict, carpeta: Path) -> tuple[Path, Path]:
     carpeta.mkdir(parents=True, exist_ok=True)
-    base = carpeta / f"{resultado['etiqueta']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    base = (
+        carpeta / f"{resultado['etiqueta']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    )
     ruta_json, ruta_csv = base.with_suffix(".json"), base.with_suffix(".csv")
-    ruta_json.write_text(json.dumps(resultado, ensure_ascii=False, indent=2), encoding="utf-8")
-    campos = ["fase", "ruta", "url", "estado", "bytes", "ms", "ok", "t_inicio_s", "error"]
+    ruta_json.write_text(
+        json.dumps(resultado, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    campos = [
+        "fase",
+        "ruta",
+        "url",
+        "estado",
+        "bytes",
+        "ms",
+        "ok",
+        "t_inicio_s",
+        "error",
+    ]
     with ruta_csv.open("w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=campos)
         w.writeheader()
@@ -249,10 +319,14 @@ def imprimir(resultado: dict) -> None:
     print(f"\n{'ruta':<34}{'n':>6}{'p50':>9}{'p95':>9}{'p99':>9}{'max':>9}{'err':>5}")
     filas = list(resultado["por_ruta"].items()) + [("TOTAL", resultado["total"])]
     for ruta, r in filas:
-        print(f"{ruta:<34}{r['n']:>6}{r['p50_ms']:>9}{r['p95_ms']:>9}{r['p99_ms']:>9}{r['max_ms']:>9}{r['errores']:>5}")
+        print(
+            f"{ruta:<34}{r['n']:>6}{r['p50_ms']:>9}{r['p95_ms']:>9}{r['p99_ms']:>9}{r['max_ms']:>9}{r['errores']:>5}"
+        )
     t = resultado["total"]
-    print(f"\nsolicitudes/s: {t.get('solicitudes_por_segundo')}  tasa de error: {t['tasa_error_pct']} %  "
-          f"p95 < {UMBRAL_P95_MS:.0f} ms: {'SI' if resultado['cumple_p95'] else 'NO'}")
+    print(
+        f"\nsolicitudes/s: {t.get('solicitudes_por_segundo')}  tasa de error: {t['tasa_error_pct']} %  "
+        f"p95 < {UMBRAL_P95_MS:.0f} ms: {'SI' if resultado['cumple_p95'] else 'NO'}"
+    )
     if resultado["abortada"]:
         print(f"CORRIDA DETENIDA: {resultado['abortada']}")
 
@@ -261,15 +335,46 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Mide la latencia de la API (solo GET).")
     ap.add_argument("--base-url", required=True, help="p. ej. http://127.0.0.1:8010")
     ap.add_argument("--concurrencia", type=int, default=10)
-    ap.add_argument("--total", type=int, default=1000, help="solicitudes de la medición (incluye el GET de descubrimiento)")
-    ap.add_argument("--rutas", default=RUTAS_POR_DEFECTO, help="lista separada por comas; {obra} se reemplaza por slugs del catálogo")
-    ap.add_argument("--detalles", type=int, default=3, help="cuántas obras distintas usar para {obra}")
-    ap.add_argument("--calentamiento", type=int, default=0, help="solicitudes previas que no entran en las estadísticas")
+    ap.add_argument(
+        "--total",
+        type=int,
+        default=1000,
+        help="solicitudes de la medición (incluye el GET de descubrimiento)",
+    )
+    ap.add_argument(
+        "--rutas",
+        default=RUTAS_POR_DEFECTO,
+        help="lista separada por comas; {obra} se reemplaza por slugs del catálogo",
+    )
+    ap.add_argument(
+        "--detalles",
+        type=int,
+        default=3,
+        help="cuántas obras distintas usar para {obra}",
+    )
+    ap.add_argument(
+        "--calentamiento",
+        type=int,
+        default=0,
+        help="solicitudes previas que no entran en las estadísticas",
+    )
     ap.add_argument("--timeout", type=float, default=30.0)
     ap.add_argument("--etiqueta", default="medicion")
-    ap.add_argument("--salida", default="resultados", help="carpeta para el JSON y el CSV")
-    ap.add_argument("--tasa-error-max", type=float, default=0.10, help="detiene la corrida si se supera (0.10 = 10 %%)")
-    ap.add_argument("--graves-max", type=int, default=3, help="detiene la corrida con tantos 429/5xx")
+    ap.add_argument(
+        "--salida", default="resultados", help="carpeta para el JSON y el CSV"
+    )
+    ap.add_argument(
+        "--tasa-error-max",
+        type=float,
+        default=0.10,
+        help="detiene la corrida si se supera (0.10 = 10 %%)",
+    )
+    ap.add_argument(
+        "--graves-max",
+        type=int,
+        default=3,
+        help="detiene la corrida con tantos 429/5xx",
+    )
     args = ap.parse_args()
     if args.concurrencia < 1 or args.total < 1 or args.calentamiento < 0:
         sys.exit("ERROR: concurrencia y total deben ser >= 1.")
