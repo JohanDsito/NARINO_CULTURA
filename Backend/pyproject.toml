@@ -29,6 +29,7 @@ omit = [
     "*/test_*",
     "*/tests.py",
     "config/settings/test.py",
+    "config/settings/e2e.py",
     "manage.py",
     "config/asgi.py",
     "config/wsgi.py",
