@@ -2,9 +2,11 @@ import logging
 import secrets
 from datetime import timedelta
 
+from django.db import transaction
 from django.db.models import ProtectedError, Q, Sum
 from django.utils import timezone
 from rest_framework import generics, status
+from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -83,10 +85,55 @@ class AdminCreateUserAPIView(APIView):
         )
 
 
+class AdminSafetyError(APIException):
+    """400 con `detail` legible y `code` estable para las reglas de autoprotección del admin."""
+
+    status_code = status.HTTP_400_BAD_REQUEST
+
+    def __init__(self, detail, code):
+        super().__init__({"detail": detail, "code": code})
+
+
 class AdminUserDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = AdminUserSerializer
     permission_classes = [IsAdmin]
     queryset = User.objects.all()
+
+    @staticmethod
+    def _lock_active_admins():
+        """Bloquea las filas de administradores activos y devuelve sus ids (evita carreras)."""
+        return set(
+            User.objects.select_for_update()
+            .filter(role=User.Role.ADMINISTRADOR, is_active=True)
+            .values_list("pk", flat=True)
+        )
+
+    def _check_safety(self, target, new_role, new_active, deleting=False):
+        """Impide que un admin se degrade, suspenda o elimine, y que no quede ningún admin activo."""
+        is_self = target.pk == self.request.user.pk
+        if is_self and deleting:
+            raise AdminSafetyError("No puedes eliminar tu propia cuenta.", "admin_self_change")
+        if is_self and (new_role != User.Role.ADMINISTRADOR or not new_active):
+            raise AdminSafetyError(
+                "No puedes quitarte el rol de administrador ni suspender tu propia cuenta.", "admin_self_change"
+            )
+        admins = self._lock_active_admins()
+        stays_admin = not deleting and new_role == User.Role.ADMINISTRADOR and new_active
+        if target.pk in admins and not stays_admin and len(admins) <= 1:
+            raise AdminSafetyError("Debe quedar al menos un administrador activo.", "last_admin")
+
+    def perform_update(self, serializer):
+        with transaction.atomic():
+            target = User.objects.select_for_update().get(pk=serializer.instance.pk)
+            data = serializer.validated_data
+            self._check_safety(target, data.get("role", target.role), data.get("is_active", target.is_active))
+            serializer.save()
+
+    def perform_destroy(self, instance):
+        with transaction.atomic():
+            target = User.objects.select_for_update().get(pk=instance.pk)
+            self._check_safety(target, target.role, target.is_active, deleting=True)
+            target.delete()
 
     def destroy(self, request, *args, **kwargs):
         try:

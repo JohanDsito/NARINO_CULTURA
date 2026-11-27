@@ -8,6 +8,7 @@ from django.utils import timezone
 from rest_framework.test import APITestCase
 
 from apps.administration.serializers import AdminUserSerializer
+from apps.administration.views import AdminUserDetailAPIView
 from apps.marketplace.models import Order, OrderItem
 from apps.notifications.models import NotificationLog
 from apps.users.models import User
@@ -123,6 +124,61 @@ class AdminUserDetailTests(APITestCase):
         self.assertEqual(r.data["code"], "user_has_sales")
         self.assertTrue(User.objects.filter(id=artwork.artist.user_id).exists())
         self.assertTrue(OrderItem.objects.filter(order=order).exists())
+
+    def test_admin_cannot_remove_own_admin_role(self):
+        url = f"{USERS_URL}{self.admin.id}/"
+        r = self.client.patch(url, {"role": "ARTISTA"}, format="json")
+        self.assertEqual(r.status_code, 400)
+        self.assertEqual(r.data["code"], "admin_self_change")
+        self.assertIn("administrador", r.data["detail"])
+        self.admin.refresh_from_db()
+        self.assertEqual(self.admin.role, "ADMINISTRADOR")
+
+    def test_admin_cannot_suspend_self(self):
+        r = self.client.patch(f"{USERS_URL}{self.admin.id}/", {"is_active": False}, format="json")
+        self.assertEqual(r.status_code, 400)
+        self.assertEqual(r.data["code"], "admin_self_change")
+        self.admin.refresh_from_db()
+        self.assertTrue(self.admin.is_active)
+
+    def test_admin_cannot_delete_self(self):
+        r = self.client.delete(f"{USERS_URL}{self.admin.id}/")
+        self.assertEqual(r.status_code, 400)
+        self.assertEqual(r.data["code"], "admin_self_change")
+        self.assertTrue(User.objects.filter(id=self.admin.id).exists())
+
+    def test_admin_can_edit_own_non_sensitive_fields(self):
+        url = f"{USERS_URL}{self.admin.id}/"
+        r = self.client.patch(url, {"phone": "3001234567", "role": "ADMINISTRADOR", "is_active": True}, format="json")
+        self.assertEqual(r.status_code, 200)
+        self.admin.refresh_from_db()
+        self.assertEqual(self.admin.phone, "3001234567")
+
+    def test_admin_can_demote_suspend_and_delete_another_admin(self):
+        otro = AdminUserFactory()
+        url = f"{USERS_URL}{otro.id}/"
+        self.assertEqual(self.client.patch(url, {"is_active": False}, format="json").status_code, 200)
+        self.assertEqual(self.client.patch(url, {"is_active": True, "role": "ARTISTA"}, format="json").status_code, 200)
+        otro.refresh_from_db()
+        self.assertEqual(otro.role, "ARTISTA")
+        tercero = AdminUserFactory()
+        self.assertEqual(self.client.delete(f"{USERS_URL}{tercero.id}/").status_code, 204)
+
+    def test_last_active_admin_cannot_be_demoted_suspended_or_deleted(self):
+        otro = AdminUserFactory()
+        url = f"{USERS_URL}{otro.id}/"
+        # Simula una carrera: el objetivo figura como único administrador activo
+        with patch.object(AdminUserDetailAPIView, "_lock_active_admins", return_value={otro.pk}):
+            for body in ({"role": "ARTISTA"}, {"is_active": False}):
+                r = self.client.patch(url, body, format="json")
+                self.assertEqual(r.status_code, 400)
+                self.assertEqual(r.data["code"], "last_admin")
+            r = self.client.delete(url)
+            self.assertEqual(r.status_code, 400)
+            self.assertEqual(r.data["code"], "last_admin")
+        otro.refresh_from_db()
+        self.assertEqual(otro.role, "ADMINISTRADOR")
+        self.assertTrue(otro.is_active)
 
     def test_non_admin_cannot_manage_users(self):
         self.client.force_authenticate(user=self.user)
