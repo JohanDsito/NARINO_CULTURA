@@ -1,5 +1,5 @@
 """Capa de IA (services/llm.py y services/ai_service.py) con Gemini y Groq simulados."""
-from datetime import timedelta
+from datetime import datetime, timedelta
 from unittest.mock import patch
 
 import requests
@@ -347,15 +347,16 @@ class ExtractEventFromFlyerTests(TestCase):
         post.return_value = llm_fakes.gemini(self.PAYLOAD)
         data = AIService.extract_event_from_flyer(image_url="https://res.cloudinary.com/a.png")
         fetch.assert_called_once_with("https://res.cloudinary.com/a.png")
-        self.assertIn("inline_data", str(post.call_args.kwargs["json"]))
+        parts = post.call_args.kwargs["json"]["contents"][-1]["parts"]
+        self.assertIn({"inline_data": {"mime_type": "image/png", "data": "cG5n"}}, parts)  # base64 de b"png"
         self.assertEqual((data["title"], data["event_type"], data["model_used"]), ("Noche de bambuco", "CONCIERTO", "gemini"))
 
     @patch("services.llm._session.post")
     def test_naive_dates_get_the_default_timezone_and_a_two_hour_end(self, post):
         post.return_value = llm_fakes.gemini(self.PAYLOAD)
         data = AIService.extract_event_from_flyer(flyer_text="Noche de bambuco 1 de mayo")
-        self.assertTrue(timezone.is_aware(data["start_date"]))
-        self.assertEqual(data["start_date"].utcoffset(), timezone.localtime(data["start_date"]).utcoffset())
+        expected = timezone.make_aware(datetime(2030, 5, 1, 20, 0), timezone.get_default_timezone())
+        self.assertEqual(data["start_date"], expected)
         self.assertEqual(data["end_date"] - data["start_date"], timedelta(hours=2))
 
     @patch("services.llm._session.post")

@@ -16,6 +16,8 @@ from services.auction_service import AuctionService
 from tests.factories import ArtistProfileFactory, ArtistUserFactory, ArtworkFactory, UserFactory
 
 APPLICATION = URLRouter(websocket_urlpatterns)
+# Margen holgado para runners lentos (con cobertura); un test que pasa no espera este tiempo
+TIMEOUT = 5
 
 
 class AuctionConsumerTests(TransactionTestCase):
@@ -42,10 +44,10 @@ class AuctionConsumerTests(TransactionTestCase):
     def test_connect_sends_connected_and_snapshot(self):
         async def scenario():
             comm = self._communicator(self.auction.id)
-            connected, _ = await comm.connect()
+            connected, _ = await comm.connect(TIMEOUT)
             self.assertTrue(connected)
-            hello = await comm.receive_json_from()
-            snapshot = await comm.receive_json_from()
+            hello = await comm.receive_json_from(TIMEOUT)
+            snapshot = await comm.receive_json_from(TIMEOUT)
             await comm.disconnect()
             return hello, snapshot
 
@@ -62,9 +64,9 @@ class AuctionConsumerTests(TransactionTestCase):
 
         async def scenario():
             comm = self._communicator(self.auction.id)
-            await comm.connect()
-            await comm.receive_json_from()
-            snapshot = await comm.receive_json_from()
+            await comm.connect(TIMEOUT)
+            await comm.receive_json_from(TIMEOUT)
+            snapshot = await comm.receive_json_from(TIMEOUT)
             await comm.disconnect()
             return snapshot
 
@@ -75,8 +77,8 @@ class AuctionConsumerTests(TransactionTestCase):
     def test_unknown_auction_connects_without_snapshot(self):
         async def scenario():
             comm = self._communicator(uuid.uuid4())
-            connected, _ = await comm.connect()
-            hello = await comm.receive_json_from()
+            connected, _ = await comm.connect(TIMEOUT)
+            hello = await comm.receive_json_from(TIMEOUT)
             nothing = await comm.receive_nothing()
             await comm.disconnect()
             return connected, hello, nothing
@@ -89,18 +91,20 @@ class AuctionConsumerTests(TransactionTestCase):
     def test_bid_event_is_pushed_to_subscribed_client(self):
         async def scenario():
             comm = self._communicator(self.auction.id)
-            await comm.connect()
-            await comm.receive_json_from()
-            await comm.receive_json_from()
+            await comm.connect(TIMEOUT)
+            await comm.receive_json_from(TIMEOUT)
+            await comm.receive_json_from(TIMEOUT)
             await sync_to_async(AuctionService.place_bid)(
                 auction=self.auction, bidder=self.bidder, amount=Decimal("130000.00")
             )
-            event = await comm.receive_json_from()
+            event = await comm.receive_json_from(TIMEOUT)
             await comm.disconnect()
             return event
 
         event = async_to_sync(scenario)()
         self.assertEqual(event["type"], "bid_placed")
+        self.assertEqual(event["auction_id"], str(self.auction.id))
+        self.assertEqual(event["amount"], "130000.00")
         self.assertEqual(event["current_price"], "130000.00")
         self.assertEqual(event["highest_bidder_id"], str(self.bidder.id))
 
@@ -108,13 +112,13 @@ class AuctionConsumerTests(TransactionTestCase):
         async def scenario():
             comm = self._communicator(self.auction.id)
             other = self._communicator(uuid.uuid4())
-            await comm.connect()
-            await other.connect()
+            await comm.connect(TIMEOUT)
+            await other.connect(TIMEOUT)
             for c in (comm, other):
-                await c.receive_json_from()
-            await comm.receive_json_from()
+                await c.receive_json_from(TIMEOUT)
+            await comm.receive_json_from(TIMEOUT)
             await sync_to_async(AuctionService.close_auction)(auction=self.auction, actor=self.seller)
-            event = await comm.receive_json_from()
+            event = await comm.receive_json_from(TIMEOUT)
             other_silent = await other.receive_nothing()
             await comm.disconnect()
             await other.disconnect()
@@ -122,14 +126,17 @@ class AuctionConsumerTests(TransactionTestCase):
 
         event, other_silent = async_to_sync(scenario)()
         self.assertEqual(event["type"], "auction_closed")
+        self.assertEqual(event["auction_id"], str(self.auction.id))
+        self.assertIsNone(event["winner_id"])  # cerrada sin pujas: no hay ganador
+        self.assertEqual(event["current_price"], "100000.00")
         self.assertTrue(other_silent)
 
     def test_client_messages_are_ignored(self):
         async def scenario():
             comm = self._communicator(self.auction.id)
-            await comm.connect()
-            await comm.receive_json_from()
-            await comm.receive_json_from()
+            await comm.connect(TIMEOUT)
+            await comm.receive_json_from(TIMEOUT)
+            await comm.receive_json_from(TIMEOUT)
             await comm.send_json_to({"type": "bid", "amount": "999"})
             silent = await comm.receive_nothing()
             await comm.disconnect()
@@ -145,9 +152,9 @@ class AuctionConsumerTests(TransactionTestCase):
 
         async def scenario():
             comm = self._communicator(self.auction.id)
-            await comm.connect()
-            await comm.receive_json_from()
-            await comm.receive_json_from()
+            await comm.connect(TIMEOUT)
+            await comm.receive_json_from(TIMEOUT)
+            await comm.receive_json_from(TIMEOUT)
             layer = get_channel_layer()
             before = len(layer.groups.get(group, {}))
             await comm.disconnect()
