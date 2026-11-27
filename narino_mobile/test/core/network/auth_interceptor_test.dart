@@ -17,6 +17,12 @@ class _Adapter implements HttpClientAdapter {
   /// El refresh responde 401 (token de renovación vencido o en lista negra).
   bool refreshFalla = false;
 
+  /// Código con que falla el refresh (el backend responde 400 si está en lista negra).
+  int codigoFalla = 401;
+
+  /// Refresh enviados en cada renovación, en orden.
+  final List<String?> refreshEnviados = [];
+
   /// El reintento con el token nuevo se demora más que el timeout.
   bool reintentoLento = false;
 
@@ -31,8 +37,9 @@ class _Adapter implements HttpClientAdapter {
         );
     if (o.path == ApiConstants.refreshToken) {
       refrescos++;
+      refreshEnviados.add((o.data as Map)['refresh']?.toString());
       await Future<void>.delayed(const Duration(milliseconds: 20));
-      if (refreshFalla) return json(401, {'detail': 'Token inválido.'});
+      if (refreshFalla) return json(codigoFalla, {'detail': 'Token inválido.'});
       return json(200, respuestaRefresh);
     }
     final auth = o.headers['Authorization'];
@@ -74,6 +81,26 @@ void main() {
     adapter.respuestaRefresh = {'access': 'nuevo', 'refresh': 'refresh-2'};
     await dio.get('/a/');
     expect(await StorageUtils.getRefreshToken(), 'refresh-2');
+  });
+
+  test('una segunda renovación envía el refresh rotado, no el original', () async {
+    adapter.respuestaRefresh = {'access': 'nuevo', 'refresh': 'refresh-2'};
+    await dio.get('/a/');
+    // El access guardado vuelve a vencer: fuerza otra renovación.
+    await StorageUtils.saveTokens(accessToken: 'viejo', refreshToken: 'refresh-2');
+    await dio.get('/b/');
+    expect(adapter.refreshEnviados, ['refresh-1', 'refresh-2']);
+  });
+
+  test('si el refresh viene en lista negra (400), cierra la sesión', () async {
+    adapter.refreshFalla = true;
+    adapter.codigoFalla = 400;
+    final antes = SessionExpiry.notifier.value;
+
+    await expectLater(dio.get('/a/'), throwsA(isA<DioException>()));
+
+    expect(await StorageUtils.hasToken(), isFalse);
+    expect(SessionExpiry.notifier.value, antes + 1);
   });
 
   test('sin rotación se conserva el refresh actual', () async {
