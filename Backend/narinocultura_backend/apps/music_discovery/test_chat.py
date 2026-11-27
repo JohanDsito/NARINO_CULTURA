@@ -1,6 +1,7 @@
 """Chat con IA: sesión por usuario o IP, validaciones y respuestas de respaldo por reglas."""
 from unittest.mock import patch
 
+from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -71,3 +72,22 @@ class ChatWithoutProvidersTests(APITestCase):
         for message, expected in cases.items():
             with self.subTest(message=message):
                 self.assertIn(expected, ai_rules.chat_reply(message))
+
+
+class RuleBasedArtworkTextTests(TestCase):
+    """Descripción y respuesta de cortesía por reglas (cuando no hay proveedor de IA)."""
+
+    def test_thanks_reply(self):
+        self.assertIn("Con gusto", ai_rules.chat_reply("Muchas gracias"))
+
+    def test_description_with_only_material_technique_or_dimensions(self):
+        base = {"title": "", "description": "", "technique": "", "material": "", "dimensions": ""}
+        self.assertEqual(
+            ai_rules.artwork_description(**{**base, "material": "Lienzo"}).split(". ")[0],
+            "Está elaborada en lienzo",
+        )
+        self.assertIn("técnica de óleo.", ai_rules.artwork_description(**{**base, "technique": "Óleo"}))
+        text = ai_rules.artwork_description(**{**base, "dimensions": "50x70 cm", "description": "Paisaje"})
+        self.assertIn("Sus dimensiones son 50x70 cm.", text)
+        self.assertTrue(text.endswith("Paisaje"))
+        self.assertNotIn("«", text)  # sin título no se menciona la obra por nombre
