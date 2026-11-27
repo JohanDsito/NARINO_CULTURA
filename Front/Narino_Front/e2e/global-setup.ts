@@ -6,7 +6,7 @@ export default async function globalSetup() {
     ['E2E_API_URL', API_URL],
     ['E2E_BASE_URL', WEB_URL],
   ] as const) {
-    if (/railway|narinocultura\.uk/i.test(url)) {
+    if (/railway|rlwy\.net|narinocultura\.uk/i.test(url)) {
       throw new Error(`${nombre}=${url} apunta a producción. Las pruebas e2e solo corren contra un entorno local.`)
     }
   }
