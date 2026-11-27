@@ -34,6 +34,8 @@ import 'package:narino_cultura/core/constants/env_constants.dart';
 import 'package:narino_cultura/core/utils/storage_utils.dart';
 import 'package:narino_cultura/main.dart' as app;
 
+import 'support/entorno_pruebas.dart';
+
 // ─── Credenciales (nunca hardcodeadas) ───────────────────────────────────────
 
 const _email = String.fromEnvironment('TEST_EMAIL', defaultValue: '');
@@ -96,6 +98,7 @@ String _result(int ms, int threshold) =>
 // ─── Suite ────────────────────────────────────────────────────────────────────
 
 void main() {
+  EntornoPruebas.exigirEntornoSeguro();
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() async {

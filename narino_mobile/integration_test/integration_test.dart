@@ -22,6 +22,8 @@ import 'package:narino_cultura/core/constants/env_constants.dart';
 import 'package:narino_cultura/core/utils/storage_utils.dart';
 import 'package:narino_cultura/main.dart' as app;
 
+import 'support/entorno_pruebas.dart';
+
 // ─── Credenciales via dart-define (nunca hardcodeadas) ───────────────────────
 
 const _email = String.fromEnvironment('TEST_EMAIL', defaultValue: '');
@@ -71,6 +73,7 @@ Future<void> _navTo(WidgetTester tester, String label) async {
 // ─── Suite de pruebas ─────────────────────────────────────────────────────────
 
 void main() {
+  EntornoPruebas.exigirEntornoSeguro();
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   // ── Grupo 1: Autenticación (estado limpio) ──────────────────────────────────
@@ -155,6 +158,7 @@ void main() {
         expect(find.text('Nariño Cultura'), findsOneWidget);
         print('✅ MO-IN-03 pasó');
       },
+      skip: !EntornoPruebas.esBackendLocal,
     );
   });
 
