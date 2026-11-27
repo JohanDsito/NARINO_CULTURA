@@ -26,3 +26,8 @@ dist-ssr
 # Reportes y cachés generados
 coverage/
 *.tsbuildinfo
+
+# Reportes de Playwright
+playwright-report/
+test-results/
+blob-report/

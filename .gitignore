@@ -28,3 +28,7 @@ Thumbs.db
 
 # Informes y documentos de trabajo locales (no se versionan)
 /docs/informes/
+
+# Base y archivos de las pruebas e2e locales
+*.sqlite3
+mediafiles_e2e/
