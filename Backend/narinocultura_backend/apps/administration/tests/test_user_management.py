@@ -166,19 +166,47 @@ class AdminUserDetailTests(APITestCase):
 
     def test_last_active_admin_cannot_be_demoted_suspended_or_deleted(self):
         otro = AdminUserFactory()
+        AdminUserFactory(is_active=False)  # un admin suspendido no cuenta como administrador activo
         url = f"{USERS_URL}{otro.id}/"
-        # Simula una carrera: el objetivo figura como único administrador activo
-        with patch.object(AdminUserDetailAPIView, "_lock_active_admins", return_value={otro.pk}):
-            for body in ({"role": "ARTISTA"}, {"is_active": False}):
-                r = self.client.patch(url, body, format="json")
-                self.assertEqual(r.status_code, 400)
-                self.assertEqual(r.data["code"], "last_admin")
-            r = self.client.delete(url)
+        # Carrera: alguien suspendió a quien hace la petición después de autenticarse,
+        # así que `otro` es el único administrador activo en la base de datos
+        User.objects.filter(pk=self.admin.pk).update(is_active=False)
+        for body in ({"role": "ARTISTA"}, {"is_active": False}):
+            r = self.client.patch(url, body, format="json")
             self.assertEqual(r.status_code, 400)
             self.assertEqual(r.data["code"], "last_admin")
+            self.assertIn("al menos un administrador", r.data["detail"])
+        r = self.client.delete(url)
+        self.assertEqual(r.status_code, 400)
+        self.assertEqual(r.data["code"], "last_admin")
         otro.refresh_from_db()
         self.assertEqual(otro.role, "ADMINISTRADOR")
         self.assertTrue(otro.is_active)
+
+    def test_put_also_enforces_self_protection(self):
+        body = {"first_name": "Ana", "last_name": "Admin", "role": "COMPRADOR", "is_active": True, "phone": ""}
+        r = self.client.put(f"{USERS_URL}{self.admin.id}/", body, format="json")
+        self.assertEqual(r.status_code, 400)
+        self.assertEqual(r.data["code"], "admin_self_change")
+        self.admin.refresh_from_db()
+        self.assertEqual(self.admin.role, "ADMINISTRADOR")
+
+    def test_update_saves_over_fresh_row_not_stale_instance(self):
+        # Un PATCH de otro campo no debe revertir un cambio de rol hecho entre get_object() y el guardado
+        otro = AdminUserFactory()
+        original_get_object = AdminUserDetailAPIView.get_object
+
+        def stale_get_object(view):
+            obj = original_get_object(view)
+            User.objects.filter(pk=obj.pk).update(role=User.Role.GESTOR_CULTURAL)
+            return obj
+
+        with patch.object(AdminUserDetailAPIView, "get_object", stale_get_object):
+            r = self.client.patch(f"{USERS_URL}{otro.id}/", {"phone": "3110000000"}, format="json")
+        self.assertEqual(r.status_code, 200)
+        otro.refresh_from_db()
+        self.assertEqual(otro.role, "GESTOR_CULTURAL")
+        self.assertEqual(otro.phone, "3110000000")
 
     def test_non_admin_cannot_manage_users(self):
         self.client.force_authenticate(user=self.user)
