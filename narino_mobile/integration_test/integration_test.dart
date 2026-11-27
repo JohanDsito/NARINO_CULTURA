@@ -1,15 +1,16 @@
 // ignore_for_file: avoid_print
 //
 // PRUEBAS DE INTEGRACIÓN MO-IN-01 a MO-IN-16
-// Backend: https://narinocultura-production.up.railway.app
+// Backend: SOLO local (nunca producción). Ver integration_test/README.md.
 //
 // Cómo ejecutar (con emulador o dispositivo conectado):
 //
 //   flutter test integration_test/integration_test.dart \
+//     --dart-define=API_BASE_URL=http://<IP-del-PC>:8000 \
 //     --dart-define=TEST_EMAIL=tu@correo.com \
 //     --dart-define=TEST_PASSWORD=tucontraseña
 //
-// La URL de Railway está fija en EnvConstants — no hace falta pasarla.
+// API_BASE_URL es obligatoria: sin ella, o si apunta a producción, la suite aborta.
 //
 // ❌ NO guardes credenciales reales en este archivo.
 
@@ -18,6 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
+import 'package:narino_cultura/core/constants/api_constants.dart';
 import 'package:narino_cultura/core/constants/env_constants.dart';
 import 'package:narino_cultura/core/utils/storage_utils.dart';
 import 'package:narino_cultura/main.dart' as app;
@@ -36,7 +38,7 @@ const _shortDelay = Duration(seconds: 3);
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/// Hace login programático contra Railway y guarda los tokens en SecureStorage.
+/// Hace login programático contra el backend local y guarda los tokens en SecureStorage.
 Future<void> _loginProgrammatically() async {
   assert(_email.isNotEmpty, 'Pasa --dart-define=TEST_EMAIL=...');
   assert(_password.isNotEmpty, 'Pasa --dart-define=TEST_PASSWORD=...');
@@ -48,7 +50,7 @@ Future<void> _loginProgrammatically() async {
   ));
 
   final response = await dio.post(
-    '/auth/login/',
+    ApiConstants.login,
     data: {'email': _email, 'password': _password},
   );
 
