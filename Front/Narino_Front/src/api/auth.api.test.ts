@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import axiosInstance from './axiosInstance'
 import {
   confirmPasswordReset,
+  deleteAccount,
   login,
   logout,
   me,
@@ -15,6 +16,7 @@ vi.mock('@/api/axiosInstance', () => ({
   default: {
     get: vi.fn(),
     post: vi.fn(),
+    delete: vi.fn(),
   },
 }))
 
@@ -184,5 +186,15 @@ describe('auth.api', () => {
         refresh: 'refresh-token',
       },
     )
+  })
+
+  it('deletes the account sending the password in the DELETE body', async () => {
+    mockedAxios.delete.mockResolvedValueOnce({ data: undefined })
+
+    await deleteAccount('Secreta123')
+
+    expect(mockedAxios.delete).toHaveBeenCalledWith('/api/v1/auth/delete-account/', {
+      data: { password: 'Secreta123' },
+    })
   })
 })
