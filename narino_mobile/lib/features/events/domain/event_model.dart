@@ -1,3 +1,5 @@
+import 'package:narino_cultura/core/utils/json_num.dart';
+
 export 'event_types.dart';
 
 /// Modelo de dominio que representa un evento cultural en la agenda.
@@ -100,10 +102,10 @@ class EventModel {
           json['esta_suscrito'] as bool? ??
           json['is_subscribed'] as bool? ??
           false,
-      latitud: (json['latitud'] as num?)?.toDouble() ??
-          (json['latitude'] as num?)?.toDouble(),
-      longitud: (json['longitud'] as num?)?.toDouble() ??
-          (json['longitude'] as num?)?.toDouble(),
+      latitud:
+          parseJsonDouble(json['latitud']) ?? parseJsonDouble(json['latitude']),
+      longitud: parseJsonDouble(json['longitud']) ??
+          parseJsonDouble(json['longitude']),
     );
   }
 

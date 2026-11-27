@@ -21,6 +21,42 @@ void main() {
           'longitud': -77.2811,
         };
 
+    test('lee latitude/longitude como texto (DecimalField de Django)', () {
+      final event = EventModel.fromJson({
+        ...baseJson(),
+        'latitud': null,
+        'longitud': null,
+        'latitude': '1.213611',
+        'longitude': '-77.281100',
+      });
+      expect(event.latitud, 1.213611);
+      expect(event.longitud, -77.2811);
+    });
+
+    test('lee latitude/longitude como número', () {
+      final event = EventModel.fromJson({
+        ...baseJson(),
+        'latitud': null,
+        'longitud': null,
+        'latitude': 1.2,
+        'longitude': -77,
+      });
+      expect(event.latitud, 1.2);
+      expect(event.longitud, -77.0);
+    });
+
+    test('latitude/longitude nulas o inválidas dan null sin lanzar', () {
+      final event = EventModel.fromJson({
+        ...baseJson(),
+        'latitud': null,
+        'longitud': null,
+        'latitude': null,
+        'longitude': 'no-es-numero',
+      });
+      expect(event.latitud, isNull);
+      expect(event.longitud, isNull);
+    });
+
     test('mapea los campos en inglés del backend a los del modelo', () {
       final event = EventModel.fromJson(baseJson());
 
