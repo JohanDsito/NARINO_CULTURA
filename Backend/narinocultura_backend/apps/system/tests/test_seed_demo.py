@@ -1,7 +1,9 @@
 import os
+import runpy
 from io import StringIO
 from unittest.mock import patch
 
+from django.conf import settings
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase
@@ -37,6 +39,21 @@ class SeedDemoGuardTests(TestCase):
             os.environ.pop("DJANGO_SETTINGS_MODULE", None)
             with self.assertRaises(CommandError):
                 call_command("seed_demo", "--confirmar", stdout=StringIO())
+
+    def test_se_niega_dentro_de_railway(self):
+        with patch.dict(os.environ, {"RAILWAY_ENVIRONMENT": "production"}):
+            with self.assertRaises(CommandError) as ctx:
+                sembrar("config.settings.development")
+        self.assertIn("Railway", str(ctx.exception))
+        self.assertFalse(User.objects.exists())
+
+    def test_se_niega_contra_la_base_de_railway(self):
+        for host in ("postgres.railway.internal", "monorail.proxy.rlwy.net"):
+            # SQLite ignora HOST: cambiarlo solo afecta lo que ve el comando
+            with self.subTest(host=host), patch.dict(settings.DATABASES["default"], {"HOST": host}):
+                with self.assertRaises(CommandError):
+                    sembrar("config.settings.development")
+        self.assertFalse(User.objects.exists())
 
     def test_exige_confirmar(self):
         with self.assertRaises(CommandError) as ctx:
@@ -88,3 +105,47 @@ class SeedDemoTests(TestCase):
         fin = Auction.objects.get().ends_at
         sembrar()
         self.assertEqual(Auction.objects.get().ends_at, fin)
+
+
+class AjustesE2ETests(TestCase):
+    """config.settings.e2e se niega a arrancar si algo apunta a Railway (producción)."""
+
+    def cargar(self, **entorno):
+        base = {k: v for k, v in os.environ.items() if not k.startswith("RAILWAY_")}
+        for variable in ("DATABASE_URL", "REDIS_URL", "DB_HOST", "ALLOWED_HOSTS"):
+            base.pop(variable, None)
+        with patch.dict(os.environ, {**base, **entorno}, clear=True):
+            return runpy.run_module("config.settings.e2e")
+
+    def test_arranca_aislado_en_local(self):
+        ajustes = self.cargar(DATABASE_URL="postgres://u:p@127.0.0.1:5432/narino_e2e")
+        self.assertEqual(ajustes["DATABASES"]["default"]["HOST"], "127.0.0.1")
+        self.assertEqual(ajustes["DATABASES"]["default"]["ENGINE"], "django.db.backends.postgresql")
+        self.assertEqual(ajustes["EMAIL_BACKEND"], "django.core.mail.backends.locmem.EmailBackend")
+        self.assertEqual(ajustes["GEMINI_API_KEY"], "")
+        self.assertEqual(ajustes["REST_FRAMEWORK"]["DEFAULT_THROTTLE_CLASSES"], [])
+        self.assertIn("LocMemCache", ajustes["CACHES"]["default"]["BACKEND"])
+        self.assertNotIn("cloudinary_storage", ajustes["INSTALLED_APPS"])
+
+    def test_sin_database_url_usa_sqlite(self):
+        ajustes = self.cargar()
+        self.assertEqual(ajustes["DATABASES"]["default"]["ENGINE"], "django.db.backends.sqlite3")
+
+    def test_se_niega_con_urls_de_railway(self):
+        casos = {
+            "DATABASE_URL": "postgresql://postgres:x@monorail.proxy.rlwy.net:12345/railway",
+            "REDIS_URL": "redis://default:x@redis.railway.internal:6379",
+            "DB_HOST": "postgres.railway.internal",
+            "ALLOWED_HOSTS": "narinocultura-production.up.railway.app",
+        }
+        for variable, valor in casos.items():
+            with self.subTest(variable=variable), self.assertRaises(RuntimeError):
+                self.cargar(**{variable: valor})
+
+    def test_se_niega_dentro_de_railway(self):
+        with self.assertRaises(RuntimeError):
+            self.cargar(RAILWAY_ENVIRONMENT_NAME="production")
+
+    def test_rechaza_bases_que_no_son_postgres(self):
+        with self.assertRaises(RuntimeError):
+            self.cargar(DATABASE_URL="mysql://u:p@127.0.0.1/x")

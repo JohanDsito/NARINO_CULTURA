@@ -15,7 +15,24 @@ import os
 from urllib.parse import unquote, urlparse
 
 from .base import *  # noqa: F401,F403
-from .base import BASE_DIR, REST_FRAMEWORK, STORAGES
+from .base import BASE_DIR, INSTALLED_APPS, REST_FRAMEWORK, STORAGES
+
+# Dominios de producción: Railway publica la base y Redis como *.railway.app, *.railway.internal
+# y *.proxy.rlwy.net; narinocultura.uk es el dominio público.
+MARCAS_PRODUCCION = ("railway", "rlwy.net", "narinocultura.uk")
+
+
+def _apunta_a_produccion(valor):
+    valor = (valor or "").lower()
+    return any(marca in valor for marca in MARCAS_PRODUCCION)
+
+
+# Dentro de un servicio de Railway (o con `railway run`) siempre hay variables RAILWAY_*: ahí nunca arranca.
+if any(nombre.startswith("RAILWAY_") for nombre in os.environ):
+    raise RuntimeError("config.settings.e2e no puede correr dentro de Railway (producción).")
+for _variable in ("DATABASE_URL", "REDIS_URL", "DB_HOST", "ALLOWED_HOSTS"):
+    if _apunta_a_produccion(os.environ.get(_variable)):
+        raise RuntimeError(f"config.settings.e2e no puede usar {_variable} de producción (Railway).")
 
 DEBUG = False
 
@@ -25,8 +42,6 @@ SECRET_KEY = "e2e-secret-key-no-es-para-produccion"
 def _database_from_env():
     """Arma DATABASES desde DATABASE_URL; sin ella usa un SQLite en archivo."""
     url = os.environ.get("DATABASE_URL", "").strip()
-    if "railway" in url.lower():
-        raise RuntimeError("config.settings.e2e no puede usar una base de datos de Railway (producción).")
     if not url:
         return {
             "ENGINE": "django.db.backends.sqlite3",
@@ -48,8 +63,6 @@ def _database_from_env():
 DATABASES = {"default": _database_from_env()}
 
 _hosts_env = os.environ.get("ALLOWED_HOSTS", "")
-if "railway" in _hosts_env.lower():
-    raise RuntimeError("config.settings.e2e no puede usar hosts de Railway (producción).")
 ALLOWED_HOSTS = [h.strip() for h in _hosts_env.split(",") if h.strip()] or ["127.0.0.1", "localhost"]
 
 # Cualquier origen puede llamar a la API (el front de prueba corre en otro puerto)
@@ -81,15 +94,18 @@ WOMPI_PUBLIC_KEY = "pub_test_e2e"
 WOMPI_PRIVATE_KEY = "prv_test_e2e"
 WOMPI_INTEGRITY_KEY = "test_integrity_e2e"
 WOMPI_EVENTS_SECRET = "e2e_events_secret"
+WOMPI_BASE_URL = "http://127.0.0.1:9/wompi-deshabilitado"
 
-# Sin Redis: WebSockets y tareas en el mismo proceso
+# Sin Redis (aunque haya REDIS_URL en el .env): caché, WebSockets y tareas en el mismo proceso
+CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache", "LOCATION": "narino-e2e"}}
 CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
 CELERY_TASK_ALWAYS_EAGER = True
 CELERY_TASK_EAGER_PROPAGATES = True
 CELERY_BROKER_URL = "memory://"
 CELERY_RESULT_BACKEND = "cache+memory://"
 
-# Archivos subidos en el disco local, nunca en Cloudinary
+# Archivos subidos en el disco local, nunca en Cloudinary (aunque sus llaves estén en el .env)
+INSTALLED_APPS = [app for app in INSTALLED_APPS if app not in ("cloudinary_storage", "cloudinary")]
 STORAGES = {**STORAGES, "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"}}
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "mediafiles_e2e"

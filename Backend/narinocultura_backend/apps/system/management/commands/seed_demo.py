@@ -14,6 +14,7 @@ import os
 from datetime import timedelta
 from decimal import Decimal
 
+from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 
@@ -24,6 +25,8 @@ from apps.events.models import Event
 from apps.users.models import User
 
 AMBIENTES_PERMITIDOS = ("config.settings.e2e", "config.settings.development")
+# Hosts de la base de producción (Railway): *.railway.internal, *.proxy.rlwy.net, *.railway.app
+MARCAS_PRODUCCION = ("railway", "rlwy.net")
 
 DEMO_PASSWORD = "Demo1234!"
 ADMIN_EMAIL = "admin@demo.test"
@@ -56,6 +59,12 @@ class Command(BaseCommand):
             raise CommandError(
                 f"seed_demo solo corre con {' o '.join(AMBIENTES_PERMITIDOS)} (ambiente actual: '{ambiente}')."
             )
+        # development.py hereda la base de DB_HOST: en Railway, o contra su base, se niega igual
+        host_base = str(settings.DATABASES["default"].get("HOST") or "").lower()
+        if any(nombre.startswith("RAILWAY_") for nombre in os.environ) or any(
+            marca in host_base for marca in MARCAS_PRODUCCION
+        ):
+            raise CommandError("seed_demo no corre en Railway ni contra su base de datos (producción).")
         if not options["confirmar"]:
             raise CommandError("Falta la bandera --confirmar: este comando crea usuarios con contraseña conocida.")
 
