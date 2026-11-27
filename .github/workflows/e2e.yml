@@ -108,8 +108,12 @@ jobs:
           else
             npx playwright install --with-deps chromium
           fi
+      - name: Tipos de las pruebas e2e
+        working-directory: Front/Narino_Front
+        run: npm run e2e:typecheck
       - name: Pruebas e2e
         working-directory: Front/Narino_Front
+        timeout-minutes: 10
         env:
           CI: "true"
           E2E_API_URL: ${{ env.API_URL }}
@@ -119,6 +123,9 @@ jobs:
       # ── Lighthouse (solo avisos: no bloquea el PR) ─────────────────────────
       - name: Lighthouse (inicio, catálogo y detalle)
         if: ${{ !cancelled() }}
+        # Solo avisos: ni un puntaje bajo ni una falla de la herramienta ponen rojo el job
+        continue-on-error: true
+        timeout-minutes: 5
         working-directory: Front/Narino_Front
         run: |
           OBRA_ID=$(curl --silent --fail "$API_URL/api/v1/artworks/?page_size=1" | python3 -c "import json,sys; d=json.load(sys.stdin); r=d['results'] if isinstance(d,dict) else d; print(r[0]['id'])")
