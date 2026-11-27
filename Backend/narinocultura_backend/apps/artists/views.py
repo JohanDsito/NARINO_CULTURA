@@ -75,9 +75,8 @@ class ArtistProfileViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"], url_path="follow")
     @transaction.atomic
     def follow(self, request, slug=None):
+        # Autenticación garantizada por get_permissions: sin sesión DRF responde 401 antes de llegar aquí
         profile = self.get_object()
-        if not request.user.is_authenticated:
-            return Response({"detail": "Autenticación requerida."}, status=401)
         if profile.user_id == request.user.id:
             return Response({"detail": "No puedes seguir tu propio perfil."}, status=400)
         follow, created = Follow.objects.get_or_create(follower=request.user, artist=profile)
