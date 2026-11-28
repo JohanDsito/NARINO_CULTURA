@@ -47,6 +47,18 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],
+      // Sin `include`, v8 solo mide los archivos que alguna prueba importa y las páginas sin
+      // pruebas quedarían fuera del porcentaje: se mide todo el código de la app.
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: [
+        // Arranque de la app (createRoot sobre #root): no hay lógica que probar, lo cubren las pruebas e2e
+        'src/main.tsx',
+        // Declaraciones de tipos: no generan código ejecutable
+        'src/**/*.d.ts',
+        // Infraestructura de pruebas, no código de la app
+        'src/test/**',
+        'src/**/*.test.{ts,tsx}',
+      ],
     },
   },
 })
