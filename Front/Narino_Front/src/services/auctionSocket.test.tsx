@@ -26,6 +26,8 @@ describe('AuctionSocket', () => {
   })
   afterEach(() => {
     vi.unstubAllGlobals()
+    vi.unstubAllEnvs()
+    vi.resetModules()
   })
 
   it('se conecta por wss a la sala de la subasta y avisa al abrir', () => {
@@ -81,6 +83,14 @@ describe('AuctionSocket', () => {
     socket.disconnect()
     expect(() => socket.disconnect()).not.toThrow()
     expect(socket.isConnected).toBe(false)
+  })
+
+  it('con un backend sin TLS usa ws:// y quita el sufijo /api/v1', async () => {
+    vi.stubEnv('VITE_API_BASE_URL', 'http://localhost:8000/api/v1')
+    vi.resetModules()
+    const { AuctionSocket: LocalSocket } = await import('@/services/auctionSocket')
+    new LocalSocket().connect('5', vi.fn())
+    expect(FakeWebSocket.instances[0].url).toBe('ws://localhost:8000/ws/auctions/5/')
   })
 
   describe('useAuctionSocket', () => {

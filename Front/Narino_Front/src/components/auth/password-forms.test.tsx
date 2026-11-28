@@ -84,7 +84,7 @@ describe('ResetPasswordForm', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Actualizar contraseña' }))
     await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Contraseña actualizada.', { description: 'Listo' }))
     expect(mockedConfirm.mock.calls[0]).toEqual(['tokenlargo123', 'password1'])
-    expect(screen.getByTestId('location')).toHaveTextContent('/login')
+    await waitFor(() => expect(screen.getByTestId('location').textContent).toBe('/login'))
   })
 
   it('si el servidor rechaza el token avisa y no navega', async () => {
@@ -95,5 +95,20 @@ describe('ResetPasswordForm', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Actualizar contraseña' }))
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Token vencido'))
     expect(screen.getByTestId('location')).toHaveTextContent('/reset-password')
+  })
+})
+
+describe('ResetPasswordForm: envío en curso', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('mientras espera al servidor el botón dice "Actualizando…" y queda deshabilitado', async () => {
+    mockedConfirm.mockReturnValue(new Promise(() => {}))
+    renderWithProviders(<ResetPasswordForm initialToken="tokenlargo123" />, { route: '/reset-password', path: '/reset-password' })
+    fireEvent.change(screen.getByLabelText('Nueva contraseña'), { target: { value: 'password1' } })
+    fireEvent.change(screen.getByLabelText('Confirmar contraseña'), { target: { value: 'password1' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Actualizar contraseña' }))
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Actualizar contraseña' })).toHaveTextContent('Actualizando…'))
+    expect(screen.getByRole('button', { name: 'Actualizar contraseña' })).toBeDisabled()
+    expect(mockedConfirm).toHaveBeenCalledWith('tokenlargo123', 'password1')
   })
 })

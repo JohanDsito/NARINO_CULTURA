@@ -161,3 +161,26 @@ describe('MusicianProfileForm', () => {
     expect(screen.getByLabelText('Nombre artístico')).toHaveValue('Ana')
   })
 })
+
+describe('Formularios de perfil: guardado en curso', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(getMusicGenres).mockResolvedValue([])
+  })
+
+  it('el formulario de artista dice "Guardando..." mientras espera', async () => {
+    vi.mocked(createArtistProfile).mockReturnValue(new Promise(() => {}))
+    renderWithProviders(<ArtistProfileForm profile={null} user={USER} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar perfil' }))
+    expect(await screen.findByRole('button', { name: 'Guardando...' })).toBeDisabled()
+  })
+
+  it('el formulario de músico dice "Guardando..." mientras espera, y el nombre artístico se puede editar', async () => {
+    vi.mocked(createMusicianProfile).mockReturnValue(new Promise(() => {}))
+    renderWithProviders(<MusicianProfileForm profile={null} user={USER} />)
+    fireEvent.change(screen.getByLabelText('Nombre artístico'), { target: { value: ' Trío Nuevo ' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar perfil' }))
+    expect(await screen.findByRole('button', { name: 'Guardando...' })).toBeDisabled()
+    expect(createMusicianProfile).toHaveBeenCalledWith(expect.objectContaining({ artistic_name: 'Trío Nuevo' }))
+  })
+})

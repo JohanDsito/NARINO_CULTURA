@@ -1,12 +1,9 @@
 import type { ReactElement } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render } from '@testing-library/react'
-import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
 
-function LocationProbe() {
-  const location = useLocation()
-  return <div data-testid="location">{location.pathname + location.search}</div>
-}
+import { LocationProbe } from './location-probe'
 
 interface Options {
   /** Ruta inicial (con query string si hace falta). */

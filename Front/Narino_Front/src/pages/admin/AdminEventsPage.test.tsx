@@ -45,7 +45,7 @@ function ev(id: string, overrides: Partial<Event> = {}): Event {
 describe('AdminEventsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    useAuthStore.setState({ user: { id: 'u', email: 'a@test.com', first_name: 'A', last_name: 'B', role: 'admin' } })
+    useAuthStore.setState({ user: { id: 'u', email: 'a@test.com', first_name: 'A', last_name: 'B', role: 'admin', is_verified: true } })
     mockedPending.mockResolvedValue([ev('p1')])
     mockedApproved.mockResolvedValue([ev('a1', { is_published: true })])
   })
