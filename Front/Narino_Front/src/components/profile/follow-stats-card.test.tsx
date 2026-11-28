@@ -44,6 +44,24 @@ describe('FollowStatsCard', () => {
     expect(screen.queryByText('Juan Gómez')).not.toBeInTheDocument()
   })
 
+  it('con solo el nombre o solo el apellido usa lo que haya', async () => {
+    setup({
+      followers: () =>
+        Promise.resolve([
+          { id: '3', first_name: 'Solo' },
+          { id: '4', last_name: 'Apellido' },
+          { id: '5' },
+        ]),
+    })
+    fireEvent.click(screen.getByRole('button', { name: /Ver seguidores/ }))
+    expect(await screen.findByText('Solo')).toBeInTheDocument()
+    expect(screen.getByText('Apellido')).toBeInTheDocument()
+    expect(screen.getByText('S')).toBeInTheDocument()
+    expect(screen.getByText('A')).toBeInTheDocument()
+    // sin nombre ni apellido: nombre e inicial muestran '?'
+    expect(screen.getAllByText('?')).toHaveLength(2)
+  })
+
   it('muestra esqueletos mientras carga', () => {
     setup({ followers: () => new Promise(() => {}) })
     fireEvent.click(screen.getByRole('button', { name: /Ver seguidores/ }))

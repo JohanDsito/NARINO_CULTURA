@@ -14,9 +14,8 @@ interface FollowStatsCardProps {
 }
 
 function Avatar({ item }: { item: FollowItem }) {
-  const name = item.artistic_name
-    ?? `${item.first_name ?? ''} ${item.last_name ?? ''}`.trim()
-    ?? '?'
+  const name = (item.artistic_name
+    ?? `${item.first_name ?? ''} ${item.last_name ?? ''}`.trim()) || '?'
   const initial = name.charAt(0).toUpperCase()
 
   return (
