@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:narino_cultura/core/network/raiz_confianza.dart';
 
@@ -10,14 +11,19 @@ void main() {
   final bytes = Uint8List.fromList(utf8.encode('PEM'));
   Future<Uint8List> cargar() async => bytes;
 
-  test('el asset empaquetado es un certificado PEM válido', () {
+  test('el asset es exactamente ISRG Root X1 (huella SHA-256 oficial)', () {
     final pem = File(rutaIsrgRootX1).readAsStringSync();
-    expect(pem, contains('BEGIN CERTIFICATE'));
+    expect(RegExp('BEGIN CERTIFICATE').allMatches(pem).length, 1);
+    expect(RegExp(r'-----BEGIN ').allMatches(pem).length, 1,
+        reason: 'sin claves ni otros bloques PEM');
     final der = base64.decode(pem
         .replaceAll(RegExp(r'-----[A-Z ]+-----'), '')
         .replaceAll(RegExp(r'\s'), ''));
-    // La huella SHA-256 se verificó al incluir el archivo (ver el commit).
-    expect(der.length, greaterThan(1000));
+    // Huella publicada por Let's Encrypt en letsencrypt.org/certificates.
+    expect(
+      sha256.convert(der).toString(),
+      '96bcec06264976f37460779acf28c5a7cfe8a3c0aae11a8ffcee05c0bddf08c6',
+    );
   });
 
   test('en Android agrega los bytes al contexto', () async {
