@@ -49,10 +49,16 @@ describe('CheckoutPage: flujo de pago y estados', () => {
     expect(screen.getByTestId('location')).toHaveTextContent('/artworks')
   })
 
-  it('sin carrito del servidor se trata como vacío', async () => {
-    mockedCart.mockResolvedValue(undefined as never)
+  it('si falla la carga del carrito avisa del error (no dice vacío) y Reintentar vuelve a pedirlo', async () => {
+    mockedCart.mockRejectedValueOnce(new Error('sin red'))
     renderWithProviders(<CheckoutPage />)
-    expect(await screen.findByText('Tu carrito está vacío.')).toBeInTheDocument()
+    expect(await screen.findByText('No pudimos cargar tu carrito.')).toBeInTheDocument()
+    expect(screen.queryByText('Tu carrito está vacío.')).not.toBeInTheDocument()
+    expect(mockedCart).toHaveBeenCalledTimes(1)
+    mockedCart.mockResolvedValueOnce(cart([{ id: 'c1', artwork: 'w1', artwork_title: 'Volcán', artwork_price: '1000', created_at: '' }]))
+    fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }))
+    expect(await screen.findByText('Obras en tu carrito (1)')).toBeInTheDocument()
+    expect(mockedCart).toHaveBeenCalledTimes(2)
   })
 
   it('pagar crea la orden, avisa y arranca el pago de Wompi con el id de la orden', async () => {
