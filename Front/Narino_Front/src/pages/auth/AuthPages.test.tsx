@@ -21,26 +21,26 @@ describe('Páginas de autenticación', () => {
     expect(screen.getByText('formulario-login')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Crear una aquí' })).toHaveAttribute('href', '/register')
     expect(screen.getByRole('link', { name: '¿Olvidaste tu contraseña?' })).toHaveAttribute('href', '/forgot-password')
-    expect(screen.getByRole('link', { name: 'Explorar obras' })).toHaveAttribute('href', '/artworks')
+    expect(screen.getByRole('link', { name: 'Explorar la plataforma' })).toHaveAttribute('href', '/artworks')
   })
 
   it('registro: muestra el formulario y el enlace a login', () => {
     renderWithProviders(<RegisterPage />)
     expect(screen.getByText('formulario-registro')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Inicia sesión aquí' })).toHaveAttribute('href', '/login')
-    expect(screen.getByRole('link', { name: 'Conocer artistas' })).toHaveAttribute('href', '/artists')
+    expect(screen.getByRole('link', { name: 'Explorar artistas' })).toHaveAttribute('href', '/artists')
   })
 
   it('olvidé mi contraseña: formulario y botón volver', () => {
     renderWithProviders(<ForgotPasswordPage />)
     expect(screen.getByText('formulario-olvido')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Volver' })).toHaveAttribute('href', '/login')
+    expect(screen.getByRole('link', { name: 'Volver a login' })).toHaveAttribute('href', '/login')
   })
 
   it('restablecer: pasa el token de la URL al formulario', () => {
     renderWithProviders(<ResetPasswordPage />, { route: '/reset-password?token=abc123' })
     expect(screen.getByText('formulario-reset:abc123')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Volver' })).toHaveAttribute('href', '/login')
+    expect(screen.getByRole('link', { name: 'Volver a login' })).toHaveAttribute('href', '/login')
   })
 
   it('restablecer sin token: el formulario recibe undefined', () => {
@@ -52,6 +52,6 @@ describe('Páginas de autenticación', () => {
     renderWithProviders(<NotFoundPage />)
     expect(screen.getByText('La ruta que intentas abrir no existe o fue movida.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Ir al inicio' })).toHaveAttribute('href', '/')
-    expect(screen.getByRole('link', { name: 'Iniciar sesión' })).toHaveAttribute('href', '/login')
+    expect(screen.getByRole('link', { name: 'Ir a login' })).toHaveAttribute('href', '/login')
   })
 })
