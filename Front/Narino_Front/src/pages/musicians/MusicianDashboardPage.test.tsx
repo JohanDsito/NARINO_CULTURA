@@ -27,9 +27,13 @@ vi.mock('@/components/profile/follow-stats-card', () => ({
 }))
 vi.mock('@/components/profile/profile-image-upload', () => ({
   ProfileImageUpload: (props: { name: string; currentUrl?: string; disabled?: boolean; onUpload: (f: File) => Promise<unknown> }) => (
-    <button disabled={props.disabled} onClick={() => void props.onUpload(new File(['x'], 'f.png')).catch(() => {})}>
-      foto:{props.name}:{String(props.currentUrl)}
-    </button>
+    <>
+      <button disabled={props.disabled} onClick={() => void props.onUpload(new File(['x'], 'f.png')).catch(() => {})}>
+        foto:{props.name}:{String(props.currentUrl)}
+      </button>
+      {/* sin disabled: permite invocar onUpload aunque la interfaz real lo bloquee */}
+      <button onClick={() => void props.onUpload(new File(['x'], 'f.png')).catch(() => {})}>forzar-subida</button>
+    </>
   ),
 }))
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }))
@@ -88,9 +92,8 @@ describe('MusicianDashboardPage', () => {
   it('intentar subir una foto sin perfil guardado avisa que primero se guarda el perfil', async () => {
     mockedProfile.mockResolvedValue(null)
     renderWithProviders(<MusicianDashboardPage />)
-    const button = await screen.findByRole('button', { name: 'foto:Ana:undefined' })
-    button.removeAttribute('disabled')
-    fireEvent.click(button)
+    await screen.findByRole('button', { name: 'foto:Ana:undefined' })
+    fireEvent.click(screen.getByRole('button', { name: 'forzar-subida' }))
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Guarda el perfil antes de subir una foto.'))
     expect(mockedUpload).not.toHaveBeenCalled()
   })

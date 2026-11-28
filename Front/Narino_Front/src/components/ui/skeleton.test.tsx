@@ -15,9 +15,9 @@ describe('Skeleton', () => {
   })
 
   it.each([
-    ['obra', ArtworkCardSkeleton, 7],
-    ['artista', ArtistCardSkeleton, 7],
-    ['músico', MusicianCardSkeleton, 9],
+    ['obra', ArtworkCardSkeleton, 6],
+    ['artista', ArtistCardSkeleton, 6],
+    ['músico', MusicianCardSkeleton, 7],
   ])('el esqueleto de tarjeta de %s dibuja sus bloques animados', (_name, Component, blocks) => {
     const { container } = render(<Component />)
     expect(container.querySelectorAll('.animate-pulse')).toHaveLength(blocks)

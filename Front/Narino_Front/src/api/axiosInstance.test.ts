@@ -195,4 +195,59 @@ describe('axiosInstance', () => {
     expect(localStorage.getItem('refresh_token')).toBeNull()
     expect(localStorage.getItem('access_token')).toBeNull()
   })
+
+  it('sin token no agrega la cabecera Authorization', async () => {
+    await import('./axiosInstance')
+    const requestHandler = mockRequestUse.mock.calls[0][0] as (c: { headers: Record<string, string> }) => { headers: Record<string, string> }
+    expect(requestHandler({ headers: {} }).headers.Authorization).toBeUndefined()
+  })
+
+  it('un error al armar la petición se rechaza tal cual', async () => {
+    await import('./axiosInstance')
+    const requestError = mockRequestUse.mock.calls[0][1] as (e: unknown) => Promise<unknown>
+    const error = new Error('config inválida')
+    await expect(requestError(error)).rejects.toBe(error)
+  })
+
+  it('las respuestas correctas pasan sin cambios', async () => {
+    await import('./axiosInstance')
+    const onSuccess = mockResponseUse.mock.calls[0][0] as (r: unknown) => unknown
+    const response = { data: 1 }
+    expect(onSuccess(response)).toBe(response)
+  })
+
+  it('un error que no es 401 se rechaza sin intentar renovar; un 401 ya reintentado también', async () => {
+    await import('./axiosInstance')
+    const handler = mockResponseUse.mock.calls[0][1] as (e: unknown) => Promise<unknown>
+    const serverError = { config: { headers: {} }, response: { status: 500 } }
+    await expect(handler(serverError)).rejects.toBe(serverError)
+    const retried = { config: { headers: {}, _retry: true }, response: { status: 401 } }
+    await expect(handler(retried)).rejects.toBe(retried)
+    const noResponse = { config: { headers: {} } }
+    await expect(handler(noResponse)).rejects.toBe(noResponse)
+    expect(mockAxiosPost).not.toHaveBeenCalled()
+  })
+
+  it('renovar sin refresh rotado conserva el refresh actual y guarda el nuevo access', async () => {
+    await import('./axiosInstance')
+    const { useAuthStore } = await import('@/store/authStore')
+    const handler = mockResponseUse.mock.calls[0][1] as (e: unknown) => Promise<unknown>
+    useAuthStore.setState({ refreshToken: 'viejo', accessToken: 'a' })
+    localStorage.setItem('refresh_token', 'viejo')
+    mockAxiosPost.mockResolvedValueOnce({ data: { access: 'a3' } })
+    mockAxiosInstance.mockResolvedValueOnce({ data: 'ok' })
+    await handler({ config: { headers: {}, _retry: false }, response: { status: 401 } })
+    expect(useAuthStore.getState().accessToken).toBe('a3')
+    expect(useAuthStore.getState().refreshToken).toBe('viejo')
+    expect(localStorage.getItem('refresh_token')).toBe('viejo')
+  })
+
+  it('si ya está en /login al cerrar la sesión no vuelve a redirigir', async () => {
+    window.history.replaceState(null, '', '/login')
+    await import('./axiosInstance')
+    const handler = mockResponseUse.mock.calls[0][1] as (e: unknown) => Promise<unknown>
+    const error = { config: { headers: {}, _retry: false }, response: { status: 401 } }
+    await expect(handler(error)).rejects.toBe(error)
+    expect(window.location.pathname).toBe('/login')
+  })
 })

@@ -6,7 +6,8 @@ import App from '@/App'
 // El enrutador real tiene su propia prueba (router/router.test.tsx): aquí solo se comprueba que App lo monta.
 vi.mock('@/router', async () => {
   const { createMemoryRouter } = await import('react-router-dom')
-  return { router: createMemoryRouter([{ path: '/', element: <p>inicio-de-prueba</p> }]) }
+  const { createElement } = await import('react')
+  return { router: createMemoryRouter([{ path: '/', element: createElement('p', null, 'inicio-de-prueba') }]) }
 })
 
 describe('App', () => {

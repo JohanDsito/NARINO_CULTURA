@@ -255,6 +255,39 @@ describe('auctions.api', () => {
 })
 
 describe('auth.api', () => {
+  it('login: con { tokens, user } o con tokens sueltos y perfil aparte; sin tokens falla', async () => {
+    http.post.mockReturnValueOnce(ok({ tokens: { access: 'a', refresh: 'r' }, user: { id: 'u', role: 'ARTISTA' } }))
+    const direct = await auth.login({ email: 'a@b.c', password: 'x' })
+    expect(direct.user.role).toBe('artist')
+    expect(direct.tokens).toEqual({ access: 'a', refresh: 'r' })
+
+    http.post.mockReturnValueOnce(ok({ access: 'a2', refresh: 'r2' }))
+    http.get.mockReturnValueOnce(ok({ id: 'u2', role: 'COMPRADOR' }))
+    const separate = await auth.login({ email: 'a@b.c', password: 'x' })
+    expect(separate.user.role).toBe('buyer')
+    expect(http.get).toHaveBeenLastCalledWith('/api/v1/users/me/', { headers: { Authorization: 'Bearer a2' } })
+
+    http.post.mockReturnValueOnce(ok({ access: 'solo-access' }))
+    await expect(auth.login({ email: 'a@b.c', password: 'x' })).rejects.toThrow('Respuesta de autenticación inválida.')
+  })
+
+  it('registro y verificación de correo usan message, detail o un texto por defecto', async () => {
+    http.post.mockReturnValueOnce(ok({ message: 'm' }))
+    expect(await auth.register({} as never)).toEqual({ message: 'm' })
+    http.post.mockReturnValueOnce(ok({ detail: 'd' }))
+    expect(await auth.register({} as never)).toEqual({ message: 'd' })
+    http.post.mockReturnValueOnce(ok({}))
+    expect(await auth.register({} as never)).toEqual({ message: 'Registro exitoso.' })
+
+    http.post.mockReturnValueOnce(ok({ message: 'm' }))
+    expect(await auth.verifyEmail('t')).toEqual({ message: 'm' })
+    expect(http.post).toHaveBeenLastCalledWith('/api/v1/auth/verify-email/', { token: 't' })
+    http.post.mockReturnValueOnce(ok({ detail: 'd' }))
+    expect(await auth.verifyEmail('t')).toEqual({ message: 'd' })
+    http.post.mockReturnValueOnce(ok({}))
+    expect(await auth.verifyEmail('t')).toEqual({ message: 'Email verificado correctamente.' })
+  })
+
   it('perfil, recuperar, restablecer y cambiar contraseña con { message } o { detail } o texto por defecto', async () => {
     http.get.mockReturnValueOnce(ok({ id: 'u', role: 'ARTISTA' }))
     expect((await auth.me()).role).toBe('artist')
