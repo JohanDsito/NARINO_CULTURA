@@ -55,6 +55,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+    - assets/certs/isrg_root_x1.pem
 
 # Íconos de la app (flutter pub run flutter_launcher_icons). Fuentes en assets/branding/, generadas con la marca:
 # montaña blanca sobre el degradado naranja → magenta.
