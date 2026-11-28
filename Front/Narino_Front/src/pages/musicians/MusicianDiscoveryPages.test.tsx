@@ -146,10 +146,7 @@ describe('MusicDiscoveryPage', () => {
     await waitFor(() => expect(mockedDiscovery).toHaveBeenCalled())
   })
 
-  // ERROR REAL detectado: MusicDiscoveryPage.tsx:30-37. handleSearch(ex) hace setQuery(q) y mutate() en el mismo
-  // evento; mutationFn lee `query` del cierre del render anterior, así que un ejemplo se busca con el texto VIEJO
-  // (vacío la primera vez) en lugar del ejemplo elegido.
-  it.skip('al elegir un ejemplo busca con el texto del ejemplo (BUG: usa el texto anterior)', async () => {
+  it('al elegir un ejemplo busca con el texto del ejemplo, no con el anterior', async () => {
     mockedDiscovery.mockResolvedValue({ ...RESULT, filters_applied: {} })
     renderWithProviders(<MusicDiscoveryPage />)
     fireEvent.click(screen.getByRole('button', { name: 'Colectivo de jazz contemporáneo' }))
