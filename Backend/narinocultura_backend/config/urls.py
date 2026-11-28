@@ -12,7 +12,7 @@ def api_root(request):
     return JsonResponse(
         {
             "message": "Bienvenido a Narino Cultura API",
-            "version": "1.0.0",
+            "version": "1.3.0",
             "docs": "/api/docs/",
             "health": "/health/",
             "endpoints": {
