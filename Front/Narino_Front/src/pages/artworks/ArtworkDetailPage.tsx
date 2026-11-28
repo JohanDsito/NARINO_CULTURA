@@ -51,8 +51,20 @@ export default function ArtworkDetailPage() {
     },
   })
 
+  if (isLoading) return <PageLoader fullPage label="Cargando obra…" />
+
+  if (isError || !artwork) {
+    return (
+      <div className="min-h-screen pt-24 flex flex-col items-center gap-4">
+        <p className="text-text-muted font-body">No se encontró esta obra.</p>
+        <Link to={ROUTES.ARTWORKS} className="text-magenta hover:underline font-body text-sm">
+          ← Volver al catálogo
+        </Link>
+      </div>
+    )
+  }
+
   const handleAddToCart = () => {
-    if (!artwork) return
     if (isAuthenticated) {
       addToServerCartMutation.mutate()
     } else {
@@ -70,19 +82,6 @@ export default function ArtworkDetailPage() {
       })
       toast.success('Obra agregada al carrito')
     }
-  }
-
-  if (isLoading) return <PageLoader fullPage label="Cargando obra…" />
-
-  if (isError || !artwork) {
-    return (
-      <div className="min-h-screen pt-24 flex flex-col items-center gap-4">
-        <p className="text-text-muted font-body">No se encontró esta obra.</p>
-        <Link to={ROUTES.ARTWORKS} className="text-magenta hover:underline font-body text-sm">
-          ← Volver al catálogo
-        </Link>
-      </div>
-    )
   }
 
   const images = [

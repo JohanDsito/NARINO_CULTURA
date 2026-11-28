@@ -83,7 +83,7 @@ describe('ArtistDashboardPage', () => {
   it('creates an artist profile when no profile exists', async () => {
     const user = userEvent.setup()
 
-    mockedGetMyArtistProfile.mockResolvedValueOnce(null)
+    mockedGetMyArtistProfile.mockResolvedValue(null)
 
     mockedCreateArtistProfile.mockResolvedValueOnce(
       {} as Awaited<
@@ -135,7 +135,7 @@ describe('ArtistDashboardPage', () => {
   it('updates an existing artist profile by slug', async () => {
     const user = userEvent.setup()
 
-    mockedGetMyArtistProfile.mockResolvedValueOnce(
+    mockedGetMyArtistProfile.mockResolvedValue(
       {
         id: '1',
         user_id: '7',

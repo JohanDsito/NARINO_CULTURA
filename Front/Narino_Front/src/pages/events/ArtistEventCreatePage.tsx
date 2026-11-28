@@ -98,7 +98,8 @@ export default function ArtistEventCreatePage() {
   const removeFlyerFile = () => {
     setFlyerFile(null)
     setFlyerPreview(null)
-    if (fileInputRef.current) fileInputRef.current.value = ''
+    // El input de archivo está siempre montado (solo cambia la vista de arriba)
+    fileInputRef.current!.value = ''
   }
 
   return (

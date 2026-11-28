@@ -17,10 +17,17 @@ import { MUSICAL_WORK_TYPE_LABELS } from '@/constants/labels'
 import type { MusicalWork } from '@/types'
 
 type WorkType = CreateMusicalWorkPayload['work_type']
+// El formulario siempre guarda texto (vacío si no se llenó), nunca indefinido
+type WorkForm = Required<
+  Pick<
+    CreateMusicalWorkPayload,
+    'title' | 'work_type' | 'youtube_url' | 'soundcloud_embed' | 'spotify_track_url' | 'description' | 'release_date'
+  >
+>
 
 const WORK_TYPE_OPTIONS = Object.entries(MUSICAL_WORK_TYPE_LABELS) as [WorkType, string][]
 
-function formFromWork(work: MusicalWork): CreateMusicalWorkPayload {
+function formFromWork(work: MusicalWork): WorkForm {
   return {
     title: work.title ?? '',
     work_type: work.work_type ?? 'STUDIO',
@@ -70,10 +77,10 @@ function MusicianWorkEditForm({ work }: { work: MusicalWork }) {
       const payload: Partial<CreateMusicalWorkPayload> = {
         title: form.title.trim(),
         work_type: form.work_type,
-        youtube_url: form.youtube_url?.trim() ?? '',
-        soundcloud_embed: form.soundcloud_embed?.trim() ?? '',
-        spotify_track_url: form.spotify_track_url?.trim() ?? '',
-        description: form.description?.trim() ?? '',
+        youtube_url: form.youtube_url.trim(),
+        soundcloud_embed: form.soundcloud_embed.trim(),
+        spotify_track_url: form.spotify_track_url.trim(),
+        description: form.description.trim(),
         release_date: form.release_date || undefined,
       }
       return updateMusicalWork(id, payload)
@@ -89,10 +96,7 @@ function MusicianWorkEditForm({ work }: { work: MusicalWork }) {
     },
   })
 
-  const updateField = <K extends keyof CreateMusicalWorkPayload>(
-    field: K,
-    value: CreateMusicalWorkPayload[K],
-  ) => {
+  const updateField = <K extends keyof WorkForm>(field: K, value: WorkForm[K]) => {
     setForm((current) => ({ ...current, [field]: value }))
   }
 
@@ -150,7 +154,7 @@ function MusicianWorkEditForm({ work }: { work: MusicalWork }) {
                 <Input
                   id="releaseDate"
                   type="date"
-                  value={form.release_date ?? ''}
+                  value={form.release_date}
                   onChange={(e) => updateField('release_date', e.target.value)}
                 />
               </div>
@@ -160,7 +164,7 @@ function MusicianWorkEditForm({ work }: { work: MusicalWork }) {
                 <Input
                   id="youtube"
                   placeholder="https://youtube.com/watch?v=..."
-                  value={form.youtube_url ?? ''}
+                  value={form.youtube_url}
                   onChange={(e) => updateField('youtube_url', e.target.value)}
                 />
               </div>
@@ -170,7 +174,7 @@ function MusicianWorkEditForm({ work }: { work: MusicalWork }) {
                 <Input
                   id="spotify"
                   placeholder="https://open.spotify.com/track/..."
-                  value={form.spotify_track_url ?? ''}
+                  value={form.spotify_track_url}
                   onChange={(e) => updateField('spotify_track_url', e.target.value)}
                 />
               </div>
@@ -180,7 +184,7 @@ function MusicianWorkEditForm({ work }: { work: MusicalWork }) {
                 <Input
                   id="soundcloud"
                   placeholder="https://soundcloud.com/..."
-                  value={form.soundcloud_embed ?? ''}
+                  value={form.soundcloud_embed}
                   onChange={(e) => updateField('soundcloud_embed', e.target.value)}
                 />
               </div>
@@ -191,7 +195,7 @@ function MusicianWorkEditForm({ work }: { work: MusicalWork }) {
                   id="description"
                   rows={4}
                   placeholder="Cuéntanos sobre esta obra..."
-                  value={form.description ?? ''}
+                  value={form.description}
                   onChange={(e) => updateField('description', e.target.value)}
                 />
               </div>

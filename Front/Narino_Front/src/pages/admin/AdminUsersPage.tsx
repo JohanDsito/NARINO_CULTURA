@@ -106,11 +106,10 @@ export default function AdminUsersPage() {
     deleteMutation.mutate(user.id)
   }
 
-  const confirmPending = () => {
-    if (!pending) return
+  const confirmPending = (change: PendingChange) => {
     updateMutation.mutate({
-      id: pending.user.id,
-      payload: pending.kind === 'role' ? { role: pending.role } : { is_active: pending.active },
+      id: change.user.id,
+      payload: change.kind === 'role' ? { role: change.role } : { is_active: change.active },
     })
   }
 
@@ -228,7 +227,8 @@ export default function AdminUsersPage() {
         }
         tone={pending?.kind === 'active' && !pending.active ? 'danger' : 'primary'}
         isPending={updateMutation.isPending}
-        onConfirm={confirmPending}
+        // El diálogo solo se abre (y por lo tanto solo confirma) cuando hay un cambio pendiente
+        onConfirm={() => confirmPending(pending!)}
         onCancel={() => setPending(null)}
       />
     </div>

@@ -89,7 +89,7 @@ export default function AuctionRoomPage() {
     )
   }
 
-  const displayPrice = currentPrice ?? parseFloat(auction.current_price)
+  const displayPrice = livePrice ?? parseFloat(auction.current_price)
   const isActive = auction.status === 'ACTIVA'
 
   return (

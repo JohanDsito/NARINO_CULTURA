@@ -15,7 +15,7 @@ export default function CheckoutPage() {
   const queryClient = useQueryClient()
   const startPayment = useStartPayment()
 
-  const { data: cart, isLoading } = useQuery({
+  const { data: cart, isLoading, isError, refetch } = useQuery({
     queryKey: ['server-cart'],
     queryFn: () => getServerCart(),
     staleTime: 30 * 1000,
@@ -59,6 +59,13 @@ export default function CheckoutPage() {
             {Array.from({ length: 2 }).map((_, i) => (
               <div key={i} className="rounded-card border border-border bg-bg-card animate-pulse h-20" />
             ))}
+          </div>
+        ) : isError ? (
+          <div className="flex flex-col items-center gap-3 py-24 text-text-muted">
+            <p className="font-body text-sm">No pudimos cargar tu carrito.</p>
+            <Button variant="secondary" size="sm" onClick={() => refetch()}>
+              Reintentar
+            </Button>
           </div>
         ) : items.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-24 text-text-muted">

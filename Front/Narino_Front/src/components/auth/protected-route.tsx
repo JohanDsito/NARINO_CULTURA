@@ -31,6 +31,12 @@ export function ProtectedRoute({
     if (meQuery.data) updateUser(meQuery.data)
   }, [meQuery.data, updateUser])
 
+  // Una sesión que el servidor no pudo verificar se cierra (en un efecto, no durante el render)
+  const verificationFailed = !user && meQuery.isError
+  useEffect(() => {
+    if (verificationFailed) logout()
+  }, [verificationFailed, logout])
+
   if (!accessToken) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />
   }
@@ -39,8 +45,7 @@ export function ProtectedRoute({
     return <PageLoader label="Verificando sesión…" />
   }
 
-  if (!user && meQuery.isError) {
-    logout()
+  if (verificationFailed) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />
   }
 

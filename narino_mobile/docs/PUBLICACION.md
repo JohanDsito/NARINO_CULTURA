@@ -4,7 +4,7 @@
 |---|---|
 | Identificador (`applicationId`) | **`uk.narinocultura.app`**: no se puede cambiar después de publicar |
 | Nombre | Nariño Cultura |
-| Versión | `version:` de `pubspec.yaml` (hoy `1.2.0+2`: nombre `1.2.0`, código `2`) |
+| Versión | `version:` de `pubspec.yaml` (hoy `1.3.0+3`: nombre `1.3.0`, código `3`) |
 | Android mínimo / objetivo | 7.0 (SDK 24) / SDK 36 |
 
 ## 1. Llave de firma

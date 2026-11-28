@@ -8,6 +8,7 @@ import { login } from '@/api/auth.api'
 import { createArtistProfile } from '@/api/artists.api'
 import { LoginForm } from '@/components/auth/login-form'
 import { useAuthStore } from '@/store/authStore'
+import { renderWithProviders } from '@/test/render'
 import { setPendingArtistProfile } from '@/utils/pendingArtistProfile'
 
 vi.mock('@/api/auth.api', () => ({
@@ -164,7 +165,7 @@ describe('LoginForm', () => {
       {} as Awaited<ReturnType<typeof createArtistProfile>>,
     )
 
-    renderLoginForm()
+    renderWithProviders(<LoginForm />, { route: '/login', path: '/login' })
 
     await user.type(
       screen.getByLabelText(/email/i),
@@ -194,5 +195,6 @@ describe('LoginForm', () => {
         'narino_cultura_pending_artist_profile',
       ),
     ).toBeNull()
+    await waitFor(() => expect(screen.getByTestId('location').textContent).toBe('/dashboard'))
   })
 })

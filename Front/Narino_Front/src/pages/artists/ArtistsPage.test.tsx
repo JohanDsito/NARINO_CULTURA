@@ -88,3 +88,14 @@ describe('ArtistsPage', () => {
     expect(await screen.findByText('Sin resultados para tu búsqueda.')).toBeInTheDocument()
   })
 })
+
+describe('ArtistsPage: sin artistas', () => {
+  it('sin búsqueda ni artistas muestra "No hay artistas disponibles."', async () => {
+    vi.clearAllMocks()
+    mockedMusicians.mockResolvedValue({ results: [] } as never)
+    mockedList.mockResolvedValue([])
+    renderPage()
+    expect(await screen.findByText('No hay artistas disponibles.')).toBeInTheDocument()
+    expect(screen.queryByText('Sin resultados para tu búsqueda.')).not.toBeInTheDocument()
+  })
+})

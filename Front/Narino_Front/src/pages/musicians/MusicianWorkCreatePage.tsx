@@ -15,10 +15,17 @@ import { ROUTES } from '@/constants/routes'
 import { MUSICAL_WORK_TYPE_LABELS } from '@/constants/labels'
 
 type WorkType = CreateMusicalWorkPayload['work_type']
+// El formulario siempre guarda texto (vacío si no se llenó), nunca indefinido
+type WorkForm = Required<
+  Pick<
+    CreateMusicalWorkPayload,
+    'title' | 'work_type' | 'youtube_url' | 'soundcloud_embed' | 'spotify_track_url' | 'description' | 'release_date'
+  >
+>
 
 const WORK_TYPE_OPTIONS = Object.entries(MUSICAL_WORK_TYPE_LABELS) as [WorkType, string][]
 
-const initialForm: CreateMusicalWorkPayload = {
+const initialForm: WorkForm = {
   title: '',
   work_type: 'STUDIO',
   youtube_url: '',
@@ -39,10 +46,10 @@ export default function MusicianWorkCreatePage() {
       const payload: CreateMusicalWorkPayload = {
         title: form.title.trim(),
         work_type: form.work_type,
-        youtube_url: form.youtube_url?.trim() || undefined,
-        soundcloud_embed: form.soundcloud_embed?.trim() || undefined,
-        spotify_track_url: form.spotify_track_url?.trim() || undefined,
-        description: form.description?.trim() || undefined,
+        youtube_url: form.youtube_url.trim() || undefined,
+        soundcloud_embed: form.soundcloud_embed.trim() || undefined,
+        spotify_track_url: form.spotify_track_url.trim() || undefined,
+        description: form.description.trim() || undefined,
         release_date: form.release_date || undefined,
       }
       return createMusicalWork(payload)
@@ -57,10 +64,7 @@ export default function MusicianWorkCreatePage() {
     },
   })
 
-  const updateField = <K extends keyof CreateMusicalWorkPayload>(
-    field: K,
-    value: CreateMusicalWorkPayload[K],
-  ) => {
+  const updateField = <K extends keyof WorkForm>(field: K, value: WorkForm[K]) => {
     setForm((current) => ({ ...current, [field]: value }))
   }
 
@@ -118,7 +122,7 @@ export default function MusicianWorkCreatePage() {
                 <Input
                   id="releaseDate"
                   type="date"
-                  value={form.release_date ?? ''}
+                  value={form.release_date}
                   onChange={(e) => updateField('release_date', e.target.value)}
                 />
               </div>
@@ -128,7 +132,7 @@ export default function MusicianWorkCreatePage() {
                 <Input
                   id="youtube"
                   placeholder="https://youtube.com/watch?v=..."
-                  value={form.youtube_url ?? ''}
+                  value={form.youtube_url}
                   onChange={(e) => updateField('youtube_url', e.target.value)}
                 />
               </div>
@@ -138,7 +142,7 @@ export default function MusicianWorkCreatePage() {
                 <Input
                   id="spotify"
                   placeholder="https://open.spotify.com/track/..."
-                  value={form.spotify_track_url ?? ''}
+                  value={form.spotify_track_url}
                   onChange={(e) => updateField('spotify_track_url', e.target.value)}
                 />
               </div>
@@ -148,7 +152,7 @@ export default function MusicianWorkCreatePage() {
                 <Input
                   id="soundcloud"
                   placeholder="https://soundcloud.com/..."
-                  value={form.soundcloud_embed ?? ''}
+                  value={form.soundcloud_embed}
                   onChange={(e) => updateField('soundcloud_embed', e.target.value)}
                 />
               </div>
@@ -159,7 +163,7 @@ export default function MusicianWorkCreatePage() {
                   id="description"
                   rows={4}
                   placeholder="Cuéntanos sobre esta obra..."
-                  value={form.description ?? ''}
+                  value={form.description}
                   onChange={(e) => updateField('description', e.target.value)}
                 />
               </div>
