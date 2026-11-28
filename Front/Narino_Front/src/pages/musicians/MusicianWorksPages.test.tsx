@@ -234,3 +234,26 @@ describe('MusicianWorkEditPage', () => {
     expect(screen.getByRole('link', { name: '← Volver a mis obras' })).toHaveAttribute('href', '/dashboard/musician/works')
   })
 })
+
+describe('Páginas de obras: guardado en curso', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('crear dice "Guardando..." mientras espera al servidor', async () => {
+    mockedCreate.mockReturnValue(new Promise(() => {}))
+    renderWithProviders(<MusicianWorkCreatePage />, { route: '/dashboard/musician/works/new', path: '/dashboard/musician/works/new' })
+    fireEvent.change(screen.getByLabelText('Título *'), { target: { value: 'Mi obra' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar obra' }))
+    expect(await screen.findByRole('button', { name: 'Guardando...' })).toBeDisabled()
+    expect(mockedCreate).toHaveBeenCalledTimes(1)
+  })
+
+  it('editar dice "Guardando..." mientras espera al servidor', async () => {
+    mockedGet.mockResolvedValue(work())
+    mockedUpdate.mockReturnValue(new Promise(() => {}))
+    renderWithProviders(<MusicianWorkEditPage />, { route: '/dashboard/musician/works/w1/edit', path: '/dashboard/musician/works/:id/edit' })
+    await screen.findByLabelText('Título *')
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+    expect(await screen.findByRole('button', { name: 'Guardando...' })).toBeDisabled()
+    expect(mockedUpdate).toHaveBeenCalledTimes(1)
+  })
+})

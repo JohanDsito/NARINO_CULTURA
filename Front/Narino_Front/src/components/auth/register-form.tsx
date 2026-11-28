@@ -96,10 +96,11 @@ export function RegisterForm() {
   const mutation = useMutation({
     mutationFn: async (values: FormValues) => {
       if (values.role === 'artist') {
-        const artistic_name = values.artisticName?.trim() ?? ''
+        // El esquema ya exige nombre artístico y ciudad no vacíos cuando el rol es artista
+        const artistic_name = values.artisticName!.trim()
         const discipline = values.discipline?.trim() || undefined
-        const city = values.city?.trim() || undefined
-        if (artistic_name) setPendingArtistProfile({ artistic_name, discipline, city })
+        const city = values.city!.trim()
+        setPendingArtistProfile({ artistic_name, discipline, city })
       }
 
       return await registerApi({

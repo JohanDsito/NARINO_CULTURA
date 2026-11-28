@@ -301,7 +301,7 @@ export default function MusicianProfilePage() {
                         <div className="p-3">
                           <p className="font-body font-semibold text-text-primary text-sm">{work.title}</p>
                           <p className="font-body text-text-muted text-[12px]">
-                            {MUSICAL_WORK_TYPE_LABELS[work.work_type] ?? work.work_type}
+                            {MUSICAL_WORK_TYPE_LABELS.VIDEO}
                           </p>
                         </div>
                       </Card>
