@@ -62,7 +62,7 @@ describe('ProfileImageUpload', () => {
     expect(createObjectURL).not.toHaveBeenCalled()
   })
 
-  it('cancelar sin vista previa tampoco falla', () => {
+  it('cancelar tras elegir un solo archivo libera su vista previa una vez', () => {
     const { container } = render(<ProfileImageUpload name="ana" onUpload={vi.fn()} isPending={false} />)
     fireEvent.change(picker(container), { target: { files: [new File(['1'], 'a.png')] } })
     fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
@@ -83,14 +83,20 @@ describe('ProfileImageUpload', () => {
     expect(screen.getByRole('button', { name: 'Cambiar foto' })).toBeDisabled()
   })
 
-  // ERROR REAL detectado: profile-image-upload.tsx:34 (handleSave) hace `await onUpload(file)` sin try/catch.
-  // UserProfilePage le pasa `mutateAsync`, que relanza el error: si la subida falla queda un rechazo de promesa
-  // sin manejar (el toast de error sí sale, pero el navegador registra "Uncaught (in promise)").
-  it.skip('si la subida falla no deja un rechazo de promesa sin manejar (BUG: lo deja)', async () => {
-    const onUpload = vi.fn().mockRejectedValue(new Error('x'))
-    const { container } = render(<ProfileImageUpload name="ana" onUpload={onUpload} isPending={false} />)
-    fireEvent.change(picker(container), { target: { files: [new File(['1'], 'a.png')] } })
-    fireEvent.click(screen.getByRole('button', { name: 'Guardar foto' }))
-    await waitFor(() => expect(onUpload).toHaveBeenCalled())
+  it('si la subida falla no deja un rechazo sin manejar y conserva la foto elegida para reintentar', async () => {
+    const unhandled = vi.fn()
+    process.on('unhandledRejection', unhandled)
+    try {
+      const onUpload = vi.fn().mockRejectedValue(new Error('x'))
+      const { container } = render(<ProfileImageUpload name="ana" onUpload={onUpload} isPending={false} />)
+      fireEvent.change(picker(container), { target: { files: [new File(['1'], 'a.png')] } })
+      fireEvent.click(screen.getByRole('button', { name: 'Guardar foto' }))
+      await waitFor(() => expect(onUpload).toHaveBeenCalled())
+      await new Promise((r) => setTimeout(r, 50))
+    } finally {
+      process.off('unhandledRejection', unhandled)
+    }
+    expect(unhandled).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: 'Guardar foto' })).toBeInTheDocument()
   })
 })

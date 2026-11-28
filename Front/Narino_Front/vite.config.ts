@@ -43,11 +43,6 @@ export default defineConfig({
     setupFiles: './src/test/setup.ts',
     // userEvent escribe carácter por carácter; en máquinas lentas 5 s no alcanza
     testTimeout: 20_000,
-    // Bug conocido de la app (event-form-modal.tsx: rechazo sin manejar al fallar la creación). Se ignora SOLO el
-    // error marcado por su prueba; cualquier otro error sin manejar sigue haciendo fallar la corrida.
-    onUnhandledError: (error) => {
-      if (error instanceof Error && error.message === 'BUG_CONOCIDO_EVENT_FORM') return false
-    },
 
     coverage: {
       provider: 'v8',

@@ -77,24 +77,39 @@ describe('EventFormModal: validaciones, cierre y errores', () => {
     expect(onOpenChange).toHaveBeenCalledWith(false)
   })
 
-  // ERROR REAL detectado: event-form-modal.tsx:57-63 (onSubmit) hace `await mutation.mutateAsync(data)` dentro de
-  // try/finally sin catch: si el servidor rechaza el evento, el toast de error sí sale (onError) pero el rechazo
-  // vuelve a lanzarse desde handleSubmit y queda como promesa sin manejar. Aquí se ignora SOLO ese error marcado
-  // mediante `onUnhandledError` en vite.config.ts, para poder cubrir las ramas de onError.
-  it('si el servidor responde con detalle, lo muestra; si no, usa el mensaje genérico (BUG: rechazo sin manejar)', async () => {
-    const withDetail = new AxiosError('x', 'ERR', undefined, undefined, { status: 400, data: { detail: 'Fecha pasada' } } as AxiosResponse)
-    ;(withDetail as Error).message = 'BUG_CONOCIDO_EVENT_FORM'
-    mockedCreate.mockRejectedValueOnce(withDetail)
+  it('si el servidor responde con detalle, lo muestra; si no, usa el mensaje genérico, sin rechazos sin manejar', async () => {
+    const unhandled = vi.fn()
+    process.on('unhandledRejection', unhandled)
+    try {
+      const withDetail = new AxiosError('x', 'ERR', undefined, undefined, { status: 400, data: { detail: 'Fecha pasada' } } as AxiosResponse)
+      mockedCreate.mockRejectedValueOnce(withDetail)
+      renderModal()
+      fill()
+      fireEvent.click(screen.getByRole('button', { name: 'Crear evento' }))
+      await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Fecha pasada'))
+
+      const plain = new Error('falló')
+      mockedCreate.mockRejectedValueOnce(plain)
+      fireEvent.click(screen.getByRole('button', { name: 'Crear evento' }))
+      await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Error al crear el evento'))
+      await new Promise((r) => setTimeout(r, 50))
+    } finally {
+      process.off('unhandledRejection', unhandled)
+    }
+    expect(unhandled).not.toHaveBeenCalled()
+  })
+})
+
+describe('EventFormModal: envío en curso', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('mientras el servidor responde el botón dice "Creando..." y queda deshabilitado', async () => {
+    mockedCreate.mockReturnValue(new Promise(() => {}))
     renderModal()
     fill()
     fireEvent.click(screen.getByRole('button', { name: 'Crear evento' }))
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Fecha pasada'))
-
-    const plain = new Error('BUG_CONOCIDO_EVENT_FORM')
-    mockedCreate.mockRejectedValueOnce(plain)
-    fireEvent.click(screen.getByRole('button', { name: 'Crear evento' }))
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Error al crear el evento'))
-    // permite que el rechazo sin manejar llegue al filtro antes de terminar la prueba
-    await new Promise((r) => setTimeout(r, 50))
+    const pending = await screen.findByRole('button', { name: 'Creando...' })
+    expect(pending).toBeDisabled()
+    expect(mockedCreate).toHaveBeenCalledTimes(1)
   })
 })
