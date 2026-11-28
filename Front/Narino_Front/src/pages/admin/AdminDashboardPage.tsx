@@ -25,7 +25,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ORDER_STATUS_LABELS } from '@/constants/labels'
+import { TRANSACTION_STATUS_LABELS } from '@/constants/labels'
 import { formatCurrency } from '@/utils'
 
 const REFETCH_INTERVAL = 30_000
@@ -341,16 +341,12 @@ export default function AdminDashboardPage() {
                 <CardTitle className="text-base">Estado de la plataforma</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {[
-                  { label: 'API backend', ok: true },
-                  { label: 'Pagos (Wompi)', ok: true },
-                  { label: 'Almacenamiento', ok: true },
-                ].map(({ label, ok }) => (
+                {['API backend', 'Pagos (Wompi)', 'Almacenamiento'].map((label) => (
                   <div key={label} className="flex items-center justify-between text-sm">
                     <span className="text-text-secondary">{label}</span>
-                    <span className={`flex items-center gap-1 text-xs font-medium ${ok ? 'text-verde' : 'text-error'}`}>
+                    <span className="flex items-center gap-1 text-xs font-medium text-verde">
                       <CheckCircle2 size={12} />
-                      {ok ? 'Operativo' : 'Error'}
+                      Operativo
                     </span>
                   </div>
                 ))}
@@ -396,14 +392,14 @@ export default function AdminDashboardPage() {
                     </thead>
                     <tbody className="divide-y divide-border">
                       {transactions.map((order) => {
-                        const statusInfo = ORDER_STATUS_LABELS[order.status] ?? {
+                        const statusInfo = TRANSACTION_STATUS_LABELS[order.status] ?? {
                           label: order.status,
                           color: '',
                         }
                         return (
                           <tr key={order.id} className="hover:bg-bg-subtle/30 transition-colors">
                             <td className="py-2.5 pr-4 font-mono text-xs text-text-primary">
-                              #{(order.id ?? '').slice(0, 8).toUpperCase()}
+                              #{order.order_id.slice(0, 8).toUpperCase()}
                             </td>
                             <td className="py-2.5 pr-4 text-xs text-text-secondary">
                               {order.order_type === 'COMPRA_DIRECTA' ? 'Directa' : 'Subasta'}

@@ -115,7 +115,7 @@ export default function ArtistsPage() {
                       </h2>
                       {/* Disciplina — siempre ocupa la misma línea */}
                       <p className="font-body text-text-muted text-[13px] line-clamp-1 min-h-[18px]">
-                        {artist.discipline || ''}
+                        {artist.discipline}
                       </p>
                       {/* Ciudad — siempre ocupa la misma línea */}
                       <p className="font-body text-text-muted text-[12px] min-h-[18px]">

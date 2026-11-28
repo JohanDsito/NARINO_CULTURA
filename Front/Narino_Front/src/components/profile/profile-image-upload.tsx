@@ -18,33 +18,35 @@ export function ProfileImageUpload({
   isPending,
   disabled,
 }: ProfileImageUploadProps) {
-  const [preview, setPreview] = useState<string | null>(null)
-  const [file, setFile] = useState<File | null>(null)
+  // La foto elegida y su vista previa viajan juntas: una no existe sin la otra
+  const [picked, setPicked] = useState<{ file: File; preview: string } | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const displayUrl = preview ?? currentUrl ?? null
+  const displayUrl = picked?.preview ?? currentUrl ?? null
   const initial = name.charAt(0).toUpperCase()
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]
     if (!f) return
-    setFile(f)
-    if (preview) URL.revokeObjectURL(preview)
-    setPreview(URL.createObjectURL(f))
+    if (picked) URL.revokeObjectURL(picked.preview)
+    setPicked({ file: f, preview: URL.createObjectURL(f) })
   }
 
-  const handleSave = async () => {
-    if (!file) return
-    await onUpload(file)
-    setFile(null)
-    setPreview(null)
+  const handleSave = async (selected: File) => {
+    try {
+      await onUpload(selected)
+    } catch {
+      // Quien sube (la mutación) ya avisa del error; se conserva la foto elegida para reintentar
+      return
+    }
+    setPicked(null)
   }
 
-  const handleCancel = () => {
-    if (preview) URL.revokeObjectURL(preview)
-    setFile(null)
-    setPreview(null)
-    if (inputRef.current) inputRef.current.value = ''
+  const handleCancel = (current: { preview: string }) => {
+    URL.revokeObjectURL(current.preview)
+    setPicked(null)
+    // El input está siempre montado: solo cambia el botón que se muestra
+    inputRef.current!.value = ''
   }
 
   return (
@@ -84,12 +86,12 @@ export function ProfileImageUpload({
           onChange={handleFileChange}
         />
 
-        {file ? (
+        {picked ? (
           <div className="flex w-full gap-2">
             <Button
               type="button"
               className="flex-1 text-sm"
-              onClick={handleSave}
+              onClick={() => handleSave(picked.file)}
               disabled={isPending}
             >
               {isPending ? 'Subiendo…' : 'Guardar foto'}
@@ -98,7 +100,7 @@ export function ProfileImageUpload({
               type="button"
               variant="outline"
               className="text-sm"
-              onClick={handleCancel}
+              onClick={() => handleCancel(picked)}
               disabled={isPending}
             >
               Cancelar

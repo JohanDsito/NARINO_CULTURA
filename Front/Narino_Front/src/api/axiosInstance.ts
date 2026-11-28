@@ -2,6 +2,7 @@ import axios from 'axios'
 
 import { API_BASE_URL } from '@/config/env'
 import { useAuthStore } from '@/store/authStore'
+import { redirectToLogin } from '@/utils/navigation'
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -23,7 +24,7 @@ axiosInstance.interceptors.request.use(
 /** Cierra la sesión local (tokens + store persistido) y manda al login. */
 function forceLogout() {
   useAuthStore.getState().logout()
-  if (window.location.pathname !== '/login') window.location.href = '/login'
+  if (window.location.pathname !== '/login') redirectToLogin()
 }
 
 /** Renovación en curso: con rotación el refresh viejo queda invalidado, así que

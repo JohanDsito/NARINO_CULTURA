@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -32,8 +31,6 @@ interface EventFormModalProps {
 }
 
 export function EventFormModal({ open, onOpenChange, onSuccess }: EventFormModalProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  
   const {
     register,
     handleSubmit,
@@ -65,14 +62,9 @@ export function EventFormModal({ open, onOpenChange, onSuccess }: EventFormModal
     },
   })
 
-  const onSubmit = async (data: EventFormData) => {
-    setIsSubmitting(true)
-    try {
-      await mutation.mutateAsync(data)
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
+  // mutate (no mutateAsync): el error ya se avisa en onError y no debe relanzarse como rechazo sin manejar
+  const onSubmit = (data: EventFormData) => mutation.mutate(data)
+  const isSubmitting = mutation.isPending
 
   if (!open) return null
 
@@ -211,9 +203,9 @@ export function EventFormModal({ open, onOpenChange, onSuccess }: EventFormModal
               </Button>
               <Button
                 type="submit"
-                disabled={isSubmitting || mutation.isPending}
+                disabled={isSubmitting}
               >
-                {isSubmitting || mutation.isPending ? 'Creando...' : 'Crear evento'}
+                {isSubmitting ? 'Creando...' : 'Crear evento'}
               </Button>
             </div>
           </form>

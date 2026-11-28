@@ -22,7 +22,7 @@ export default function MusicDiscoveryPage() {
   const [result, setResult] = useState<MusicDiscoveryResult | null>(null)
 
   const discoveryMutation = useMutation({
-    mutationFn: () => musicDiscovery(query),
+    mutationFn: (searchQuery: string) => musicDiscovery(searchQuery),
     onSuccess: (data) => setResult(data),
   })
 
@@ -30,7 +30,7 @@ export default function MusicDiscoveryPage() {
     const searchQuery = q ?? query
     if (!searchQuery.trim()) return
     if (q) setQuery(q)
-    discoveryMutation.mutate()
+    discoveryMutation.mutate(searchQuery)
   }
 
   const filtersApplied = result?.filters_applied

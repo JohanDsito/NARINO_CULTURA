@@ -11,6 +11,7 @@ import {
 } from '@/api/notifications.api'
 import NotificationsPage from '@/pages/user/NotificationsPage'
 import { useAuthStore } from '@/store/authStore'
+import { renderWithProviders } from '@/test/render'
 import type { AppNotification, PaginatedResponse } from '@/types'
 
 vi.mock('@/api/notifications.api', () => ({
@@ -106,10 +107,11 @@ describe('NotificationsPage', () => {
     expect(await screen.findByText('Detalle del evento')).toBeInTheDocument()
   })
 
-  it('un aviso ya leído no se vuelve a marcar', async () => {
-    renderPage()
+  it('un aviso ya leído no se vuelve a marcar, solo lleva a su enlace', async () => {
+    renderWithProviders(<NotificationsPage />, { route: '/notifications', path: '/notifications' })
     fireEvent.click(await screen.findByText('Pago confirmado'))
     expect(mockedMarkRead).not.toHaveBeenCalled()
+    expect(screen.getByTestId('location').textContent).toBe('/orders')
   })
 
   it('marca todas como leídas', async () => {
