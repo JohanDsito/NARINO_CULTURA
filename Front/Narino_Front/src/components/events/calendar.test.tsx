@@ -172,7 +172,7 @@ describe('EventCalendar', () => {
     useAuthStore.setState({ user: { id: 'u', role: 'admin' } as User })
     const { unmount } = renderWithProviders(<EventCalendar showCreateButton />)
     fireEvent.click(await screen.findByRole('button', { name: '+ Agregar evento' }))
-    expect(screen.getByText(/modal-evento/)).toBeInTheDocument()
+    expect(await screen.findByText(/modal-evento/)).toBeInTheDocument()
     const calls = mockedRange.mock.calls.length
     fireEvent.click(screen.getByRole('button', { name: 'guardar-evento' }))
     expect(screen.queryByText(/modal-evento/)).not.toBeInTheDocument()

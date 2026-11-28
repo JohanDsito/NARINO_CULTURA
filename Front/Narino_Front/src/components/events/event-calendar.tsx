@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { Suspense, lazy, useMemo, useState } from 'react'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -13,7 +13,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/store/authStore'
-import { EventFormModal } from './event-form-modal'
+
+// El formulario (react-hook-form + zod) solo lo usa el administrador: no se descarga en la portada de los demás
+const EventFormModal = lazy(() =>
+  import('./event-form-modal').then((m) => ({ default: m.EventFormModal })),
+)
 
 interface EventCalendarProps {
   showCreateButton?: boolean
@@ -108,15 +112,17 @@ export function EventCalendar({ showCreateButton = false }: EventCalendarProps) 
         )}
       </div>
 
-      {isAdmin && showCreateButton && (
-        <EventFormModal
-          open={showEventForm}
-          onOpenChange={setShowEventForm}
-          onSuccess={() => {
-            setShowEventForm(false)
-            refetch()
-          }}
-        />
+      {isAdmin && showCreateButton && showEventForm && (
+        <Suspense fallback={null}>
+          <EventFormModal
+            open={showEventForm}
+            onOpenChange={setShowEventForm}
+            onSuccess={() => {
+              setShowEventForm(false)
+              refetch()
+            }}
+          />
+        </Suspense>
       )}
 
       {isError && (

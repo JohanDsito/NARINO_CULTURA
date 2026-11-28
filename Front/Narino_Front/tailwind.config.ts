@@ -21,9 +21,9 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        display: ['Inter', 'system-ui', 'sans-serif'],
-        body: ['Inter', 'system-ui', 'sans-serif'],
-        accent: ['Inter', 'system-ui', 'sans-serif'],
+        display: ['Inter Variable', 'Inter Fallback', 'system-ui', 'sans-serif'],
+        body: ['Inter Variable', 'Inter Fallback', 'system-ui', 'sans-serif'],
+        accent: ['Inter Variable', 'Inter Fallback', 'system-ui', 'sans-serif'],
       },
       colors: {
         bg: token('bg'),

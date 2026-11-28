@@ -1,4 +1,3 @@
-import carnavalimg from '@/assets/carnaval.png'
 import { Link } from 'react-router-dom'
 import { ArrowRight, CalendarDays, Gavel, Palette, ShoppingBag, type LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -89,29 +88,34 @@ export default function HomePage() {
             </p>
             <div className="flex flex-wrap items-center gap-3">
               {isAuthenticated ? (
-                <Button asChild aria-label="Ir a mi panel">
+                <Button asChild>
                   <Link to={accountPath}>Ir a mi panel</Link>
                 </Button>
               ) : (
                 <>
-                  <Button asChild aria-label="Ir a login">
+                  <Button asChild>
                     <Link to="/login">Iniciar sesión</Link>
                   </Button>
-                  <Button variant="outline" asChild aria-label="Ir a registro">
+                  <Button variant="outline" asChild>
                     <Link to="/register">Crear cuenta</Link>
                   </Button>
                 </>
               )}
-              <Button variant="ghost" asChild aria-label="Explorar obras">
+              <Button variant="ghost" asChild>
                 <Link to="/artworks">Explorar obras</Link>
               </Button>
             </div>
           </div>
           <div className="nc-card relative overflow-hidden rounded-card border border-border bg-bg-card shadow-card">
             <img
-              src={carnavalimg}
+              src="/carnaval-hero.webp"
               alt="Carnaval de Negros y Blancos: máscara y colores tradicionales"
-              loading="lazy"
+              width={431}
+              height={575}
+              // Es la imagen principal de la portada: se pide de inmediato y con prioridad (LCP)
+              loading="eager"
+              fetchPriority="high"
+              decoding="async"
               className="h-[320px] w-full object-cover sm:h-[360px]"
             />
           </div>
@@ -119,7 +123,7 @@ export default function HomePage() {
 
         <section className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-label="Secciones">
           {SECTIONS.map(({ to, eyebrow, title, text, cta, icon: Icon, tint, ink }) => (
-            <Link key={to} to={to} className="group no-underline" aria-label={cta}>
+            <Link key={to} to={to} className="group no-underline">
               <Card className="flex h-full flex-col gap-3">
                 <span className={`flex h-11 w-11 items-center justify-center rounded-full ${tint} ${ink}`}>
                   <Icon size={20} aria-hidden />

@@ -4,6 +4,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { AppLayout } from '@/components/layout/app-layout'
 import { ProtectedRoute } from '@/components/auth/protected-route'
 import { PageLoader } from '@/components/layout/page-loader'
+import HomePage from '@/pages/home/HomePage'
 import { ANY_AUTH, ROLE } from '@/constants/roles'
 
 function lazyPage<T extends { default: ComponentType }>(
@@ -12,7 +13,7 @@ function lazyPage<T extends { default: ComponentType }>(
 ) {
   const Component = lazy(importer)
   return (
-    <Suspense fallback={<PageLoader label={label ?? 'Cargando…'} />}>
+    <Suspense fallback={<PageLoader fullPage label={label ?? 'Cargando…'} />}>
       <Component />
     </Suspense>
   )
@@ -26,7 +27,8 @@ export const router = createBrowserRouter([
       // ── Inicio ───────────────────────────────────────────────────────────
       {
         index: true,
-        element: lazyPage(() => import('@/pages/home/HomePage'), 'Cargando inicio…'),
+        // La portada va en el paquete inicial: así no espera otra descarga después de arrancar (LCP)
+        element: <HomePage />,
       },
 
       // ── Auth ─────────────────────────────────────────────────────────────

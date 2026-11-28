@@ -62,6 +62,7 @@ export default function ArtworksCatalogPage() {
             />
           </div>
           <select
+            aria-label="Filtrar por categoría"
             value={categoryId}
             onChange={(e) => { setCategoryId(e.target.value); setPage(1) }}
             className="rounded-input border border-border bg-bg-card px-3 py-2.5 font-body text-sm text-text-primary focus:outline-none focus:border-azul focus:ring-2 focus:ring-azul/25"
@@ -126,9 +127,9 @@ export default function ArtworksCatalogPage() {
                       )}
                     </div>
                     <div className="p-4">
-                      <h3 className="font-display font-bold text-text-primary text-[14px] mb-1 line-clamp-1 group-hover:text-magenta transition-colors">
+                      <h2 className="font-display font-bold text-text-primary text-[14px] mb-1 line-clamp-1 group-hover:text-magenta transition-colors">
                         {artwork.title}
-                      </h3>
+                      </h2>
                       {artwork.category_detail && (
                         <p className="font-body text-text-muted text-[12px] mb-2">
                           {artwork.category_detail.name}

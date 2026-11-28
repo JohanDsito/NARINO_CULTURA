@@ -28,7 +28,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         duration={4000}
         toastOptions={{
           style: {
-            fontFamily: 'Inter, sans-serif',
+            fontFamily: "'Inter Variable', 'Inter Fallback', sans-serif",
           },
         }}
       />
