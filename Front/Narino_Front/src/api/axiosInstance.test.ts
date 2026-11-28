@@ -11,6 +11,9 @@ const mockAxiosInstance = Object.assign(vi.fn(), {
   },
 })
 
+const mockRedirectToLogin = vi.hoisted(() => vi.fn())
+vi.mock('@/utils/navigation', () => ({ redirectToLogin: mockRedirectToLogin }))
+
 vi.mock('axios', () => ({
   default: {
     create: vi.fn(() => mockAxiosInstance),
@@ -248,6 +251,15 @@ describe('axiosInstance', () => {
     const handler = mockResponseUse.mock.calls[0][1] as (e: unknown) => Promise<unknown>
     const error = { config: { headers: {}, _retry: false }, response: { status: 401 } }
     await expect(handler(error)).rejects.toBe(error)
-    expect(window.location.pathname).toBe('/login')
+    expect(mockRedirectToLogin).not.toHaveBeenCalled()
+  })
+
+  it('si no está en /login al cerrar la sesión redirige al login', async () => {
+    window.history.replaceState(null, '', '/obras')
+    await import('./axiosInstance')
+    const handler = mockResponseUse.mock.calls[0][1] as (e: unknown) => Promise<unknown>
+    const error = { config: { headers: {}, _retry: false }, response: { status: 401 } }
+    await expect(handler(error)).rejects.toBe(error)
+    expect(mockRedirectToLogin).toHaveBeenCalledTimes(1)
   })
 })
