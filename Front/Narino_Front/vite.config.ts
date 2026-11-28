@@ -1,5 +1,5 @@
 import { configDefaults, defineConfig } from 'vitest/config'
-import { loadEnv, type Plugin } from 'vite'
+import type { Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 
@@ -8,11 +8,15 @@ import path from 'path'
  * petición. Usa el mismo origen que `src/config/env.ts` (VITE_API_BASE_URL o la API de producción).
  */
 function preconnectApi(): Plugin {
+  let apiBaseUrl = ''
   return {
     name: 'preconnect-api',
+    // config.env ya trae VITE_* del entorno del proceso y de los .env del modo en curso (--mode, envDir)
+    configResolved(config) {
+      apiBaseUrl = String(config.env.VITE_API_BASE_URL ?? '')
+    },
     transformIndexHtml(html) {
-      const env = loadEnv(process.env.NODE_ENV ?? 'production', process.cwd(), '')
-      const raw = process.env.VITE_API_BASE_URL || env.VITE_API_BASE_URL || 'https://narinocultura-production.up.railway.app'
+      const raw = apiBaseUrl || 'https://narinocultura-production.up.railway.app'
       try {
         const origin = new URL(raw).origin
         return html.replace('</title>', `</title>
