@@ -64,6 +64,14 @@ class NotificationApiTests(APITestCase):
     def test_unread_count(self):
         self.assertEqual(self.client.get(f"{URL}unread-count/").data, {"unread": 2})
 
+    def test_marking_an_already_read_notification_keeps_its_read_date(self):
+        before = self.read.read_at
+        r = self.client.post(f"{URL}{self.read.id}/read/")
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(r.data["read"])
+        self.read.refresh_from_db()
+        self.assertEqual(self.read.read_at, before)
+
     def test_mark_read_with_post_and_patch(self):
         r = self.client.post(f"{URL}{self.new.id}/read/")
         self.assertEqual(r.status_code, 200)

@@ -50,8 +50,8 @@ export default function CheckoutPage() {
   const isProcessing = checkoutMutation.isPending || startPayment.isPending
 
   return (
-    <div className="min-h-screen bg-bg pt-16">
-      <PageShell title="Checkout" subtitle="Revisa tu orden antes de confirmar" />
+    <div className="min-h-screen pt-16">
+      <PageShell eyebrow="Tienda" accent="naranja" title="Tu carrito" subtitle="Revisa tu orden antes de pagar" />
 
       <main className="mx-auto max-w-3xl px-6 py-8">
         {isLoading ? (
@@ -97,7 +97,7 @@ export default function CheckoutPage() {
                       </p>
                     )}
                   </div>
-                  <p className="font-body font-bold text-oro flex-none">
+                  <p className="font-body font-bold text-naranja flex-none">
                     {formatCurrency(item.artwork_price)}
                   </p>
                   <Button
@@ -119,7 +119,7 @@ export default function CheckoutPage() {
               <h3 className="font-display font-bold text-text-primary text-[16px]">Resumen</h3>
               <div className="flex justify-between items-center py-3 border-t border-border">
                 <span className="font-body text-text-muted text-sm">Total</span>
-                <span className="font-display font-bold text-oro text-[22px]">
+                <span className="font-display font-extrabold text-naranja text-[22px]">
                   {formatCurrency(total)}
                 </span>
               </div>

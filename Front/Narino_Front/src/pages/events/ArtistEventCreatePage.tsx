@@ -102,7 +102,7 @@ export default function ArtistEventCreatePage() {
   }
 
   return (
-    <div className="min-h-screen bg-bg pt-16">
+    <div className="min-h-screen pt-16">
       <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-8 md:px-10">
         <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -274,7 +274,7 @@ export default function ArtistEventCreatePage() {
                         <button
                           type="button"
                           onClick={removeFlyerFile}
-                          className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-error text-white hover:bg-error/80"
+                          className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-tomate-fill text-on-tomate hover:bg-tomate-fill/90"
                         >
                           <X size={12} />
                         </button>
@@ -295,7 +295,7 @@ export default function ArtistEventCreatePage() {
                         </span>
                       </button>
                     )}
-                    <p className="text-xs text-amber-600 dark:text-amber-400">
+                    <p className="text-xs text-oro">
                       ⚠ La subida de archivos requiere activación en el servidor. Usa la opción URL mientras tanto.
                     </p>
                   </>
@@ -311,7 +311,7 @@ export default function ArtistEventCreatePage() {
               </div>
 
               {/* Aviso de aprobación */}
-              <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 md:col-span-2 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-300">
+              <div className="rounded-lg border border-oro/40 bg-oro-tint px-4 py-3 text-sm text-oro md:col-span-2">
                 <strong>Nota:</strong> Tu evento será revisado por un administrador antes de
                 aparecer en el calendario público. Recibirás una notificación cuando sea aprobado.
               </div>

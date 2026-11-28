@@ -21,14 +21,16 @@ const socialLinks = [
 
 export function Footer() {
   return (
-    <footer className="mt-auto border-t border-oro/20 bg-[#2D1B00] dark:bg-bg-card">
+    <footer className="nc-glass relative mt-auto border-t border-border">
+      {/* Serpentina: el detalle de color del carnaval */}
+      <div className="nc-serpentina absolute inset-x-0 top-0 h-[3px]" aria-hidden />
       <div className="flex w-full flex-col gap-6 px-6 py-6 md:px-10">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
-            <p className="font-display text-base font-semibold text-oro-light">
+            <p className="font-display text-base font-extrabold text-text-primary">
               Nariño Cultura
             </p>
-            <p className="max-w-md text-sm text-white/70">
+            <p className="max-w-md text-sm text-text-secondary">
               Ecosistema cultural y artístico del departamento de Nariño,
               Colombia.
             </p>
@@ -38,26 +40,26 @@ export function Footer() {
             className="flex flex-wrap gap-x-4 gap-y-2 text-sm"
             aria-label="Enlaces del sitio"
           >
-            <Link to="/artists" className="text-white/70 hover:text-oro-light">
+            <Link to="/artists" className="text-text-secondary hover:text-azul">
               Artistas
             </Link>
-            <Link to="/artworks" className="text-white/70 hover:text-oro-light">
+            <Link to="/artworks" className="text-text-secondary hover:text-azul">
               Obras
             </Link>
-            <Link to="/events" className="text-white/70 hover:text-oro-light">
+            <Link to="/events" className="text-text-secondary hover:text-azul">
               Eventos
             </Link>
             <Link
               to="/marketplace"
-              className="text-white/70 hover:text-oro-light"
+              className="text-text-secondary hover:text-azul"
             >
               Marketplace
             </Link>
           </nav>
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-white/10 pt-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-white/70">
+        <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-text-secondary">
             Un proyecto de UCC y Corpocarnaval
           </p>
 
@@ -69,7 +71,7 @@ export function Footer() {
                 target="_blank"
                 rel="noreferrer"
                 aria-label={label}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-oro-light transition-colors hover:bg-oro hover:text-[#2D1B00]"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-bg-subtle text-text-primary transition-colors hover:bg-azul-fill hover:text-on-azul"
               >
                 <Icon size={15} />
               </a>

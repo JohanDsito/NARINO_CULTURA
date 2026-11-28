@@ -1,11 +1,65 @@
 import carnavalimg from '@/assets/carnaval.png'
 import { Link } from 'react-router-dom'
+import { ArrowRight, CalendarDays, Gavel, Palette, ShoppingBag, type LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { PageShell } from '@/components/layout/page-shell'
 import { EventCalendar } from '@/components/events/event-calendar'
 import { useAuthStore } from '@/store/authStore'
 import { getArtistDashboardPath } from '@/utils/artistDiscipline'
+
+/** Accesos a cada sección con su color (como en la app): catálogo magenta, tienda naranja, subastas oro y eventos tomate. */
+const SECTIONS: {
+  to: string
+  eyebrow: string
+  title: string
+  text: string
+  cta: string
+  icon: LucideIcon
+  tint: string
+  ink: string
+}[] = [
+  {
+    to: '/artworks',
+    eyebrow: 'Artes plásticas',
+    title: 'Catálogo',
+    text: 'Obras originales de pintores, escultores y fotógrafos nariñenses.',
+    cta: 'Ver catálogo',
+    icon: Palette,
+    tint: 'bg-magenta-tint',
+    ink: 'text-magenta',
+  },
+  {
+    to: '/marketplace',
+    eyebrow: 'Artesanos',
+    title: 'Tienda',
+    text: 'Compra directo al creador con pago seguro por Wompi.',
+    cta: 'Ver tienda',
+    icon: ShoppingBag,
+    tint: 'bg-naranja-tint',
+    ink: 'text-naranja',
+  },
+  {
+    to: '/auctions',
+    eyebrow: 'En vivo',
+    title: 'Subastas',
+    text: 'Sigue las subastas en tiempo real y participa con pujas.',
+    cta: 'Ver subastas',
+    icon: Gavel,
+    tint: 'bg-oro-tint',
+    ink: 'text-oro',
+  },
+  {
+    to: '/events',
+    eyebrow: 'Agenda',
+    title: 'Eventos',
+    text: 'Conciertos, exposiciones, talleres y ferias del departamento.',
+    cta: 'Ver eventos',
+    icon: CalendarDays,
+    tint: 'bg-tomate-tint',
+    ink: 'text-tomate',
+  },
+]
 
 export default function HomePage() {
   const { user, isAuthenticated } = useAuthStore()
@@ -18,14 +72,16 @@ export default function HomePage() {
   })()
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen pt-16">
       <PageShell
+        eyebrow="Arte · música · carnaval"
+        accent="magenta"
         title="Nariño Cultura"
         description="Conecta con artistas, compra obras únicas, participa en subastas y descubre la agenda cultural de Nariño."
       >
-        <section className="grid gap-6 lg:grid-cols-2 lg:items-center">
-          <div className="space-y-4">
-            <h2 className="text-5xl font-semibold leading-tight tracking-tight">
+        <section className="grid gap-8 lg:grid-cols-2 lg:items-center">
+          <div className="space-y-5">
+            <h2 className="text-4xl font-extrabold leading-tight text-text-primary md:text-5xl">
               Arte y tradición desde el corazón de Nariño
             </h2>
             <p className="max-w-2xl text-lg text-text-secondary">
@@ -46,12 +102,12 @@ export default function HomePage() {
                   </Button>
                 </>
               )}
+              <Button variant="ghost" asChild aria-label="Explorar obras">
+                <Link to="/artworks">Explorar obras</Link>
+              </Button>
             </div>
-            <Button variant="secondary" asChild aria-label="Explorar obras">
-              <Link to="/artworks">Explorar obras</Link>
-            </Button>
           </div>
-          <div className="relative overflow-hidden rounded-xl border bg-bg-card">
+          <div className="nc-card relative overflow-hidden rounded-card border border-border bg-bg-card shadow-card">
             <img
               src={carnavalimg}
               alt="Carnaval de Negros y Blancos: máscara y colores tradicionales"
@@ -61,46 +117,25 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="mt-10 grid gap-4 md:grid-cols-3">
-          <Card>
-            <CardHeader>
-              <CardTitle>Marketplace</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <p className="text-sm text-text-secondary">
-                Compra obras y artesanías con un flujo de pago claro.
-              </p>
-              <Button variant="outline" asChild aria-label="Ir a marketplace">
-                <Link to="/marketplace">Ver marketplace</Link>
-              </Button>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Subastas</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <p className="text-sm text-text-secondary">
-                Sigue subastas en tiempo real y participa con pujas.
-              </p>
-              <Button variant="outline" asChild aria-label="Ir a subastas">
-                <Link to="/auctions">Ver subastas</Link>
-              </Button>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Eventos</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <p className="text-sm text-text-secondary">
-                Descubre agenda cultural: conciertos, exposiciones y talleres.
-              </p>
-              <Button variant="outline" asChild aria-label="Ir a eventos">
-                <Link to="/events">Ver eventos</Link>
-              </Button>
-            </CardContent>
-          </Card>
+        <section className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-label="Secciones">
+          {SECTIONS.map(({ to, eyebrow, title, text, cta, icon: Icon, tint, ink }) => (
+            <Link key={to} to={to} className="group no-underline" aria-label={cta}>
+              <Card className="flex h-full flex-col gap-3">
+                <span className={`flex h-11 w-11 items-center justify-center rounded-full ${tint} ${ink}`}>
+                  <Icon size={20} aria-hidden />
+                </span>
+                <div>
+                  <p className={`nc-eyebrow ${ink}`}>{eyebrow}</p>
+                  <h3 className="text-xl font-extrabold text-text-primary">{title}</h3>
+                </div>
+                <p className="flex-1 text-sm text-text-secondary">{text}</p>
+                <span className={`inline-flex items-center gap-1 text-sm font-semibold ${ink}`}>
+                  {cta}
+                  <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" aria-hidden />
+                </span>
+              </Card>
+            </Link>
+          ))}
         </section>
 
         {/* Sección de calendario de eventos */}

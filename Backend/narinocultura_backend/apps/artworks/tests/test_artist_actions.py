@@ -160,6 +160,13 @@ class ArtworkAIEnhanceTests(APITestCase):
         self.assertEqual(r.status_code, 400)
         self.assertIn("regenerate_description", r.data)
 
+    @patch("apps.artworks.views.AIService.enhance_artwork", side_effect=RuntimeError("IA no disponible"))
+    def test_service_runtime_error_becomes_400_with_detail(self, _enhance):
+        self.client.force_authenticate(user=self.owner)
+        r = self.client.post(self.url, {}, format="json")
+        self.assertEqual(r.status_code, 400)
+        self.assertEqual(r.data["detail"], "IA no disponible")
+
     def test_without_providers_rules_answer(self):
         # En test no hay llaves de IA: responden las reglas locales, sin error
         self.client.force_authenticate(user=self.owner)

@@ -38,22 +38,18 @@ export default function MusicDiscoveryPage() {
     : []
 
   return (
-    <div className="min-h-screen bg-bg pt-16">
+    <div className="min-h-screen pt-16">
       {/* Hero */}
-      <section className="relative overflow-hidden px-6 py-16 text-center" style={{ background: '#2D1B00' }}>
-        <div
-          className="pointer-events-none absolute -top-20 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full"
-          style={{ background: 'radial-gradient(ellipse, rgba(201,146,26,0.15) 0%, transparent 70%)' }}
-        />
+      <section className="relative overflow-hidden px-6 py-16 text-center">
         <div className="relative z-10 max-w-2xl mx-auto">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <Sparkles size={22} className="text-oro" />
-            <Badge variant="oro">Búsqueda con IA</Badge>
+            <Sparkles size={22} className="text-azul" />
+            <Badge variant="azul">Búsqueda con IA</Badge>
           </div>
-          <h1 className="font-display font-black text-oro-light text-[36px] md:text-[48px] leading-tight mb-3">
+          <h1 className="font-display font-extrabold text-text-primary text-[36px] md:text-[48px] leading-tight mb-3">
             Music Discovery
           </h1>
-          <p className="font-body text-[16px] mb-8" style={{ color: 'rgba(245,239,229,0.75)' }}>
+          <p className="font-body text-[16px] mb-8 text-text-secondary">
             Describe en lenguaje natural qué tipo de músico buscas.<br />
             Nuestra IA analiza tu búsqueda y encuentra los artistas más relevantes.
           </p>
@@ -68,11 +64,11 @@ export default function MusicDiscoveryPage() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                className="w-full rounded-input border border-oro/40 bg-white/10 pl-9 pr-4 py-3 font-body text-sm text-oro-light placeholder:text-oro-light/50 focus:outline-none focus:ring-2 focus:ring-oro/50"
+                className="w-full rounded-input border border-border-strong bg-bg-card pl-9 pr-4 py-3 font-body text-[15px] text-text-primary placeholder:text-text-muted focus:outline-none focus:border-azul focus:ring-2 focus:ring-azul/25"
               />
             </div>
             <Button
-              variant="gold"
+              variant="primary"
               onClick={() => handleSearch()}
               disabled={discoveryMutation.isPending || !query.trim()}
               className="gap-2 flex-none"
@@ -88,7 +84,7 @@ export default function MusicDiscoveryPage() {
               <button
                 key={ex}
                 onClick={() => handleSearch(ex)}
-                className="rounded-tag border border-oro/30 text-oro-light/70 hover:text-oro-light hover:border-oro/60 font-body text-[12px] px-3 py-1 transition-colors"
+                className="rounded-tag border border-border-strong text-text-secondary hover:text-azul hover:border-azul font-body text-[12px] px-3 py-1 transition-colors"
               >
                 {ex}
               </button>
@@ -101,7 +97,7 @@ export default function MusicDiscoveryPage() {
       <main className="mx-auto max-w-6xl px-6 py-10">
         {discoveryMutation.isPending && (
           <div className="flex items-center justify-center gap-3 py-16 text-text-muted">
-            <Sparkles size={20} className="animate-pulse text-oro" />
+            <Sparkles size={20} className="motion-safe:animate-pulse text-azul" />
             <p className="font-body">Analizando tu búsqueda con IA…</p>
           </div>
         )}
@@ -115,7 +111,7 @@ export default function MusicDiscoveryPage() {
                   Filtros detectados:
                 </span>
                 {filtersApplied.map(([key, value]) => (
-                  <Badge key={key} variant="indigo" className="text-[11px]">
+                  <Badge key={key} variant="azul" className="text-[11px]">
                     {key}: {String(value)}
                   </Badge>
                 ))}
@@ -137,19 +133,19 @@ export default function MusicDiscoveryPage() {
                     className="no-underline"
                   >
                     <Card className="p-5 hover:shadow-card transition-shadow cursor-pointer group">
-                      <div className="w-12 h-12 rounded-full bg-oro/20 flex items-center justify-center mb-3">
+                      <div className="w-12 h-12 rounded-full bg-azul-tint flex items-center justify-center mb-3">
                         {musician.profile_image_url ? (
                           <img src={musician.profile_image_url} alt="" className="w-12 h-12 rounded-full object-cover" />
                         ) : (
-                          <span className="font-display font-bold text-oro text-xl">
+                          <span className="font-display font-bold text-azul text-xl">
                             {musician.artistic_name.charAt(0)}
                           </span>
                         )}
                       </div>
-                      <h3 className="font-display font-bold text-text-primary text-[16px] mb-1 group-hover:text-oro transition-colors">
+                      <h3 className="font-display font-bold text-text-primary text-[16px] mb-1 group-hover:text-azul transition-colors">
                         {musician.artistic_name}
                       </h3>
-                      <Badge variant="indigo" className="text-[10px] mb-2">
+                      <Badge variant="azul" className="text-[10px] mb-2">
                         {AGGREGATION_TYPE_LABELS[musician.aggregation_type] ?? musician.aggregation_type}
                       </Badge>
                       {musician.city && (

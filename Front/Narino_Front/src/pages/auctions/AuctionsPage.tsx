@@ -30,8 +30,10 @@ export default function AuctionsPage() {
   const auctions = Array.isArray(data) ? data : (data?.results ?? [])
 
   return (
-    <div className="min-h-screen bg-bg pt-16">
+    <div className="min-h-screen pt-16">
       <PageShell
+        eyebrow="Subastas en vivo"
+        accent="oro"
         title="Subastas"
         subtitle="Compite en tiempo real por obras únicas de artistas nariñenses"
       />
@@ -78,10 +80,10 @@ export default function AuctionsPage() {
                     <Badge
                       variant={
                         auction.status === 'ACTIVA'
-                          ? 'selva'
+                          ? 'tomate'
                           : auction.status === 'CERRADA'
-                            ? 'indigo'
-                            : 'tierra'
+                            ? 'oro'
+                            : 'secondary'
                       }
                     >
                       {auction.status === 'ACTIVA'

@@ -1,286 +1,102 @@
-# Design System — Nariño Cultura
-
-## 📋 Introducción
-
-El Design System de Nariño Cultura proporciona una paleta de colores, tipografía y componentes consistentes para toda la aplicación.
-
-**Características:**
-- ✅ Modo claro y oscuro nativos
-- ✅ Variables CSS sincronizadas con Tailwind
-- ✅ Tipografía premium (Playfair Display, DM Sans, Cormorant Garamond)
-- ✅ Componentes reutilizables con variantes
-- ✅ Animaciones suaves (Framer Motion, Tailwind)
-- ✅ Accesibilidad WCAG AA
-
----
-
-## 🎨 Colores
-
-### Modo Claro (Predeterminado)
-
-```
---bg:               #F7F3EE   (Fondo principal — crema cálido)
---bg-card:          #FFFFFF   (Cards)
---bg-subtle:        #EDE8E1   (Inputs, hover suave)
---text-primary:     #1A1208   (Headings, nombres)
---text-secondary:   #5C4F3A   (Descripciones)
---text-muted:       #9C8E78   (Fechas, metadatos)
---border:           #DDD6CA   (Bordes)
-
--- TIERRA (primario)
---tierra:           #8B4513   (Botones, CTA)
---tierra-light:     #C1763A   (Hover botones)
---tierra-pale:      #F0DCC8   (Tags, hover superficial)
-
--- VOLCÁN (neutros profundos)
---volcan:           #2D1B00   (Header, navbar)
---volcan-mid:       #4A3320   (Secciones oscuras)
-
--- ORO ANDINO (acento premium)
---oro:              #C9921A   (Precios, subastas)
---oro-light:        #F0C060   (Texto sobre oscuro)
---oro-pale:         #FBF0D5   (Badges, alertas)
-
--- SELVA & ÍNDIGO (complementarios)
---selva:            #2E5E30   (Éxito, disponible)
---selva-light:      #5A9B5C   (Iconos éxito)
---selva-pale:       #D4EBD5
---indigo:           #3B3580   (Links, subastas)
---indigo-light:     #6B65C0   (Hover indigo)
---indigo-pale:      #E1E0F5
-
--- SEMÁNTICOS
---error:            #C0392B
---success:          #27AE60
-```
-
-### Modo Oscuro
-
-En modo oscuro, las variables se invierten automáticamente al agregar la clase `.dark` al elemento `<html>`.
-
-**Uso en componentes:**
-```tsx
-// Siempre usar variables CSS, NUNCA hardcodear colores
-<div className="bg-tierra text-text-primary">
-  Contenido
-</div>
-```
-
----
-
-## 🔤 Tipografía
-
-### Familias
-
-| Rol       | Fuente                | Uso |
-|-----------|----------------------|-----|
-| Display   | Playfair Display 900  | Títulos hero, H1 |
-| Heading   | Playfair Display 700  | H2, H3, nombres artistas |
-| Accent    | Cormorant Garamond 300 italic | Subtítulos, citas |
-| Body      | DM Sans 400/500       | Párrafos, texto UI |
-| Label     | DM Sans 600/700       | Botones, badges, precios |
-| Mono      | DM Sans               | Tags código, referencias |
-
-### Escala de Tamaños
-
-| Clase CSS    | Tamaño | Uso |
-|--------------|--------|-----|
-| `.text-display` | clamp(30px, 6vw, 50px) | Hero principal |
-| `.text-h1`     | clamp(26px, 5vw, 42px) | Títulos principales |
-| `.text-h2`     | 28px | Subtítulos secciones |
-| `.text-h3`     | 21px | Subheadings |
-| `.text-body`   | 15px | Párrafos, UI |
-| `.text-small`  | 13px | Descripciones cortas |
-| `.text-label`  | 11px | Badges, labels |
-| `.text-micro`  | 10px | Metadatos |
-| `.text-accent` | 18px italic | Subtítulos decorativos |
-
-**Uso en componentes:**
-```tsx
-<h1 className="text-h1 font-display text-text-primary">
-  Título Principal
-</h1>
-
-<p className="text-body font-body text-text-secondary">
-  Descripción del contenido...
-</p>
-
-<span className="text-accent text-text-muted">
-  "Tagline elegante"
-</span>
-```
-
----
-
-## 🛠️ Componentes Base
-
-### Button (3 variantes)
-
-```tsx
-// Primario (terra)
-<button className="bg-tierra text-white hover:bg-tierra-light rounded-btn">
-  Acción Principal
-</button>
-
-// Secundario (outline)
-<button className="bg-transparent border border-tierra text-tierra hover:bg-tierra-pale rounded-btn">
-  Acción Secundaria
-</button>
-
-// Gold (premium)
-<button className="bg-oro text-volcan hover:bg-oro-light font-semibold rounded-btn">
-  Precio / CTA Subasta
-</button>
-```
-
-**Estilos base aplicados automáticamente:**
-- Font: DM Sans 600, 13px
-- Padding: 9px 18px
-- Border-radius: 7px
-- Transición: 0.35s smooth
-- Hover: translateY(-1px)
-
-### Badge / Tag (4 variantes)
-
-```tsx
-<span className="bg-tierra-pale text-tierra rounded-tag px-2.5 py-0.5 text-xs font-semibold">
-  Tag Tierra
-</span>
-
-<span className="bg-oro-pale text-oro rounded-tag px-2.5 py-0.5 text-xs font-semibold">
-  Tag Oro
-</span>
-
-<span className="bg-selva-pale text-selva rounded-tag px-2.5 py-0.5 text-xs font-semibold">
-  Tag Selva (Disponible)
-</span>
-
-<span className="bg-indigo-pale text-indigo rounded-tag px-2.5 py-0.5 text-xs font-semibold">
-  Tag Indigo
-</span>
-```
-
-### Alert (3 variantes)
-
-```tsx
-<div className="bg-selva-pale text-selva border-l-4 border-selva p-3 rounded-lg">
-  ✓ Acción completada exitosamente
-</div>
-
-<div className="bg-oro-pale text-oro border-l-4 border-oro p-3 rounded-lg">
-  ⚠ Advertencia importante
-</div>
-
-<div className="bg-red-100 text-error border-l-4 border-error p-3 rounded-lg">
-  ✕ Ocurrió un error
-</div>
-```
-
-### Card
-
-```tsx
-<div className="bg-bg-card border border-border rounded-card p-5 hover:shadow-card transition-smooth hover:translate-y-[-4px]">
-  Contenido de card
-</div>
-```
-
-### Input
-
-```tsx
-<input
-  type="text"
-  className="w-full bg-bg-subtle border border-border text-text-primary placeholder:text-text-muted rounded-input px-3 py-2 focus:border-tierra focus:ring-2 focus:ring-tierra-pale transition-smooth"
-  placeholder="Ingresa texto..."
-/>
-```
-
----
-
-## 🌙 Dark Mode
-
-### Uso en componentes
-
-```tsx
-import { useTheme } from '@/hooks/useTheme'
-
-export function MyComponent() {
-  const { theme, toggle } = useTheme()
-
-  return (
-    <div className="bg-bg text-text-primary transition-smooth">
-      <button onClick={toggle}>
-        {theme === 'light' ? '🌙 Oscuro' : '☀️ Claro'}
-      </button>
-    </div>
-  )
-}
-```
-
-### Store de tema
-
-```tsx
-import { useThemeStore } from '@/store/themeStore'
-
-export function ThemeToggle() {
-  const { theme, toggle } = useThemeStore()
-
-  return (
-    <button onClick={toggle} aria-label="Cambiar tema">
-      {theme === 'light' ? '🌙' : '☀️'}
-    </button>
-  )
-}
-```
-
-La preferencia se guarda automáticamente en `localStorage` con clave `nc-theme-store`.
-
----
-
-## 📦 Constantes y Tokens
-
-Todos los tokens están centralizados en:
-```typescript
-import { DESIGN_TOKENS, COMPONENT_VARIANTS } from '@/constants/designTokens'
-
-console.log(DESIGN_TOKENS.colors.light.tierra)      // #8B4513
-console.log(DESIGN_TOKENS.typography.sizes.h1)      // clamp(26px, 5vw, 42px)
-console.log(COMPONENT_VARIANTS.button.primary)      // { bg, color, hover }
-```
-
----
-
-## ✅ Checklist de Implementación
-
-- [x] Variables CSS en `index.css` (luz + oscuro)
-- [x] Tailwind config extendido en `tailwind.config.ts`
-- [x] Google Fonts importadas
-- [x] Hook `useTheme` para toggle dark mode
-- [x] Store `useThemeStore` para estado global
-- [x] Clases de tipografía (`.text-h1`, `.text-body`, etc.)
-- [x] Constantes de tokens en `designTokens.ts`
-- [x] Estilos base y animaciones en `index.css`
-- [ ] Componentes UI (Button.tsx, Badge.tsx, etc.) — Paso 2
-- [ ] Navbar con toggle dark mode — Paso 3
-- [ ] Página perfil artista — Paso 4
-
----
-
-## 🎯 Reglas de Implementación
-
-1. **NUNCA hardcodear colores hex.** Usar siempre variables CSS.
-2. **Todos los componentes aceptan `className` prop** para extensión.
-3. **Tipografía:** Font-display solo en títulos; font-body en resto; font-accent solo en taglines.
-4. **Border-radius:** Cards 12-14px, botones 7px, tags 99px, inputs 8px, avatar 50%.
-5. **Sombras:** Cards en hover usan `shadow-card`.
-6. **Focus visible:** Outline 2px `--tierra`, offset 2px (WCAG AA).
-7. **Responsive:** sm:640px, md:768px, lg:1024px, xl:1280px.
-8. **Contraste mínimo:** 4.5:1 texto sobre fondo en ambos modos.
-
----
-
-## 🚀 Próximos Pasos
-
-- **Paso 2:** Crear componentes UI (Button.tsx, Badge.tsx, Alert.tsx, Card.tsx, Input.tsx)
-- **Paso 3:** Navbar.tsx y Footer.tsx
-- **Paso 4:** ArtistProfilePage.tsx con mockup completo
-
+# Design system "Carnaval" — Web
+
+La web usa el mismo design system que la app móvil ([`narino_mobile/docs/DISENO_CARNAVAL.md`](../../narino_mobile/docs/DISENO_CARNAVAL.md)):
+el fondo celebra la fiesta y la interfaz encima es limpia para que la obra sea protagonista.
+
+- Tokens: `src/index.css` (variables CSS en `:root` y `.dark`)
+- Clases de Tailwind: `tailwind.config.ts`
+- Componentes: `src/components/ui/` y `src/components/layout/`
+
+## Modo claro y oscuro
+
+Si la persona no eligió un modo, la web **sigue el del sistema**. El botón de la barra guarda su elección.
+`index.html` aplica el modo antes de dibujar, para que no haya destello al abrir en oscuro.
+
+| Rol | Oscuro (noche de carnaval) | Claro (día de desfile) | Clase |
+|---|---|---|---|
+| Fondo | `#050505` | `#F5F5F7` | `bg-bg` (solo el `body`; las páginas no lo repiten para que se vean los orbes) |
+| Tarjeta | `#121214` | `#FFFFFF` | `bg-bg-card` |
+| Superficie suave | `#1C1C1F` | `#EBEBF0` | `bg-bg-subtle` |
+| Texto | `#F5F5F7` / `#86868B` / `#7C7C82` | `#1D1D1F` / `#6E6E73` / `#74747A` | `text-text-primary` / `-secondary` / `-muted` |
+| Borde | blanco 8 % | negro 8 % | `border-border` (también el `border` sin color) |
+| Borde de campos | blanco 16 % | negro 16 % | `border-border-strong` |
+
+## Acentos: cuatro usos por color
+
+Los neón puros no se leen como texto sobre fondo claro. Por eso cada acento tiene una **tinta**, que en claro es más oscura y
+pasa el contraste AA.
+
+| Acento | Tinta (texto) | Relleno | Texto sobre el relleno | Tinte (fondo suave) |
+|---|---|---|---|---|
+| Azul (acción) | `text-azul` | `bg-azul-fill` | `text-on-azul` | `bg-azul-tint` |
+| Tomate | `text-tomate` | `bg-tomate-fill` | `text-on-tomate` | `bg-tomate-tint` |
+| Naranja | `text-naranja` | `bg-naranja-fill` | `text-on-naranja` | `bg-naranja-tint` |
+| Oro | `text-oro` | `bg-oro-fill` | `text-on-oro` | `bg-oro-tint` |
+| Magenta | `text-magenta` | `bg-magenta-fill` | `text-on-magenta` | `bg-magenta-tint` |
+| Verde | `text-verde` | `bg-verde-fill` | `text-on-verde` | `bg-verde-tint` |
+
+**Reglas**
+- Texto de color: siempre la tinta (`text-x`). Nunca `text-x-fill`.
+- Botón, chip activo o insignia sólida: `bg-x-fill` con `text-on-x`. **Nunca `text-white` fijo**: en oscuro el azul es
+  cian y necesita letras negras.
+- Fondo de estado o selección: `bg-x-tint` con borde `border-x/40`.
+- Nada de colores sueltos (`#…`, `amber-*`, `gray-*`, `text-white`). La excepción son los colores de marca de las redes
+  sociales al pasar el mouse.
+
+**Alias anteriores.** Siguen funcionando para no romper pantallas, pero en código nuevo hay que usar los nombres nuevos.
+
+| Alias | Equivale a |
+|---|---|
+| `tierra`, `tierra-pale`, `on-tierra` | `azul`, `azul-tint`, `on-azul` |
+| `selva`, `selva-pale` | `verde`, `verde-tint` |
+| `indigo`, `indigo-pale` | `magenta`, `magenta-tint` |
+| `oro-pale` | `oro-tint` |
+| `error`, `success` | `tomate`, `verde` |
+
+## Color por sección
+
+| Sección | Acento |
+|---|---|
+| Acción principal (todas) | **Azul** |
+| Catálogo / artes plásticas | Magenta |
+| Tienda / artesanos | Naranja |
+| Subastas | Oro, y tomate para "en vivo" |
+| Eventos / agenda | Tomate |
+| Música | Azul |
+| Estados | Verde éxito · tomate error · oro aviso |
+
+Aplicado en la web:
+
+- Precios en **naranja** en toda la web, como en la app.
+- Cada página lleva su etiqueta de sección con `PageShell` y los títulos cambian al color de la sección al pasar el mouse.
+- Estados de obra: «en subasta» en oro y «vendida» en neutro. Subasta «en curso» en tomate, con el punto en vivo.
+- La hora de los eventos va en naranja.
+- El inicio muestra las cuatro secciones con su color.
+
+`PageShell` acepta `eyebrow` y `accent`: `<PageShell eyebrow="Artes plásticas" accent="magenta" title="Catálogo de Obras" />`.
+`ArtworkImage` usa el tinte de la sección cuando la obra no tiene foto.
+
+## Forma y tipografía
+
+- Fuente **Inter** (300–800). Los títulos van en `font-extrabold` con espaciado −0.02em.
+- Tarjetas: `rounded-card` (22 px). En oscuro, `Card` lleva borde degradado azul → naranja (clase `nc-card`).
+- Botones: píldora (`rounded-btn`) de 44 px (`h-11`) y 36 px (`sm`), con reacción al toque (`active:scale-[0.96]`,
+  `ease-spring`).
+- Campos: `rounded-input` (14 px), fondo de tarjeta, `border-border-strong`, foco azul.
+
+## Utilidades (`index.css`)
+
+| Clase | Uso |
+|---|---|
+| `nc-card` | Borde degradado de tarjeta en oscuro |
+| `nc-glass` | Barra y pie de vidrio (`backdrop-filter`) |
+| `nc-eyebrow` | Etiqueta de sección en mayúsculas sobre los títulos |
+| `nc-serpentina` | Franja tomate → naranja → oro → magenta → azul. **Nunca detrás de texto** |
+| `nc-fiesta` | Degradado tomate → magenta para héroes con texto blanco grande |
+| `nc-brand` | Degradado naranja → magenta del logo |
+
+El fondo de orbes vive en `body::before`: va al 45 % en oscuro y al 28 % en claro. No se anima.
+
+## Revisión visual
+
+Antes de dar por terminada una pantalla, revisarla en claro y en oscuro, en escritorio (1280 px) y en celular (390 px).

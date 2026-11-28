@@ -48,7 +48,7 @@ function StatCard({
       <CardContent className="flex h-full flex-col justify-between gap-3 p-5">
         <div className="flex items-center justify-between">
           <div className={`flex h-11 w-11 flex-none items-center justify-center rounded-xl ${color}`}>
-            <Icon size={20} className="text-white" />
+            <Icon size={20} />
           </div>
           {href && <ArrowRight size={15} className="text-text-secondary" />}
         </div>
@@ -113,7 +113,7 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-bg pt-16">
+    <div className="min-h-screen pt-16">
       <main className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-6 py-8 md:px-10">
 
         {/* Header */}
@@ -146,21 +146,21 @@ export default function AdminDashboardPage() {
             label="Usuarios totales"
             value={m?.total_users ?? '—'}
             href="/admin/users"
-            color="bg-indigo-500"
+            color="bg-azul-tint text-azul"
           />
           <StatCard
             icon={Image}
             label="Obras publicadas"
             value={m?.total_artworks ?? '—'}
             href="/admin/artworks"
-            color="bg-tierra"
+            color="bg-magenta-tint text-magenta"
           />
           <StatCard
             icon={ShoppingBag}
             label="Transacciones"
             value={m?.total_transactions ?? '—'}
             href="/admin/transactions"
-            color="bg-selva"
+            color="bg-naranja-tint text-naranja"
           />
           <StatCard
             icon={TrendingUp}
@@ -170,13 +170,13 @@ export default function AdminDashboardPage() {
                 ? formatCurrency(Number(m.revenue_last_30_days))
                 : '—'
             }
-            color="bg-emerald-600"
+            color="bg-verde-tint text-verde"
           />
           <StatCard
             icon={Gavel}
             label="Nuevos usuarios (30d)"
             value={m?.new_users_last_30_days ?? '—'}
-            color="bg-oro"
+            color="bg-oro-tint text-oro"
           />
         </section>
 
@@ -187,10 +187,10 @@ export default function AdminDashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
-                <AlertCircle size={18} className="text-amber-500" />
+                <AlertCircle size={18} className="text-oro" />
                 Pendientes de aprobación
                 {totalPending > 0 && (
-                  <span className="ml-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white">
+                  <span className="ml-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-oro-fill px-1.5 text-[10px] font-bold text-on-oro">
                     {totalPending}
                   </span>
                 )}
@@ -202,9 +202,9 @@ export default function AdminDashboardPage() {
               <div>
                 <div className="mb-2 flex items-center justify-between">
                   <p className="text-sm font-semibold text-text-primary flex items-center gap-1.5">
-                    <CalendarClock size={14} className="text-amber-500" />
+                    <CalendarClock size={14} className="text-oro" />
                     Eventos por aprobar
-                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+                    <span className="rounded-full bg-oro-tint px-2 py-0.5 text-[11px] font-bold text-oro">
                       {pendingEvents.length}
                     </span>
                   </p>
@@ -258,7 +258,7 @@ export default function AdminDashboardPage() {
                   <p className="text-sm font-semibold text-text-primary flex items-center gap-1.5">
                     <Image size={14} className="text-tierra" />
                     Obras por moderar
-                    <span className="rounded-full bg-orange-100 px-2 py-0.5 text-[11px] font-bold text-orange-700 dark:bg-orange-950 dark:text-orange-300">
+                    <span className="rounded-full bg-naranja-tint px-2 py-0.5 text-[11px] font-bold text-naranja">
                       {pendingArtworks.length}
                     </span>
                   </p>
@@ -313,7 +313,7 @@ export default function AdminDashboardPage() {
                 {[
                   { to: '/admin/users', icon: Users, label: 'Gestionar usuarios', color: 'text-indigo-500' },
                   { to: '/admin/artworks', icon: Image, label: 'Moderar obras', color: 'text-tierra', badge: pendingArtworks.length },
-                  { to: '/admin/events', icon: CalendarClock, label: 'Aprobar eventos', color: 'text-amber-500', badge: pendingEvents.length },
+                  { to: '/admin/events', icon: CalendarClock, label: 'Aprobar eventos', color: 'text-oro', badge: pendingEvents.length },
                   { to: '/admin/transactions', icon: Receipt, label: 'Ver transacciones', color: 'text-selva' },
                 ].map(({ to, icon: Icon, label, color, badge }) => (
                   <Link
@@ -324,7 +324,7 @@ export default function AdminDashboardPage() {
                     <Icon size={16} className={color} />
                     <span className="flex-1 text-sm font-medium text-text-primary">{label}</span>
                     {badge ? (
-                      <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-bold text-white">
+                      <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-oro-fill px-1 text-[10px] font-bold text-on-oro">
                         {badge}
                       </span>
                     ) : (
@@ -348,7 +348,7 @@ export default function AdminDashboardPage() {
                 ].map(({ label, ok }) => (
                   <div key={label} className="flex items-center justify-between text-sm">
                     <span className="text-text-secondary">{label}</span>
-                    <span className={`flex items-center gap-1 text-xs font-medium ${ok ? 'text-emerald-600' : 'text-error'}`}>
+                    <span className={`flex items-center gap-1 text-xs font-medium ${ok ? 'text-verde' : 'text-error'}`}>
                       <CheckCircle2 size={12} />
                       {ok ? 'Operativo' : 'Error'}
                     </span>

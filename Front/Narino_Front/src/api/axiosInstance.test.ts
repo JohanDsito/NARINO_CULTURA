@@ -141,4 +141,58 @@ describe('axiosInstance', () => {
 
     expect(localStorage.getItem('refresh_token')).toBeNull()
   })
+
+  it('guarda el refresh rotado en localStorage y en el store', async () => {
+    await import('./axiosInstance')
+    const { useAuthStore } = await import('@/store/authStore')
+    const handler = mockResponseUse.mock.calls[0][1] as (e: unknown) => Promise<unknown>
+    localStorage.setItem('refresh_token', 'refresh-viejo')
+    mockAxiosPost.mockResolvedValueOnce({ data: { access: 'a2', refresh: 'refresh-nuevo' } })
+    mockAxiosInstance.mockResolvedValueOnce({ data: 'ok' })
+
+    await handler({ config: { headers: {}, _retry: false }, response: { status: 401 } })
+
+    expect(localStorage.getItem('refresh_token')).toBe('refresh-nuevo')
+    expect(useAuthStore.getState().refreshToken).toBe('refresh-nuevo')
+    expect(useAuthStore.getState().accessToken).toBe('a2')
+  })
+
+  it('dos 401 simultáneos hacen una sola renovación y ambos reintentan', async () => {
+    await import('./axiosInstance')
+    const handler = mockResponseUse.mock.calls[0][1] as (e: unknown) => Promise<unknown>
+    localStorage.setItem('refresh_token', 'r1')
+    let resolvePost!: (v: unknown) => void
+    mockAxiosPost.mockReturnValueOnce(new Promise((res) => { resolvePost = res }))
+    mockAxiosInstance.mockResolvedValue({ data: 'ok' })
+    const reqA = { headers: {} as Record<string, string>, _retry: false }
+    const reqB = { headers: {} as Record<string, string>, _retry: false }
+
+    const pA = handler({ config: reqA, response: { status: 401 } })
+    const pB = handler({ config: reqB, response: { status: 401 } })
+    resolvePost({ data: { access: 'a2', refresh: 'r2' } })
+    await Promise.all([pA, pB])
+
+    expect(mockAxiosPost).toHaveBeenCalledTimes(1)
+    expect(reqA.headers.Authorization).toBe('Bearer a2')
+    expect(reqB.headers.Authorization).toBe('Bearer a2')
+    expect(mockAxiosInstance).toHaveBeenCalledTimes(2)
+  })
+
+  it('si la renovación falla cierra la sesión y rechaza ambas peticiones', async () => {
+    await import('./axiosInstance')
+    const handler = mockResponseUse.mock.calls[0][1] as (e: unknown) => Promise<unknown>
+    localStorage.setItem('access_token', 'a')
+    localStorage.setItem('refresh_token', 'r1')
+    mockAxiosPost.mockRejectedValueOnce(new Error('400'))
+
+    const results = await Promise.allSettled([
+      handler({ config: { headers: {}, _retry: false }, response: { status: 401 } }),
+      handler({ config: { headers: {}, _retry: false }, response: { status: 401 } }),
+    ])
+
+    expect(results.every((r) => r.status === 'rejected')).toBe(true)
+    expect(mockAxiosPost).toHaveBeenCalledTimes(1)
+    expect(localStorage.getItem('refresh_token')).toBeNull()
+    expect(localStorage.getItem('access_token')).toBeNull()
+  })
 })

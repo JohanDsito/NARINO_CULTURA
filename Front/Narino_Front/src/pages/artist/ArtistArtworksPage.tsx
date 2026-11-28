@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { deleteArtwork, getArtworks } from '@/api/artworks.api'
 import { getMyArtistProfile } from '@/api/artists.api'
 import { Badge } from '@/components/ui/badge'
+import { ArtworkImage } from '@/components/artworks/artwork-image'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { ROUTES } from '@/constants/routes'
@@ -29,20 +30,9 @@ function ArtworkCard({
   return (
     <Card className="overflow-hidden">
       <div className="relative aspect-[4/3] bg-bg-subtle">
-        {image ? (
-          <img
-            src={image}
-            alt={artwork.title}
-            className="h-full w-full object-cover"
-            loading="lazy"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-text-secondary">
-            <ImageIcon size={36} />
-          </div>
-        )}
+        <ArtworkImage src={image} alt={artwork.title} accent="magenta" />
         <div className="absolute left-3 top-3">
-          <Badge variant="tierra">{categoryName}</Badge>
+          <Badge variant="magenta">{categoryName}</Badge>
         </div>
         <div className="absolute right-3 top-3">
           <Badge variant={artworkStatus(artwork.status).variant}>
@@ -62,7 +52,7 @@ function ArtworkCard({
         </div>
 
         <div className="flex items-center justify-between gap-3">
-          <p className="text-sm font-semibold text-tierra">{formatCurrency(artwork.price, 'Sin precio')}</p>
+          <p className="text-sm font-semibold text-naranja">{formatCurrency(artwork.price, 'Sin precio')}</p>
           <p className="text-xs text-text-secondary">{artwork.technique || 'Sin técnica'}</p>
         </div>
 
@@ -133,7 +123,7 @@ export default function ArtistArtworksPage() {
   const isLoading = artworksQuery.isLoading || profilesQuery.isLoading
 
   return (
-    <div className="min-h-screen bg-bg pt-16">
+    <div className="min-h-screen pt-16">
       <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-8 md:px-10">
         <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -187,7 +177,7 @@ export default function ArtistArtworksPage() {
         {!isLoading && !artworksQuery.isError && artworks.length === 0 && (
           <Card>
             <CardContent className="flex flex-col items-start gap-4 p-6">
-              <div className="rounded-full bg-tierra-pale p-3 text-tierra">
+              <div className="rounded-full bg-magenta-tint p-3 text-magenta">
                 <ImageIcon size={22} />
               </div>
               <div>

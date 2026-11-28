@@ -15,8 +15,8 @@ export default function FavoritesPage() {
   const saved = favorites.filter((f) => !f.id.startsWith('pendiente-'))
 
   return (
-    <div className="min-h-screen bg-bg pt-16">
-      <PageShell title="Mis favoritos" subtitle="Las obras que guardaste para ver después" />
+    <div className="min-h-screen pt-16">
+      <PageShell eyebrow="Tu colección" accent="magenta" title="Mis favoritos" subtitle="Las obras que guardaste para ver después" />
 
       <main className="mx-auto max-w-6xl px-6 py-8">
         {isLoading ? (
@@ -74,7 +74,7 @@ export default function FavoritesPage() {
                 <div className="flex flex-1 flex-col gap-1 p-4">
                   <Link
                     to={ROUTES.ARTWORK_DETAIL(favorite.artwork_id)}
-                    className="font-display text-[17px] font-bold text-text-primary no-underline hover:text-oro"
+                    className="font-display text-[17px] font-bold text-text-primary no-underline hover:text-magenta"
                   >
                     {favorite.title}
                   </Link>

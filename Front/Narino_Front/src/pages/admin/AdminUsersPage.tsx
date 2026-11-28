@@ -1,87 +1,150 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Search, Trash2, Users } from 'lucide-react'
+import { Users } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { deleteAdminUser, listAdminUsers } from '@/api/admin.api'
-import { Badge, type BadgeVariant } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import {
+  deleteAdminUser,
+  listAdminUsers,
+  updateAdminUser,
+  type AdminUserListItem,
+} from '@/api/admin.api'
+import { AdminUserFilters, type StatusFilter } from '@/components/admin/admin-user-filters'
+import { AdminUserRow } from '@/components/admin/admin-user-row'
 import { PageShell } from '@/components/layout/page-shell'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { ROLE_LABELS } from '@/constants/labels'
+import { useAuthStore } from '@/store/authStore'
+import type { UserRole } from '@/types'
+import { getApiErrorMessage } from '@/utils/apiError'
 
-const ROLE_COLORS: Record<string, BadgeVariant> = {
-  artist: 'indigo',
-  buyer: 'secondary',
-  cultural_manager: 'selva',
-  admin: 'tierra',
+type PendingChange =
+  | { kind: 'role'; user: AdminUserListItem; role: UserRole }
+  | { kind: 'active'; user: AdminUserListItem; active: boolean }
+
+function userName(user: AdminUserListItem) {
+  return `${user.first_name} ${user.last_name}`.trim() || user.email
 }
 
 export default function AdminUsersPage() {
   const queryClient = useQueryClient()
+  const currentUserId = useAuthStore((s) => s.user?.id)
   const [search, setSearch] = useState('')
+  const [role, setRole] = useState<UserRole | ''>('')
+  const [status, setStatus] = useState<StatusFilter>('all')
+  const [pending, setPending] = useState<PendingChange | null>(null)
+
+  const filters = {
+    role: role || undefined,
+    is_active: status === 'all' ? undefined : status === 'active',
+  }
 
   const { data: users = [], isLoading, isError } = useQuery({
-    queryKey: ['admin-users'],
-    queryFn: () => listAdminUsers(),
+    queryKey: ['admin-users', filters],
+    queryFn: () => listAdminUsers(filters),
     staleTime: 30_000,
     refetchInterval: 30_000,
     retry: 1,
   })
 
+  const refresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: ['admin-users'] })
+    await queryClient.invalidateQueries({ queryKey: ['admin-metrics'] })
+  }
+
   const deleteMutation = useMutation({
     mutationFn: deleteAdminUser,
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['admin-users'] })
-      await queryClient.invalidateQueries({ queryKey: ['admin-metrics'] })
+      await refresh()
       toast.success('Usuario eliminado.')
     },
-    onError: () => toast.error('No se pudo eliminar el usuario.'),
+    // 409 (`user_has_sales`): el mensaje del backend sugiere suspenderlo
+    onError: (error) => toast.error(getApiErrorMessage(error)),
   })
 
-  const handleDelete = (id: string, email: string) => {
+  const updateMutation = useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: { role?: UserRole; is_active?: boolean } }) =>
+      updateAdminUser(id, payload),
+    onSuccess: async (_data, { payload }) => {
+      await refresh()
+      toast.success(
+        payload.role
+          ? 'Rol actualizado.'
+          : payload.is_active
+            ? 'Cuenta restaurada.'
+            : 'Cuenta suspendida.',
+      )
+    },
+    onError: (error) => toast.error(getApiErrorMessage(error)),
+    onSettled: () => setPending(null),
+  })
+
+  const askRoleChange = (user: AdminUserListItem, next: UserRole) => {
+    // Un admin no puede quitarse su propio rol (el backend no lo impide, se valida aquí)
+    if (user.id === currentUserId) {
+      toast.error('No puedes cambiar tu propio rol de administrador.')
+      return
+    }
+    if (next !== user.role) setPending({ kind: 'role', user, role: next })
+  }
+
+  const askToggleActive = (user: AdminUserListItem) => {
+    if (user.id === currentUserId) {
+      toast.error('No puedes suspender tu propia cuenta.')
+      return
+    }
+    setPending({ kind: 'active', user, active: !user.is_active })
+  }
+
+  const handleDelete = (user: AdminUserListItem) => {
     if (
       !window.confirm(
-        `¿Eliminar permanentemente a "${email}"?\nEsta acción borrará su perfil y no se puede deshacer.`,
+        `¿Eliminar permanentemente a "${user.email}"?\nEsta acción borrará su perfil y no se puede deshacer.`,
       )
     )
       return
-    deleteMutation.mutate(id)
+    deleteMutation.mutate(user.id)
   }
 
+  const confirmPending = () => {
+    if (!pending) return
+    updateMutation.mutate({
+      id: pending.user.id,
+      payload: pending.kind === 'role' ? { role: pending.role } : { is_active: pending.active },
+    })
+  }
+
+  const term = search.trim().toLowerCase()
   const filtered = users.filter(
     (u) =>
-      !search ||
-      u.email.toLowerCase().includes(search.toLowerCase()) ||
-      `${u.first_name} ${u.last_name}`.toLowerCase().includes(search.toLowerCase()),
+      !term ||
+      u.email.toLowerCase().includes(term) ||
+      `${u.first_name} ${u.last_name}`.toLowerCase().includes(term),
   )
+  const hasFilters = Boolean(term || role || status !== 'all')
+  const busy = updateMutation.isPending || deleteMutation.isPending
 
   return (
-    <div className="min-h-screen bg-bg pt-16">
+    <div className="min-h-screen pt-16">
       <PageShell
         title="Gestión de Usuarios"
-        subtitle={`${users.length} usuario${users.length === 1 ? '' : 's'} registrado${users.length === 1 ? '' : 's'}`}
+        subtitle={`${filtered.length} usuario${filtered.length === 1 ? '' : 's'} ${hasFilters ? 'encontrado' : 'registrado'}${filtered.length === 1 ? '' : 's'}`}
       />
 
       <main className="mx-auto max-w-6xl px-6 py-8">
-        {/* Search */}
-        <div className="relative mb-6 max-w-sm">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
-          <Input
-            placeholder="Buscar por nombre o email…"
-            className="pl-9"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
+        <AdminUserFilters
+          search={search}
+          role={role}
+          status={status}
+          onSearchChange={setSearch}
+          onRoleChange={setRole}
+          onStatusChange={setStatus}
+        />
 
         {isLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div
-                key={i}
-                className="h-14 animate-pulse rounded-lg border border-border bg-bg-subtle"
-              />
+              <div key={i} className="h-14 animate-pulse rounded-lg border border-border bg-bg-subtle" />
             ))}
           </div>
         ) : isError ? (
@@ -91,7 +154,9 @@ export default function AdminUsersPage() {
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-24 text-text-secondary">
             <Users size={40} className="opacity-30" />
-            <p className="text-sm">{search ? 'Sin resultados para tu búsqueda.' : 'No hay usuarios registrados.'}</p>
+            <p className="text-sm">
+              {hasFilters ? 'Sin resultados para tu búsqueda.' : 'No hay usuarios registrados.'}
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto rounded-xl border border-border">
@@ -110,50 +175,62 @@ export default function AdminUsersPage() {
               </thead>
               <tbody className="divide-y divide-border">
                 {filtered.map((user) => (
-                  <tr key={user.id} className="transition-colors hover:bg-bg-subtle/30">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-tierra/10 text-sm font-bold text-tierra">
-                          {(user.first_name || user.email).charAt(0).toUpperCase()}
-                        </div>
-                        <span className="text-sm font-medium text-text-primary">
-                          {user.first_name} {user.last_name}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-text-secondary">{user.email}</td>
-                    <td className="px-4 py-3">
-                      <Badge
-                        variant={ROLE_COLORS[user.role] ?? 'secondary'}
-                        className="text-[11px]"
-                      >
-                        {ROLE_LABELS[user.role] ?? user.role}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-text-secondary">
-                      {!user.is_active ? 'Inactivo' : user.is_verified ? 'Verificado' : 'Sin verificar'}
-                    </td>
-                    <td className="px-4 py-3">
-                      {user.role !== 'admin' && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="gap-1.5 text-error hover:bg-error/10 hover:text-error"
-                          onClick={() => handleDelete(user.id, user.email)}
-                          disabled={deleteMutation.isPending}
-                        >
-                          <Trash2 size={13} />
-                          Eliminar
-                        </Button>
-                      )}
-                    </td>
-                  </tr>
+                  <AdminUserRow
+                    key={user.id}
+                    user={user}
+                    isSelf={user.id === currentUserId}
+                    busy={busy}
+                    onRoleChange={askRoleChange}
+                    onToggleActive={askToggleActive}
+                    onDelete={handleDelete}
+                  />
                 ))}
               </tbody>
             </table>
           </div>
         )}
       </main>
+
+      <ConfirmDialog
+        open={pending !== null}
+        title={
+          pending?.kind === 'role'
+            ? 'Cambiar rol'
+            : pending?.kind === 'active' && !pending.active
+              ? 'Suspender cuenta'
+              : 'Restaurar cuenta'
+        }
+        description={
+          pending?.kind === 'role' ? (
+            <p>
+              ¿Cambiar el rol de <strong>{userName(pending.user)}</strong> de {ROLE_LABELS[pending.user.role]} a{' '}
+              <strong>{ROLE_LABELS[pending.role]}</strong>? Sus permisos cambiarán de inmediato.
+            </p>
+          ) : pending?.kind === 'active' && !pending.active ? (
+            <p>
+              ¿Suspender la cuenta de <strong>{userName(pending.user)}</strong>? No podrá iniciar sesión hasta que
+              la restaures. Sus datos y compras se conservan.
+            </p>
+          ) : pending ? (
+            <p>
+              ¿Restaurar la cuenta de <strong>{userName(pending.user)}</strong>? Podrá volver a iniciar sesión.
+            </p>
+          ) : undefined
+        }
+        confirmLabel={
+          updateMutation.isPending
+            ? 'Guardando…'
+            : pending?.kind === 'role'
+              ? 'Cambiar rol'
+              : pending?.kind === 'active' && !pending.active
+                ? 'Suspender'
+                : 'Restaurar'
+        }
+        tone={pending?.kind === 'active' && !pending.active ? 'danger' : 'primary'}
+        isPending={updateMutation.isPending}
+        onConfirm={confirmPending}
+        onCancel={() => setPending(null)}
+      />
     </div>
   )
 }

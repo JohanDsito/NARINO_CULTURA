@@ -80,7 +80,7 @@ export default function AuctionRoomPage() {
 
   if (isError || !auction) {
     return (
-      <div className="min-h-screen bg-bg pt-24 flex flex-col items-center gap-4">
+      <div className="min-h-screen pt-24 flex flex-col items-center gap-4">
         <p className="text-text-muted font-body">No se encontró esta subasta.</p>
         <Link to={ROUTES.AUCTIONS} className="text-oro hover:underline font-body text-sm">
           ← Volver a subastas
@@ -93,7 +93,7 @@ export default function AuctionRoomPage() {
   const isActive = auction.status === 'ACTIVA'
 
   return (
-    <div className="min-h-screen bg-bg pt-16">
+    <div className="min-h-screen pt-16">
       <div className="mx-auto max-w-5xl px-6 py-8">
         {/* Breadcrumb */}
         <Link
@@ -105,12 +105,12 @@ export default function AuctionRoomPage() {
 
         {/* Header */}
         <div className="flex flex-wrap items-center gap-3 mb-6">
-          <Badge variant={isActive ? 'selva' : 'indigo'}>
+          <Badge variant={isActive ? 'tomate' : 'oro'}>
             {isActive ? 'En curso' : auction.status === 'CERRADA' ? 'Finalizada' : 'Cancelada'}
           </Badge>
           {wsConnected && isActive && (
-            <span className="flex items-center gap-1.5 font-body text-[12px] text-selva">
-              <span className="w-2 h-2 rounded-full bg-selva animate-pulse" />
+            <span className="flex items-center gap-1.5 font-body text-[12px] font-semibold text-tomate">
+              <span className="w-2 h-2 rounded-full bg-tomate-fill motion-safe:animate-pulse" />
               En tiempo real
             </span>
           )}
@@ -142,7 +142,7 @@ export default function AuctionRoomPage() {
                 <p className="font-body text-text-muted text-sm">
                   Mínimo: {formatCurrency(minBid)}
                 </p>
-                <div className="flex gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row">
                   <input
                     type="number"
                     min={minBid}
@@ -150,10 +150,10 @@ export default function AuctionRoomPage() {
                     value={bidAmount}
                     onChange={(e) => setBidAmount(e.target.value)}
                     placeholder={`Ej: ${formatCurrency(minBid + 50000)}`}
-                    className="flex-1 rounded-input border border-border bg-bg px-4 py-2.5 font-body text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-oro/50"
+                    className="min-w-0 flex-1 rounded-input border border-border-strong bg-bg-card px-4 py-2.5 font-body text-[15px] text-text-primary placeholder:text-text-muted focus:outline-none focus:border-azul focus:ring-2 focus:ring-azul/25"
                   />
                   <Button
-                    variant="gold"
+                    variant="primary"
                     onClick={() => bidMutation.mutate()}
                     disabled={
                       bidMutation.isPending ||

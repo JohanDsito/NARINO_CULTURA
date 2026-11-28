@@ -8,7 +8,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import timezone
 from PIL import Image
 from rest_framework.test import APITestCase
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 
 from apps.marketplace.models import Order, OrderItem
 from apps.users.models import EmailVerification, PasswordReset, User
@@ -85,11 +85,63 @@ class ResendVerificationFailureTests(APITestCase):
 class TokenRefreshTests(APITestCase):
     URL = "/api/v1/auth/token/refresh/"
 
-    def test_valid_refresh_returns_new_access(self):
+    def test_valid_refresh_returns_new_access_and_rotated_refresh(self):
         refresh = RefreshToken.for_user(UserFactory())
         r = self.client.post(self.URL, {"refresh": str(refresh)}, format="json")
         self.assertEqual(r.status_code, 200)
         self.assertIn("access", r.data)
+        self.assertTrue(r.data["refresh"])
+        self.assertNotEqual(r.data["refresh"], str(refresh))
+
+    def test_rotated_refresh_blacklists_old_and_new_one_works(self):
+        old = str(RefreshToken.for_user(UserFactory()))
+        first = self.client.post(self.URL, {"refresh": old}, format="json")
+        self.assertEqual(first.status_code, 200)
+        reuse = self.client.post(self.URL, {"refresh": old}, format="json")
+        self.assertEqual(reuse.status_code, 400)
+        self.assertEqual(reuse.data["detail"], "Refresh token invalido.")
+        second = self.client.post(self.URL, {"refresh": first.data["refresh"]}, format="json")
+        self.assertEqual(second.status_code, 200)
+        self.assertNotEqual(second.data["refresh"], first.data["refresh"])
+
+    def test_inactive_user_cannot_refresh(self):
+        user = UserFactory()
+        refresh = str(RefreshToken.for_user(user))
+        User.objects.filter(pk=user.pk).update(is_active=False)
+        r = self.client.post(self.URL, {"refresh": refresh}, format="json")
+        self.assertEqual(r.status_code, 400)
+        self.assertEqual(r.data["detail"], "Refresh token invalido.")
+
+    def test_deleted_user_cannot_refresh(self):
+        user = UserFactory()
+        refresh = str(RefreshToken.for_user(user))
+        User.objects.filter(pk=user.pk).delete()
+        r = self.client.post(self.URL, {"refresh": refresh}, format="json")
+        self.assertEqual(r.status_code, 400)
+        self.assertEqual(r.data["detail"], "Refresh token invalido.")
+
+    def test_rotation_keeps_role_claim_in_access_and_refresh(self):
+        from apps.users.token_serializers import CustomRefreshToken
+
+        user = UserFactory()
+        r = self.client.post(self.URL, {"refresh": str(CustomRefreshToken.for_user(user))}, format="json")
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(AccessToken(r.data["access"])["role"], user.role)
+        rotated = RefreshToken(r.data["refresh"])
+        self.assertEqual(rotated["role"], user.role)
+        self.assertEqual(rotated["user_id"], str(user.pk))
+
+    def test_concurrent_reuse_only_first_rotates(self):
+        """Simula la carrera: la 2.ª petición pasó check_blacklist antes de que la 1.ª
+        escribiera en la lista negra; aun así no debe obtener un refresh nuevo."""
+        old = str(RefreshToken.for_user(UserFactory()))
+        with patch.object(RefreshToken, "check_blacklist", lambda self: None):
+            first = self.client.post(self.URL, {"refresh": old}, format="json")
+            second = self.client.post(self.URL, {"refresh": old}, format="json")
+        self.assertEqual(first.status_code, 200)
+        self.assertEqual(second.status_code, 400)
+        self.assertEqual(second.data["detail"], "Refresh token invalido.")
+        self.assertNotIn("refresh", second.data)
 
     def test_missing_refresh_returns_400(self):
         r = self.client.post(self.URL, {}, format="json")
@@ -100,6 +152,15 @@ class TokenRefreshTests(APITestCase):
         r = self.client.post(self.URL, {"refresh": "basura"}, format="json")
         self.assertEqual(r.status_code, 400)
         self.assertEqual(r.data["detail"], "Refresh token invalido.")
+
+
+class RoleClaimTokenTests(APITestCase):
+    def test_custom_serializer_and_refresh_token_include_role_claim(self):
+        from apps.users.token_serializers import CustomRefreshToken, CustomTokenObtainPairSerializer
+
+        user = UserFactory()
+        self.assertEqual(CustomTokenObtainPairSerializer.get_token(user)["role"], user.role)
+        self.assertEqual(CustomRefreshToken.for_user(user)["role"], user.role)
 
 
 class LogoutTests(APITestCase):

@@ -9,6 +9,7 @@ import { getArtworks } from '@/api/artworks.api'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
+import { ArtworkImage } from '@/components/artworks/artwork-image'
 import { PageLoader } from '@/components/layout/page-loader'
 import { useAuthStore } from '@/store/authStore'
 import { ROUTES } from '@/constants/routes'
@@ -49,9 +50,9 @@ export default function ArtistProfilePage() {
 
   if (isError || !artist) {
     return (
-      <div className="min-h-screen bg-bg pt-24 flex flex-col items-center gap-4">
+      <div className="min-h-screen pt-24 flex flex-col items-center gap-4">
         <p className="text-text-muted font-body">No se encontró este perfil de artista.</p>
-        <Link to={ROUTES.ARTISTS} className="text-oro hover:underline font-body text-sm">
+        <Link to={ROUTES.ARTISTS} className="text-magenta hover:underline font-body text-sm">
           ← Volver al directorio
         </Link>
       </div>
@@ -78,13 +79,13 @@ export default function ArtistProfilePage() {
       href: artist.tiktok_url,
       label: 'TikTok',
       icon: <FaTiktok size={15} />,
-      hover: 'hover:text-white',
+      hover: 'hover:text-text-primary',
     },
     artist.website_url && {
       href: artist.website_url,
       label: 'Sitio web',
       icon: <Globe size={15} />,
-      hover: 'hover:text-oro',
+      hover: 'hover:text-magenta',
       extra: <ExternalLink size={11} className="opacity-60" />,
     },
   ].filter(Boolean) as {
@@ -96,12 +97,12 @@ export default function ArtistProfilePage() {
   }[]
 
   return (
-    <div className="min-h-screen bg-bg pt-16">
+    <div className="min-h-screen pt-16">
       {/* Breadcrumb integrado en el fondo oscuro */}
-      <div className="px-6 md:px-16 pt-6" style={{ background: '#2D1B00' }}>
+      <div className="px-6 md:px-16 pt-6">
         <Link
           to={ROUTES.ARTISTS}
-          className="inline-flex items-center gap-1.5 text-oro/60 hover:text-oro font-body text-sm no-underline transition-colors pb-4"
+          className="inline-flex items-center gap-1.5 text-text-secondary hover:text-text-primary font-body text-sm no-underline transition-colors pb-4"
         >
           <ArrowLeft size={14} /> Artistas
         </Link>
@@ -110,22 +111,13 @@ export default function ArtistProfilePage() {
       {/* Hero */}
       <section
         className="relative overflow-hidden px-6 md:px-16 pb-14 pt-8"
-        style={{ background: '#2D1B00' }}
       >
         {/* Decoraciones */}
-        <div
-          className="pointer-events-none absolute -top-20 -right-20 w-96 h-96 rounded-full opacity-60"
-          style={{ background: 'radial-gradient(circle, rgba(201,146,26,0.18) 0%, transparent 70%)' }}
-        />
-        <div
-          className="pointer-events-none absolute bottom-0 left-0 right-0 h-20"
-          style={{ background: 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.25))' }}
-        />
 
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row gap-10 items-start relative z-10">
           {/* Avatar */}
           <div className="flex-none">
-            <div className="w-28 h-28 md:w-36 md:h-36 rounded-full ring-2 ring-oro/30 overflow-hidden bg-oro/20 flex items-center justify-center shadow-xl">
+            <div className="w-28 h-28 md:w-36 md:h-36 rounded-full ring-2 ring-magenta/40 overflow-hidden bg-magenta-tint flex items-center justify-center shadow-xl">
               {artist.profile_image_url ? (
                 <img
                   src={artist.profile_image_url}
@@ -133,7 +125,7 @@ export default function ArtistProfilePage() {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <span className="font-display font-bold text-oro text-5xl">
+                <span className="font-display font-bold text-magenta text-5xl">
                   {artist.artistic_name.charAt(0)}
                 </span>
               )}
@@ -144,12 +136,12 @@ export default function ArtistProfilePage() {
           <div className="flex-1 min-w-0">
             {/* Badge */}
             <div className="flex flex-wrap gap-2 mb-3">
-              {artist.is_public && <Badge variant="indigo">Perfil público</Badge>}
+              {artist.is_public && <Badge variant="magenta">Perfil público</Badge>}
             </div>
 
             {/* Nombre */}
             <h1
-              className="font-display font-black text-oro-light leading-tight mb-1"
+              className="font-display font-extrabold text-text-primary leading-tight mb-1"
               style={{ fontSize: 'clamp(28px, 5vw, 44px)' }}
             >
               {artist.artistic_name}
@@ -157,7 +149,7 @@ export default function ArtistProfilePage() {
 
             {/* Disciplina */}
             {artist.discipline && (
-              <p className="font-accent italic text-tierra-light text-[20px] mb-4">
+              <p className="font-semibold text-magenta text-[20px] mb-4">
                 {artist.discipline}
               </p>
             )}
@@ -170,8 +162,7 @@ export default function ArtistProfilePage() {
             {/* Biografía */}
             {artist.bio && (
               <p
-                className="font-body text-[14px] leading-[1.7] mb-3 max-w-2xl"
-                style={{ color: 'rgba(245,239,229,0.78)' }}
+                className="font-body text-[14px] leading-[1.7] mb-3 max-w-2xl text-text-secondary"
               >
                 {artist.bio}
               </p>
@@ -180,8 +171,7 @@ export default function ArtistProfilePage() {
             {/* Trayectoria */}
             {artist.trajectory && (
               <p
-                className="font-body text-[14px] leading-[1.7] mb-6 max-w-2xl"
-                style={{ color: 'rgba(245,239,229,0.65)' }}
+                className="font-body text-[14px] leading-[1.7] mb-6 max-w-2xl text-text-secondary"
               >
                 {artist.trajectory}
               </p>
@@ -196,7 +186,7 @@ export default function ArtistProfilePage() {
                     href={link.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`flex items-center gap-1.5 no-underline text-oro-light font-body text-[13px] transition-colors ${link.hover}`}
+                    className={`flex items-center gap-1.5 no-underline text-text-secondary font-body text-[13px] transition-colors ${link.hover}`}
                   >
                     {link.icon}
                     {link.label}
@@ -224,7 +214,7 @@ export default function ArtistProfilePage() {
           {/* Stats */}
           <div className="flex md:flex-col gap-6 md:gap-4 md:text-right text-center flex-none">
             <div>
-              <p className="font-display font-bold text-oro leading-none" style={{ fontSize: '2rem' }}>
+              <p className="font-display font-bold text-magenta leading-none" style={{ fontSize: '2rem' }}>
                 {artist.followers_count}
               </p>
               <p className="font-body text-text-muted text-[11px] mt-0.5 uppercase tracking-wide">
@@ -233,7 +223,7 @@ export default function ArtistProfilePage() {
             </div>
             {artworksCount > 0 && (
               <div>
-                <p className="font-display font-bold text-oro leading-none" style={{ fontSize: '2rem' }}>
+                <p className="font-display font-bold text-magenta leading-none" style={{ fontSize: '2rem' }}>
                   {artworksCount}
                 </p>
                 <p className="font-body text-text-muted text-[11px] mt-0.5 uppercase tracking-wide">
@@ -245,11 +235,8 @@ export default function ArtistProfilePage() {
         </div>
       </section>
 
-      {/* Separador dorado */}
-      <div
-        className="h-[3px] w-full"
-        style={{ background: 'linear-gradient(90deg, #2D1B00 0%, var(--oro) 40%, var(--oro) 60%, #2D1B00 100%)' }}
-      />
+      {/* Serpentina */}
+      <div className="nc-serpentina h-[3px] w-full" aria-hidden />
 
       {/* Contenido */}
       <div className="max-w-5xl mx-auto px-6 md:px-16 py-12">
@@ -272,7 +259,7 @@ export default function ArtistProfilePage() {
             </div>
             <Link
               to={ROUTES.ARTISTS}
-              className="font-body text-sm text-oro hover:underline no-underline"
+              className="font-body text-sm text-magenta hover:underline no-underline"
             >
               ← Explorar más artistas
             </Link>
@@ -286,7 +273,7 @@ export default function ArtistProfilePage() {
               >
                 Portafolio
               </h2>
-              <div className="flex-1 h-[2px]" style={{ background: 'var(--oro)' }} />
+              <div className="flex-1 h-[2px]" style={{ background: 'var(--magenta)' }} />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -295,7 +282,7 @@ export default function ArtistProfilePage() {
                   artwork.main_image_url ||
                   artwork.images.find((img) => img.order === 0)?.image_url ||
                   artwork.images[0]?.image_url ||
-                  `https://placehold.co/400x300/2D1B00/F0C060?text=${encodeURIComponent(artwork.title)}`
+                  ''
 
                 return (
                   <Link
@@ -305,11 +292,11 @@ export default function ArtistProfilePage() {
                   >
                     <Card className="p-0 overflow-hidden group cursor-pointer hover:shadow-card transition-shadow">
                       <div className="relative aspect-[4/3] overflow-hidden rounded-t-card">
-                        <img
+                        <ArtworkImage
                           src={mainImage}
                           alt={artwork.title}
-                          loading="lazy"
-                          className="w-full h-full object-cover transition-transform duration-[350ms] ease-smooth group-hover:scale-105"
+                          accent="magenta"
+                          className="transition-transform duration-[350ms] ease-smooth group-hover:scale-105"
                         />
                         <div className="absolute inset-0 bg-volcan/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                           <Button variant="gold" className="text-xs">Ver obra</Button>
@@ -323,16 +310,16 @@ export default function ArtistProfilePage() {
                           {artist.artistic_name}
                         </p>
                         <div className="flex items-center justify-between">
-                          <p className="font-body font-bold text-oro text-[15px]">
+                          <p className="font-body font-bold text-naranja text-[15px]">
                             {formatCurrency(parseFloat(artwork.price))}
                           </p>
                           <Badge
                             variant={
                               artwork.status === 'DISPONIBLE'
-                                ? 'selva'
+                                ? 'verde'
                                 : artwork.status === 'EN_SUBASTA'
-                                  ? 'indigo'
-                                  : 'tierra'
+                                  ? 'oro'
+                                  : 'secondary'
                             }
                           >
                             {artwork.status === 'DISPONIBLE'

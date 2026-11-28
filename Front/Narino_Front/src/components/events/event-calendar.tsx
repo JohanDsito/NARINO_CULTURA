@@ -20,12 +20,12 @@ interface EventCalendarProps {
 }
 
 const eventTypeStyles: Record<Event['event_type'], string> = {
-  CONCIERTO: 'bg-blue-100 text-blue-800',
-  EXPOSICION: 'bg-purple-100 text-purple-800',
-  TALLER: 'bg-green-100 text-green-800',
-  FERIA: 'bg-yellow-100 text-yellow-800',
-  ESPECTACULO: 'bg-pink-100 text-pink-800',
-  OTRO: 'bg-gray-100 text-gray-800',
+  CONCIERTO: 'bg-azul-tint text-azul',
+  EXPOSICION: 'bg-magenta-tint text-magenta',
+  TALLER: 'bg-verde-tint text-verde',
+  FERIA: 'bg-naranja-tint text-naranja',
+  ESPECTACULO: 'bg-tomate-tint text-tomate',
+  OTRO: 'bg-bg-subtle text-text-secondary',
 }
 
 const eventTypeLabels: Record<Event['event_type'], string> = {
@@ -37,7 +37,7 @@ const eventTypeLabels: Record<Event['event_type'], string> = {
   OTRO: 'Otro',
 }
 
-const fallbackEventTypeStyle = 'bg-gray-100 text-gray-800'
+const fallbackEventTypeStyle = 'bg-bg-subtle text-text-secondary'
 
 export function EventCalendar({ showCreateButton = false }: EventCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
@@ -97,7 +97,10 @@ export function EventCalendar({ showCreateButton = false }: EventCalendarProps) 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-2xl font-bold">Agenda Cultural</h2>
+        <div>
+          <p className="nc-eyebrow text-tomate">Eventos</p>
+          <h2 className="text-2xl font-extrabold text-text-primary">Agenda Cultural</h2>
+        </div>
         {isAdmin && showCreateButton && (
           <Button onClick={() => setShowEventForm(true)}>
             + Agregar evento

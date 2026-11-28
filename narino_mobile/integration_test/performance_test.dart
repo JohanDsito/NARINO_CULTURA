@@ -1,17 +1,18 @@
 // ignore_for_file: avoid_print
 //
 // PRUEBAS DE RENDIMIENTO MO-PE-01 a MO-PE-05
-// Backend: https://narinocultura-production.up.railway.app
+// Backend: SOLO local (nunca producción). Ver integration_test/README.md.
 //
 // ══════════════════════════════════════════════════════════════════════════════
 // CÓMO EJECUTAR (requiere emulador o dispositivo físico conectado):
 //
 //   flutter test integration_test/performance_test.dart \
 //     --profile \
+//     --dart-define=API_BASE_URL=http://<IP-del-PC>:8000 \
 //     --dart-define=TEST_EMAIL=tu@correo.com \
 //     --dart-define=TEST_PASSWORD=tucontraseña
 //
-// La URL de Railway está fija en EnvConstants — no hace falta pasarla.
+// API_BASE_URL es obligatoria: sin ella, o si apunta a producción, la suite aborta.
 //
 // El flag --profile desactiva el modo debug para medir el rendimiento real.
 //
@@ -30,9 +31,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
+import 'package:narino_cultura/core/constants/api_constants.dart';
 import 'package:narino_cultura/core/constants/env_constants.dart';
 import 'package:narino_cultura/core/utils/storage_utils.dart';
 import 'package:narino_cultura/main.dart' as app;
+
+import 'support/entorno_pruebas.dart';
 
 // ─── Credenciales (nunca hardcodeadas) ───────────────────────────────────────
 
@@ -59,7 +63,7 @@ Future<void> _loginProgrammatically() async {
     receiveTimeout: const Duration(seconds: 15),
   ));
   final resp = await dio.post(
-    '/auth/login/',
+    ApiConstants.login,
     data: {'email': _email, 'password': _password},
   );
   final data = resp.data as Map<String, dynamic>;
@@ -96,6 +100,7 @@ String _result(int ms, int threshold) =>
 // ─── Suite ────────────────────────────────────────────────────────────────────
 
 void main() {
+  EntornoPruebas.exigirEntornoSeguro();
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() async {

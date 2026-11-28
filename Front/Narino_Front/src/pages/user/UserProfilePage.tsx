@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 
 import { updateMe, uploadAvatar } from '@/api/auth.api'
 import { PageShell } from '@/components/layout/page-shell'
+import { DeleteAccountSection } from '@/components/profile/delete-account-section'
 import { ProfileImageUpload } from '@/components/profile/profile-image-upload'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -66,7 +67,7 @@ export default function UserProfilePage() {
   if (!user) return null
 
   return (
-    <div className="min-h-screen bg-bg pt-16">
+    <div className="min-h-screen pt-16">
       <PageShell title="Mi perfil" subtitle="Administra tu información personal" />
 
       <main className="mx-auto grid max-w-4xl gap-6 px-6 py-8 md:grid-cols-[1fr_280px]">
@@ -124,6 +125,8 @@ export default function UserProfilePage() {
               {updateMutation.isPending ? 'Guardando…' : 'Guardar cambios'}
             </Button>
           </form>
+
+          <DeleteAccountSection />
         </div>
 
         <ProfileImageUpload

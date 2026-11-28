@@ -98,6 +98,14 @@ export async function logout(): Promise<void> {
   }
 }
 
+/**
+ * Elimina la cuenta del usuario autenticado (`DELETE /auth/delete-account/`). Pide la contraseña.
+ * Errores: 400 si falta o es incorrecta; 409 (`code: account_has_sales`) si tiene obras vendidas.
+ */
+export async function deleteAccount(password: string): Promise<void> {
+  await axiosInstance.delete('/api/v1/auth/delete-account/', { data: { password } })
+}
+
 export const authApi = {
   login,
   register,
@@ -109,4 +117,5 @@ export const authApi = {
   updateMe,
   uploadAvatar,
   logout,
+  deleteAccount,
 }

@@ -15,7 +15,7 @@ export default function AdminTransactionsPage() {
   })
 
   return (
-    <div className="min-h-screen bg-bg pt-16">
+    <div className="min-h-screen pt-16">
       <PageShell title="Transacciones" subtitle="Auditoría de los pagos de la plataforma" />
 
       <main className="mx-auto max-w-6xl px-6 py-8">

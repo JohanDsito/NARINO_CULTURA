@@ -1,5 +1,5 @@
 """Capa de IA (services/llm.py y services/ai_service.py) con Gemini y Groq simulados."""
-from datetime import timedelta
+from datetime import datetime, timedelta
 from unittest.mock import patch
 
 import requests
@@ -255,3 +255,133 @@ class FlyerImageDownloadTests(TestCase):
 
         response.headers = {"Content-Type": "text/html"}
         self.assertIsNone(_fetch_image("https://res.cloudinary.com/page"))
+
+
+@override_settings(**llm_fakes.KEYS)
+class AIServiceEdgeCaseTests(TestCase):
+    """Errores y ramas poco frecuentes: entradas vacías, respaldo entre proveedores y datos sucios del modelo."""
+
+    def setUp(self):
+        cache.clear()
+
+    def test_chat_rejects_blank_message_without_calling_any_provider(self):
+        with patch("services.llm._session.post") as post:
+            for message in ("", "   \n", None):
+                with self.subTest(message=message), self.assertRaisesMessage(ValueError, "no puede estar vacío"):
+                    AIService.chat(message, session_id="s1")
+        post.assert_not_called()
+
+    @patch("services.llm._session.post")
+    def test_chat_history_drops_turns_without_text(self, post):
+        post.return_value = llm_fakes.gemini("ok")
+        history = [
+            {"role": "user", "text": "Busco rock"},
+            {"role": "model", "text": "   "},
+            {"role": "user"},
+            {"role": "user", "content": "¿Cuáles?"},
+        ]
+        AIService.chat("Gracias", session_id="s2", history=history)
+        texts = [c["parts"][0]["text"] for c in post.call_args.kwargs["json"]["contents"]]
+        self.assertEqual(texts, ["Busco rock", "¿Cuáles?", "Gracias"])
+
+    @patch("services.llm._session.post")
+    def test_empty_answer_falls_back_to_next_provider(self, post):
+        post.side_effect = [llm_fakes.gemini("   "), llm_fakes.groq("Respuesta de Groq")]
+        with self.assertLogs("services.llm", "WARNING") as logs:
+            result = llm.generate("Hola")
+        self.assertEqual((result.provider, result.text), ("groq", "Respuesta de Groq"))
+        self.assertIn("respuesta vacía", "".join(logs.output))
+
+    @patch("services.llm._session.post")
+    def test_all_empty_answers_raise_unavailable(self, post):
+        post.side_effect = [llm_fakes.gemini(""), llm_fakes.groq("")]
+        with self.assertLogs("services.llm", "WARNING"), self.assertRaises(llm.LLMUnavailableError):
+            llm.generate("Hola")
+
+    @patch("services.llm._session.post")
+    def test_clean_tags_accepts_comma_separated_string_and_ignores_other_types(self, post):
+        post.return_value = llm_fakes.gemini({"tags": "Óleo, #Paisaje Andino, óleo,", "description": ""})
+        artwork = ArtworkFactory(title="Volcán", technique="Óleo", material="Lienzo", description="Paisaje")
+        result = AIService.enhance_artwork(artwork)
+        self.assertEqual(result["ai_tags"], ["óleo", "paisaje-andino"])
+
+        post.return_value = llm_fakes.gemini({"tags": 42, "description": "Una obra."})
+        result = AIService.enhance_artwork(artwork)
+        # tags inválidas: se usan las reglas locales, pero la descripción del modelo se conserva
+        self.assertIn("óleo", result["ai_tags"])
+        self.assertEqual(result["ai_description"], "Una obra.")
+
+    @patch("services.llm._session.post")
+    def test_chat_context_lists_musician_genres(self, post):
+        musician = MusicianProfileFactory(artistic_name="Bambuco Sur", is_active=True)
+        musician.genres.add(MusicGenreFactory(name="Bambuco"), MusicGenreFactory(name="Currulao"))
+        post.return_value = llm_fakes.gemini("ok")
+        AIService.chat("¿Qué música hay?", session_id="s3")
+        system = post.call_args.kwargs["json"]["systemInstruction"]["parts"][0]["text"]
+        line = next(line for line in system.splitlines() if "Bambuco Sur" in line)
+        self.assertIn("Bambuco", line.split(":", 1)[1])
+        self.assertIn("Currulao", line.split(":", 1)[1])
+
+
+@override_settings(**llm_fakes.KEYS)
+class ExtractEventFromFlyerTests(TestCase):
+    PAYLOAD = {
+        "title": "Noche de bambuco",
+        "description": "Concierto",
+        "event_type": "CONCIERTO",
+        "start_date": "2030-05-01T20:00:00",
+        "end_date": None,
+        "location": "Teatro Imperial",
+    }
+
+    def test_returns_none_without_image_or_text(self):
+        with patch("services.llm._session.post") as post:
+            self.assertIsNone(AIService.extract_event_from_flyer(flyer_text="   "))
+            self.assertIsNone(AIService.extract_event_from_flyer(image_url="http://insecure.test/a.png"))
+        post.assert_not_called()
+
+    @patch("services.llm._session.post")
+    @patch("services.ai_service._fetch_image")
+    def test_downloads_image_from_url_and_sends_it_to_the_model(self, fetch, post):
+        fetch.return_value = llm.Image("image/png", b"png")
+        post.return_value = llm_fakes.gemini(self.PAYLOAD)
+        data = AIService.extract_event_from_flyer(image_url="https://res.cloudinary.com/a.png")
+        fetch.assert_called_once_with("https://res.cloudinary.com/a.png")
+        parts = post.call_args.kwargs["json"]["contents"][-1]["parts"]
+        self.assertIn({"inline_data": {"mime_type": "image/png", "data": "cG5n"}}, parts)  # base64 de b"png"
+        self.assertEqual((data["title"], data["event_type"], data["model_used"]), ("Noche de bambuco", "CONCIERTO", "gemini"))
+
+    @patch("services.llm._session.post")
+    def test_naive_dates_get_the_default_timezone_and_a_two_hour_end(self, post):
+        post.return_value = llm_fakes.gemini(self.PAYLOAD)
+        data = AIService.extract_event_from_flyer(flyer_text="Noche de bambuco 1 de mayo")
+        expected = timezone.make_aware(datetime(2030, 5, 1, 20, 0), timezone.get_default_timezone())
+        self.assertEqual(data["start_date"], expected)
+        self.assertEqual(data["end_date"] - data["start_date"], timedelta(hours=2))
+
+    @patch("services.llm._session.post")
+    def test_impossible_dates_and_unknown_type_are_discarded(self, post):
+        post.return_value = llm_fakes.gemini(
+            {**self.PAYLOAD, "start_date": "2030-02-31T20:00", "end_date": "2030-03-01T20:00", "event_type": "FIESTA"}
+        )
+        data = AIService.extract_event_from_flyer(flyer_text="Afiche")
+        self.assertIsNone(data["start_date"])
+        self.assertIsNone(data["end_date"])
+        self.assertEqual(data["event_type"], "OTRO")
+
+    @patch("services.llm._session.post", side_effect=requests.ConnectionError)
+    def test_returns_none_when_no_provider_answers(self, _post):
+        self.assertIsNone(AIService.extract_event_from_flyer(flyer_text="Afiche"))
+
+
+class FlyerImageDownloadFailureTests(TestCase):
+    @patch("services.ai_service.requests.get")
+    @patch("services.ai_service.socket.getaddrinfo", side_effect=OSError("sin DNS"))
+    def test_unresolvable_host_returns_none_without_downloading(self, _dns, get):
+        self.assertIsNone(_fetch_image("https://no-existe.invalid/a.png"))
+        get.assert_not_called()
+
+    @patch("services.ai_service.socket.getaddrinfo", return_value=[(None, None, None, "", ("93.184.216.34", 443))])
+    @patch("services.ai_service.requests.get", side_effect=requests.ConnectTimeout)
+    def test_network_error_returns_none(self, _get, _dns):
+        self.assertIsNone(_fetch_image("https://res.cloudinary.com/a.png"))

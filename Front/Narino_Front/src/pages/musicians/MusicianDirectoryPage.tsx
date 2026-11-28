@@ -39,8 +39,10 @@ export default function MusicianDirectoryPage() {
   const musicians = data?.results ?? []
 
   return (
-    <div className="min-h-screen bg-bg pt-16">
+    <div className="min-h-screen pt-16">
       <PageShell
+        eyebrow="Música"
+        accent="azul"
         title="Músicos de Nariño"
         subtitle="Artistas sonoros del departamento — solos, bandas, colectivos y más"
       />
@@ -55,7 +57,7 @@ export default function MusicianDirectoryPage() {
               placeholder="Buscar por nombre artístico, género, ciudad…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-input border border-border bg-bg-card pl-9 pr-4 py-2.5 font-body text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-oro/50"
+              className="w-full rounded-input border border-border bg-bg-card pl-9 pr-4 py-2.5 font-body text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-azul/50"
             />
           </div>
           <div className="flex gap-2 flex-wrap">
@@ -65,8 +67,8 @@ export default function MusicianDirectoryPage() {
                 onClick={() => setAggregationType(opt.value as AggregationType | '')}
                 className={`rounded-btn px-3 py-1.5 font-body text-[13px] transition-colors ${
                   aggregationType === opt.value
-                    ? 'bg-oro text-[#2D1B00] font-semibold'
-                    : 'border border-border text-text-muted hover:text-text-primary hover:border-oro/50'
+                    ? 'bg-azul-fill text-on-azul font-semibold'
+                    : 'border border-border text-text-muted hover:text-text-primary hover:border-azul/50'
                 }`}
               >
                 {opt.label}
@@ -76,7 +78,7 @@ export default function MusicianDirectoryPage() {
         </div>
 
         {/* Link a Music Discovery */}
-        <div className="mb-8 rounded-card border border-oro/30 bg-oro/5 p-4 flex items-center justify-between flex-wrap gap-3">
+        <div className="mb-8 rounded-card border border-azul/30 bg-azul-tint p-4 flex items-center justify-between flex-wrap gap-3">
           <div>
             <p className="font-body font-semibold text-text-primary text-sm">
               🎵 Búsqueda con IA
@@ -87,7 +89,7 @@ export default function MusicianDirectoryPage() {
           </div>
           <Link
             to={ROUTES.MUSIC_DISCOVERY}
-            className="rounded-btn bg-oro text-[#2D1B00] font-body text-sm font-semibold px-4 py-2 no-underline hover:bg-oro-light transition-colors flex-none"
+            className="rounded-btn bg-azul-fill text-on-azul font-body text-sm font-semibold px-4 py-2 no-underline hover:bg-azul-fill/90 transition-colors flex-none"
           >
             Probar →
           </Link>
@@ -115,22 +117,22 @@ export default function MusicianDirectoryPage() {
               >
                 <Card className="p-5 hover:shadow-card transition-shadow cursor-pointer group">
                   {/* Avatar */}
-                  <div className="w-14 h-14 rounded-full bg-oro/20 flex items-center justify-center mb-4">
+                  <div className="w-14 h-14 rounded-full bg-azul-tint flex items-center justify-center mb-4">
                     {musician.profile_image_url ? (
                       <img src={musician.profile_image_url} alt="" className="w-14 h-14 rounded-full object-cover" />
                     ) : (
-                      <span className="font-display font-bold text-oro text-2xl">
+                      <span className="font-display font-bold text-azul text-2xl">
                         {musician.artistic_name.charAt(0)}
                       </span>
                     )}
                   </div>
 
-                  <h3 className="font-display font-bold text-text-primary text-[16px] mb-1 group-hover:text-oro transition-colors line-clamp-1">
+                  <h3 className="font-display font-bold text-text-primary text-[16px] mb-1 group-hover:text-azul transition-colors line-clamp-1">
                     {musician.artistic_name}
                   </h3>
 
                   <div className="flex flex-wrap gap-1.5 mb-3">
-                    <Badge variant="indigo" className="text-[10px]">
+                    <Badge variant="azul" className="text-[10px]">
                       {AGGREGATION_TYPE_LABELS[musician.aggregation_type] ?? musician.aggregation_type}
                     </Badge>
                     {musician.is_verified && (

@@ -197,3 +197,19 @@ class NotificationDeliveryTests(TestCase):
             send.assert_not_called()
         log = NotificationLog.objects.get(notification_type="AUCTION_BID")
         self.assertEqual(log.status, NotificationLog.Status.PENDIENTE)
+
+
+class MarkFailedTests(TestCase):
+    def test_marks_only_pending_logs_as_failed(self):
+        pending = NotificationLog.objects.create(notification_type="X", payload={}, status=NotificationLog.Status.PENDIENTE)
+        sent = NotificationLog.objects.create(notification_type="X", payload={}, status=NotificationLog.Status.ENVIADO)
+        NotificationService.mark_failed(str(pending.id))
+        NotificationService.mark_failed(str(sent.id))
+        pending.refresh_from_db()
+        sent.refresh_from_db()
+        self.assertEqual(pending.status, NotificationLog.Status.FALLIDO)
+        self.assertEqual(sent.status, NotificationLog.Status.ENVIADO)
+
+    def test_unknown_log_is_ignored(self):
+        NotificationService.mark_failed("00000000-0000-0000-0000-000000000000")
+        self.assertFalse(NotificationLog.objects.exists())

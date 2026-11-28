@@ -26,6 +26,32 @@ function forceLogout() {
   if (window.location.pathname !== '/login') window.location.href = '/login'
 }
 
+/** Renovación en curso: con rotación el refresh viejo queda invalidado, así que
+ *  todas las peticiones que reciban 401 esperan esta misma promesa. */
+let refreshInFlight: Promise<string> | null = null
+
+function renewAccessToken(refreshToken: string): Promise<string> {
+  if (!refreshInFlight) {
+    refreshInFlight = axios
+      .post(`${API_BASE_URL}/api/v1/auth/token/refresh/`, { refresh: refreshToken })
+      .then(({ data }) => {
+        localStorage.setItem('access_token', data.access)
+        // El backend rota el refresh: hay que guardar el nuevo (el anterior queda en lista negra).
+        if (data.refresh) {
+          localStorage.setItem('refresh_token', data.refresh)
+          useAuthStore.setState({ accessToken: data.access, refreshToken: data.refresh })
+        } else {
+          useAuthStore.setState({ accessToken: data.access })
+        }
+        return data.access as string
+      })
+      .finally(() => {
+        refreshInFlight = null
+      })
+  }
+  return refreshInFlight
+}
+
 // Response interceptor: refresco automático en 401
 axiosInstance.interceptors.response.use(
   (response) => response,
@@ -42,13 +68,8 @@ axiosInstance.interceptors.response.use(
       }
 
       try {
-        const { data } = await axios.post(
-          `${API_BASE_URL}/api/v1/auth/token/refresh/`,
-          { refresh: refreshToken }
-        )
-        localStorage.setItem('access_token', data.access)
-        useAuthStore.setState({ accessToken: data.access })
-        originalRequest.headers.Authorization = `Bearer ${data.access}`
+        const access = await renewAccessToken(refreshToken)
+        originalRequest.headers.Authorization = `Bearer ${access}`
         return axiosInstance(originalRequest)
       } catch {
         forceLogout()

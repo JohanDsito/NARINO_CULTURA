@@ -1,9 +1,12 @@
 import uuid
 
+from django.test import SimpleTestCase
+from rest_framework.exceptions import ValidationError
 from rest_framework.test import APITestCase
 
 from apps.artworks.models import Artwork
 from apps.marketplace.models import Cart, CartItem, Favorite, Order, OrderItem
+from apps.marketplace.serializers import CheckoutSerializer
 from tests.factories import ArtistProfileFactory, ArtworkFactory, UserFactory
 
 CART_ITEMS_URL = "/api/v1/marketplace/cart/items/"
@@ -119,3 +122,15 @@ class MarketplaceStrTests(MarketplaceTestCase):
         self.assertIn(str(self.artwork.id), str(favorite))
         self.assertIn("PENDIENTE", str(order))
         self.assertIn(str(order.id), str(order_item))
+
+
+class CheckoutSerializerTests(SimpleTestCase):
+    def test_accepts_only_known_order_types(self):
+        for order_type in (Order.Type.COMPRA_DIRECTA, Order.Type.SUBASTA):
+            self.assertTrue(CheckoutSerializer(data={"order_type": order_type}).is_valid())
+        self.assertFalse(CheckoutSerializer(data={"order_type": "REGALO"}).is_valid())
+
+    def test_validate_rejects_a_type_outside_the_allowed_set(self):
+        """Defensa adicional: aunque el campo aceptara otro tipo, validate() lo rechaza."""
+        with self.assertRaisesMessage(ValidationError, "Tipo de orden inválido."):
+            CheckoutSerializer().validate({"order_type": "REGALO"})

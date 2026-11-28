@@ -5,7 +5,7 @@ import { ROUTES } from '@/constants/routes'
 
 export default function PaymentDeclinedPage() {
   return (
-    <div className="min-h-screen bg-bg pt-16 flex items-center justify-center px-6">
+    <div className="min-h-screen pt-16 flex items-center justify-center px-6">
       <div className="max-w-md w-full text-center space-y-6">
         <XCircle size={64} className="text-error mx-auto" />
         <h1 className="font-display font-bold text-text-primary text-[32px]">

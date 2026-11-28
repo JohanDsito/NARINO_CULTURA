@@ -22,8 +22,8 @@ export default function OrdersPage() {
   const [now] = useState(() => Date.now())
 
   return (
-    <div className="min-h-screen bg-bg pt-16">
-      <PageShell title="Mis pedidos" subtitle="Historial de órdenes y estados de compra" />
+    <div className="min-h-screen pt-16">
+      <PageShell eyebrow="Tienda" accent="naranja" title="Mis pedidos" subtitle="Historial de órdenes y estados de compra" />
 
       <main className="mx-auto max-w-4xl px-6 py-8">
         {isLoading ? (
@@ -67,7 +67,7 @@ export default function OrdersPage() {
                     </div>
 
                     <div className="text-right">
-                      <p className="font-display font-bold text-oro text-[20px]">
+                      <p className="font-display font-extrabold text-naranja text-[20px]">
                         {formatCurrency(order.total_amount)}
                       </p>
                       <div className="flex gap-2 mt-1 justify-end">
@@ -101,7 +101,7 @@ export default function OrdersPage() {
                           href={receiptUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 font-body text-[13px] font-semibold text-tierra hover:underline"
+                          className="inline-flex items-center gap-1.5 font-body text-[13px] font-semibold text-azul hover:underline"
                         >
                           <FileText size={14} />
                           Ver comprobante

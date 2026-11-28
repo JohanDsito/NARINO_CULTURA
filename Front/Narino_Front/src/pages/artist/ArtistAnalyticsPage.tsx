@@ -39,7 +39,7 @@ export default function ArtistAnalyticsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-bg pt-16">
+      <div className="min-h-screen pt-16">
         <PageShell title="Analíticas" subtitle="Resumen de ventas y rendimiento" />
         <main className="mx-auto max-w-5xl px-6 py-8 space-y-6">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -51,7 +51,7 @@ export default function ArtistAnalyticsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-bg pt-16">
+    <div className="min-h-screen pt-16">
       <PageShell title="Analíticas" subtitle="Resumen de ventas y rendimiento" />
 
       <main className="mx-auto max-w-5xl px-6 py-8 space-y-6">
@@ -59,7 +59,7 @@ export default function ArtistAnalyticsPage() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Card>
             <CardContent className="flex items-center gap-4 p-5">
-              <div className="rounded-full bg-oro/10 p-3 text-oro">
+              <div className="rounded-full bg-naranja-tint p-3 text-naranja">
                 <DollarSign size={20} />
               </div>
               <div>
@@ -121,10 +121,10 @@ export default function ArtistAnalyticsPage() {
             ) : (
               <ResponsiveContainer width="100%" height={240}>
                 <BarChart data={byMonth} margin={{ top: 4, right: 8, left: 8, bottom: 4 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-strong)" />
                   <XAxis
                     dataKey="month"
-                    tick={{ fontSize: 11, fill: 'var(--color-text-muted)' }}
+                    tick={{ fontSize: 11, fill: 'var(--text-muted)' }}
                     axisLine={false}
                     tickLine={false}
                   />
@@ -132,20 +132,22 @@ export default function ArtistAnalyticsPage() {
                     tickFormatter={(v: number) =>
                       v >= 1_000_000 ? `${(v / 1_000_000).toFixed(1)}M` : `${(v / 1_000).toFixed(0)}K`
                     }
-                    tick={{ fontSize: 11, fill: 'var(--color-text-muted)' }}
+                    tick={{ fontSize: 11, fill: 'var(--text-muted)' }}
                     axisLine={false}
                     tickLine={false}
                   />
                   <Tooltip
                     formatter={(value: number) => [formatCurrency(value), 'Ingresos']}
+                    cursor={{ fill: 'var(--naranja-tint)' }}
                     contentStyle={{
-                      background: 'var(--color-surface)',
-                      border: '1px solid var(--color-border)',
-                      borderRadius: '8px',
+                      background: 'var(--bg-card)',
+                      color: 'var(--text-primary)',
+                      border: '1px solid var(--border-strong)',
+                      borderRadius: '14px',
                       fontSize: '12px',
                     }}
                   />
-                  <Bar dataKey="total" fill="var(--color-oro)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="total" fill="var(--naranja-fill)" radius={[8, 8, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -186,7 +188,7 @@ export default function ArtistAnalyticsPage() {
                         <td className="py-3 font-body text-sm text-text-muted">
                           {order.order_type === 'COMPRA_DIRECTA' ? 'Directa' : 'Subasta'}
                         </td>
-                        <td className="py-3 font-body font-semibold text-oro text-sm">
+                        <td className="py-3 font-body font-semibold text-naranja text-sm">
                           {formatCurrency(order.seller_amount)}
                         </td>
                         <td className="py-3">

@@ -63,7 +63,7 @@ export function Navbar() {
           onClick={closeMenu}
           aria-current={isActive ? 'page' : undefined}
           className={`font-body text-sm font-medium no-underline transition-colors duration-300 ${
-            isActive ? 'text-oro-light' : 'text-[#f5efe5bf] hover:text-oro-light'
+            isActive ? 'text-azul font-semibold' : 'text-text-secondary hover:text-text-primary'
           } ${className}`}
         >
           {label}
@@ -72,13 +72,14 @@ export function Navbar() {
     })
 
   return (
-    <nav className="fixed inset-x-0 top-0 z-50 border-b border-oro/20 bg-[#2D1B00] dark:bg-bg-card px-4 md:px-10">
+    <nav className="nc-glass fixed inset-x-0 top-0 z-50 border-b border-border px-4 md:px-10">
       <div className="flex h-16 items-center justify-between gap-4">
         <Link to="/" className="flex items-center gap-2 no-underline" onClick={closeMenu}>
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-oro">
-            <Mountain size={16} className="text-[#2D1B00]" />
+          <div className="nc-brand flex h-8 w-8 items-center justify-center rounded-[10px]">
+            <Mountain size={16} className="text-white" />
           </div>
-          <span className="font-display text-lg font-bold tracking-wide text-oro-light">
+          {/* En pantallas angostas solo queda el logo (el nombre sigue disponible para lectores de pantalla) */}
+          <span className="sr-only whitespace-nowrap font-display text-lg font-extrabold text-text-primary min-[430px]:not-sr-only">
             Nariño Cultura
           </span>
         </Link>
@@ -90,20 +91,20 @@ export function Navbar() {
             <Link
               to="/favorites"
               aria-label="Mis favoritos"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors duration-300 hover:bg-white/10"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors duration-300 hover:bg-bg-subtle"
             >
-              <Heart size={20} className="text-[#f5efe5bf]" />
+              <Heart size={20} className="text-text-primary" />
             </Link>
           )}
 
           <Link
             to="/checkout"
             aria-label={`Carrito de compras${cartCount > 0 ? `, ${cartCount} productos` : ''}`}
-            className="relative inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors duration-300 hover:bg-white/10"
+            className="relative inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors duration-300 hover:bg-bg-subtle"
           >
-            <ShoppingCart size={20} className="text-[#f5efe5bf]" />
+            <ShoppingCart size={20} className="text-text-primary" />
             {cartCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-tierra px-1 text-[10px] font-bold text-white">
+              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-tomate-fill px-1 text-[10px] font-bold text-on-tomate">
                 {cartCount}
               </span>
             )}
@@ -112,11 +113,11 @@ export function Navbar() {
           <Link
             to="/notifications"
             aria-label={`Notificaciones${unreadCount > 0 ? `, ${unreadCount} sin leer` : ''}`}
-            className="relative inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors duration-300 hover:bg-white/10"
+            className="relative inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors duration-300 hover:bg-bg-subtle"
           >
-            <Bell size={20} className="text-[#f5efe5bf]" />
+            <Bell size={20} className="text-text-primary" />
             {unreadCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-tierra px-1 text-[10px] font-bold text-white">
+              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-tomate-fill px-1 text-[10px] font-bold text-on-tomate">
                 {unreadCount > 99 ? '99+' : unreadCount}
               </span>
             )}
@@ -126,12 +127,12 @@ export function Navbar() {
             type="button"
             onClick={toggle}
             aria-label="Cambiar modo de color"
-            className="flex h-9 w-9 items-center justify-center rounded-full transition-colors duration-300 hover:bg-white/10"
+            className="flex h-9 w-9 items-center justify-center rounded-full transition-colors duration-300 hover:bg-bg-subtle"
           >
             {theme === 'light' ? (
-              <Moon size={18} className="text-oro-light" />
+              <Moon size={18} className="text-text-primary" />
             ) : (
-              <Sun size={18} className="text-oro-light" />
+              <Sun size={18} className="text-text-primary" />
             )}
           </button>
 
@@ -139,7 +140,7 @@ export function Navbar() {
             <>
               <Link
                 to={accountPath}
-                className="hidden items-center gap-2 rounded-btn bg-tierra px-4 py-2 font-body text-[13px] font-semibold text-white no-underline transition-all duration-300 hover:-translate-y-px hover:bg-tierra-light md:inline-flex"
+                className="hidden items-center gap-2 rounded-btn bg-azul-fill px-4 py-2 font-body text-[13px] font-semibold text-on-azul no-underline transition-all duration-200 ease-spring active:scale-[0.96] hover:bg-azul-fill/90 md:inline-flex"
               >
                 <LayoutDashboard size={15} />
                 Mi panel
@@ -148,15 +149,15 @@ export function Navbar() {
                 type="button"
                 onClick={() => void logout()}
                 aria-label="Cerrar sesión"
-                className="hidden h-9 w-9 items-center justify-center rounded-full transition-colors duration-300 hover:bg-white/10 md:inline-flex"
+                className="hidden h-9 w-9 items-center justify-center rounded-full transition-colors duration-300 hover:bg-bg-subtle md:inline-flex"
               >
-                <LogOut size={18} className="text-[#f5efe5bf]" />
+                <LogOut size={18} className="text-text-primary" />
               </button>
             </>
           ) : (
             <Link
               to="/login"
-              className="hidden rounded-btn bg-tierra px-4 py-2 font-body text-[13px] font-semibold text-white no-underline transition-all duration-300 hover:-translate-y-px hover:bg-tierra-light md:inline-flex"
+              className="hidden rounded-btn bg-azul-fill px-4 py-2 font-body text-[13px] font-semibold text-on-azul no-underline transition-all duration-200 ease-spring active:scale-[0.96] hover:bg-azul-fill/90 md:inline-flex"
             >
               Ingresar
             </Link>
@@ -167,7 +168,7 @@ export function Navbar() {
             onClick={() => setIsMenuOpen((current) => !current)}
             aria-label={isMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
             aria-expanded={isMenuOpen}
-            className="flex h-9 w-9 items-center justify-center rounded-full text-oro-light transition-colors duration-300 hover:bg-white/10 md:hidden"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-text-primary transition-colors duration-300 hover:bg-bg-subtle md:hidden"
           >
             {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
@@ -175,14 +176,14 @@ export function Navbar() {
       </div>
 
       {isMenuOpen && (
-        <div className="grid gap-2 border-t border-oro/20 py-4 md:hidden">
-          {renderLinks('rounded-btn px-3 py-2 hover:bg-white/10')}
+        <div className="grid gap-2 border-t border-border py-4 md:hidden">
+          {renderLinks('rounded-btn px-3 py-2 hover:bg-bg-subtle')}
           {isAuthenticated ? (
             <>
               <Link
                 to={accountPath}
                 onClick={closeMenu}
-                className="flex items-center gap-2 rounded-btn px-3 py-2 font-body text-sm font-semibold text-white no-underline transition-colors duration-300 hover:bg-white/10"
+                className="flex items-center gap-2 rounded-btn px-3 py-2 font-body text-sm font-semibold text-text-primary no-underline transition-colors duration-300 hover:bg-bg-subtle"
               >
                 <LayoutDashboard size={16} />
                 Mi panel
@@ -193,7 +194,7 @@ export function Navbar() {
                   closeMenu()
                   void logout()
                 }}
-                className="flex items-center gap-2 rounded-btn px-3 py-2 text-left font-body text-sm font-semibold text-white transition-colors duration-300 hover:bg-white/10"
+                className="flex items-center gap-2 rounded-btn px-3 py-2 text-left font-body text-sm font-semibold text-text-primary transition-colors duration-300 hover:bg-bg-subtle"
               >
                 <LogOut size={16} />
                 Cerrar sesión
@@ -203,7 +204,7 @@ export function Navbar() {
             <Link
               to="/login"
               onClick={closeMenu}
-              className="rounded-btn bg-tierra px-3 py-2 text-center font-body text-sm font-semibold text-white no-underline transition-colors duration-300 hover:bg-tierra-light"
+              className="rounded-btn bg-azul-fill px-3 py-2 text-center font-body text-sm font-semibold text-on-azul no-underline transition-colors duration-300 hover:bg-azul-fill/90"
             >
               Ingresar
             </Link>

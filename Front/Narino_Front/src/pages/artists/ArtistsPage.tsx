@@ -46,8 +46,10 @@ export default function ArtistsPage() {
   )
 
   return (
-    <div className="min-h-screen bg-bg pt-16">
+    <div className="min-h-screen pt-16">
       <PageShell
+        eyebrow="Artistas visuales"
+        accent="magenta"
         title="Artistas de Nariño"
         subtitle="Descubre los creadores visuales del departamento"
       />
@@ -65,7 +67,7 @@ export default function ArtistsPage() {
             aria-label="Buscar artistas"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-input border border-border bg-bg-card pl-9 pr-4 py-2.5 font-body text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-oro/50"
+            className="w-full rounded-input border border-border bg-bg-card pl-9 pr-4 py-2.5 font-body text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-azul focus:ring-2 focus:ring-azul/25"
           />
         </div>
 
@@ -99,11 +101,8 @@ export default function ArtistsPage() {
               >
                 <Card className="p-0 overflow-hidden group cursor-pointer hover:shadow-card transition-shadow h-full flex flex-col">
                   {/* Avatar */}
-                  <div
-                    className="h-44 flex-none flex items-center justify-center"
-                    style={{ background: '#2D1B00' }}
-                  >
-                    <span className="font-display text-oro font-bold text-5xl">
+                  <div className="h-44 flex-none flex items-center justify-center bg-gradient-to-br from-magenta-tint to-naranja-tint">
+                    <span className="font-display text-magenta font-extrabold text-5xl">
                       {artist.artistic_name.charAt(0)}
                     </span>
                   </div>
@@ -111,7 +110,7 @@ export default function ArtistsPage() {
                   {/* Contenido — flex-1 para que todas las cards estiren igual */}
                   <div className="flex flex-1 flex-col justify-between p-5">
                     <div className="space-y-1.5">
-                      <h2 className="font-display font-bold text-text-primary text-[17px] group-hover:text-oro transition-colors line-clamp-1">
+                      <h2 className="font-display font-bold text-text-primary text-[17px] group-hover:text-magenta transition-colors line-clamp-1">
                         {artist.artistic_name}
                       </h2>
                       {/* Disciplina — siempre ocupa la misma línea */}

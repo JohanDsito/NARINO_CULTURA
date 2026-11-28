@@ -5,6 +5,7 @@ Los settings se cargan en módulos aparte (import/reload) sin tocar la configura
 
 import importlib
 import os
+import runpy
 import sys
 from unittest import mock
 
@@ -152,3 +153,20 @@ class WebSocketRoutingTests(SimpleTestCase):
         respuesta = self.client.get("/")
         self.assertEqual(respuesta.status_code, 200)
         self.assertIn("message", respuesta.json())
+
+
+class AllowedHostsTests(SimpleTestCase):
+    """ALLOWED_HOSTS sale de la variable de entorno; si viene vacía se usa la lista por defecto."""
+
+    def _cargar_base(self, valor):
+        with mock.patch.dict(os.environ, {"ALLOWED_HOSTS": valor}):
+            return runpy.run_module("config.settings.base")
+
+    def test_usa_los_hosts_de_la_variable_e_ignora_los_vacios(self):
+        ajustes = self._cargar_base("api.narinocultura.test, ,admin.narinocultura.test")
+        self.assertEqual(ajustes["ALLOWED_HOSTS"], ["api.narinocultura.test", "admin.narinocultura.test"])
+
+    def test_sin_variable_usa_la_lista_por_defecto(self):
+        ajustes = self._cargar_base("")
+        self.assertIn("localhost", ajustes["ALLOWED_HOSTS"])
+        self.assertIn("narinocultura-production.up.railway.app", ajustes["ALLOWED_HOSTS"])

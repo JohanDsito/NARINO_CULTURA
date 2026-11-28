@@ -45,9 +45,9 @@ export default function MusicianProfilePage() {
 
   if (isError || !musician) {
     return (
-      <div className="min-h-screen bg-bg pt-24 flex flex-col items-center gap-4">
+      <div className="min-h-screen pt-24 flex flex-col items-center gap-4">
         <p className="text-text-muted font-body">No se encontró este perfil.</p>
-        <Link to={ROUTES.MUSICIANS} className="text-oro hover:underline font-body text-sm">
+        <Link to={ROUTES.MUSICIANS} className="text-azul hover:underline font-body text-sm">
           ← Volver a músicos
         </Link>
       </div>
@@ -81,13 +81,13 @@ export default function MusicianProfilePage() {
       href: `https://instagram.com/${musician.instagram_handle.replace(/^@/, '')}`,
       label: `@${musician.instagram_handle.replace(/^@/, '')}`,
       icon: <FaInstagram size={15} />,
-      hover: 'hover:text-oro',
+      hover: 'hover:text-azul',
     },
     musician.website_url && {
       href: musician.website_url,
       label: 'Sitio web',
       icon: <Globe size={15} />,
-      hover: 'hover:text-oro',
+      hover: 'hover:text-azul',
       extra: <ExternalLink size={11} className="opacity-60" />,
     },
   ].filter(Boolean) as {
@@ -99,37 +99,29 @@ export default function MusicianProfilePage() {
   }[]
 
   return (
-    <div className="min-h-screen bg-bg pt-16">
+    <div className="min-h-screen pt-16">
       {/* Breadcrumb */}
-      <div className="px-6 md:px-16 pt-6" style={{ background: '#2D1B00' }}>
+      <div className="px-6 md:px-16 pt-6">
         <Link
           to={ROUTES.MUSICIANS}
-          className="inline-flex items-center gap-1.5 text-oro/60 hover:text-oro font-body text-sm no-underline transition-colors pb-4"
+          className="inline-flex items-center gap-1.5 text-text-secondary hover:text-text-primary font-body text-sm no-underline transition-colors pb-4"
         >
           <ArrowLeft size={14} /> Músicos
         </Link>
       </div>
 
       {/* Hero */}
-      <section className="relative overflow-hidden px-6 md:px-16 pb-14 pt-8" style={{ background: '#2D1B00' }}>
+      <section className="relative overflow-hidden px-6 md:px-16 pb-14 pt-8">
         {/* Decorative glow */}
-        <div
-          className="pointer-events-none absolute -top-20 -right-20 w-96 h-96 rounded-full opacity-60"
-          style={{ background: 'radial-gradient(circle, rgba(201,146,26,0.18) 0%, transparent 70%)' }}
-        />
-        <div
-          className="pointer-events-none absolute bottom-0 left-0 right-0 h-20"
-          style={{ background: 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.25))' }}
-        />
 
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row gap-10 items-start relative z-10">
           {/* Avatar */}
           <div className="flex-none">
-            <div className="w-28 h-28 md:w-36 md:h-36 rounded-full ring-2 ring-oro/30 overflow-hidden bg-oro/20 flex items-center justify-center shadow-xl">
+            <div className="w-28 h-28 md:w-36 md:h-36 rounded-full ring-2 ring-azul/30 overflow-hidden bg-azul-tint flex items-center justify-center shadow-xl">
               {musician.profile_image_url ? (
                 <img src={musician.profile_image_url} alt={musician.artistic_name} className="w-full h-full object-cover" />
               ) : (
-                <span className="font-display font-bold text-oro text-5xl">
+                <span className="font-display font-bold text-azul text-5xl">
                   {musician.artistic_name.charAt(0)}
                 </span>
               )}
@@ -140,7 +132,7 @@ export default function MusicianProfilePage() {
           <div className="flex-1 min-w-0">
             {/* Badges */}
             <div className="flex flex-wrap gap-2 mb-3">
-              <Badge variant="indigo">
+              <Badge variant="azul">
                 {AGGREGATION_TYPE_LABELS[musician.aggregation_type] ?? musician.aggregation_type}
               </Badge>
               {musician.is_verified && <Badge variant="selva">Verificado</Badge>}
@@ -148,7 +140,7 @@ export default function MusicianProfilePage() {
 
             {/* Name */}
             <h1
-              className="font-display font-black text-oro-light leading-tight mb-2"
+              className="font-display font-extrabold text-text-primary leading-tight mb-2"
               style={{ fontSize: 'clamp(28px, 5vw, 44px)' }}
             >
               {musician.artistic_name}
@@ -166,7 +158,7 @@ export default function MusicianProfilePage() {
                 {musician.genres.map((g) => (
                   <span
                     key={g.id}
-                    className="rounded-tag bg-white/10 text-oro-light font-body text-[12px] px-2.5 py-0.5"
+                    className="rounded-tag bg-azul-tint text-azul font-body text-[12px] font-semibold px-2.5 py-0.5"
                   >
                     {g.icon} {g.name}
                   </span>
@@ -177,8 +169,7 @@ export default function MusicianProfilePage() {
             {/* Bio */}
             {musician.bio && (
               <p
-                className="font-body text-[14px] leading-[1.7] mb-6 max-w-2xl"
-                style={{ color: 'rgba(245,239,229,0.78)' }}
+                className="font-body text-[14px] leading-[1.7] mb-6 max-w-2xl text-text-secondary"
               >
                 {musician.bio}
               </p>
@@ -193,7 +184,7 @@ export default function MusicianProfilePage() {
                     href={link.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`flex items-center gap-1.5 no-underline text-oro-light font-body text-[13px] transition-colors ${link.hover}`}
+                    className={`flex items-center gap-1.5 no-underline text-text-secondary font-body text-[13px] transition-colors ${link.hover}`}
                   >
                     {link.icon}
                     {link.label}
@@ -221,7 +212,7 @@ export default function MusicianProfilePage() {
           {/* Stats column */}
           <div className="flex md:flex-col gap-6 md:gap-4 md:text-right text-center flex-none">
             <div>
-              <p className="font-display font-bold text-oro leading-none" style={{ fontSize: '2rem' }}>
+              <p className="font-display font-bold text-azul leading-none" style={{ fontSize: '2rem' }}>
                 {musician.followers_count}
               </p>
               <p className="font-body text-text-muted text-[11px] mt-0.5 uppercase tracking-wide">
@@ -230,7 +221,7 @@ export default function MusicianProfilePage() {
             </div>
             {hasWorks && (
               <div>
-                <p className="font-display font-bold text-oro leading-none" style={{ fontSize: '2rem' }}>
+                <p className="font-display font-bold text-azul leading-none" style={{ fontSize: '2rem' }}>
                   {works.length}
                 </p>
                 <p className="font-body text-text-muted text-[11px] mt-0.5 uppercase tracking-wide">
@@ -243,7 +234,7 @@ export default function MusicianProfilePage() {
       </section>
 
       {/* Gold separator */}
-      <div className="h-[3px] w-full" style={{ background: 'linear-gradient(90deg, #2D1B00 0%, var(--oro) 40%, var(--oro) 60%, #2D1B00 100%)' }} />
+      <div className="nc-serpentina h-[3px] w-full" aria-hidden />
 
       {/* Content */}
       <div className="max-w-5xl mx-auto px-6 md:px-16 py-12">
@@ -266,7 +257,7 @@ export default function MusicianProfilePage() {
             </div>
             <Link
               to={ROUTES.MUSICIANS}
-              className="font-body text-sm text-oro hover:underline no-underline"
+              className="font-body text-sm text-azul hover:underline no-underline"
             >
               ← Explorar más músicos
             </Link>
@@ -280,7 +271,7 @@ export default function MusicianProfilePage() {
                   <h2 className="font-display font-bold text-text-primary text-[22px] whitespace-nowrap">
                     Videos
                   </h2>
-                  <div className="flex-1 h-[2px]" style={{ background: 'var(--oro)' }} />
+                  <div className="flex-1 h-[2px]" style={{ background: 'var(--azul)' }} />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {youtubeWorks.slice(0, 4).map((work) => {
@@ -302,7 +293,7 @@ export default function MusicianProfilePage() {
                             href={work.youtube_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-2 p-4 text-oro hover:underline font-body text-sm"
+                            className="flex items-center gap-2 p-4 text-azul hover:underline font-body text-sm"
                           >
                             <FaYoutube size={18} /> {work.title}
                           </a>
@@ -327,7 +318,7 @@ export default function MusicianProfilePage() {
                   <h2 className="font-display font-bold text-text-primary text-[22px] whitespace-nowrap">
                     Música
                   </h2>
-                  <div className="flex-1 h-[2px]" style={{ background: 'var(--oro)' }} />
+                  <div className="flex-1 h-[2px]" style={{ background: 'var(--azul)' }} />
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   {audioWorks.map((work) => {
@@ -373,7 +364,7 @@ export default function MusicianProfilePage() {
                       >
                         <div className="flex gap-4 p-4">
                           {/* Thumbnail o ícono */}
-                          <div className="w-16 h-16 flex-none rounded-lg overflow-hidden bg-oro/10 flex items-center justify-center">
+                          <div className="w-16 h-16 flex-none rounded-lg overflow-hidden bg-azul-tint flex items-center justify-center">
                             {work.thumbnail ? (
                               <img
                                 src={work.thumbnail}
@@ -381,7 +372,7 @@ export default function MusicianProfilePage() {
                                 className="w-full h-full object-cover"
                               />
                             ) : (
-                              <FaSpotify size={22} className="text-oro/40" />
+                              <FaSpotify size={22} className="text-azul/40" />
                             )}
                           </div>
 
@@ -392,7 +383,7 @@ export default function MusicianProfilePage() {
                                 {work.title}
                               </p>
                               {work.is_featured && (
-                                <span className="flex-none text-[10px] bg-oro/10 text-oro px-2 py-0.5 rounded-full font-medium">
+                                <span className="flex-none text-[10px] bg-azul-tint text-azul px-2 py-0.5 rounded-full font-medium">
                                   Destacada
                                 </span>
                               )}
