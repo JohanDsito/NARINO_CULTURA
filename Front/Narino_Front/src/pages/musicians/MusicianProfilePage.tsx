@@ -41,7 +41,7 @@ export default function MusicianProfilePage() {
     onError: () => toast.error('No se pudo actualizar el seguimiento.'),
   })
 
-  if (isLoading) return <PageLoader label="Cargando perfil del músico…" />
+  if (isLoading) return <PageLoader fullPage label="Cargando perfil del músico…" />
 
   if (isError || !musician) {
     return (

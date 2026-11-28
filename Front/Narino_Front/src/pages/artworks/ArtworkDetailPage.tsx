@@ -72,7 +72,7 @@ export default function ArtworkDetailPage() {
     }
   }
 
-  if (isLoading) return <PageLoader label="Cargando obra…" />
+  if (isLoading) return <PageLoader fullPage label="Cargando obra…" />
 
   if (isError || !artwork) {
     return (

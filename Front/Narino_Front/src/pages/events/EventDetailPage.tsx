@@ -59,7 +59,7 @@ export default function EventDetailPage() {
     onError: (error) => toast.error(getApiErrorMessage(error)),
   })
 
-  if (isLoading) return <PageLoader label="Cargando evento…" />
+  if (isLoading) return <PageLoader fullPage label="Cargando evento…" />
 
   if (isError || !event) {
     return (
