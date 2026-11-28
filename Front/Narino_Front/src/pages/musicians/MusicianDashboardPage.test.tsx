@@ -84,4 +84,14 @@ describe('MusicianDashboardPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /foto:Dúo Andino/ }))
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Muy pesada'))
   })
+
+  it('intentar subir una foto sin perfil guardado avisa que primero se guarda el perfil', async () => {
+    mockedProfile.mockResolvedValue(null)
+    renderWithProviders(<MusicianDashboardPage />)
+    const button = await screen.findByRole('button', { name: 'foto:Ana:undefined' })
+    button.removeAttribute('disabled')
+    fireEvent.click(button)
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Guarda el perfil antes de subir una foto.'))
+    expect(mockedUpload).not.toHaveBeenCalled()
+  })
 })
