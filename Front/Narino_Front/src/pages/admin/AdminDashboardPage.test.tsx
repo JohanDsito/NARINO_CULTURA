@@ -127,8 +127,8 @@ describe('AdminDashboardPage', () => {
 
   it('transacciones recientes: tipo, total, fecha y solo las 6 primeras', async () => {
     mockedTx.mockResolvedValue([
-      tx({ id: 'aaaaaaaa-1', order_type: 'SUBASTA', total_amount: '', created_at: '' }),
-      ...[2, 3, 4, 5, 6, 7].map((i) => tx({ id: `bbbbbbb${i}-x` })),
+      tx({ id: 'tx-1', order_id: 'aaaaaaaa-1', order_type: 'SUBASTA', total_amount: '', created_at: '' }),
+      ...[2, 3, 4, 5, 6, 7].map((i) => tx({ id: `tx-${i}`, order_id: `bbbbbbb${i}-x` })),
     ])
     renderWithProviders(<AdminDashboardPage />)
     expect(await screen.findByText('#AAAAAAAA')).toBeInTheDocument()
@@ -150,12 +150,17 @@ describe('AdminDashboardPage', () => {
     expect(mockedTx).toHaveBeenCalledTimes(2)
   })
 
-  // ERROR REAL detectado: AdminDashboardPage.tsx (~línea 372) usa ORDER_STATUS_LABELS con el estado de PAGO
-  // de la transacción (APROBADO/RECHAZADO), que ese mapa no conoce (solo PENDIENTE/PAGADO/CANCELADO/REEMBOLSADO):
-  // la columna "Estado" muestra el texto crudo "APROBADO" sin color. Además la fila usa tx.id como "Orden".
-  it.skip('transacciones recientes: el estado de pago aprobado se muestra como "Aprobado" (BUG: aparece "APROBADO" crudo)', async () => {
+  it('transacciones recientes: el estado de pago aprobado se muestra como "Aprobado", no crudo', async () => {
     renderWithProviders(<AdminDashboardPage />)
     expect(await screen.findByText('Aprobado')).toBeInTheDocument()
+    expect(screen.queryByText('APROBADO')).not.toBeInTheDocument()
+  })
+
+  it('transacciones recientes: la columna Orden muestra el id de la orden, no el de la transacción', async () => {
+    mockedTx.mockResolvedValue([tx({ id: 'tx000000-aaaa', order_id: 'ord98765-bbbb' })])
+    renderWithProviders(<AdminDashboardPage />)
+    expect(await screen.findByText('#ORD98765')).toBeInTheDocument()
+    expect(screen.queryByText('#TX000000')).not.toBeInTheDocument()
   })
 
   it('con un estado de orden conocido usa su etiqueta', async () => {
