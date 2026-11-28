@@ -18,7 +18,7 @@ puede dejarse sin acceso y el refresh token rota de verdad. Backend con 100 % de
 
 ### Backend
 
-- Versión de la API en 1.3.0 (documentación OpenAPI y raíz `/api/v1/`).
+- Versión de la API en 1.3.0 (documentación OpenAPI y raíz `/` de la API, que decía 1.0.0).
 - Cobertura con ramas al **100 %** (#212, #213): WebSocket de subastas, capa de IA y ramas sueltas. Se quitó un chequeo
   inalcanzable en `follow` de artistas, sin cambiar el comportamiento.
 - Ajustes `e2e` y comando `seed_demo --confirmar` para las pruebas end-to-end (#209). Se niegan a correr contra Railway y
@@ -41,13 +41,14 @@ puede dejarse sin acceso y el refresh token rota de verdad. Backend con 100 % de
 - Las coordenadas de los eventos llegan como texto desde la API y rompían la agenda y el detalle: ahora se leen bien
   (#211).
 - Las pruebas de integración ya no pueden tocar producción (#206).
-- Pruebas que confirman que guarda el refresh rotado (#214).
+- Pruebas que confirman que guarda el refresh rotado (#214); la app ya lo hacía desde el 2026-11-06.
 
 ### Pruebas y CI
 
 - **e2e de la web con Playwright** (8 pruebas: registro, compra con Wompi simulado, subasta en vivo y eventos) y
   Lighthouse como aviso, contra un backend local (#209).
-- Script de rendimiento `tools/rendimiento/medir_api.py` (#208): en producción, p95 de 383 ms con 0 % de errores.
+- Script de rendimiento `tools/rendimiento/medir_api.py` (#208): en producción, con 300 GET públicos y
+  5 a la vez, p95 de 383 ms y 0 % de errores.
 - Cifras de esta versión: backend **838 pruebas** y **100 %** de cobertura con ramas; web **130 pruebas** y 8 e2e; app
   **429 pruebas**.
 
@@ -55,10 +56,15 @@ puede dejarse sin acceso y el refresh token rota de verdad. Backend con 100 % de
 
 - **Sin migraciones nuevas** desde v1.2.0 (`makemigrations --check` sin cambios). Railway ejecuta `migrate` al arrancar,
   así que no hace falta ningún paso manual.
-- **Sesiones abiertas:** la primera renovación de cada sesión entrega un refresh nuevo. La web y la app v1.3.0 ya lo
-  guardan. **Las versiones anteriores de la app no lo guardan**: tras su primera renovación quedan sin sesión y el
-  usuario debe iniciar sesión otra vez. Conviene publicar la app 1.3.0 en Google Play y avisar.
-- Hay que publicar la web y el backend juntos; una web antigua con el backend nuevo pierde la sesión igual.
+- **Solo el backend está desplegado** (Railway, desde `main`). La web todavía no está publicada en ningún hosting y la
+  app no está en Google Play: solo hay APK de prueba.
+- **Sesiones abiertas (#214):** los refresh emitidos antes del despliegue siguen sirviendo y rotan sin error. Desde la
+  primera renovación cada sesión recibe un refresh nuevo y el anterior queda en lista negra.
+  - La app guarda el refresh rotado desde el 2026-11-06, así que los APK de prueba 1.2.0 y 1.3.0 no pierden la sesión.
+    Un APK compilado antes de esa fecha la pierde en la segunda renovación: hay que iniciar sesión otra vez o instalar
+    el APK 1.3.0.
+  - La web se publicará ya con 1.3.0, que guarda el refresh rotado. Una web anterior a 1.3.0 corriendo en local contra
+    producción pierde la sesión en la segunda renovación.
 
 ## [1.2.0] — 2026-11-21
 
