@@ -22,6 +22,19 @@
         } catch (e) {}
       })()
     </script>
+    <script>
+      // La portada se ve con una imagen grande: se pide ya, sin esperar a que cargue el JavaScript (mejora el LCP)
+      ;(function () {
+        if (location.pathname !== '/') return
+        var l = document.createElement('link')
+        l.rel = 'preload'
+        l.as = 'image'
+        l.href = '/carnaval-hero.webp'
+        l.type = 'image/webp'
+        l.setAttribute('fetchpriority', 'high')
+        document.head.appendChild(l)
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>
